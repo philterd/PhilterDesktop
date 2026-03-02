@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\phileas-net\src\Phileas\Phileas.csproj" />
     <ProjectReference Include="..\philter-policy-editor\PhilterPolicyEditor\PhilterPolicyEditor.vbproj" />
+    <ProjectReference Include="..\PhilterPolicyEditor\PhilterPolicyEditor.vbproj" />
   </ItemGroup>
 
 </Project>
