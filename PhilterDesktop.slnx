@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../phileas-net/src/Phileas/Phileas.csproj" />
+  <Project Path="philter-policy-editor/PhilterPolicyEditor/PhilterPolicyEditor.vbproj" />
+  <Project Path="philter-policy-editor/Policies/Policies.csproj" />
+  <Project Path="PhilterDesktop/PhilterDesktop.csproj" />
+</Solution>

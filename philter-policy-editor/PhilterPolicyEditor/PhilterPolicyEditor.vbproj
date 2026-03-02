@@ -1,0 +1,157 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Philter</RootNamespace>
+    <MyType>Windows</MyType>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DocumentationFile>PhilterPolicyEditor.xml</DocumentationFile>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022,WFO1000</NoWarn>
+    <DefineDebug>false</DefineDebug>
+    <DocumentationFile>PhilterPolicyEditor.xml</DocumentationFile>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022,WFO1000</NoWarn>
+    <AssemblyTitle>Policy Editor</AssemblyTitle>
+    <Description>Policy Editor</Description>
+    <Company>Mountain Fog, Inc.</Company>
+    <Product>PolicyEditor</Product>
+    <Copyright>Copyright ©  2021 Mountain Fog, Inc.</Copyright>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Update="PolicyEditorForm.Designer.vb">
+      <DependentUpon>PolicyEditorForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddAgeFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddAgeFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddCityFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddCityFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddCountyFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddCountyFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddCreditCardFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddCreditCardFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddCustomDictionaryFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddCustomDictionaryFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddDateFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddDateFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddEmailAddressFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddEmailAddressFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddFirstNameFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddFirstNameFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddHospitalAbbreviationFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddHospitalAbbreviationFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddHospitalFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddHospitalFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddIdentifierFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddIdentifierFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddIpAddressFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddIpAddressFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddNerFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddNerFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddPhoneNumberExtensionFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddPhoneNumberExtensionFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddPhoneNumberFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddPhoneNumberFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddSsnFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddSsnFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddStateAbbreviationFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddStateAbbreviationFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddStateFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddStateFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddSurnameFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddSurnameFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddUrlFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddUrlFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddVinFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddVinFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddZipCodeFilterStrategyForm.Designer.vb">
+      <DependentUpon>AddZipCodeFilterStrategyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterStrategies\BaseFilterStrategiesForm.Designer.vb">
+      <DependentUpon>BaseFilterStrategiesForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterStrategies\Complex\CustomDictionariesForm.Designer.vb">
+      <DependentUpon>CustomDictionariesForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterStrategies\Complex\CustomIdentifierForm.Designer.vb">
+      <DependentUpon>CustomIdentifierForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="PolicyEditor\FilterStrategies\Complex\CustomIdentifiersForm.Designer.vb">
+      <DependentUpon>CustomIdentifiersForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="My Project\Application.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Application.myapp</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Update="My Project\Resources.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Update="My Project\Settings.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <Compile Update="NewPolicyForm.Designer.vb">
+      <DependentUpon>NewPolicyForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="ViewJsonForm.Designer.vb">
+      <DependentUpon>ViewJsonForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="ViewJsonForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="My Project\Application.myapp">
+      <Generator>MyApplicationCodeGenerator</Generator>
+      <LastGenOutput>Application.Designer.vb</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Import Include="Microsoft.VisualBasic" />
+    <Import Include="System" />
+    <Import Include="System.Collections" />
+    <Import Include="System.Collections.Generic" />
+    <Import Include="System.Drawing" />
+    <Import Include="System.Diagnostics" />
+    <Import Include="System.Windows.Forms" />
+    <Import Include="System.Linq" />
+    <Import Include="System.Xml.Linq" />
+    <Import Include="System.Threading.Tasks" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="log4net" Version="3.3.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Policies\Policies.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,1 @@
+Philter Toolbox utilizes Philter to find and remove sensitive information from text. An instance of Philter is required to use Philter Toolbox. For more information on Philter Toolbox or Philter visit https://www.mtnfog.com.
