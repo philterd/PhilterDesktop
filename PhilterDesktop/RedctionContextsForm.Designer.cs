@@ -28,13 +28,73 @@
         /// </summary>
         private void InitializeComponent()
         {
+            listBoxContexts = new ListBox();
+            btnCreate = new Button();
+            btnDelete = new Button();
+            btnClose = new Button();
+            lblContexts = new Label();
             SuspendLayout();
+            // 
+            // listBoxContexts
+            // 
+            listBoxContexts.FormattingEnabled = true;
+            listBoxContexts.ItemHeight = 15;
+            listBoxContexts.Location = new Point(12, 32);
+            listBoxContexts.Name = "listBoxContexts";
+            listBoxContexts.Size = new Size(560, 364);
+            listBoxContexts.TabIndex = 0;
+            listBoxContexts.SelectedIndexChanged += ListBoxContexts_SelectedIndexChanged;
+            // 
+            // btnCreate
+            // 
+            btnCreate.Location = new Point(588, 32);
+            btnCreate.Name = "btnCreate";
+            btnCreate.Size = new Size(100, 30);
+            btnCreate.TabIndex = 1;
+            btnCreate.Text = "Create";
+            btnCreate.UseVisualStyleBackColor = true;
+            btnCreate.Click += BtnCreate_Click;
+            // 
+            // btnDelete
+            // 
+            btnDelete.Enabled = false;
+            btnDelete.Location = new Point(588, 68);
+            btnDelete.Name = "btnDelete";
+            btnDelete.Size = new Size(100, 30);
+            btnDelete.TabIndex = 2;
+            btnDelete.Text = "Delete";
+            btnDelete.UseVisualStyleBackColor = true;
+            btnDelete.Click += BtnDelete_Click;
+            // 
+            // btnClose
+            // 
+            btnClose.Location = new Point(588, 366);
+            btnClose.Name = "btnClose";
+            btnClose.Size = new Size(100, 30);
+            btnClose.TabIndex = 3;
+            btnClose.Text = "Close";
+            btnClose.UseVisualStyleBackColor = true;
+            btnClose.Click += BtnClose_Click;
+            // 
+            // lblContexts
+            // 
+            lblContexts.AutoSize = true;
+            lblContexts.Location = new Point(12, 9);
+            lblContexts.Name = "lblContexts";
+            lblContexts.Size = new Size(115, 15);
+            lblContexts.TabIndex = 4;
+            lblContexts.Text = "Redaction Contexts:";
             // 
             // RedctionContextsForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(700, 408);
+            Controls.Add(lblContexts);
+            Controls.Add(btnClose);
+            Controls.Add(btnDelete);
+            Controls.Add(btnCreate);
+            Controls.Add(listBoxContexts);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
@@ -43,8 +103,15 @@
             Text = "Redaction Contexts";
             Load += RedctionContextsForm_Load;
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
+
+        private ListBox listBoxContexts;
+        private Button btnCreate;
+        private Button btnDelete;
+        private Button btnClose;
+        private Label lblContexts;
     }
 }
