@@ -1,6 +1,6 @@
 ﻿namespace PhilterDesktop
 {
-    partial class Form1
+    partial class MainForm
     {
         /// <summary>
         ///  Required designer variable.
@@ -33,6 +33,7 @@
             exitToolStripMenuItem = new ToolStripMenuItem();
             toolsToolStripMenuItem = new ToolStripMenuItem();
             policiesToolStripMenuItem = new ToolStripMenuItem();
+            redactionContextsToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem1 = new ToolStripMenuItem();
             toolStripSeparator1 = new ToolStripSeparator();
@@ -48,7 +49,7 @@
             button3 = new Button();
             label3 = new Label();
             button2 = new Button();
-            comboBox2 = new ComboBox();
+            contextsComboBox = new ComboBox();
             label2 = new Label();
             comboBox1 = new ComboBox();
             label1 = new Label();
@@ -88,7 +89,7 @@
             // 
             // toolsToolStripMenuItem
             // 
-            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { policiesToolStripMenuItem });
+            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { policiesToolStripMenuItem, redactionContextsToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             toolsToolStripMenuItem.Size = new Size(47, 22);
             toolsToolStripMenuItem.Text = "Tools";
@@ -96,9 +97,16 @@
             // policiesToolStripMenuItem
             // 
             policiesToolStripMenuItem.Name = "policiesToolStripMenuItem";
-            policiesToolStripMenuItem.Size = new Size(179, 22);
+            policiesToolStripMenuItem.Size = new Size(185, 22);
             policiesToolStripMenuItem.Text = "Redaction Policies...";
             policiesToolStripMenuItem.Click += policiesToolStripMenuItem_Click;
+            // 
+            // redactionContextsToolStripMenuItem
+            // 
+            redactionContextsToolStripMenuItem.Name = "redactionContextsToolStripMenuItem";
+            redactionContextsToolStripMenuItem.Size = new Size(185, 22);
+            redactionContextsToolStripMenuItem.Text = "Redaction Contexts...";
+            redactionContextsToolStripMenuItem.Click += redactionContextsToolStripMenuItem_Click;
             // 
             // helpToolStripMenuItem
             // 
@@ -173,7 +181,7 @@
             // 
             panel1.Controls.Add(panel2);
             panel1.Controls.Add(button2);
-            panel1.Controls.Add(comboBox2);
+            panel1.Controls.Add(contextsComboBox);
             panel1.Controls.Add(label2);
             panel1.Controls.Add(comboBox1);
             panel1.Controls.Add(label1);
@@ -236,15 +244,16 @@
             button2.UseVisualStyleBackColor = true;
             button2.Click += button2_Click;
             // 
-            // comboBox2
+            // contextsComboBox
             // 
-            comboBox2.DropDownStyle = ComboBoxStyle.DropDownList;
-            comboBox2.FormattingEnabled = true;
-            comboBox2.Location = new Point(117, 191);
-            comboBox2.Margin = new Padding(2);
-            comboBox2.Name = "comboBox2";
-            comboBox2.Size = new Size(398, 23);
-            comboBox2.TabIndex = 3;
+            contextsComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            contextsComboBox.FormattingEnabled = true;
+            contextsComboBox.Location = new Point(117, 191);
+            contextsComboBox.Margin = new Padding(2);
+            contextsComboBox.Name = "contextsComboBox";
+            contextsComboBox.Size = new Size(398, 23);
+            contextsComboBox.TabIndex = 3;
+            contextsComboBox.DropDown += contextsComboBox_DropDown;
             // 
             // label2
             // 
@@ -334,7 +343,7 @@
         private Button button3;
         private Label label3;
         private Button button2;
-        private ComboBox comboBox2;
+        private ComboBox contextsComboBox;
         private Label label2;
         private ComboBox comboBox1;
         private Label label1;
@@ -344,5 +353,6 @@
         private OpenFileDialog openFileDialog1;
         private ListBox filesListBox;
         private StatusStrip statusStrip1;
+        private ToolStripMenuItem redactionContextsToolStripMenuItem;
     }
 }

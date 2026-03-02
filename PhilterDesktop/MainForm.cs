@@ -8,11 +8,13 @@ using PhileasPolicy = Phileas.Policy.Policy;
 
 namespace PhilterDesktop
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
-        LiteDbRepository<PolicyEntity> _policyRepository;
+        private readonly LiteDatabase _database;
+        private readonly PolicyRepository _policyRepository;
+        private readonly ContextRepository _contextRepository;
 
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
 
@@ -28,16 +30,25 @@ namespace PhilterDesktop
                 Directory.CreateDirectory(folder);
             }
 
-            _policyRepository = new LiteDbRepository<PolicyEntity>(dbPath);
+            // Create a single shared database instance
+            _database = new LiteDatabase(dbPath);
 
-            //    repo.EnsureIndex(x => x.CreatedAt);
+            // Pass the shared database to all repositories
+            _policyRepository = new PolicyRepository(_database);
+            _contextRepository = new ContextRepository(_database);
 
-            //var record = new FilterResult { FilteredText = result.FilteredText };
-            //repo.Insert(record);
+            // Insert default policy.
+            // TODO
 
-            //var all = repo.GetAll(); // Read
-            //repo.Update(record);    // Update
-            //repo.Delete(record.Id); // Delete
+            // Insert default context.
+            if (_contextRepository.FindByName("default") == null)
+            {
+                ContextEntity contextEntity = new ContextEntity
+                {
+                    Name = "default"
+                };
+                _contextRepository.Insert(contextEntity);
+            }
 
         }
 
@@ -113,6 +124,21 @@ namespace PhilterDesktop
             {
                 comboBox1.Items.Add(p.Name);
             }
+        }
+
+        private void contextsComboBox_DropDown(object sender, EventArgs e)
+        {
+            contextsComboBox.Items.Clear();
+            foreach (ContextEntity p in _contextRepository.GetAll())
+            {
+                contextsComboBox.Items.Add(p.Name);
+            }
+        }
+
+        private void redactionContextsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var redactionContextsForm = new RedctionContextsForm(_contextRepository);
+            redactionContextsForm.ShowDialog();
         }
     }
 

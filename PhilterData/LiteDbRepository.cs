@@ -1,31 +1,60 @@
 using LiteDB;
-using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace PhilterDesktop
+namespace PhilterData
 {
     /// <summary>
-    /// Generic LiteDB repository providing CRUD operations for any entity type.
+    /// Abstract base class providing generic LiteDB repository operations for entity types.
     /// The entity must have an <c>Id</c> property (or a property marked with <c>[BsonId]</c>).
     /// </summary>
     /// <typeparam name="T">The entity type stored in the collection.</typeparam>
-    public sealed class LiteDbRepository<T> : IDisposable where T : new()
+    public abstract class LiteDbRepository<T> : IDisposable where T : new()
     {
         private readonly LiteDatabase _db;
         private readonly ILiteCollection<T> _collection;
+        private readonly bool _ownsDatabase;
         private bool _disposed;
 
+        /// <summary>
+        /// Creates a repository with a shared database instance (recommended).
+        /// </summary>
+        /// <param name="database">Shared LiteDatabase instance.</param>
+        /// <param name="collectionName">
+        /// Optional collection name. Defaults to the lowercase type name of <typeparamref name="T"/>.
+        /// </param>
+        protected LiteDbRepository(LiteDatabase database, string? collectionName = null)
+        {
+            ArgumentNullException.ThrowIfNull(database);
+
+            _db = database;
+            _ownsDatabase = false;
+            _collection = _db.GetCollection<T>(collectionName ?? typeof(T).Name.ToLowerInvariant());
+            ConfigureIndexes();
+        }
+
+        /// <summary>
+        /// Creates a repository with its own database connection (use only for single repository scenarios).
+        /// </summary>
         /// <param name="databasePath">File path for the LiteDB database (e.g., <c>"philter.db"</c>).</param>
         /// <param name="collectionName">
         /// Optional collection name. Defaults to the lowercase type name of <typeparamref name="T"/>.
         /// </param>
-        public LiteDbRepository(string databasePath, string? collectionName = null)
+        protected LiteDbRepository(string databasePath, string? collectionName = null)
         {
             ArgumentException.ThrowIfNullOrEmpty(databasePath);
 
-            _db = new LiteDatabase(databasePath);
+            _db = new LiteDatabase("Filename=" + databasePath + ";");
+            _ownsDatabase = true;
             _collection = _db.GetCollection<T>(collectionName ?? typeof(T).Name.ToLowerInvariant());
+            ConfigureIndexes();
+        }
+
+        /// <summary>
+        /// Override this method to configure entity-specific indexes.
+        /// </summary>
+        protected virtual void ConfigureIndexes()
+        {
+            // Default: no indexes
         }
 
         // ── Create ────────────────────────────────────────────────────────────────
@@ -119,7 +148,7 @@ namespace PhilterDesktop
         /// </summary>
         /// <param name="field">Expression pointing to the field to index (e.g., <c>x => x.Email</c>).</param>
         /// <param name="unique">Whether the index should enforce uniqueness.</param>
-        public void EnsureIndex(Expression<Func<T, object>> field, bool unique = false)
+        protected void EnsureIndex(Expression<Func<T, object>> field, bool unique = false)
         {
             ArgumentNullException.ThrowIfNull(field);
             _collection.EnsureIndex(field, unique);
@@ -130,7 +159,13 @@ namespace PhilterDesktop
         public void Dispose()
         {
             if (_disposed) return;
-            _db.Dispose();
+
+            // Only dispose the database if this repository owns it
+            if (_ownsDatabase)
+            {
+                _db.Dispose();
+            }
+
             _disposed = true;
         }
     }

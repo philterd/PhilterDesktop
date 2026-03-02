@@ -7,9 +7,9 @@ Imports PhilterDesktop
 
 Public Class PolicyEditorForm
 
-    Dim _repo As LiteDbRepository(Of PolicyEntity)
+    Dim _repo As PolicyRepository
 
-    Public Sub New(repo As LiteDbRepository(Of PolicyEntity))
+    Public Sub New(repo As PolicyRepository)
         InitializeComponent()
         _repo = repo
     End Sub
