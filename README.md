@@ -1,49 +1,6 @@
-# PhilterDesktop
+# Philter Desktop
 
-A Windows desktop application for managing and testing Philter policies with integrated policy editor.
-
-## Overview
-
-PhilterDesktop is a Windows Forms application that provides a user-friendly interface for:
-- Testing PII (Personally Identifiable Information) filtering using the Phileas library
-- Creating and editing Philter filter policies with a visual policy editor
-- Storing filter results in a local LiteDB database
-
-## Architecture
-
-### Solution Structure
-
-The solution consists of four projects:
-
-1. **PhilterDesktop** (.NET 10.0-windows)
-   - Main Windows Forms application
-   - Entry point for the desktop experience
-   - Integrates the Phileas filtering engine
-   - Uses LiteDB for local data persistence
-
-2. **PhilterPolicyEditor** (.NET 10.0-windows, VB.NET)
-   - Visual policy editor component
-   - Provides forms for configuring filter strategies
-   - Supports multiple PII entity types (emails, phone numbers, SSNs, credit cards, etc.)
-   - Referenced as a library by PhilterDesktop
-
-3. **Policies** (.NET Framework 4.8.1, C#)
-   - Policy model definitions
-   - Filter configuration classes
-   - Shared data structures for policy management
-
-4. **Phileas** (External dependency)
-   - Core filtering engine
-   - Located at: `../../phileas-net/src/Phileas/`
-   - Provides the actual PII detection and filtering logic
-
-### Key Technologies
-
-- **.NET 10.0** - Latest .NET runtime
-- **Windows Forms** - Desktop UI framework
-- **LiteDB 5.0.21** - Embedded NoSQL database
-- **VB.NET** - Policy editor forms
-- **C#** - Main application and policy models
+A Windows desktop application for redacting text in text files, Microsoft Word files, and PDF files.
 
 ## Getting Started
 
@@ -84,15 +41,6 @@ The solution consists of four projects:
 
 ## Features
 
-### Main Application
-- **Filter Testing**: Test PII filtering with custom input text
-- **Policy Management**: Create, edit, and delete filter policies
-- **Result History**: View and manage previous filter results (stored in LiteDB)
-- **Menu Navigation**: 
-  - File ? Exit
-  - Tools ? Policies (opens Policy Editor)
-  - Help ? About
-
 ### Policy Editor
 Supports configuration for the following PII entity types:
 - Personal: First Names, Surnames, Ages
@@ -113,5 +61,5 @@ Each filter supports multiple strategies:
 
 ## License
 
-Copyright   2026 Mountain Fog, Inc.
+Copyright 2026 Philterd, LLC.
 
