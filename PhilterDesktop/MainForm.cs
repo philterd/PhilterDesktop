@@ -13,7 +13,7 @@ namespace PhilterDesktop
         private readonly LiteDatabase _database;
         private readonly PolicyRepository _policyRepository;
         private readonly ContextRepository _contextRepository;
-
+        private readonly ContextEntryRepository _contextEntryRepository;
         public MainForm()
         {
             InitializeComponent();
@@ -36,6 +36,7 @@ namespace PhilterDesktop
             // Pass the shared database to all repositories
             _policyRepository = new PolicyRepository(_database);
             _contextRepository = new ContextRepository(_database);
+            _contextEntryRepository = new ContextEntryRepository(_database);
 
             // Insert default policy.
             // TODO
@@ -137,7 +138,7 @@ namespace PhilterDesktop
 
         private void redactionContextsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var redactionContextsForm = new RedctionContextsForm(_contextRepository);
+            var redactionContextsForm = new RedctionContextsForm(_contextRepository, _contextEntryRepository);
             redactionContextsForm.ShowDialog();
         }
     }

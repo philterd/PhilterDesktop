@@ -31,6 +31,7 @@
             listBoxContexts = new ListBox();
             btnCreate = new Button();
             btnDelete = new Button();
+            btnEmpty = new Button();
             btnClose = new Button();
             lblContexts = new Label();
             SuspendLayout();
@@ -66,12 +67,23 @@
             btnDelete.UseVisualStyleBackColor = true;
             btnDelete.Click += BtnDelete_Click;
             // 
+            // btnEmpty
+            // 
+            btnEmpty.Enabled = false;
+            btnEmpty.Location = new Point(588, 104);
+            btnEmpty.Name = "btnEmpty";
+            btnEmpty.Size = new Size(100, 30);
+            btnEmpty.TabIndex = 3;
+            btnEmpty.Text = "Empty";
+            btnEmpty.UseVisualStyleBackColor = true;
+            btnEmpty.Click += BtnEmpty_Click;
+            // 
             // btnClose
             // 
             btnClose.Location = new Point(588, 366);
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(100, 30);
-            btnClose.TabIndex = 3;
+            btnClose.TabIndex = 4;
             btnClose.Text = "Close";
             btnClose.UseVisualStyleBackColor = true;
             btnClose.Click += BtnClose_Click;
@@ -82,7 +94,7 @@
             lblContexts.Location = new Point(12, 9);
             lblContexts.Name = "lblContexts";
             lblContexts.Size = new Size(115, 15);
-            lblContexts.TabIndex = 4;
+            lblContexts.TabIndex = 5;
             lblContexts.Text = "Redaction Contexts:";
             // 
             // RedctionContextsForm
@@ -92,6 +104,7 @@
             ClientSize = new Size(700, 408);
             Controls.Add(lblContexts);
             Controls.Add(btnClose);
+            Controls.Add(btnEmpty);
             Controls.Add(btnDelete);
             Controls.Add(btnCreate);
             Controls.Add(listBoxContexts);
@@ -111,6 +124,7 @@
         private ListBox listBoxContexts;
         private Button btnCreate;
         private Button btnDelete;
+        private Button btnEmpty;
         private Button btnClose;
         private Label lblContexts;
     }

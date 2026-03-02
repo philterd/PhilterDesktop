@@ -13,11 +13,13 @@ namespace PhilterDesktop
     public partial class RedctionContextsForm : Form
     {
         private ContextRepository _repo;
+        private ContextEntryRepository _contextEntryRepository;
 
-        public RedctionContextsForm(ContextRepository repo)
+        public RedctionContextsForm(ContextRepository contextRepository, ContextEntryRepository contextEntryRepository)
         {
             InitializeComponent();
-            _repo = repo;
+            _repo = contextRepository;
+            _contextEntryRepository = contextEntryRepository;
         }
 
         private void RedctionContextsForm_Load(object sender, EventArgs e)
@@ -141,6 +143,43 @@ namespace PhilterDesktop
             }
         }
 
+        private void BtnEmpty_Click(object? sender, EventArgs e)
+        {
+            if (listBoxContexts.SelectedItem is not ContextListItem selectedItem)
+                return;
+
+            var contextName = selectedItem.Context.Name;
+            var entryCount = _contextEntryRepository.CountByContext(contextName);
+
+            if (entryCount == 0)
+            {
+                MessageBox.Show(
+                    $"The context '{contextName}' is already empty.",
+                    "No Entries",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            var result = MessageBox.Show(
+                $"Are you sure you want to empty the context '{contextName}'?\n\n" +
+                $"This will delete {entryCount} {(entryCount == 1 ? "entry" : "entries")}.",
+                "Confirm Empty Context",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                var deletedCount = _contextEntryRepository.DeleteAllByContext(contextName);
+                
+                MessageBox.Show(
+                    $"Successfully emptied context '{contextName}'.\n{deletedCount} {(deletedCount == 1 ? "entry was" : "entries were")} deleted.",
+                    "Success",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+        }
+
         private void ListBoxContexts_SelectedIndexChanged(object? sender, EventArgs e)
         {
             UpdateButtonStates();
@@ -148,7 +187,9 @@ namespace PhilterDesktop
 
         private void UpdateButtonStates()
         {
-            btnDelete.Enabled = listBoxContexts.SelectedItem != null;
+            var hasSelection = listBoxContexts.SelectedItem != null;
+            btnDelete.Enabled = hasSelection;
+            btnEmpty.Enabled = hasSelection;
         }
 
         private void BtnClose_Click(object? sender, EventArgs e)
