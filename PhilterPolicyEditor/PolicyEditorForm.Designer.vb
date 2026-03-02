@@ -25,695 +25,695 @@ Partial Class PolicyEditorForm
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(PolicyEditorForm))
-        Me.PolicyPanel = New System.Windows.Forms.Panel()
-        Me.CustomIdentifiersConfigureButton = New System.Windows.Forms.Button()
-        Me.CustomIdentifiersCheckBox = New System.Windows.Forms.CheckBox()
-        Me.CustomDictionariesConfigureButton = New System.Windows.Forms.Button()
-        Me.CustomDictionariesCheckBox = New System.Windows.Forms.CheckBox()
-        Me.ZipCodesConfigureButton = New System.Windows.Forms.Button()
-        Me.ZipCodesCheckBox = New System.Windows.Forms.CheckBox()
-        Me.VINsConfigureButton = New System.Windows.Forms.Button()
-        Me.VINsCheckBox = New System.Windows.Forms.CheckBox()
-        Me.URLsConfigureButton = New System.Windows.Forms.Button()
-        Me.URLsCheckBox = New System.Windows.Forms.CheckBox()
-        Me.SurnamesConfigureButton = New System.Windows.Forms.Button()
-        Me.SurnamesCheckBox = New System.Windows.Forms.CheckBox()
-        Me.StateAbbreviationsConfigureButton = New System.Windows.Forms.Button()
-        Me.StateAbbreviationsCheckBox = New System.Windows.Forms.CheckBox()
-        Me.StatesConfigureButton = New System.Windows.Forms.Button()
-        Me.StatesCheckBox = New System.Windows.Forms.CheckBox()
-        Me.SSNsConfigureButton = New System.Windows.Forms.Button()
-        Me.SSNsCheckBox = New System.Windows.Forms.CheckBox()
-        Me.PhoneNumberExtsConfigureButton = New System.Windows.Forms.Button()
-        Me.PhoneNumberExtsCheckBox = New System.Windows.Forms.CheckBox()
-        Me.PhoneNumbersConfigureButton = New System.Windows.Forms.Button()
-        Me.PhoneNumbersCheckBox = New System.Windows.Forms.CheckBox()
-        Me.NERConfigureButton = New System.Windows.Forms.Button()
-        Me.NERCheckBox = New System.Windows.Forms.CheckBox()
-        Me.IPAddressesConfigureButton = New System.Windows.Forms.Button()
-        Me.IPAddressesCheckBox = New System.Windows.Forms.CheckBox()
-        Me.HospitalsConfigureButton = New System.Windows.Forms.Button()
-        Me.HospitalsCheckBox = New System.Windows.Forms.CheckBox()
-        Me.HospitalAbbreviationsConfigureButton = New System.Windows.Forms.Button()
-        Me.HospitalAbbreviationsCheckBox = New System.Windows.Forms.CheckBox()
-        Me.FirstNamesConfigureButton = New System.Windows.Forms.Button()
-        Me.FirstNamesCheckBox = New System.Windows.Forms.CheckBox()
-        Me.EmailAddressesConfigureButton = New System.Windows.Forms.Button()
-        Me.EmailAddressesCheckBox = New System.Windows.Forms.CheckBox()
-        Me.DatesConfigureButton = New System.Windows.Forms.Button()
-        Me.DatesCheckBox = New System.Windows.Forms.CheckBox()
-        Me.CreditCardsConfigureButton = New System.Windows.Forms.Button()
-        Me.CreditCardsCheckBox = New System.Windows.Forms.CheckBox()
-        Me.CountiesConfigureButton = New System.Windows.Forms.Button()
-        Me.CountiesCheckBox = New System.Windows.Forms.CheckBox()
-        Me.CitiesConfigureButton = New System.Windows.Forms.Button()
-        Me.CitiesCheckBox = New System.Windows.Forms.CheckBox()
-        Me.AgesConfigureButton = New System.Windows.Forms.Button()
-        Me.AgesCheckBox = New System.Windows.Forms.CheckBox()
-        Me.PolicysToolStrip = New System.Windows.Forms.ToolStrip()
-        Me.ToolStripLabel1 = New System.Windows.Forms.ToolStripLabel()
-        Me.PolicysToolStripDropDownButton = New System.Windows.Forms.ToolStripComboBox()
-        Me.RefreshToolStripButton = New System.Windows.Forms.ToolStripButton()
-        Me.ToolStripSeparator6 = New System.Windows.Forms.ToolStripSeparator()
-        Me.NewToolStripButton = New System.Windows.Forms.ToolStripButton()
-        Me.SaveToolStripButton = New System.Windows.Forms.ToolStripButton()
-        Me.SaveAsToolStripButton = New System.Windows.Forms.ToolStripButton()
-        Me.DeleteToolStripButton = New System.Windows.Forms.ToolStripButton()
-        Me.PolicyPanel.SuspendLayout()
-        Me.PolicysToolStrip.SuspendLayout()
-        Me.SuspendLayout()
-        '
-        'PolicyPanel
-        '
-        Me.PolicyPanel.Controls.Add(Me.CustomIdentifiersConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.CustomIdentifiersCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.CustomDictionariesConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.CustomDictionariesCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.ZipCodesConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.ZipCodesCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.VINsConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.VINsCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.URLsConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.URLsCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.SurnamesConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.SurnamesCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.StateAbbreviationsConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.StateAbbreviationsCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.StatesConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.StatesCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.SSNsConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.SSNsCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.PhoneNumberExtsConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.PhoneNumberExtsCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.PhoneNumbersConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.PhoneNumbersCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.NERConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.NERCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.IPAddressesConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.IPAddressesCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.HospitalsConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.HospitalsCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.HospitalAbbreviationsConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.HospitalAbbreviationsCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.FirstNamesConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.FirstNamesCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.EmailAddressesConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.EmailAddressesCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.DatesConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.DatesCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.CreditCardsConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.CreditCardsCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.CountiesConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.CountiesCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.CitiesConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.CitiesCheckBox)
-        Me.PolicyPanel.Controls.Add(Me.AgesConfigureButton)
-        Me.PolicyPanel.Controls.Add(Me.AgesCheckBox)
-        Me.PolicyPanel.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.PolicyPanel.Enabled = False
-        Me.PolicyPanel.Location = New System.Drawing.Point(0, 34)
-        Me.PolicyPanel.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.PolicyPanel.Name = "PolicyPanel"
-        Me.PolicyPanel.Size = New System.Drawing.Size(1381, 509)
-        Me.PolicyPanel.TabIndex = 10
-        '
-        'CustomIdentifiersConfigureButton
-        '
-        Me.CustomIdentifiersConfigureButton.Enabled = False
-        Me.CustomIdentifiersConfigureButton.Location = New System.Drawing.Point(1189, 77)
-        Me.CustomIdentifiersConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.CustomIdentifiersConfigureButton.Name = "CustomIdentifiersConfigureButton"
-        Me.CustomIdentifiersConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.CustomIdentifiersConfigureButton.TabIndex = 45
-        Me.CustomIdentifiersConfigureButton.Text = "Configure..."
-        Me.CustomIdentifiersConfigureButton.UseVisualStyleBackColor = True
-        '
-        'CustomIdentifiersCheckBox
-        '
-        Me.CustomIdentifiersCheckBox.AutoSize = True
-        Me.CustomIdentifiersCheckBox.Location = New System.Drawing.Point(984, 83)
-        Me.CustomIdentifiersCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.CustomIdentifiersCheckBox.Name = "CustomIdentifiersCheckBox"
-        Me.CustomIdentifiersCheckBox.Size = New System.Drawing.Size(164, 24)
-        Me.CustomIdentifiersCheckBox.TabIndex = 44
-        Me.CustomIdentifiersCheckBox.Text = "Custom Identifiers"
-        Me.CustomIdentifiersCheckBox.UseVisualStyleBackColor = True
-        '
-        'CustomDictionariesConfigureButton
-        '
-        Me.CustomDictionariesConfigureButton.Enabled = False
-        Me.CustomDictionariesConfigureButton.Location = New System.Drawing.Point(1189, 32)
-        Me.CustomDictionariesConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.CustomDictionariesConfigureButton.Name = "CustomDictionariesConfigureButton"
-        Me.CustomDictionariesConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.CustomDictionariesConfigureButton.TabIndex = 43
-        Me.CustomDictionariesConfigureButton.Text = "Configure..."
-        Me.CustomDictionariesConfigureButton.UseVisualStyleBackColor = True
-        '
-        'CustomDictionariesCheckBox
-        '
-        Me.CustomDictionariesCheckBox.AutoSize = True
-        Me.CustomDictionariesCheckBox.Location = New System.Drawing.Point(984, 39)
-        Me.CustomDictionariesCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.CustomDictionariesCheckBox.Name = "CustomDictionariesCheckBox"
-        Me.CustomDictionariesCheckBox.Size = New System.Drawing.Size(177, 24)
-        Me.CustomDictionariesCheckBox.TabIndex = 42
-        Me.CustomDictionariesCheckBox.Text = "Custom Dictionaries"
-        Me.CustomDictionariesCheckBox.UseVisualStyleBackColor = True
-        '
-        'ZipCodesConfigureButton
-        '
-        Me.ZipCodesConfigureButton.Enabled = False
-        Me.ZipCodesConfigureButton.Location = New System.Drawing.Point(712, 437)
-        Me.ZipCodesConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.ZipCodesConfigureButton.Name = "ZipCodesConfigureButton"
-        Me.ZipCodesConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.ZipCodesConfigureButton.TabIndex = 41
-        Me.ZipCodesConfigureButton.Text = "Configure..."
-        Me.ZipCodesConfigureButton.UseVisualStyleBackColor = True
-        '
-        'ZipCodesCheckBox
-        '
-        Me.ZipCodesCheckBox.AutoSize = True
-        Me.ZipCodesCheckBox.Location = New System.Drawing.Point(507, 443)
-        Me.ZipCodesCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.ZipCodesCheckBox.Name = "ZipCodesCheckBox"
-        Me.ZipCodesCheckBox.Size = New System.Drawing.Size(107, 24)
-        Me.ZipCodesCheckBox.TabIndex = 40
-        Me.ZipCodesCheckBox.Text = "Zip Codes"
-        Me.ZipCodesCheckBox.UseVisualStyleBackColor = True
-        '
-        'VINsConfigureButton
-        '
-        Me.VINsConfigureButton.Enabled = False
-        Me.VINsConfigureButton.Location = New System.Drawing.Point(712, 392)
-        Me.VINsConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.VINsConfigureButton.Name = "VINsConfigureButton"
-        Me.VINsConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.VINsConfigureButton.TabIndex = 39
-        Me.VINsConfigureButton.Text = "Configure..."
-        Me.VINsConfigureButton.UseVisualStyleBackColor = True
-        '
-        'VINsCheckBox
-        '
-        Me.VINsCheckBox.AutoSize = True
-        Me.VINsCheckBox.Location = New System.Drawing.Point(507, 399)
-        Me.VINsCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.VINsCheckBox.Name = "VINsCheckBox"
-        Me.VINsCheckBox.Size = New System.Drawing.Size(70, 24)
-        Me.VINsCheckBox.TabIndex = 38
-        Me.VINsCheckBox.Text = "VINs"
-        Me.VINsCheckBox.UseVisualStyleBackColor = True
-        '
-        'URLsConfigureButton
-        '
-        Me.URLsConfigureButton.Enabled = False
-        Me.URLsConfigureButton.Location = New System.Drawing.Point(712, 348)
-        Me.URLsConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.URLsConfigureButton.Name = "URLsConfigureButton"
-        Me.URLsConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.URLsConfigureButton.TabIndex = 37
-        Me.URLsConfigureButton.Text = "Configure..."
-        Me.URLsConfigureButton.UseVisualStyleBackColor = True
-        '
-        'URLsCheckBox
-        '
-        Me.URLsCheckBox.AutoSize = True
-        Me.URLsCheckBox.Location = New System.Drawing.Point(507, 353)
-        Me.URLsCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.URLsCheckBox.Name = "URLsCheckBox"
-        Me.URLsCheckBox.Size = New System.Drawing.Size(76, 24)
-        Me.URLsCheckBox.TabIndex = 36
-        Me.URLsCheckBox.Text = "URLs"
-        Me.URLsCheckBox.UseVisualStyleBackColor = True
-        '
-        'SurnamesConfigureButton
-        '
-        Me.SurnamesConfigureButton.Enabled = False
-        Me.SurnamesConfigureButton.Location = New System.Drawing.Point(712, 303)
-        Me.SurnamesConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.SurnamesConfigureButton.Name = "SurnamesConfigureButton"
-        Me.SurnamesConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.SurnamesConfigureButton.TabIndex = 35
-        Me.SurnamesConfigureButton.Text = "Configure..."
-        Me.SurnamesConfigureButton.UseVisualStyleBackColor = True
-        '
-        'SurnamesCheckBox
-        '
-        Me.SurnamesCheckBox.AutoSize = True
-        Me.SurnamesCheckBox.Location = New System.Drawing.Point(507, 309)
-        Me.SurnamesCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.SurnamesCheckBox.Name = "SurnamesCheckBox"
-        Me.SurnamesCheckBox.Size = New System.Drawing.Size(108, 24)
-        Me.SurnamesCheckBox.TabIndex = 34
-        Me.SurnamesCheckBox.Text = "Surnames"
-        Me.SurnamesCheckBox.UseVisualStyleBackColor = True
-        '
-        'StateAbbreviationsConfigureButton
-        '
-        Me.StateAbbreviationsConfigureButton.Enabled = False
-        Me.StateAbbreviationsConfigureButton.Location = New System.Drawing.Point(712, 259)
-        Me.StateAbbreviationsConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.StateAbbreviationsConfigureButton.Name = "StateAbbreviationsConfigureButton"
-        Me.StateAbbreviationsConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.StateAbbreviationsConfigureButton.TabIndex = 33
-        Me.StateAbbreviationsConfigureButton.Text = "Configure..."
-        Me.StateAbbreviationsConfigureButton.UseVisualStyleBackColor = True
-        '
-        'StateAbbreviationsCheckBox
-        '
-        Me.StateAbbreviationsCheckBox.AutoSize = True
-        Me.StateAbbreviationsCheckBox.Location = New System.Drawing.Point(507, 264)
-        Me.StateAbbreviationsCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.StateAbbreviationsCheckBox.Name = "StateAbbreviationsCheckBox"
-        Me.StateAbbreviationsCheckBox.Size = New System.Drawing.Size(174, 24)
-        Me.StateAbbreviationsCheckBox.TabIndex = 32
-        Me.StateAbbreviationsCheckBox.Text = "State Abbreviations"
-        Me.StateAbbreviationsCheckBox.UseVisualStyleBackColor = True
-        '
-        'StatesConfigureButton
-        '
-        Me.StatesConfigureButton.Enabled = False
-        Me.StatesConfigureButton.Location = New System.Drawing.Point(712, 213)
-        Me.StatesConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.StatesConfigureButton.Name = "StatesConfigureButton"
-        Me.StatesConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.StatesConfigureButton.TabIndex = 31
-        Me.StatesConfigureButton.Text = "Configure..."
-        Me.StatesConfigureButton.UseVisualStyleBackColor = True
-        '
-        'StatesCheckBox
-        '
-        Me.StatesCheckBox.AutoSize = True
-        Me.StatesCheckBox.Location = New System.Drawing.Point(507, 220)
-        Me.StatesCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.StatesCheckBox.Name = "StatesCheckBox"
-        Me.StatesCheckBox.Size = New System.Drawing.Size(82, 24)
-        Me.StatesCheckBox.TabIndex = 30
-        Me.StatesCheckBox.Text = "States"
-        Me.StatesCheckBox.UseVisualStyleBackColor = True
-        '
-        'SSNsConfigureButton
-        '
-        Me.SSNsConfigureButton.Enabled = False
-        Me.SSNsConfigureButton.Location = New System.Drawing.Point(712, 169)
-        Me.SSNsConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.SSNsConfigureButton.Name = "SSNsConfigureButton"
-        Me.SSNsConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.SSNsConfigureButton.TabIndex = 29
-        Me.SSNsConfigureButton.Text = "Configure..."
-        Me.SSNsConfigureButton.UseVisualStyleBackColor = True
-        '
-        'SSNsCheckBox
-        '
-        Me.SSNsCheckBox.AutoSize = True
-        Me.SSNsCheckBox.Location = New System.Drawing.Point(507, 176)
-        Me.SSNsCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.SSNsCheckBox.Name = "SSNsCheckBox"
-        Me.SSNsCheckBox.Size = New System.Drawing.Size(76, 24)
-        Me.SSNsCheckBox.TabIndex = 28
-        Me.SSNsCheckBox.Text = "SSNs"
-        Me.SSNsCheckBox.UseVisualStyleBackColor = True
-        '
-        'PhoneNumberExtsConfigureButton
-        '
-        Me.PhoneNumberExtsConfigureButton.Enabled = False
-        Me.PhoneNumberExtsConfigureButton.Location = New System.Drawing.Point(712, 124)
-        Me.PhoneNumberExtsConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.PhoneNumberExtsConfigureButton.Name = "PhoneNumberExtsConfigureButton"
-        Me.PhoneNumberExtsConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.PhoneNumberExtsConfigureButton.TabIndex = 27
-        Me.PhoneNumberExtsConfigureButton.Text = "Configure..."
-        Me.PhoneNumberExtsConfigureButton.UseVisualStyleBackColor = True
-        '
-        'PhoneNumberExtsCheckBox
-        '
-        Me.PhoneNumberExtsCheckBox.AutoSize = True
-        Me.PhoneNumberExtsCheckBox.Location = New System.Drawing.Point(507, 131)
-        Me.PhoneNumberExtsCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.PhoneNumberExtsCheckBox.Name = "PhoneNumberExtsCheckBox"
-        Me.PhoneNumberExtsCheckBox.Size = New System.Drawing.Size(180, 24)
-        Me.PhoneNumberExtsCheckBox.TabIndex = 26
-        Me.PhoneNumberExtsCheckBox.Text = "Phone Number Exts."
-        Me.PhoneNumberExtsCheckBox.UseVisualStyleBackColor = True
-        '
-        'PhoneNumbersConfigureButton
-        '
-        Me.PhoneNumbersConfigureButton.Enabled = False
-        Me.PhoneNumbersConfigureButton.Location = New System.Drawing.Point(712, 80)
-        Me.PhoneNumbersConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.PhoneNumbersConfigureButton.Name = "PhoneNumbersConfigureButton"
-        Me.PhoneNumbersConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.PhoneNumbersConfigureButton.TabIndex = 25
-        Me.PhoneNumbersConfigureButton.Text = "Configure..."
-        Me.PhoneNumbersConfigureButton.UseVisualStyleBackColor = True
-        '
-        'PhoneNumbersCheckBox
-        '
-        Me.PhoneNumbersCheckBox.AutoSize = True
-        Me.PhoneNumbersCheckBox.Location = New System.Drawing.Point(507, 87)
-        Me.PhoneNumbersCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.PhoneNumbersCheckBox.Name = "PhoneNumbersCheckBox"
-        Me.PhoneNumbersCheckBox.Size = New System.Drawing.Size(149, 24)
-        Me.PhoneNumbersCheckBox.TabIndex = 24
-        Me.PhoneNumbersCheckBox.Text = "Phone Numbers"
-        Me.PhoneNumbersCheckBox.UseVisualStyleBackColor = True
-        '
-        'NERConfigureButton
-        '
-        Me.NERConfigureButton.Enabled = False
-        Me.NERConfigureButton.Location = New System.Drawing.Point(712, 36)
-        Me.NERConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.NERConfigureButton.Name = "NERConfigureButton"
-        Me.NERConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.NERConfigureButton.TabIndex = 23
-        Me.NERConfigureButton.Text = "Configure..."
-        Me.NERConfigureButton.UseVisualStyleBackColor = True
-        '
-        'NERCheckBox
-        '
-        Me.NERCheckBox.AutoSize = True
-        Me.NERCheckBox.Location = New System.Drawing.Point(507, 41)
-        Me.NERCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.NERCheckBox.Name = "NERCheckBox"
-        Me.NERCheckBox.Size = New System.Drawing.Size(197, 24)
-        Me.NERCheckBox.TabIndex = 22
-        Me.NERCheckBox.Text = "NER (English Persons)"
-        Me.NERCheckBox.UseVisualStyleBackColor = True
-        '
-        'IPAddressesConfigureButton
-        '
-        Me.IPAddressesConfigureButton.Enabled = False
-        Me.IPAddressesConfigureButton.Location = New System.Drawing.Point(234, 431)
-        Me.IPAddressesConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.IPAddressesConfigureButton.Name = "IPAddressesConfigureButton"
-        Me.IPAddressesConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.IPAddressesConfigureButton.TabIndex = 21
-        Me.IPAddressesConfigureButton.Text = "Configure..."
-        Me.IPAddressesConfigureButton.UseVisualStyleBackColor = True
-        '
-        'IPAddressesCheckBox
-        '
-        Me.IPAddressesCheckBox.AutoSize = True
-        Me.IPAddressesCheckBox.Location = New System.Drawing.Point(28, 437)
-        Me.IPAddressesCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.IPAddressesCheckBox.Name = "IPAddressesCheckBox"
-        Me.IPAddressesCheckBox.Size = New System.Drawing.Size(130, 24)
-        Me.IPAddressesCheckBox.TabIndex = 20
-        Me.IPAddressesCheckBox.Text = "IP Addresses"
-        Me.IPAddressesCheckBox.UseVisualStyleBackColor = True
-        '
-        'HospitalsConfigureButton
-        '
-        Me.HospitalsConfigureButton.Enabled = False
-        Me.HospitalsConfigureButton.Location = New System.Drawing.Point(234, 387)
-        Me.HospitalsConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.HospitalsConfigureButton.Name = "HospitalsConfigureButton"
-        Me.HospitalsConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.HospitalsConfigureButton.TabIndex = 17
-        Me.HospitalsConfigureButton.Text = "Configure..."
-        Me.HospitalsConfigureButton.UseVisualStyleBackColor = True
-        '
-        'HospitalsCheckBox
-        '
-        Me.HospitalsCheckBox.AutoSize = True
-        Me.HospitalsCheckBox.Location = New System.Drawing.Point(28, 392)
-        Me.HospitalsCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.HospitalsCheckBox.Name = "HospitalsCheckBox"
-        Me.HospitalsCheckBox.Size = New System.Drawing.Size(101, 24)
-        Me.HospitalsCheckBox.TabIndex = 16
-        Me.HospitalsCheckBox.Text = "Hospitals"
-        Me.HospitalsCheckBox.UseVisualStyleBackColor = True
-        '
-        'HospitalAbbreviationsConfigureButton
-        '
-        Me.HospitalAbbreviationsConfigureButton.Enabled = False
-        Me.HospitalAbbreviationsConfigureButton.Location = New System.Drawing.Point(234, 341)
-        Me.HospitalAbbreviationsConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.HospitalAbbreviationsConfigureButton.Name = "HospitalAbbreviationsConfigureButton"
-        Me.HospitalAbbreviationsConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.HospitalAbbreviationsConfigureButton.TabIndex = 15
-        Me.HospitalAbbreviationsConfigureButton.Text = "Configure..."
-        Me.HospitalAbbreviationsConfigureButton.UseVisualStyleBackColor = True
-        '
-        'HospitalAbbreviationsCheckBox
-        '
-        Me.HospitalAbbreviationsCheckBox.AutoSize = True
-        Me.HospitalAbbreviationsCheckBox.Location = New System.Drawing.Point(28, 348)
-        Me.HospitalAbbreviationsCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.HospitalAbbreviationsCheckBox.Name = "HospitalAbbreviationsCheckBox"
-        Me.HospitalAbbreviationsCheckBox.Size = New System.Drawing.Size(193, 24)
-        Me.HospitalAbbreviationsCheckBox.TabIndex = 14
-        Me.HospitalAbbreviationsCheckBox.Text = "Hospital Abbreviations"
-        Me.HospitalAbbreviationsCheckBox.UseVisualStyleBackColor = True
-        '
-        'FirstNamesConfigureButton
-        '
-        Me.FirstNamesConfigureButton.Enabled = False
-        Me.FirstNamesConfigureButton.Location = New System.Drawing.Point(234, 297)
-        Me.FirstNamesConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.FirstNamesConfigureButton.Name = "FirstNamesConfigureButton"
-        Me.FirstNamesConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.FirstNamesConfigureButton.TabIndex = 13
-        Me.FirstNamesConfigureButton.Text = "Configure..."
-        Me.FirstNamesConfigureButton.UseVisualStyleBackColor = True
-        '
-        'FirstNamesCheckBox
-        '
-        Me.FirstNamesCheckBox.AutoSize = True
-        Me.FirstNamesCheckBox.Location = New System.Drawing.Point(28, 303)
-        Me.FirstNamesCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.FirstNamesCheckBox.Name = "FirstNamesCheckBox"
-        Me.FirstNamesCheckBox.Size = New System.Drawing.Size(120, 24)
-        Me.FirstNamesCheckBox.TabIndex = 12
-        Me.FirstNamesCheckBox.Text = "First Names"
-        Me.FirstNamesCheckBox.UseVisualStyleBackColor = True
-        '
-        'EmailAddressesConfigureButton
-        '
-        Me.EmailAddressesConfigureButton.Enabled = False
-        Me.EmailAddressesConfigureButton.Location = New System.Drawing.Point(234, 252)
-        Me.EmailAddressesConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.EmailAddressesConfigureButton.Name = "EmailAddressesConfigureButton"
-        Me.EmailAddressesConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.EmailAddressesConfigureButton.TabIndex = 11
-        Me.EmailAddressesConfigureButton.Text = "Configure..."
-        Me.EmailAddressesConfigureButton.UseVisualStyleBackColor = True
-        '
-        'EmailAddressesCheckBox
-        '
-        Me.EmailAddressesCheckBox.AutoSize = True
-        Me.EmailAddressesCheckBox.Location = New System.Drawing.Point(28, 259)
-        Me.EmailAddressesCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.EmailAddressesCheckBox.Name = "EmailAddressesCheckBox"
-        Me.EmailAddressesCheckBox.Size = New System.Drawing.Size(137, 24)
-        Me.EmailAddressesCheckBox.TabIndex = 10
-        Me.EmailAddressesCheckBox.Text = "Email Address"
-        Me.EmailAddressesCheckBox.UseVisualStyleBackColor = True
-        '
-        'DatesConfigureButton
-        '
-        Me.DatesConfigureButton.Enabled = False
-        Me.DatesConfigureButton.Location = New System.Drawing.Point(234, 208)
-        Me.DatesConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.DatesConfigureButton.Name = "DatesConfigureButton"
-        Me.DatesConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.DatesConfigureButton.TabIndex = 9
-        Me.DatesConfigureButton.Text = "Configure..."
-        Me.DatesConfigureButton.UseVisualStyleBackColor = True
-        '
-        'DatesCheckBox
-        '
-        Me.DatesCheckBox.AutoSize = True
-        Me.DatesCheckBox.Location = New System.Drawing.Point(28, 213)
-        Me.DatesCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.DatesCheckBox.Name = "DatesCheckBox"
-        Me.DatesCheckBox.Size = New System.Drawing.Size(78, 24)
-        Me.DatesCheckBox.TabIndex = 8
-        Me.DatesCheckBox.Text = "Dates"
-        Me.DatesCheckBox.UseVisualStyleBackColor = True
-        '
-        'CreditCardsConfigureButton
-        '
-        Me.CreditCardsConfigureButton.Enabled = False
-        Me.CreditCardsConfigureButton.Location = New System.Drawing.Point(234, 163)
-        Me.CreditCardsConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.CreditCardsConfigureButton.Name = "CreditCardsConfigureButton"
-        Me.CreditCardsConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.CreditCardsConfigureButton.TabIndex = 7
-        Me.CreditCardsConfigureButton.Text = "Configure..."
-        Me.CreditCardsConfigureButton.UseVisualStyleBackColor = True
-        '
-        'CreditCardsCheckBox
-        '
-        Me.CreditCardsCheckBox.AutoSize = True
-        Me.CreditCardsCheckBox.Location = New System.Drawing.Point(28, 169)
-        Me.CreditCardsCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.CreditCardsCheckBox.Name = "CreditCardsCheckBox"
-        Me.CreditCardsCheckBox.Size = New System.Drawing.Size(123, 24)
-        Me.CreditCardsCheckBox.TabIndex = 6
-        Me.CreditCardsCheckBox.Text = "Credit Cards"
-        Me.CreditCardsCheckBox.UseVisualStyleBackColor = True
-        '
-        'CountiesConfigureButton
-        '
-        Me.CountiesConfigureButton.Enabled = False
-        Me.CountiesConfigureButton.Location = New System.Drawing.Point(234, 119)
-        Me.CountiesConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.CountiesConfigureButton.Name = "CountiesConfigureButton"
-        Me.CountiesConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.CountiesConfigureButton.TabIndex = 5
-        Me.CountiesConfigureButton.Text = "Configure..."
-        Me.CountiesConfigureButton.UseVisualStyleBackColor = True
-        '
-        'CountiesCheckBox
-        '
-        Me.CountiesCheckBox.AutoSize = True
-        Me.CountiesCheckBox.Location = New System.Drawing.Point(28, 124)
-        Me.CountiesCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.CountiesCheckBox.Name = "CountiesCheckBox"
-        Me.CountiesCheckBox.Size = New System.Drawing.Size(98, 24)
-        Me.CountiesCheckBox.TabIndex = 4
-        Me.CountiesCheckBox.Text = "Counties"
-        Me.CountiesCheckBox.UseVisualStyleBackColor = True
-        '
-        'CitiesConfigureButton
-        '
-        Me.CitiesConfigureButton.Enabled = False
-        Me.CitiesConfigureButton.Location = New System.Drawing.Point(234, 73)
-        Me.CitiesConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.CitiesConfigureButton.Name = "CitiesConfigureButton"
-        Me.CitiesConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.CitiesConfigureButton.TabIndex = 3
-        Me.CitiesConfigureButton.Text = "Configure..."
-        Me.CitiesConfigureButton.UseVisualStyleBackColor = True
-        '
-        'CitiesCheckBox
-        '
-        Me.CitiesCheckBox.AutoSize = True
-        Me.CitiesCheckBox.Location = New System.Drawing.Point(28, 80)
-        Me.CitiesCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.CitiesCheckBox.Name = "CitiesCheckBox"
-        Me.CitiesCheckBox.Size = New System.Drawing.Size(74, 24)
-        Me.CitiesCheckBox.TabIndex = 2
-        Me.CitiesCheckBox.Text = "Cities"
-        Me.CitiesCheckBox.UseVisualStyleBackColor = True
-        '
-        'AgesConfigureButton
-        '
-        Me.AgesConfigureButton.Enabled = False
-        Me.AgesConfigureButton.Location = New System.Drawing.Point(234, 29)
-        Me.AgesConfigureButton.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.AgesConfigureButton.Name = "AgesConfigureButton"
-        Me.AgesConfigureButton.Size = New System.Drawing.Size(157, 36)
-        Me.AgesConfigureButton.TabIndex = 1
-        Me.AgesConfigureButton.Text = "Configure..."
-        Me.AgesConfigureButton.UseVisualStyleBackColor = True
-        '
-        'AgesCheckBox
-        '
-        Me.AgesCheckBox.AutoSize = True
-        Me.AgesCheckBox.Location = New System.Drawing.Point(28, 36)
-        Me.AgesCheckBox.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.AgesCheckBox.Name = "AgesCheckBox"
-        Me.AgesCheckBox.Size = New System.Drawing.Size(72, 24)
-        Me.AgesCheckBox.TabIndex = 0
-        Me.AgesCheckBox.Text = "Ages"
-        Me.AgesCheckBox.UseVisualStyleBackColor = True
-        '
-        'PolicysToolStrip
-        '
-        Me.PolicysToolStrip.ImageScalingSize = New System.Drawing.Size(24, 24)
-        Me.PolicysToolStrip.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.ToolStripLabel1, Me.PolicysToolStripDropDownButton, Me.RefreshToolStripButton, Me.ToolStripSeparator6, Me.NewToolStripButton, Me.SaveToolStripButton, Me.SaveAsToolStripButton, Me.DeleteToolStripButton})
-        Me.PolicysToolStrip.Location = New System.Drawing.Point(0, 0)
-        Me.PolicysToolStrip.Name = "PolicysToolStrip"
-        Me.PolicysToolStrip.Padding = New System.Windows.Forms.Padding(0, 0, 3, 0)
-        Me.PolicysToolStrip.Size = New System.Drawing.Size(1381, 34)
-        Me.PolicysToolStrip.TabIndex = 9
-        Me.PolicysToolStrip.Text = "ToolStrip3"
-        '
-        'ToolStripLabel1
-        '
-        Me.ToolStripLabel1.Name = "ToolStripLabel1"
-        Me.ToolStripLabel1.Size = New System.Drawing.Size(126, 29)
-        Me.ToolStripLabel1.Text = "Select a Policy:"
-        '
-        'PolicysToolStripDropDownButton
-        '
-        Me.PolicysToolStripDropDownButton.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
-        Me.PolicysToolStripDropDownButton.Name = "PolicysToolStripDropDownButton"
-        Me.PolicysToolStripDropDownButton.Size = New System.Drawing.Size(410, 34)
-        '
-        'RefreshToolStripButton
-        '
-        Me.RefreshToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image
-        Me.RefreshToolStripButton.Image = CType(resources.GetObject("RefreshToolStripButton.Image"), System.Drawing.Image)
-        Me.RefreshToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta
-        Me.RefreshToolStripButton.Name = "RefreshToolStripButton"
-        Me.RefreshToolStripButton.Size = New System.Drawing.Size(34, 29)
-        Me.RefreshToolStripButton.Text = "Refresh"
-        '
-        'ToolStripSeparator6
-        '
-        Me.ToolStripSeparator6.Name = "ToolStripSeparator6"
-        Me.ToolStripSeparator6.Size = New System.Drawing.Size(6, 34)
-        '
-        'NewToolStripButton
-        '
-        Me.NewToolStripButton.Image = CType(resources.GetObject("NewToolStripButton.Image"), System.Drawing.Image)
-        Me.NewToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta
-        Me.NewToolStripButton.Name = "NewToolStripButton"
-        Me.NewToolStripButton.Size = New System.Drawing.Size(87, 29)
-        Me.NewToolStripButton.Text = "New..."
-        '
-        'SaveToolStripButton
-        '
-        Me.SaveToolStripButton.Enabled = False
-        Me.SaveToolStripButton.Image = CType(resources.GetObject("SaveToolStripButton.Image"), System.Drawing.Image)
-        Me.SaveToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta
-        Me.SaveToolStripButton.Name = "SaveToolStripButton"
-        Me.SaveToolStripButton.Size = New System.Drawing.Size(77, 29)
-        Me.SaveToolStripButton.Text = "Save"
-        '
-        'SaveAsToolStripButton
-        '
-        Me.SaveAsToolStripButton.Enabled = False
-        Me.SaveAsToolStripButton.Image = CType(resources.GetObject("SaveAsToolStripButton.Image"), System.Drawing.Image)
-        Me.SaveAsToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta
-        Me.SaveAsToolStripButton.Name = "SaveAsToolStripButton"
-        Me.SaveAsToolStripButton.Size = New System.Drawing.Size(114, 29)
-        Me.SaveAsToolStripButton.Text = "Save As..."
-        '
-        'DeleteToolStripButton
-        '
-        Me.DeleteToolStripButton.Enabled = False
-        Me.DeleteToolStripButton.Image = CType(resources.GetObject("DeleteToolStripButton.Image"), System.Drawing.Image)
-        Me.DeleteToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta
-        Me.DeleteToolStripButton.Name = "DeleteToolStripButton"
-        Me.DeleteToolStripButton.Size = New System.Drawing.Size(102, 29)
-        Me.DeleteToolStripButton.Text = "Delete..."
-        '
-        'PolicyEditorForm
-        '
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(9.0!, 20.0!)
-        Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(1381, 543)
-        Me.Controls.Add(Me.PolicyPanel)
-        Me.Controls.Add(Me.PolicysToolStrip)
-        Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog
-        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.Margin = New System.Windows.Forms.Padding(5, 4, 5, 4)
-        Me.MaximizeBox = False
-        Me.MinimumSize = New System.Drawing.Size(1395, 576)
-        Me.Name = "PolicyEditorForm"
-        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Philter Policy Editor"
-        Me.PolicyPanel.ResumeLayout(False)
-        Me.PolicyPanel.PerformLayout()
-        Me.PolicysToolStrip.ResumeLayout(False)
-        Me.PolicysToolStrip.PerformLayout()
-        Me.ResumeLayout(False)
-        Me.PerformLayout()
+        PolicyPanel = New Panel()
+        CustomIdentifiersConfigureButton = New Button()
+        CustomIdentifiersCheckBox = New CheckBox()
+        CustomDictionariesConfigureButton = New Button()
+        CustomDictionariesCheckBox = New CheckBox()
+        ZipCodesConfigureButton = New Button()
+        ZipCodesCheckBox = New CheckBox()
+        VINsConfigureButton = New Button()
+        VINsCheckBox = New CheckBox()
+        URLsConfigureButton = New Button()
+        URLsCheckBox = New CheckBox()
+        SurnamesConfigureButton = New Button()
+        SurnamesCheckBox = New CheckBox()
+        StateAbbreviationsConfigureButton = New Button()
+        StateAbbreviationsCheckBox = New CheckBox()
+        StatesConfigureButton = New Button()
+        StatesCheckBox = New CheckBox()
+        SSNsConfigureButton = New Button()
+        SSNsCheckBox = New CheckBox()
+        PhoneNumberExtsConfigureButton = New Button()
+        PhoneNumberExtsCheckBox = New CheckBox()
+        PhoneNumbersConfigureButton = New Button()
+        PhoneNumbersCheckBox = New CheckBox()
+        NERConfigureButton = New Button()
+        NERCheckBox = New CheckBox()
+        IPAddressesConfigureButton = New Button()
+        IPAddressesCheckBox = New CheckBox()
+        HospitalsConfigureButton = New Button()
+        HospitalsCheckBox = New CheckBox()
+        HospitalAbbreviationsConfigureButton = New Button()
+        HospitalAbbreviationsCheckBox = New CheckBox()
+        FirstNamesConfigureButton = New Button()
+        FirstNamesCheckBox = New CheckBox()
+        EmailAddressesConfigureButton = New Button()
+        EmailAddressesCheckBox = New CheckBox()
+        DatesConfigureButton = New Button()
+        DatesCheckBox = New CheckBox()
+        CreditCardsConfigureButton = New Button()
+        CreditCardsCheckBox = New CheckBox()
+        CountiesConfigureButton = New Button()
+        CountiesCheckBox = New CheckBox()
+        CitiesConfigureButton = New Button()
+        CitiesCheckBox = New CheckBox()
+        AgesConfigureButton = New Button()
+        AgesCheckBox = New CheckBox()
+        PolicysToolStrip = New ToolStrip()
+        ToolStripLabel1 = New ToolStripLabel()
+        PoliciesToolStripDropDownButton = New ToolStripComboBox()
+        RefreshToolStripButton = New ToolStripButton()
+        ToolStripSeparator6 = New ToolStripSeparator()
+        NewToolStripButton = New ToolStripButton()
+        SaveToolStripButton = New ToolStripButton()
+        SaveAsToolStripButton = New ToolStripButton()
+        DeleteToolStripButton = New ToolStripButton()
+        PolicyPanel.SuspendLayout()
+        PolicysToolStrip.SuspendLayout()
+        SuspendLayout()
+        ' 
+        ' PolicyPanel
+        ' 
+        PolicyPanel.Controls.Add(CustomIdentifiersConfigureButton)
+        PolicyPanel.Controls.Add(CustomIdentifiersCheckBox)
+        PolicyPanel.Controls.Add(CustomDictionariesConfigureButton)
+        PolicyPanel.Controls.Add(CustomDictionariesCheckBox)
+        PolicyPanel.Controls.Add(ZipCodesConfigureButton)
+        PolicyPanel.Controls.Add(ZipCodesCheckBox)
+        PolicyPanel.Controls.Add(VINsConfigureButton)
+        PolicyPanel.Controls.Add(VINsCheckBox)
+        PolicyPanel.Controls.Add(URLsConfigureButton)
+        PolicyPanel.Controls.Add(URLsCheckBox)
+        PolicyPanel.Controls.Add(SurnamesConfigureButton)
+        PolicyPanel.Controls.Add(SurnamesCheckBox)
+        PolicyPanel.Controls.Add(StateAbbreviationsConfigureButton)
+        PolicyPanel.Controls.Add(StateAbbreviationsCheckBox)
+        PolicyPanel.Controls.Add(StatesConfigureButton)
+        PolicyPanel.Controls.Add(StatesCheckBox)
+        PolicyPanel.Controls.Add(SSNsConfigureButton)
+        PolicyPanel.Controls.Add(SSNsCheckBox)
+        PolicyPanel.Controls.Add(PhoneNumberExtsConfigureButton)
+        PolicyPanel.Controls.Add(PhoneNumberExtsCheckBox)
+        PolicyPanel.Controls.Add(PhoneNumbersConfigureButton)
+        PolicyPanel.Controls.Add(PhoneNumbersCheckBox)
+        PolicyPanel.Controls.Add(NERConfigureButton)
+        PolicyPanel.Controls.Add(NERCheckBox)
+        PolicyPanel.Controls.Add(IPAddressesConfigureButton)
+        PolicyPanel.Controls.Add(IPAddressesCheckBox)
+        PolicyPanel.Controls.Add(HospitalsConfigureButton)
+        PolicyPanel.Controls.Add(HospitalsCheckBox)
+        PolicyPanel.Controls.Add(HospitalAbbreviationsConfigureButton)
+        PolicyPanel.Controls.Add(HospitalAbbreviationsCheckBox)
+        PolicyPanel.Controls.Add(FirstNamesConfigureButton)
+        PolicyPanel.Controls.Add(FirstNamesCheckBox)
+        PolicyPanel.Controls.Add(EmailAddressesConfigureButton)
+        PolicyPanel.Controls.Add(EmailAddressesCheckBox)
+        PolicyPanel.Controls.Add(DatesConfigureButton)
+        PolicyPanel.Controls.Add(DatesCheckBox)
+        PolicyPanel.Controls.Add(CreditCardsConfigureButton)
+        PolicyPanel.Controls.Add(CreditCardsCheckBox)
+        PolicyPanel.Controls.Add(CountiesConfigureButton)
+        PolicyPanel.Controls.Add(CountiesCheckBox)
+        PolicyPanel.Controls.Add(CitiesConfigureButton)
+        PolicyPanel.Controls.Add(CitiesCheckBox)
+        PolicyPanel.Controls.Add(AgesConfigureButton)
+        PolicyPanel.Controls.Add(AgesCheckBox)
+        PolicyPanel.Dock = DockStyle.Fill
+        PolicyPanel.Enabled = False
+        PolicyPanel.Location = New Point(0, 31)
+        PolicyPanel.Margin = New Padding(4, 3, 4, 3)
+        PolicyPanel.Name = "PolicyPanel"
+        PolicyPanel.Size = New Size(1074, 376)
+        PolicyPanel.TabIndex = 10
+        ' 
+        ' CustomIdentifiersConfigureButton
+        ' 
+        CustomIdentifiersConfigureButton.Enabled = False
+        CustomIdentifiersConfigureButton.Location = New Point(925, 58)
+        CustomIdentifiersConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        CustomIdentifiersConfigureButton.Name = "CustomIdentifiersConfigureButton"
+        CustomIdentifiersConfigureButton.Size = New Size(122, 27)
+        CustomIdentifiersConfigureButton.TabIndex = 45
+        CustomIdentifiersConfigureButton.Text = "Configure..."
+        CustomIdentifiersConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' CustomIdentifiersCheckBox
+        ' 
+        CustomIdentifiersCheckBox.AutoSize = True
+        CustomIdentifiersCheckBox.Location = New Point(765, 62)
+        CustomIdentifiersCheckBox.Margin = New Padding(4, 3, 4, 3)
+        CustomIdentifiersCheckBox.Name = "CustomIdentifiersCheckBox"
+        CustomIdentifiersCheckBox.Size = New Size(123, 19)
+        CustomIdentifiersCheckBox.TabIndex = 44
+        CustomIdentifiersCheckBox.Text = "Custom Identifiers"
+        CustomIdentifiersCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' CustomDictionariesConfigureButton
+        ' 
+        CustomDictionariesConfigureButton.Enabled = False
+        CustomDictionariesConfigureButton.Location = New Point(925, 24)
+        CustomDictionariesConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        CustomDictionariesConfigureButton.Name = "CustomDictionariesConfigureButton"
+        CustomDictionariesConfigureButton.Size = New Size(122, 27)
+        CustomDictionariesConfigureButton.TabIndex = 43
+        CustomDictionariesConfigureButton.Text = "Configure..."
+        CustomDictionariesConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' CustomDictionariesCheckBox
+        ' 
+        CustomDictionariesCheckBox.AutoSize = True
+        CustomDictionariesCheckBox.Location = New Point(765, 29)
+        CustomDictionariesCheckBox.Margin = New Padding(4, 3, 4, 3)
+        CustomDictionariesCheckBox.Name = "CustomDictionariesCheckBox"
+        CustomDictionariesCheckBox.Size = New Size(133, 19)
+        CustomDictionariesCheckBox.TabIndex = 42
+        CustomDictionariesCheckBox.Text = "Custom Dictionaries"
+        CustomDictionariesCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' ZipCodesConfigureButton
+        ' 
+        ZipCodesConfigureButton.Enabled = False
+        ZipCodesConfigureButton.Location = New Point(554, 328)
+        ZipCodesConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        ZipCodesConfigureButton.Name = "ZipCodesConfigureButton"
+        ZipCodesConfigureButton.Size = New Size(122, 27)
+        ZipCodesConfigureButton.TabIndex = 41
+        ZipCodesConfigureButton.Text = "Configure..."
+        ZipCodesConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' ZipCodesCheckBox
+        ' 
+        ZipCodesCheckBox.AutoSize = True
+        ZipCodesCheckBox.Location = New Point(394, 332)
+        ZipCodesCheckBox.Margin = New Padding(4, 3, 4, 3)
+        ZipCodesCheckBox.Name = "ZipCodesCheckBox"
+        ZipCodesCheckBox.Size = New Size(79, 19)
+        ZipCodesCheckBox.TabIndex = 40
+        ZipCodesCheckBox.Text = "Zip Codes"
+        ZipCodesCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' VINsConfigureButton
+        ' 
+        VINsConfigureButton.Enabled = False
+        VINsConfigureButton.Location = New Point(554, 294)
+        VINsConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        VINsConfigureButton.Name = "VINsConfigureButton"
+        VINsConfigureButton.Size = New Size(122, 27)
+        VINsConfigureButton.TabIndex = 39
+        VINsConfigureButton.Text = "Configure..."
+        VINsConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' VINsCheckBox
+        ' 
+        VINsCheckBox.AutoSize = True
+        VINsCheckBox.Location = New Point(394, 299)
+        VINsCheckBox.Margin = New Padding(4, 3, 4, 3)
+        VINsCheckBox.Name = "VINsCheckBox"
+        VINsCheckBox.Size = New Size(50, 19)
+        VINsCheckBox.TabIndex = 38
+        VINsCheckBox.Text = "VINs"
+        VINsCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' URLsConfigureButton
+        ' 
+        URLsConfigureButton.Enabled = False
+        URLsConfigureButton.Location = New Point(554, 261)
+        URLsConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        URLsConfigureButton.Name = "URLsConfigureButton"
+        URLsConfigureButton.Size = New Size(122, 27)
+        URLsConfigureButton.TabIndex = 37
+        URLsConfigureButton.Text = "Configure..."
+        URLsConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' URLsCheckBox
+        ' 
+        URLsCheckBox.AutoSize = True
+        URLsCheckBox.Location = New Point(394, 265)
+        URLsCheckBox.Margin = New Padding(4, 3, 4, 3)
+        URLsCheckBox.Name = "URLsCheckBox"
+        URLsCheckBox.Size = New Size(52, 19)
+        URLsCheckBox.TabIndex = 36
+        URLsCheckBox.Text = "URLs"
+        URLsCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' SurnamesConfigureButton
+        ' 
+        SurnamesConfigureButton.Enabled = False
+        SurnamesConfigureButton.Location = New Point(554, 227)
+        SurnamesConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        SurnamesConfigureButton.Name = "SurnamesConfigureButton"
+        SurnamesConfigureButton.Size = New Size(122, 27)
+        SurnamesConfigureButton.TabIndex = 35
+        SurnamesConfigureButton.Text = "Configure..."
+        SurnamesConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' SurnamesCheckBox
+        ' 
+        SurnamesCheckBox.AutoSize = True
+        SurnamesCheckBox.Location = New Point(394, 232)
+        SurnamesCheckBox.Margin = New Padding(4, 3, 4, 3)
+        SurnamesCheckBox.Name = "SurnamesCheckBox"
+        SurnamesCheckBox.Size = New Size(78, 19)
+        SurnamesCheckBox.TabIndex = 34
+        SurnamesCheckBox.Text = "Surnames"
+        SurnamesCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' StateAbbreviationsConfigureButton
+        ' 
+        StateAbbreviationsConfigureButton.Enabled = False
+        StateAbbreviationsConfigureButton.Location = New Point(554, 194)
+        StateAbbreviationsConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        StateAbbreviationsConfigureButton.Name = "StateAbbreviationsConfigureButton"
+        StateAbbreviationsConfigureButton.Size = New Size(122, 27)
+        StateAbbreviationsConfigureButton.TabIndex = 33
+        StateAbbreviationsConfigureButton.Text = "Configure..."
+        StateAbbreviationsConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' StateAbbreviationsCheckBox
+        ' 
+        StateAbbreviationsCheckBox.AutoSize = True
+        StateAbbreviationsCheckBox.Location = New Point(394, 198)
+        StateAbbreviationsCheckBox.Margin = New Padding(4, 3, 4, 3)
+        StateAbbreviationsCheckBox.Name = "StateAbbreviationsCheckBox"
+        StateAbbreviationsCheckBox.Size = New Size(128, 19)
+        StateAbbreviationsCheckBox.TabIndex = 32
+        StateAbbreviationsCheckBox.Text = "State Abbreviations"
+        StateAbbreviationsCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' StatesConfigureButton
+        ' 
+        StatesConfigureButton.Enabled = False
+        StatesConfigureButton.Location = New Point(554, 160)
+        StatesConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        StatesConfigureButton.Name = "StatesConfigureButton"
+        StatesConfigureButton.Size = New Size(122, 27)
+        StatesConfigureButton.TabIndex = 31
+        StatesConfigureButton.Text = "Configure..."
+        StatesConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' StatesCheckBox
+        ' 
+        StatesCheckBox.AutoSize = True
+        StatesCheckBox.Location = New Point(394, 165)
+        StatesCheckBox.Margin = New Padding(4, 3, 4, 3)
+        StatesCheckBox.Name = "StatesCheckBox"
+        StatesCheckBox.Size = New Size(57, 19)
+        StatesCheckBox.TabIndex = 30
+        StatesCheckBox.Text = "States"
+        StatesCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' SSNsConfigureButton
+        ' 
+        SSNsConfigureButton.Enabled = False
+        SSNsConfigureButton.Location = New Point(554, 127)
+        SSNsConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        SSNsConfigureButton.Name = "SSNsConfigureButton"
+        SSNsConfigureButton.Size = New Size(122, 27)
+        SSNsConfigureButton.TabIndex = 29
+        SSNsConfigureButton.Text = "Configure..."
+        SSNsConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' SSNsCheckBox
+        ' 
+        SSNsCheckBox.AutoSize = True
+        SSNsCheckBox.Location = New Point(394, 132)
+        SSNsCheckBox.Margin = New Padding(4, 3, 4, 3)
+        SSNsCheckBox.Name = "SSNsCheckBox"
+        SSNsCheckBox.Size = New Size(52, 19)
+        SSNsCheckBox.TabIndex = 28
+        SSNsCheckBox.Text = "SSNs"
+        SSNsCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' PhoneNumberExtsConfigureButton
+        ' 
+        PhoneNumberExtsConfigureButton.Enabled = False
+        PhoneNumberExtsConfigureButton.Location = New Point(554, 93)
+        PhoneNumberExtsConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        PhoneNumberExtsConfigureButton.Name = "PhoneNumberExtsConfigureButton"
+        PhoneNumberExtsConfigureButton.Size = New Size(122, 27)
+        PhoneNumberExtsConfigureButton.TabIndex = 27
+        PhoneNumberExtsConfigureButton.Text = "Configure..."
+        PhoneNumberExtsConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' PhoneNumberExtsCheckBox
+        ' 
+        PhoneNumberExtsCheckBox.AutoSize = True
+        PhoneNumberExtsCheckBox.Location = New Point(394, 98)
+        PhoneNumberExtsCheckBox.Margin = New Padding(4, 3, 4, 3)
+        PhoneNumberExtsCheckBox.Name = "PhoneNumberExtsCheckBox"
+        PhoneNumberExtsCheckBox.Size = New Size(133, 19)
+        PhoneNumberExtsCheckBox.TabIndex = 26
+        PhoneNumberExtsCheckBox.Text = "Phone Number Exts."
+        PhoneNumberExtsCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' PhoneNumbersConfigureButton
+        ' 
+        PhoneNumbersConfigureButton.Enabled = False
+        PhoneNumbersConfigureButton.Location = New Point(554, 60)
+        PhoneNumbersConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        PhoneNumbersConfigureButton.Name = "PhoneNumbersConfigureButton"
+        PhoneNumbersConfigureButton.Size = New Size(122, 27)
+        PhoneNumbersConfigureButton.TabIndex = 25
+        PhoneNumbersConfigureButton.Text = "Configure..."
+        PhoneNumbersConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' PhoneNumbersCheckBox
+        ' 
+        PhoneNumbersCheckBox.AutoSize = True
+        PhoneNumbersCheckBox.Location = New Point(394, 65)
+        PhoneNumbersCheckBox.Margin = New Padding(4, 3, 4, 3)
+        PhoneNumbersCheckBox.Name = "PhoneNumbersCheckBox"
+        PhoneNumbersCheckBox.Size = New Size(112, 19)
+        PhoneNumbersCheckBox.TabIndex = 24
+        PhoneNumbersCheckBox.Text = "Phone Numbers"
+        PhoneNumbersCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' NERConfigureButton
+        ' 
+        NERConfigureButton.Enabled = False
+        NERConfigureButton.Location = New Point(554, 27)
+        NERConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        NERConfigureButton.Name = "NERConfigureButton"
+        NERConfigureButton.Size = New Size(122, 27)
+        NERConfigureButton.TabIndex = 23
+        NERConfigureButton.Text = "Configure..."
+        NERConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' NERCheckBox
+        ' 
+        NERCheckBox.AutoSize = True
+        NERCheckBox.Location = New Point(394, 31)
+        NERCheckBox.Margin = New Padding(4, 3, 4, 3)
+        NERCheckBox.Name = "NERCheckBox"
+        NERCheckBox.Size = New Size(141, 19)
+        NERCheckBox.TabIndex = 22
+        NERCheckBox.Text = "NER (English Persons)"
+        NERCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' IPAddressesConfigureButton
+        ' 
+        IPAddressesConfigureButton.Enabled = False
+        IPAddressesConfigureButton.Location = New Point(182, 323)
+        IPAddressesConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        IPAddressesConfigureButton.Name = "IPAddressesConfigureButton"
+        IPAddressesConfigureButton.Size = New Size(122, 27)
+        IPAddressesConfigureButton.TabIndex = 21
+        IPAddressesConfigureButton.Text = "Configure..."
+        IPAddressesConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' IPAddressesCheckBox
+        ' 
+        IPAddressesCheckBox.AutoSize = True
+        IPAddressesCheckBox.Location = New Point(22, 328)
+        IPAddressesCheckBox.Margin = New Padding(4, 3, 4, 3)
+        IPAddressesCheckBox.Name = "IPAddressesCheckBox"
+        IPAddressesCheckBox.Size = New Size(92, 19)
+        IPAddressesCheckBox.TabIndex = 20
+        IPAddressesCheckBox.Text = "IP Addresses"
+        IPAddressesCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' HospitalsConfigureButton
+        ' 
+        HospitalsConfigureButton.Enabled = False
+        HospitalsConfigureButton.Location = New Point(182, 290)
+        HospitalsConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        HospitalsConfigureButton.Name = "HospitalsConfigureButton"
+        HospitalsConfigureButton.Size = New Size(122, 27)
+        HospitalsConfigureButton.TabIndex = 17
+        HospitalsConfigureButton.Text = "Configure..."
+        HospitalsConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' HospitalsCheckBox
+        ' 
+        HospitalsCheckBox.AutoSize = True
+        HospitalsCheckBox.Location = New Point(22, 294)
+        HospitalsCheckBox.Margin = New Padding(4, 3, 4, 3)
+        HospitalsCheckBox.Name = "HospitalsCheckBox"
+        HospitalsCheckBox.Size = New Size(75, 19)
+        HospitalsCheckBox.TabIndex = 16
+        HospitalsCheckBox.Text = "Hospitals"
+        HospitalsCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' HospitalAbbreviationsConfigureButton
+        ' 
+        HospitalAbbreviationsConfigureButton.Enabled = False
+        HospitalAbbreviationsConfigureButton.Location = New Point(182, 256)
+        HospitalAbbreviationsConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        HospitalAbbreviationsConfigureButton.Name = "HospitalAbbreviationsConfigureButton"
+        HospitalAbbreviationsConfigureButton.Size = New Size(122, 27)
+        HospitalAbbreviationsConfigureButton.TabIndex = 15
+        HospitalAbbreviationsConfigureButton.Text = "Configure..."
+        HospitalAbbreviationsConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' HospitalAbbreviationsCheckBox
+        ' 
+        HospitalAbbreviationsCheckBox.AutoSize = True
+        HospitalAbbreviationsCheckBox.Location = New Point(22, 261)
+        HospitalAbbreviationsCheckBox.Margin = New Padding(4, 3, 4, 3)
+        HospitalAbbreviationsCheckBox.Name = "HospitalAbbreviationsCheckBox"
+        HospitalAbbreviationsCheckBox.Size = New Size(146, 19)
+        HospitalAbbreviationsCheckBox.TabIndex = 14
+        HospitalAbbreviationsCheckBox.Text = "Hospital Abbreviations"
+        HospitalAbbreviationsCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' FirstNamesConfigureButton
+        ' 
+        FirstNamesConfigureButton.Enabled = False
+        FirstNamesConfigureButton.Location = New Point(182, 223)
+        FirstNamesConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        FirstNamesConfigureButton.Name = "FirstNamesConfigureButton"
+        FirstNamesConfigureButton.Size = New Size(122, 27)
+        FirstNamesConfigureButton.TabIndex = 13
+        FirstNamesConfigureButton.Text = "Configure..."
+        FirstNamesConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' FirstNamesCheckBox
+        ' 
+        FirstNamesCheckBox.AutoSize = True
+        FirstNamesCheckBox.Location = New Point(22, 227)
+        FirstNamesCheckBox.Margin = New Padding(4, 3, 4, 3)
+        FirstNamesCheckBox.Name = "FirstNamesCheckBox"
+        FirstNamesCheckBox.Size = New Size(88, 19)
+        FirstNamesCheckBox.TabIndex = 12
+        FirstNamesCheckBox.Text = "First Names"
+        FirstNamesCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' EmailAddressesConfigureButton
+        ' 
+        EmailAddressesConfigureButton.Enabled = False
+        EmailAddressesConfigureButton.Location = New Point(182, 189)
+        EmailAddressesConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        EmailAddressesConfigureButton.Name = "EmailAddressesConfigureButton"
+        EmailAddressesConfigureButton.Size = New Size(122, 27)
+        EmailAddressesConfigureButton.TabIndex = 11
+        EmailAddressesConfigureButton.Text = "Configure..."
+        EmailAddressesConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' EmailAddressesCheckBox
+        ' 
+        EmailAddressesCheckBox.AutoSize = True
+        EmailAddressesCheckBox.Location = New Point(22, 194)
+        EmailAddressesCheckBox.Margin = New Padding(4, 3, 4, 3)
+        EmailAddressesCheckBox.Name = "EmailAddressesCheckBox"
+        EmailAddressesCheckBox.Size = New Size(100, 19)
+        EmailAddressesCheckBox.TabIndex = 10
+        EmailAddressesCheckBox.Text = "Email Address"
+        EmailAddressesCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' DatesConfigureButton
+        ' 
+        DatesConfigureButton.Enabled = False
+        DatesConfigureButton.Location = New Point(182, 156)
+        DatesConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        DatesConfigureButton.Name = "DatesConfigureButton"
+        DatesConfigureButton.Size = New Size(122, 27)
+        DatesConfigureButton.TabIndex = 9
+        DatesConfigureButton.Text = "Configure..."
+        DatesConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' DatesCheckBox
+        ' 
+        DatesCheckBox.AutoSize = True
+        DatesCheckBox.Location = New Point(22, 160)
+        DatesCheckBox.Margin = New Padding(4, 3, 4, 3)
+        DatesCheckBox.Name = "DatesCheckBox"
+        DatesCheckBox.Size = New Size(55, 19)
+        DatesCheckBox.TabIndex = 8
+        DatesCheckBox.Text = "Dates"
+        DatesCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' CreditCardsConfigureButton
+        ' 
+        CreditCardsConfigureButton.Enabled = False
+        CreditCardsConfigureButton.Location = New Point(182, 122)
+        CreditCardsConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        CreditCardsConfigureButton.Name = "CreditCardsConfigureButton"
+        CreditCardsConfigureButton.Size = New Size(122, 27)
+        CreditCardsConfigureButton.TabIndex = 7
+        CreditCardsConfigureButton.Text = "Configure..."
+        CreditCardsConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' CreditCardsCheckBox
+        ' 
+        CreditCardsCheckBox.AutoSize = True
+        CreditCardsCheckBox.Location = New Point(22, 127)
+        CreditCardsCheckBox.Margin = New Padding(4, 3, 4, 3)
+        CreditCardsCheckBox.Name = "CreditCardsCheckBox"
+        CreditCardsCheckBox.Size = New Size(91, 19)
+        CreditCardsCheckBox.TabIndex = 6
+        CreditCardsCheckBox.Text = "Credit Cards"
+        CreditCardsCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' CountiesConfigureButton
+        ' 
+        CountiesConfigureButton.Enabled = False
+        CountiesConfigureButton.Location = New Point(182, 89)
+        CountiesConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        CountiesConfigureButton.Name = "CountiesConfigureButton"
+        CountiesConfigureButton.Size = New Size(122, 27)
+        CountiesConfigureButton.TabIndex = 5
+        CountiesConfigureButton.Text = "Configure..."
+        CountiesConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' CountiesCheckBox
+        ' 
+        CountiesCheckBox.AutoSize = True
+        CountiesCheckBox.Location = New Point(22, 93)
+        CountiesCheckBox.Margin = New Padding(4, 3, 4, 3)
+        CountiesCheckBox.Name = "CountiesCheckBox"
+        CountiesCheckBox.Size = New Size(73, 19)
+        CountiesCheckBox.TabIndex = 4
+        CountiesCheckBox.Text = "Counties"
+        CountiesCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' CitiesConfigureButton
+        ' 
+        CitiesConfigureButton.Enabled = False
+        CitiesConfigureButton.Location = New Point(182, 55)
+        CitiesConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        CitiesConfigureButton.Name = "CitiesConfigureButton"
+        CitiesConfigureButton.Size = New Size(122, 27)
+        CitiesConfigureButton.TabIndex = 3
+        CitiesConfigureButton.Text = "Configure..."
+        CitiesConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' CitiesCheckBox
+        ' 
+        CitiesCheckBox.AutoSize = True
+        CitiesCheckBox.Location = New Point(22, 60)
+        CitiesCheckBox.Margin = New Padding(4, 3, 4, 3)
+        CitiesCheckBox.Name = "CitiesCheckBox"
+        CitiesCheckBox.Size = New Size(55, 19)
+        CitiesCheckBox.TabIndex = 2
+        CitiesCheckBox.Text = "Cities"
+        CitiesCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' AgesConfigureButton
+        ' 
+        AgesConfigureButton.Enabled = False
+        AgesConfigureButton.Location = New Point(182, 22)
+        AgesConfigureButton.Margin = New Padding(4, 3, 4, 3)
+        AgesConfigureButton.Name = "AgesConfigureButton"
+        AgesConfigureButton.Size = New Size(122, 27)
+        AgesConfigureButton.TabIndex = 1
+        AgesConfigureButton.Text = "Configure..."
+        AgesConfigureButton.UseVisualStyleBackColor = True
+        ' 
+        ' AgesCheckBox
+        ' 
+        AgesCheckBox.AutoSize = True
+        AgesCheckBox.Location = New Point(22, 27)
+        AgesCheckBox.Margin = New Padding(4, 3, 4, 3)
+        AgesCheckBox.Name = "AgesCheckBox"
+        AgesCheckBox.Size = New Size(52, 19)
+        AgesCheckBox.TabIndex = 0
+        AgesCheckBox.Text = "Ages"
+        AgesCheckBox.UseVisualStyleBackColor = True
+        ' 
+        ' PolicysToolStrip
+        ' 
+        PolicysToolStrip.ImageScalingSize = New Size(24, 24)
+        PolicysToolStrip.Items.AddRange(New ToolStripItem() {ToolStripLabel1, PoliciesToolStripDropDownButton, RefreshToolStripButton, ToolStripSeparator6, NewToolStripButton, SaveToolStripButton, SaveAsToolStripButton, DeleteToolStripButton})
+        PolicysToolStrip.Location = New Point(0, 0)
+        PolicysToolStrip.Name = "PolicysToolStrip"
+        PolicysToolStrip.Padding = New Padding(0, 0, 2, 0)
+        PolicysToolStrip.Size = New Size(1074, 31)
+        PolicysToolStrip.TabIndex = 9
+        PolicysToolStrip.Text = "ToolStrip3"
+        ' 
+        ' ToolStripLabel1
+        ' 
+        ToolStripLabel1.Name = "ToolStripLabel1"
+        ToolStripLabel1.Size = New Size(85, 28)
+        ToolStripLabel1.Text = "Select a Policy:"
+        ' 
+        ' PoliciesToolStripDropDownButton
+        ' 
+        PoliciesToolStripDropDownButton.DropDownStyle = ComboBoxStyle.DropDownList
+        PoliciesToolStripDropDownButton.Name = "PoliciesToolStripDropDownButton"
+        PoliciesToolStripDropDownButton.Size = New Size(320, 31)
+        ' 
+        ' RefreshToolStripButton
+        ' 
+        RefreshToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image
+        RefreshToolStripButton.Image = CType(resources.GetObject("RefreshToolStripButton.Image"), Image)
+        RefreshToolStripButton.ImageTransparentColor = Color.Magenta
+        RefreshToolStripButton.Name = "RefreshToolStripButton"
+        RefreshToolStripButton.Size = New Size(28, 28)
+        RefreshToolStripButton.Text = "Refresh"
+        ' 
+        ' ToolStripSeparator6
+        ' 
+        ToolStripSeparator6.Name = "ToolStripSeparator6"
+        ToolStripSeparator6.Size = New Size(6, 31)
+        ' 
+        ' NewToolStripButton
+        ' 
+        NewToolStripButton.Image = CType(resources.GetObject("NewToolStripButton.Image"), Image)
+        NewToolStripButton.ImageTransparentColor = Color.Magenta
+        NewToolStripButton.Name = "NewToolStripButton"
+        NewToolStripButton.Size = New Size(68, 28)
+        NewToolStripButton.Text = "New..."
+        ' 
+        ' SaveToolStripButton
+        ' 
+        SaveToolStripButton.Enabled = False
+        SaveToolStripButton.Image = CType(resources.GetObject("SaveToolStripButton.Image"), Image)
+        SaveToolStripButton.ImageTransparentColor = Color.Magenta
+        SaveToolStripButton.Name = "SaveToolStripButton"
+        SaveToolStripButton.Size = New Size(59, 28)
+        SaveToolStripButton.Text = "Save"
+        ' 
+        ' SaveAsToolStripButton
+        ' 
+        SaveAsToolStripButton.Enabled = False
+        SaveAsToolStripButton.Image = CType(resources.GetObject("SaveAsToolStripButton.Image"), Image)
+        SaveAsToolStripButton.ImageTransparentColor = Color.Magenta
+        SaveAsToolStripButton.Name = "SaveAsToolStripButton"
+        SaveAsToolStripButton.Size = New Size(84, 28)
+        SaveAsToolStripButton.Text = "Save As..."
+        ' 
+        ' DeleteToolStripButton
+        ' 
+        DeleteToolStripButton.Enabled = False
+        DeleteToolStripButton.Image = CType(resources.GetObject("DeleteToolStripButton.Image"), Image)
+        DeleteToolStripButton.ImageTransparentColor = Color.Magenta
+        DeleteToolStripButton.Name = "DeleteToolStripButton"
+        DeleteToolStripButton.Size = New Size(77, 28)
+        DeleteToolStripButton.Text = "Delete..."
+        ' 
+        ' PolicyEditorForm
+        ' 
+        AutoScaleDimensions = New SizeF(7F, 15F)
+        AutoScaleMode = AutoScaleMode.Font
+        ClientSize = New Size(1074, 407)
+        Controls.Add(PolicyPanel)
+        Controls.Add(PolicysToolStrip)
+        FormBorderStyle = FormBorderStyle.FixedDialog
+        Icon = CType(resources.GetObject("$this.Icon"), Icon)
+        Margin = New Padding(4, 3, 4, 3)
+        MaximizeBox = False
+        MinimumSize = New Size(1089, 442)
+        Name = "PolicyEditorForm"
+        StartPosition = FormStartPosition.CenterScreen
+        Text = "Philter Policy Editor"
+        PolicyPanel.ResumeLayout(False)
+        PolicyPanel.PerformLayout()
+        PolicysToolStrip.ResumeLayout(False)
+        PolicysToolStrip.PerformLayout()
+        ResumeLayout(False)
+        PerformLayout()
 
     End Sub
 
@@ -764,7 +764,7 @@ Partial Class PolicyEditorForm
     Friend WithEvents AgesCheckBox As CheckBox
     Friend WithEvents PolicysToolStrip As ToolStrip
     Friend WithEvents ToolStripLabel1 As ToolStripLabel
-    Friend WithEvents PolicysToolStripDropDownButton As ToolStripComboBox
+    Friend WithEvents PoliciesToolStripDropDownButton As ToolStripComboBox
     Friend WithEvents RefreshToolStripButton As ToolStripButton
     Friend WithEvents ToolStripSeparator6 As ToolStripSeparator
     Friend WithEvents NewToolStripButton As ToolStripButton

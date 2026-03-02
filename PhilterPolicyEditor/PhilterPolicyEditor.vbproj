@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0-windows7.0</TargetFramework>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Library</OutputType>
     <RootNamespace>Philter</RootNamespace>
     <MyType>Windows</MyType>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -162,6 +162,7 @@
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\PhilterData\PhilterData.csproj" />
     <ProjectReference Include="..\Policies\Policies.csproj" />
   </ItemGroup>
 </Project>

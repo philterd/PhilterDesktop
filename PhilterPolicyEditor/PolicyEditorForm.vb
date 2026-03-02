@@ -1,11 +1,18 @@
-﻿Imports System.IO
-Imports System.Windows.Forms
+﻿Imports System.Windows.Forms
 Imports Newtonsoft.Json
-Imports Philter.Model
 Imports Philter.Model.Policy
 Imports Philter.Model.Policy.Filters
+Imports PhilterData
+Imports PhilterDesktop
 
 Public Class PolicyEditorForm
+
+    Dim _repo As LiteDbRepository(Of PolicyEntity)
+
+    Public Sub New(repo As LiteDbRepository(Of PolicyEntity))
+        InitializeComponent()
+        _repo = repo
+    End Sub
 
     Private Sub Policys_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' TODO: Load the policy names
@@ -13,7 +20,14 @@ Public Class PolicyEditorForm
 
     Private Sub NewToolStripButton_Click(sender As Object, e As EventArgs) Handles NewToolStripButton.Click
 
-        ' TODO: Get the name of the new policy and create it in the database.
+        Dim PolicyEntity as new PolicyEntity
+        PolicyEntity.Name = "new policy3"
+        _repo.Insert(PolicyEntity)
+
+        PoliciesToolStripDropDownButton.Items.Clear()
+        For each policy as PolicyEntity in _repo.GetAll()
+            PoliciesToolStripDropDownButton.Items.Add(policy.Name)
+        Next
 
     End Sub
 
@@ -46,7 +60,11 @@ Public Class PolicyEditorForm
 
     Private Sub SaveToolStripButton_Click(sender As Object, e As EventArgs) Handles SaveToolStripButton.Click
 
-        ' TODO: Save the policy to the database.
+        ' Save the policy to the database.
+        Dim PolicyEntity As New PolicyEntity
+        PolicyEntity.Name = "saved"
+        PolicyEntity.Json = JsonConvert.SerializeObject(GetPolicy())
+        _repo.Insert(PolicyEntity)
 
     End Sub
 
@@ -58,110 +76,137 @@ Public Class PolicyEditorForm
 
     Private Sub RefreshToolStripButton_Click(sender As Object, e As EventArgs) Handles RefreshToolStripButton.Click
 
-        ' TODO: Load the policies from the database.
+        ' Refresh the list of policies.
+        PoliciesToolStripDropDownButton.Items.Clear()
+        For each policy as PolicyEntity in _repo.GetAll()
+            PoliciesToolStripDropDownButton.Items.Add(policy.Name)
+        Next
 
     End Sub
 
     Private Sub DeleteToolStripButton_Click(sender As Object, e As EventArgs) Handles DeleteToolStripButton.Click
 
-        ' TODO: Delete the policy from the database.
+        ' TODO: Get the policy name.
+        If MessageBox.Show("Are you sure you want to delete the policy with name " & "test" & "?", Application.ProductName, MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
+
+            ' Delete the policy from the database.
+            _repo.Delete("new policy")
+
+            For each policy as PolicyEntity in _repo.GetAll()
+                PoliciesToolStripDropDownButton.Items.Add(policy.Name)
+            Next
+
+            ResetForm()
+
+        End If
 
     End Sub
 
-    Private Sub PolicysToolStripDropDownButton_SelectedIndexChanged(sender As Object, e As EventArgs) Handles PolicysToolStripDropDownButton.SelectedIndexChanged
+    Private Sub PolicysToolStripDropDownButton_SelectedIndexChanged(sender As Object, e As EventArgs) Handles PoliciesToolStripDropDownButton.SelectedIndexChanged
 
-        Dim Name As String = PolicysToolStripDropDownButton.SelectedItem.ToString
+        Dim Name As String = PoliciesToolStripDropDownButton.SelectedItem.ToString
 
-        ' TODO: Get the policy from the database.
-        Dim json As String = "{}"
+        Dim PolicyEntity As PolicyEntity = _repo.FindOne(Function(x) x.Name.Equals(Name))
+        Dim json As String = PolicyEntity.Json
+        System.Diagnostics.Debug.WriteLine(json)
 
-        Dim fp As Policy = JsonConvert.DeserializeObject(Of Model.Policy.Policy)(json)
-        PolicyPanel.Tag = fp
+        Dim fp As Policy = JsonConvert.DeserializeObject(Of Policy)(json)
 
         ResetForm()
 
-        If Not fp.Identifiers.Age Is Nothing Then
-            AgesCheckBox.Checked = True
-        End If
+        PolicyPanel.Tag = fp
 
-        If Not fp.Identifiers.City Is Nothing Then
-            CitiesCheckBox.Checked = True
-        End If
+        If Not fp.Identifiers is Nothing then
 
-        If Not fp.Identifiers.County Is Nothing Then
-            CountiesCheckBox.Checked = True
-        End If
+            If not fp.Identifiers.Age is Nothing Then
+                AgesCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.CreditCard Is Nothing Then
-            CreditCardsCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.City Is Nothing Then
+                CitiesCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.CustomDictionaries Is Nothing Then
-            CustomDictionariesCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.County Is Nothing Then
+                CountiesCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.Date Is Nothing Then
-            DatesCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.CreditCard Is Nothing Then
+                CreditCardsCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.EmailAddress Is Nothing Then
-            EmailAddressesCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.CustomDictionaries Is Nothing Then
+                CustomDictionariesCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.FirstName Is Nothing Then
-            FirstNamesCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.Date Is Nothing Then
+                DatesCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.Hospital Is Nothing Then
-            HospitalsCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.EmailAddress Is Nothing Then
+                EmailAddressesCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.HospitalAbbreviation Is Nothing Then
-            HospitalAbbreviationsCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.FirstName Is Nothing Then
+                FirstNamesCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.CustomIdentifiers Is Nothing Then
-            CustomIdentifiersCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.Hospital Is Nothing Then
+                HospitalsCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.IpAddress Is Nothing Then
-            IPAddressesCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.HospitalAbbreviation Is Nothing Then
+                HospitalAbbreviationsCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.Ner Is Nothing Then
-            NERCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.CustomIdentifiers Is Nothing Then
+                CustomIdentifiersCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.PhoneNumber Is Nothing Then
-            PhoneNumbersCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.IpAddress Is Nothing Then
+                IPAddressesCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.PhoneNumberExtension Is Nothing Then
-            PhoneNumberExtsCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.Ner Is Nothing Then
+                NERCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.Ssn Is Nothing Then
-            SSNsCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.PhoneNumber Is Nothing Then
+                PhoneNumbersCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.State Is Nothing Then
-            StatesCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.PhoneNumberExtension Is Nothing Then
+                PhoneNumberExtsCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.StateAbbreviation Is Nothing Then
-            StateAbbreviationsCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.Ssn Is Nothing Then
+                SSNsCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.Surname Is Nothing Then
-            SurnamesCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.State Is Nothing Then
+                StatesCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.Url Is Nothing Then
-            URLsCheckBox.Checked = True
-        End If
+            If Not fp.Identifiers.StateAbbreviation Is Nothing Then
+                StateAbbreviationsCheckBox.Checked = True
+            End If
 
-        If Not fp.Identifiers.Vin Is Nothing Then
-            VINsCheckBox.Checked = True
+            If Not fp.Identifiers.Surname Is Nothing Then
+                SurnamesCheckBox.Checked = True
+            End If
+
+            If Not fp.Identifiers.Url Is Nothing Then
+                URLsCheckBox.Checked = True
+            End If
+
+            If Not fp.Identifiers.Vin Is Nothing Then
+                VINsCheckBox.Checked = True
+            End If
+
+        Else
+
+            fp.Identifiers = new Identifiers()
+            PolicyPanel.Tag = fp
+
         End If
 
         PolicyPanel.Enabled = True
@@ -1270,4 +1315,7 @@ Public Class PolicyEditorForm
 
     End Sub
 
+    Private Sub PoliciesToolStripDropDownButton_Click(sender As Object, e As EventArgs) Handles PoliciesToolStripDropDownButton.Click
+
+    End Sub
 End Class

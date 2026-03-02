@@ -1,7 +1,4 @@
-﻿Imports System.Text.RegularExpressions
-Imports System.Windows.Forms
-
-Public Class NewPolicyForm
+﻿Public Class NewPolicyForm
 
     Public Property PolicyName As String
 
@@ -15,12 +12,12 @@ Public Class NewPolicyForm
 
     End Sub
 
-        Private Sub Cancel_Button_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Cancel_Button.Click
+    Private Sub Cancel_Button_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Cancel_Button.Click
 
-            Me.DialogResult = System.Windows.Forms.DialogResult.Cancel
-            Me.Close()
+        Me.DialogResult = System.Windows.Forms.DialogResult.Cancel
+        Me.Close()
 
-        End Sub
+    End Sub
 
     Private Sub NewPolicyForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
