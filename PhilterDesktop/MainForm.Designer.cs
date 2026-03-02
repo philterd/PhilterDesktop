@@ -34,6 +34,8 @@
             toolsToolStripMenuItem = new ToolStripMenuItem();
             policiesToolStripMenuItem = new ToolStripMenuItem();
             redactionContextsToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator2 = new ToolStripSeparator();
+            settingsToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem1 = new ToolStripMenuItem();
             toolStripSeparator1 = new ToolStripSeparator();
@@ -89,7 +91,7 @@
             // 
             // toolsToolStripMenuItem
             // 
-            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { policiesToolStripMenuItem, redactionContextsToolStripMenuItem });
+            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { policiesToolStripMenuItem, redactionContextsToolStripMenuItem, toolStripSeparator2, settingsToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             toolsToolStripMenuItem.Size = new Size(47, 22);
             toolsToolStripMenuItem.Text = "Tools";
@@ -107,6 +109,18 @@
             redactionContextsToolStripMenuItem.Size = new Size(185, 22);
             redactionContextsToolStripMenuItem.Text = "Redaction Contexts...";
             redactionContextsToolStripMenuItem.Click += redactionContextsToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new Size(182, 6);
+            // 
+            // settingsToolStripMenuItem
+            // 
+            settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+            settingsToolStripMenuItem.Size = new Size(185, 22);
+            settingsToolStripMenuItem.Text = "Settings...";
+            settingsToolStripMenuItem.Click += this.settingsToolStripMenuItem_Click;
             // 
             // helpToolStripMenuItem
             // 
@@ -354,5 +368,7 @@
         private ListBox filesListBox;
         private StatusStrip statusStrip1;
         private ToolStripMenuItem redactionContextsToolStripMenuItem;
+        private ToolStripSeparator toolStripSeparator2;
+        private ToolStripMenuItem settingsToolStripMenuItem;
     }
 }

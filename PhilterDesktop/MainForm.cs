@@ -14,6 +14,8 @@ namespace PhilterDesktop
         private readonly PolicyRepository _policyRepository;
         private readonly ContextRepository _contextRepository;
         private readonly ContextEntryRepository _contextEntryRepository;
+        private readonly SettingsRepository _settingsRepository;
+        
         public MainForm()
         {
             InitializeComponent();
@@ -37,6 +39,7 @@ namespace PhilterDesktop
             _policyRepository = new PolicyRepository(_database);
             _contextRepository = new ContextRepository(_database);
             _contextEntryRepository = new ContextEntryRepository(_database);
+            _settingsRepository = new SettingsRepository(_database);
 
             // Insert default policy.
             // TODO
@@ -188,6 +191,12 @@ namespace PhilterDesktop
         {
             var redactionContextsForm = new RedctionContextsForm(_contextRepository, _contextEntryRepository);
             redactionContextsForm.ShowDialog();
+        }
+
+        private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var settingsForm = new SettingsForm(_settingsRepository);
+            settingsForm.ShowDialog();
         }
     }
 
