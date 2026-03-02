@@ -85,10 +85,17 @@ namespace PhilterDesktop
                 {
                     foreach (string file in files)
                     {
-                        // Only add if the file doesn't already exist in the list
+                        // Only add if the file doesn't already exist in the list and is an acceptable file type.
                         if (!filesListBox.Items.Contains(file))
                         {
-                            filesListBox.Items.Add(file);
+                            if (file.EndsWith(".txt") || file.EndsWith(".docx") || file.EndsWith(".pdf"))
+                            {
+                                filesListBox.Items.Add(file);
+                            }
+                            else
+                            {
+                                // TODO: Show a message to the user that the file type is not supported.
+                            }
                         }
                     }
                 }
