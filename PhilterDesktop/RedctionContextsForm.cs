@@ -29,12 +29,16 @@ namespace PhilterDesktop
 
         private void LoadContexts()
         {
-            listBoxContexts.Items.Clear();
+            listViewContexts.Items.Clear();
             
             var contexts = _repo.GetAllOrderedByDate();
             foreach (var context in contexts)
             {
-                listBoxContexts.Items.Add(new ContextListItem(context));
+                var entryCount = _contextEntryRepository.CountByContext(context.Name);
+                var item = new ListViewItem(context.Name);
+                item.SubItems.Add(entryCount.ToString());
+                item.Tag = context;
+                listViewContexts.Items.Add(item);
             }
 
             // Update button states
@@ -124,18 +128,20 @@ namespace PhilterDesktop
 
         private void BtnDelete_Click(object? sender, EventArgs e)
         {
-            if (listBoxContexts.SelectedItem is not ContextListItem selectedItem)
+            if (listViewContexts.SelectedItems.Count == 0)
                 return;
 
+            var selectedContext = (ContextEntity)listViewContexts.SelectedItems[0].Tag;
+
             var result = MessageBox.Show(
-                $"Are you sure you want to delete the context '{selectedItem.Context.Name}'?",
+                $"Are you sure you want to delete the context '{selectedContext.Name}'?",
                 "Confirm Delete",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
-                _repo.Delete(selectedItem.Context.Id);
+                _repo.Delete(selectedContext.Id);
                 LoadContexts();
 
                 MessageBox.Show("Redaction context deleted successfully.", "Success", 
@@ -145,10 +151,11 @@ namespace PhilterDesktop
 
         private void BtnEmpty_Click(object? sender, EventArgs e)
         {
-            if (listBoxContexts.SelectedItem is not ContextListItem selectedItem)
+            if (listViewContexts.SelectedItems.Count == 0)
                 return;
 
-            var contextName = selectedItem.Context.Name;
+            var selectedContext = (ContextEntity)listViewContexts.SelectedItems[0].Tag;
+            var contextName = selectedContext.Name;
             var entryCount = _contextEntryRepository.CountByContext(contextName);
 
             if (entryCount == 0)
@@ -177,17 +184,20 @@ namespace PhilterDesktop
                     "Success",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
+
+                // Refresh the list to update the entry count
+                LoadContexts();
             }
         }
 
-        private void ListBoxContexts_SelectedIndexChanged(object? sender, EventArgs e)
+        private void ListViewContexts_SelectedIndexChanged(object? sender, EventArgs e)
         {
             UpdateButtonStates();
         }
 
         private void UpdateButtonStates()
         {
-            var hasSelection = listBoxContexts.SelectedItem != null;
+            var hasSelection = listViewContexts.SelectedItems.Count > 0;
             btnDelete.Enabled = hasSelection;
             btnEmpty.Enabled = hasSelection;
         }
@@ -195,24 +205,6 @@ namespace PhilterDesktop
         private void BtnClose_Click(object? sender, EventArgs e)
         {
             Close();
-        }
-
-        /// <summary>
-        /// Helper class to wrap ContextEntity for ListBox display.
-        /// </summary>
-        private class ContextListItem
-        {
-            public ContextEntity Context { get; }
-
-            public ContextListItem(ContextEntity context)
-            {
-                Context = context;
-            }
-
-            public override string ToString()
-            {
-                return $"{Context.Name} (Created: {Context.CreatedAt:g})";
-            }
         }
     }
 }

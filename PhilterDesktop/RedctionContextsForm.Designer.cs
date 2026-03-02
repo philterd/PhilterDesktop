@@ -28,7 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            listBoxContexts = new ListBox();
+            listViewContexts = new ListView();
+            columnHeaderName = new ColumnHeader();
+            columnHeaderEntries = new ColumnHeader();
             btnCreate = new Button();
             btnDelete = new Button();
             btnEmpty = new Button();
@@ -36,15 +38,29 @@
             lblContexts = new Label();
             SuspendLayout();
             // 
-            // listBoxContexts
+            // listViewContexts
             // 
-            listBoxContexts.FormattingEnabled = true;
-            listBoxContexts.ItemHeight = 15;
-            listBoxContexts.Location = new Point(12, 32);
-            listBoxContexts.Name = "listBoxContexts";
-            listBoxContexts.Size = new Size(560, 364);
-            listBoxContexts.TabIndex = 0;
-            listBoxContexts.SelectedIndexChanged += ListBoxContexts_SelectedIndexChanged;
+            listViewContexts.Columns.AddRange(new ColumnHeader[] { columnHeaderName, columnHeaderEntries });
+            listViewContexts.FullRowSelect = true;
+            listViewContexts.GridLines = true;
+            listViewContexts.Location = new Point(12, 32);
+            listViewContexts.MultiSelect = false;
+            listViewContexts.Name = "listViewContexts";
+            listViewContexts.Size = new Size(560, 364);
+            listViewContexts.TabIndex = 0;
+            listViewContexts.UseCompatibleStateImageBehavior = false;
+            listViewContexts.View = View.Details;
+            listViewContexts.SelectedIndexChanged += ListViewContexts_SelectedIndexChanged;
+            // 
+            // columnHeaderName
+            // 
+            columnHeaderName.Text = "Context Name";
+            columnHeaderName.Width = 350;
+            // 
+            // columnHeaderEntries
+            // 
+            columnHeaderEntries.Text = "Entries";
+            columnHeaderEntries.Width = 200;
             // 
             // btnCreate
             // 
@@ -107,7 +123,7 @@
             Controls.Add(btnEmpty);
             Controls.Add(btnDelete);
             Controls.Add(btnCreate);
-            Controls.Add(listBoxContexts);
+            Controls.Add(listViewContexts);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
@@ -121,7 +137,9 @@
 
         #endregion
 
-        private ListBox listBoxContexts;
+        private ListView listViewContexts;
+        private ColumnHeader columnHeaderName;
+        private ColumnHeader columnHeaderEntries;
         private Button btnCreate;
         private Button btnDelete;
         private Button btnEmpty;

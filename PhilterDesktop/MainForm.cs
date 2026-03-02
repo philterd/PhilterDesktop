@@ -80,8 +80,7 @@ namespace PhilterDesktop
             // Get the dropped files
             if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                string[]? files = e.Data.GetData(DataFormats.FileDrop) as string[];
-                if (files != null)
+                if (e.Data.GetData(DataFormats.FileDrop) is string[] files)
                 {
                     foreach (string file in files)
                     {
