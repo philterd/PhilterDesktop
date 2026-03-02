@@ -10,7 +10,7 @@ namespace PhilterDesktop
 {
     public partial class Form1 : Form
     {
-        LiteDbRepository<PolicyEntity> _repo;
+        LiteDbRepository<PolicyEntity> _policyRepository;
 
         public Form1()
         {
@@ -28,7 +28,7 @@ namespace PhilterDesktop
                 Directory.CreateDirectory(folder);
             }
 
-            _repo = new LiteDbRepository<PolicyEntity>(dbPath);
+            _policyRepository = new LiteDbRepository<PolicyEntity>(dbPath);
 
             //    repo.EnsureIndex(x => x.CreatedAt);
 
@@ -59,7 +59,7 @@ namespace PhilterDesktop
 
         private void policiesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var f = new PolicyEditorForm(_repo);
+            var f = new PolicyEditorForm(_policyRepository);
             f.ShowDialog();
         }
 
@@ -109,7 +109,7 @@ namespace PhilterDesktop
         private void comboBox1_DropDown(object sender, EventArgs e)
         {
             comboBox1.Items.Clear();
-            foreach (PolicyEntity p in _repo.GetAll())
+            foreach (PolicyEntity p in _policyRepository.GetAll())
             {
                 comboBox1.Items.Add(p.Name);
             }
