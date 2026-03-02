@@ -44,7 +44,7 @@
             columnHeader1 = new ColumnHeader();
             columnHeader2 = new ColumnHeader();
             panel1 = new Panel();
-            panel2 = new Panel();
+            filesPanel = new Panel();
             filesListBox = new ListBox();
             button3 = new Button();
             label3 = new Label();
@@ -59,7 +59,7 @@
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
             panel1.SuspendLayout();
-            panel2.SuspendLayout();
+            filesPanel.SuspendLayout();
             SuspendLayout();
             // 
             // menuStrip1
@@ -179,7 +179,7 @@
             // 
             // panel1
             // 
-            panel1.Controls.Add(panel2);
+            panel1.Controls.Add(filesPanel);
             panel1.Controls.Add(button2);
             panel1.Controls.Add(contextsComboBox);
             panel1.Controls.Add(label2);
@@ -192,16 +192,16 @@
             panel1.Size = new Size(539, 253);
             panel1.TabIndex = 0;
             // 
-            // panel2
+            // filesPanel
             // 
-            panel2.Controls.Add(filesListBox);
-            panel2.Controls.Add(button3);
-            panel2.Controls.Add(label3);
-            panel2.Location = new Point(20, 22);
-            panel2.Margin = new Padding(2);
-            panel2.Name = "panel2";
-            panel2.Size = new Size(495, 122);
-            panel2.TabIndex = 4;
+            filesPanel.Controls.Add(filesListBox);
+            filesPanel.Controls.Add(button3);
+            filesPanel.Controls.Add(label3);
+            filesPanel.Location = new Point(20, 22);
+            filesPanel.Margin = new Padding(2);
+            filesPanel.Name = "filesPanel";
+            filesPanel.Size = new Size(495, 122);
+            filesPanel.TabIndex = 4;
             // 
             // filesListBox
             // 
@@ -299,7 +299,7 @@
             statusStrip1.TabIndex = 3;
             statusStrip1.Text = "statusStrip1";
             // 
-            // Form1
+            // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -310,7 +310,7 @@
             Controls.Add(statusStrip1);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MainMenuStrip = menuStrip1;
-            Name = "Form1";
+            Name = "MainForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Philter Desktop";
             Load += Form1_Load;
@@ -320,8 +320,8 @@
             tabPage1.ResumeLayout(false);
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
-            panel2.ResumeLayout(false);
-            panel2.PerformLayout();
+            filesPanel.ResumeLayout(false);
+            filesPanel.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -339,7 +339,7 @@
         private TabControl tabControl1;
         private TabPage tabPage1;
         private Panel panel1;
-        private Panel panel2;
+        private Panel filesPanel;
         private Button button3;
         private Label label3;
         private Button button2;

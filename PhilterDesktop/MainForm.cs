@@ -51,6 +51,48 @@ namespace PhilterDesktop
                 _contextRepository.Insert(contextEntity);
             }
 
+            // Enable drag and drop for filesListBox
+            filesListBox.AllowDrop = true;
+            filesListBox.DragEnter += FilesControl_DragEnter;
+            filesListBox.DragDrop += FilesControl_DragDrop;
+
+            // Enable drag and drop for filesPanel
+            filesPanel.AllowDrop = true;
+            filesPanel.DragEnter += FilesControl_DragEnter;
+            filesPanel.DragDrop += FilesControl_DragDrop;
+        }
+
+        private void FilesControl_DragEnter(object? sender, DragEventArgs e)
+        {
+            // Check if the data being dragged contains files
+            if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+
+        private void FilesControl_DragDrop(object? sender, DragEventArgs e)
+        {
+            // Get the dropped files
+            if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[]? files = e.Data.GetData(DataFormats.FileDrop) as string[];
+                if (files != null)
+                {
+                    foreach (string file in files)
+                    {
+                        // Only add if the file doesn't already exist in the list
+                        if (!filesListBox.Items.Contains(file))
+                        {
+                            filesListBox.Items.Add(file);
+                        }
+                    }
+                }
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
