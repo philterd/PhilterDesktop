@@ -17,7 +17,7 @@ namespace PhilterDesktop
         private readonly ContextEntryRepository _contextEntryRepository;
         private readonly SettingsRepository _settingsRepository;
         private bool _loggingEnabled;
-       
+
         public MainForm()
         {
             InitializeComponent();
@@ -69,70 +69,6 @@ namespace PhilterDesktop
                     Logger.LogInfo("Created default redaction context");
                 }
             }
-
-            // Enable drag and drop for filesListBox
-            filesListBox.AllowDrop = true;
-            filesListBox.DragEnter += FilesControl_DragEnter;
-            filesListBox.DragDrop += FilesControl_DragDrop;
-
-            // Enable drag and drop for filesPanel
-            filesPanel.AllowDrop = true;
-            filesPanel.DragEnter += FilesControl_DragEnter;
-            filesPanel.DragDrop += FilesControl_DragDrop;
-        }
-
-        private void FilesControl_DragEnter(object? sender, DragEventArgs e)
-        {
-            // Check if the data being dragged contains files
-            if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                e.Effect = DragDropEffects.Copy;
-            }
-            else
-            {
-                e.Effect = DragDropEffects.None;
-            }
-        }
-
-        private void FilesControl_DragDrop(object? sender, DragEventArgs e)
-        {
-            // Get the dropped files
-            if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                if (e.Data.GetData(DataFormats.FileDrop) is string[] files)
-                {
-                    foreach (string file in files)
-                    {
-                        // Only add if the file doesn't already exist in the list and is an acceptable file type.
-                        if (!filesListBox.Items.Contains(file))
-                        {
-                            if (file.EndsWith(".txt") || file.EndsWith(".docx") || file.EndsWith(".pdf"))
-                            {
-                                filesListBox.Items.Add(file);
-
-                                if (_loggingEnabled)
-                                {
-                                    Logger.LogInfo($"File added via drag-drop: {file}");
-                                }
-                            }
-                            else
-                            {
-                                if (_loggingEnabled)
-                                {
-                                    Logger.LogWarning($"Unsupported file type rejected: {file}");
-                                }
-                                // TODO: Show a message to the user that the file type is not supported.
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-
-
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -159,97 +95,6 @@ namespace PhilterDesktop
 
             var f = new PolicyEditorForm(_policyRepository);
             f.ShowDialog();
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            openFileDialog1.CheckFileExists = true;
-            openFileDialog1.CheckPathExists = true;
-            openFileDialog1.Multiselect = true;
-            openFileDialog1.Filter = "Text Files (*.txt)|*.txt|PDF Documents (*.pdf)|*.pdf|Microsoft Word Documents (*.docx)|*.docx";
-            openFileDialog1.FilterIndex = 0;
-            openFileDialog1.FileName = "";
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
-            {
-                foreach (string s in openFileDialog1.FileNames)
-                {
-                    filesListBox.Items.Add(s);
-
-                    if (_loggingEnabled)
-                    {
-                        Logger.LogInfo($"File added via file dialog: {s}");
-                    }
-                }
-            }
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-
-            if (comboBox1.Text == string.Empty)
-            {
-                MessageBox.Show("A policy must be selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            if (contextsComboBox.Text == string.Empty)
-            {
-                MessageBox.Show("A context must be selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            PolicyEntity policyEntity = _policyRepository.FindByName(comboBox1.Text);
-            PhileasPolicy? policy = System.Text.Json.JsonSerializer.Deserialize<PhileasPolicy>(policyEntity.Json);
-
-            if (policy == null)
-            {
-                MessageBox.Show("Unable to load policy.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-                if (_loggingEnabled)
-                {
-                    Logger.LogError($"Unable to load policy: {comboBox1.Text}");
-                }
-
-                return;
-            }
-
-            string context = contextsComboBox.Text;
-
-            var result = new FilterService().Filter(
-                policy: policy,
-                context: context,
-                piece: 0,
-                input: "Contact john.doe@example.com for help."
-            );
-
-            if (_loggingEnabled)
-            {
-                //Logger.LogInfo($"Test filter executed - Result: {result.FilteredText}");
-            }
-
-        }
-
-        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void comboBox1_DropDown(object sender, EventArgs e)
-        {
-            comboBox1.Items.Clear();
-            foreach (PolicyEntity p in _policyRepository.GetAll())
-            {
-                comboBox1.Items.Add(p.Name);
-            }
-        }
-
-        private void contextsComboBox_DropDown(object sender, EventArgs e)
-        {
-            contextsComboBox.Items.Clear();
-            foreach (ContextEntity p in _contextRepository.GetAll())
-            {
-                contextsComboBox.Items.Add(p.Name);
-            }
         }
 
         private void redactionContextsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -290,6 +135,66 @@ namespace PhilterDesktop
                 }
             }
         }
-    }
 
+        private void toolStripButtonRedactDocuments_Click(object sender, EventArgs e)
+        {
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo("Opening Redact Documents dialog");
+            }
+
+            var redactDocumentsForm = new RedactDocumentsForm(_policyRepository, _contextRepository, _loggingEnabled);
+            redactDocumentsForm.ShowDialog();
+        }
+
+        private void policiesToolStripButton_Click(object sender, EventArgs e)
+        {
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo("Opening Policy Editor");
+            }
+
+            var f = new PolicyEditorForm(_policyRepository);
+            f.ShowDialog();
+        }
+
+        private void contextsToolStripButton_Click(object sender, EventArgs e)
+        {
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo("Opening Redaction Contexts dialog");
+            }
+
+            var redactionContextsForm = new RedctionContextsForm(_contextRepository, _contextEntryRepository);
+            redactionContextsForm.ShowDialog();
+        }
+
+        private void settingsToolStripButton_Click(object sender, EventArgs e)
+        {
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo("Opening Settings dialog");
+            }
+
+            var settingsForm = new SettingsForm(_settingsRepository);
+            var result = settingsForm.ShowDialog();
+
+            // Reload logging setting in case it changed
+            if (result == DialogResult.OK)
+            {
+                var settings = _settingsRepository.GetSettings();
+                bool previousLoggingState = _loggingEnabled;
+                _loggingEnabled = settings.LoggingEnabled;
+
+                if (_loggingEnabled && !previousLoggingState)
+                {
+                    Logger.LogInfo("Logging enabled via settings");
+                }
+                else if (!_loggingEnabled && previousLoggingState)
+                {
+                    Logger.LogInfo("Logging disabled via settings");
+                }
+            }
+        }
+    }
 }
