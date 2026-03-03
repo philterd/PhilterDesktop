@@ -4,6 +4,7 @@ using Phileas.Policy.Filters;
 using Phileas.Services;
 using Philter;
 using PhilterData;
+using System.Text.Json;
 using PhileasPolicy = Phileas.Policy.Policy;
 
 namespace PhilterDesktop
@@ -184,28 +185,48 @@ namespace PhilterDesktop
 
         private void button2_Click(object sender, EventArgs e)
         {
-            var policy = new PhileasPolicy
+
+            if (comboBox1.Text == string.Empty)
             {
-                Name = "my-policy",
-                Identifiers = new Identifiers
+                MessageBox.Show("A policy must be selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (contextsComboBox.Text == string.Empty)
+            {
+                MessageBox.Show("A context must be selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            PolicyEntity policyEntity = _policyRepository.FindByName(comboBox1.Text);
+            PhileasPolicy? policy = System.Text.Json.JsonSerializer.Deserialize<PhileasPolicy>(policyEntity.Json);
+
+            if (policy == null)
+            {
+                MessageBox.Show("Unable to load policy.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                if (_loggingEnabled)
                 {
-                    EmailAddress = new EmailAddress()
+                    Logger.LogError($"Unable to load policy: {comboBox1.Text}");
                 }
-            };
+
+                return;
+            }
+
+            string context = contextsComboBox.Text;
 
             var result = new FilterService().Filter(
                 policy: policy,
-                context: "default",
+                context: context,
                 piece: 0,
                 input: "Contact john.doe@example.com for help."
             );
 
-            System.Diagnostics.Debug.WriteLine(result.FilteredText);
-
             if (_loggingEnabled)
             {
-                Logger.LogInfo($"Test filter executed - Result: {result.FilteredText}");
+                //Logger.LogInfo($"Test filter executed - Result: {result.FilteredText}");
             }
+
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
