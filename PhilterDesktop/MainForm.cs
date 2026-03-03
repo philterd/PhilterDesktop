@@ -86,6 +86,17 @@ namespace PhilterDesktop
             Application.Exit();
         }
 
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo("Opening About dialog");
+            }
+
+            var aboutForm = new AboutForm();
+            aboutForm.ShowDialog();
+        }
+
         private void policiesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_loggingEnabled)

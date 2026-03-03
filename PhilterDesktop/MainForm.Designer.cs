@@ -110,6 +110,7 @@
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
             aboutToolStripMenuItem.Size = new Size(270, 34);
             aboutToolStripMenuItem.Text = "About...";
+            aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
             // statusStrip1
             // 
