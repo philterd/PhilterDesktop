@@ -1,10 +1,11 @@
 using PhilterData;
+using System.Diagnostics;
 
 namespace PhilterDesktop
 {
     /// <summary>
     /// Form for managing application settings.
-    /// </summary>
+    /// /// </summary>
     public partial class SettingsForm : Form
     {
         private readonly SettingsRepository _settingsRepository;
@@ -32,6 +33,7 @@ namespace PhilterDesktop
             txtCustomFolder.Text = _settings.CustomOutputFolder;
             txtCustomFolder.Enabled = !_settings.OutputToOriginalLocation;
             btnBrowse.Enabled = !_settings.OutputToOriginalLocation;
+            chkEnableLogging.Checked = _settings.LoggingEnabled;
         }
 
         private void RadioOriginalLocation_CheckedChanged(object sender, EventArgs e)
@@ -52,6 +54,50 @@ namespace PhilterDesktop
             if (folderDialog.ShowDialog() == DialogResult.OK)
             {
                 txtCustomFolder.Text = folderDialog.SelectedPath;
+            }
+        }
+
+        private void ChkEnableLogging_CheckedChanged(object sender, EventArgs e)
+        {
+  
+        }
+
+        private string GetLogFilePath()
+        {
+            string root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string folder = Path.Combine(root, "PhilterDesktop");
+            return Path.Combine(folder, "application.log");
+        }
+
+        private void BtnOpenLog_Click(object sender, EventArgs e)
+        {
+            string logFilePath = GetLogFilePath();
+
+            if (!File.Exists(logFilePath))
+            {
+                MessageBox.Show(
+                    "Log file does not exist yet. The log file will be created when logging is enabled and events are logged.",
+                    "Log File Not Found",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = logFilePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Failed to open log file: {ex.Message}",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
 
@@ -104,14 +150,9 @@ namespace PhilterDesktop
             // Save settings
             _settings.OutputToOriginalLocation = radioOriginalLocation.Checked;
             _settings.CustomOutputFolder = txtCustomFolder.Text.Trim();
+            _settings.LoggingEnabled = chkEnableLogging.Checked;
             
             _settingsRepository.SaveSettings(_settings);
-
-            MessageBox.Show(
-                "Settings saved successfully.",
-                "Success",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
 
             DialogResult = DialogResult.OK;
             Close();

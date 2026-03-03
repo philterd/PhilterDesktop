@@ -26,6 +26,11 @@ namespace PhilterData
         public string CustomOutputFolder { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets a value indicating whether logging is enabled.
+        /// </summary>
+        public bool LoggingEnabled { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets the date and time when the settings were last modified.
         /// </summary>
         public DateTime LastModified { get; set; } = DateTime.UtcNow;

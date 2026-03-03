@@ -33,9 +33,13 @@ namespace PhilterDesktop
             txtCustomFolder = new TextBox();
             radioCustomFolder = new RadioButton();
             radioOriginalLocation = new RadioButton();
+            groupBoxLogging = new GroupBox();
+            btnOpenLog = new Button();
+            chkEnableLogging = new CheckBox();
             btnSave = new Button();
             btnCancel = new Button();
             groupBoxOutput.SuspendLayout();
+            groupBoxLogging.SuspendLayout();
             SuspendLayout();
             // 
             // groupBoxOutput
@@ -91,22 +95,55 @@ namespace PhilterDesktop
             radioOriginalLocation.UseVisualStyleBackColor = true;
             radioOriginalLocation.CheckedChanged += RadioOriginalLocation_CheckedChanged;
             // 
+            // groupBoxLogging
+            // 
+            groupBoxLogging.Controls.Add(btnOpenLog);
+            groupBoxLogging.Controls.Add(chkEnableLogging);
+            groupBoxLogging.Location = new Point(12, 138);
+            groupBoxLogging.Name = "groupBoxLogging";
+            groupBoxLogging.Size = new Size(560, 65);
+            groupBoxLogging.TabIndex = 1;
+            groupBoxLogging.TabStop = false;
+            groupBoxLogging.Text = "Logging";
+            // 
+            // btnOpenLog
+            // 
+            btnOpenLog.Location = new Point(165, 27);
+            btnOpenLog.Name = "btnOpenLog";
+            btnOpenLog.Size = new Size(100, 25);
+            btnOpenLog.TabIndex = 1;
+            btnOpenLog.Text = "Open Log File";
+            btnOpenLog.UseVisualStyleBackColor = true;
+            btnOpenLog.Enabled = true;
+            btnOpenLog.Click += BtnOpenLog_Click;
+            // 
+            // chkEnableLogging
+            // 
+            chkEnableLogging.AutoSize = true;
+            chkEnableLogging.Location = new Point(20, 30);
+            chkEnableLogging.Name = "chkEnableLogging";
+            chkEnableLogging.Size = new Size(107, 19);
+            chkEnableLogging.TabIndex = 0;
+            chkEnableLogging.Text = "Enable logging";
+            chkEnableLogging.UseVisualStyleBackColor = true;
+            chkEnableLogging.CheckedChanged += ChkEnableLogging_CheckedChanged;
+            // 
             // btnSave
             // 
-            btnSave.Location = new Point(390, 145);
+            btnSave.Location = new Point(390, 216);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(90, 30);
-            btnSave.TabIndex = 1;
+            btnSave.TabIndex = 2;
             btnSave.Text = "Save";
             btnSave.UseVisualStyleBackColor = true;
             btnSave.Click += BtnSave_Click;
             // 
             // btnCancel
             // 
-            btnCancel.Location = new Point(486, 145);
+            btnCancel.Location = new Point(486, 216);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(90, 30);
-            btnCancel.TabIndex = 2;
+            btnCancel.TabIndex = 3;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = true;
             btnCancel.Click += BtnCancel_Click;
@@ -115,9 +152,10 @@ namespace PhilterDesktop
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(584, 187);
+            ClientSize = new Size(584, 258);
             Controls.Add(btnCancel);
             Controls.Add(btnSave);
+            Controls.Add(groupBoxLogging);
             Controls.Add(groupBoxOutput);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
@@ -128,6 +166,8 @@ namespace PhilterDesktop
             Load += SettingsForm_Load;
             groupBoxOutput.ResumeLayout(false);
             groupBoxOutput.PerformLayout();
+            groupBoxLogging.ResumeLayout(false);
+            groupBoxLogging.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -138,6 +178,9 @@ namespace PhilterDesktop
         private RadioButton radioCustomFolder;
         private TextBox txtCustomFolder;
         private Button btnBrowse;
+        private GroupBox groupBoxLogging;
+        private CheckBox chkEnableLogging;
+        private Button btnOpenLog;
         private Button btnSave;
         private Button btnCancel;
     }

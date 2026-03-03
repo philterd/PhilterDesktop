@@ -15,7 +15,8 @@ namespace PhilterDesktop
         private readonly ContextRepository _contextRepository;
         private readonly ContextEntryRepository _contextEntryRepository;
         private readonly SettingsRepository _settingsRepository;
-        
+        private bool _loggingEnabled;
+       
         public MainForm()
         {
             InitializeComponent();
@@ -41,6 +42,15 @@ namespace PhilterDesktop
             _contextEntryRepository = new ContextEntryRepository(_database);
             _settingsRepository = new SettingsRepository(_database);
 
+            // Load settings and check if logging is enabled
+            var settings = _settingsRepository.GetSettings();
+            _loggingEnabled = settings.LoggingEnabled;
+
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo("PhilterDesktop application started");
+            }
+
             // Insert default policy.
             // TODO
 
@@ -52,6 +62,11 @@ namespace PhilterDesktop
                     Name = "default"
                 };
                 _contextRepository.Insert(contextEntity);
+
+                if (_loggingEnabled)
+                {
+                    Logger.LogInfo("Created default redaction context");
+                }
             }
 
             // Enable drag and drop for filesListBox
@@ -93,9 +108,18 @@ namespace PhilterDesktop
                             if (file.EndsWith(".txt") || file.EndsWith(".docx") || file.EndsWith(".pdf"))
                             {
                                 filesListBox.Items.Add(file);
+
+                                if (_loggingEnabled)
+                                {
+                                    Logger.LogInfo($"File added via drag-drop: {file}");
+                                }
                             }
                             else
                             {
+                                if (_loggingEnabled)
+                                {
+                                    Logger.LogWarning($"Unsupported file type rejected: {file}");
+                                }
                                 // TODO: Show a message to the user that the file type is not supported.
                             }
                         }
@@ -117,11 +141,21 @@ namespace PhilterDesktop
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo("PhilterDesktop application closing");
+            }
+
             Application.Exit();
         }
 
         private void policiesToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo("Opening Policy Editor");
+            }
+
             var f = new PolicyEditorForm(_policyRepository);
             f.ShowDialog();
         }
@@ -139,6 +173,11 @@ namespace PhilterDesktop
                 foreach (string s in openFileDialog1.FileNames)
                 {
                     filesListBox.Items.Add(s);
+
+                    if (_loggingEnabled)
+                    {
+                        Logger.LogInfo($"File added via file dialog: {s}");
+                    }
                 }
             }
         }
@@ -162,6 +201,11 @@ namespace PhilterDesktop
             );
 
             System.Diagnostics.Debug.WriteLine(result.FilteredText);
+
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo($"Test filter executed - Result: {result.FilteredText}");
+            }
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -189,14 +233,41 @@ namespace PhilterDesktop
 
         private void redactionContextsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo("Opening Redaction Contexts dialog");
+            }
+
             var redactionContextsForm = new RedctionContextsForm(_contextRepository, _contextEntryRepository);
             redactionContextsForm.ShowDialog();
         }
 
         private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo("Opening Settings dialog");
+            }
+
             var settingsForm = new SettingsForm(_settingsRepository);
-            settingsForm.ShowDialog();
+            var result = settingsForm.ShowDialog();
+
+            // Reload logging setting in case it changed
+            if (result == DialogResult.OK)
+            {
+                var settings = _settingsRepository.GetSettings();
+                bool previousLoggingState = _loggingEnabled;
+                _loggingEnabled = settings.LoggingEnabled;
+
+                if (_loggingEnabled && !previousLoggingState)
+                {
+                    Logger.LogInfo("Logging enabled via settings");
+                }
+                else if (!_loggingEnabled && previousLoggingState)
+                {
+                    Logger.LogInfo("Logging disabled via settings");
+                }
+            }
         }
     }
 
