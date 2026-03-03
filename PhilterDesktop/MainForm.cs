@@ -138,22 +138,12 @@ namespace PhilterDesktop
 
         private void toolStripButtonRedactDocuments_Click(object sender, EventArgs e)
         {
-            if (_loggingEnabled)
-            {
-                Logger.LogInfo("Opening Redact Documents dialog");
-            }
-
             var redactDocumentsForm = new RedactDocumentsForm(_policyRepository, _contextRepository, _loggingEnabled);
             redactDocumentsForm.ShowDialog();
         }
 
         private void policiesToolStripButton_Click(object sender, EventArgs e)
         {
-            if (_loggingEnabled)
-            {
-                Logger.LogInfo("Opening Policy Editor");
-            }
-
             var f = new PolicyEditorForm(_policyRepository);
             f.ShowDialog();
         }
@@ -195,6 +185,12 @@ namespace PhilterDesktop
                     Logger.LogInfo("Logging disabled via settings");
                 }
             }
+        }
+
+        private void addFilesToRedactToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var redactDocumentsForm = new RedactDocumentsForm(_policyRepository, _contextRepository, _loggingEnabled);
+            redactDocumentsForm.ShowDialog();
         }
     }
 }

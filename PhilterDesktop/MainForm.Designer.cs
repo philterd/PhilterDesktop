@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             menuStrip1 = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
@@ -49,8 +50,16 @@
             columnHeader2 = new ColumnHeader();
             columnHeader4 = new ColumnHeader();
             columnHeader3 = new ColumnHeader();
+            contextMenuStrip1 = new ContextMenuStrip(components);
+            addFilesToRedactToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator2 = new ToolStripSeparator();
+            removeToolStripMenuItem = new ToolStripMenuItem();
+            removeAllToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator5 = new ToolStripSeparator();
+            openRedactedFileToolStripMenuItem = new ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
+            contextMenuStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // menuStrip1
@@ -86,6 +95,7 @@
             // 
             // helpToolStripMenuItem1
             // 
+            helpToolStripMenuItem1.Image = (Image)resources.GetObject("helpToolStripMenuItem1.Image");
             helpToolStripMenuItem1.Name = "helpToolStripMenuItem1";
             helpToolStripMenuItem1.Size = new Size(270, 34);
             helpToolStripMenuItem1.Text = "Help";
@@ -175,6 +185,7 @@
             // listView1
             // 
             listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader2, columnHeader4, columnHeader3 });
+            listView1.ContextMenuStrip = contextMenuStrip1;
             listView1.Dock = DockStyle.Fill;
             listView1.FullRowSelect = true;
             listView1.Location = new Point(0, 67);
@@ -204,6 +215,51 @@
             columnHeader3.Text = "Context";
             columnHeader3.Width = 120;
             // 
+            // contextMenuStrip1
+            // 
+            contextMenuStrip1.ImageScalingSize = new Size(24, 24);
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem });
+            contextMenuStrip1.Name = "contextMenuStrip1";
+            contextMenuStrip1.Size = new Size(258, 144);
+            // 
+            // addFilesToRedactToolStripMenuItem
+            // 
+            addFilesToRedactToolStripMenuItem.Image = (Image)resources.GetObject("addFilesToRedactToolStripMenuItem.Image");
+            addFilesToRedactToolStripMenuItem.Name = "addFilesToRedactToolStripMenuItem";
+            addFilesToRedactToolStripMenuItem.Size = new Size(257, 32);
+            addFilesToRedactToolStripMenuItem.Text = "Add Files to Redact...";
+            addFilesToRedactToolStripMenuItem.Click += addFilesToRedactToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new Size(254, 6);
+            // 
+            // removeToolStripMenuItem
+            // 
+            removeToolStripMenuItem.Image = (Image)resources.GetObject("removeToolStripMenuItem.Image");
+            removeToolStripMenuItem.Name = "removeToolStripMenuItem";
+            removeToolStripMenuItem.Size = new Size(257, 32);
+            removeToolStripMenuItem.Text = "Remove...";
+            // 
+            // removeAllToolStripMenuItem
+            // 
+            removeAllToolStripMenuItem.Name = "removeAllToolStripMenuItem";
+            removeAllToolStripMenuItem.Size = new Size(257, 32);
+            removeAllToolStripMenuItem.Text = "Remove All...";
+            // 
+            // toolStripSeparator5
+            // 
+            toolStripSeparator5.Name = "toolStripSeparator5";
+            toolStripSeparator5.Size = new Size(254, 6);
+            // 
+            // openRedactedFileToolStripMenuItem
+            // 
+            openRedactedFileToolStripMenuItem.Image = (Image)resources.GetObject("openRedactedFileToolStripMenuItem.Image");
+            openRedactedFileToolStripMenuItem.Name = "openRedactedFileToolStripMenuItem";
+            openRedactedFileToolStripMenuItem.Size = new Size(257, 32);
+            openRedactedFileToolStripMenuItem.Text = "Open Redacted File...";
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
@@ -225,6 +281,7 @@
             menuStrip1.PerformLayout();
             toolStrip1.ResumeLayout(false);
             toolStrip1.PerformLayout();
+            contextMenuStrip1.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -250,5 +307,12 @@
         private ToolStripButton contextsToolStripButton;
         private ToolStripSeparator toolStripSeparator4;
         private ToolStripButton settingsToolStripButton;
+        private ContextMenuStrip contextMenuStrip1;
+        private ToolStripMenuItem addFilesToRedactToolStripMenuItem;
+        private ToolStripSeparator toolStripSeparator2;
+        private ToolStripMenuItem removeToolStripMenuItem;
+        private ToolStripMenuItem removeAllToolStripMenuItem;
+        private ToolStripSeparator toolStripSeparator5;
+        private ToolStripMenuItem openRedactedFileToolStripMenuItem;
     }
 }
