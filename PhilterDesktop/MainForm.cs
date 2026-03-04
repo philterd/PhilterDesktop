@@ -97,6 +97,17 @@ namespace PhilterDesktop
             aboutForm.ShowDialog();
         }
 
+        private void licenseToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo("Opening License dialog");
+            }
+
+            var licenseForm = new LicenseForm();
+            licenseForm.ShowDialog();
+        }
+
         private void policiesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_loggingEnabled)
