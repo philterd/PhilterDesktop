@@ -26,8 +26,7 @@ namespace PhilterDesktop
 
             if (string.IsNullOrWhiteSpace(activationKey))
             {
-                MessageBox.Show("Please enter an activation key.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please enter an activation key.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -40,16 +39,14 @@ namespace PhilterDesktop
                 
                 // TODO: Save license to settings/database
                 
-                MessageBox.Show("Your license has been activated successfully.", "License Activated",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Your license has been activated successfully.", "License Activated", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else
             {
                 lblStatus.Text = "Invalid activation key";
                 lblStatus.ForeColor = Color.Red;
                 
-                MessageBox.Show("The activation key you entered is invalid. Please check and try again.", "Invalid License",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("The activation key you entered is invalid. Please check and try again.", "Invalid License", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
