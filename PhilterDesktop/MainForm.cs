@@ -214,5 +214,11 @@ namespace PhilterDesktop
             var redactDocumentsForm = new RedactDocumentsForm(_policyRepository, _contextRepository, _loggingEnabled);
             redactDocumentsForm.ShowDialog();
         }
+
+        private void redactToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var redactDocumentsForm = new RedactDocumentsForm(_policyRepository, _contextRepository, _loggingEnabled);
+            redactDocumentsForm.ShowDialog();
+        }
     }
 }

@@ -121,6 +121,18 @@
     <value>17, 17</value>
   </metadata>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="redactToolStripMenuItem.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAW
+        JQAAFiUBSVIk8AAAAWFJREFUWEftltFtxCAMhm+EvmGSl4zQEW6EjnCbtKNkg94G7QbtBtcNehu0+iNb
+        sv4LBRrI032SpTgGfmIM5HC4c2cFEfnpYayThDu2MtZJEmP8RIcQwivHaokxnjEWxuRYknEcH0XkqjN/
+        4Xgp6KtjXDEmx/9kGIYnSx2eOZ5ja/8F+4IQwnfNF6At+mzN4IKtYQjhY5qmB44zaIO2uu5njleDAWuK
+        0hddyYSLKC3KTUWXI1dUuXgTUkXZtOhy2BqvWZOiy4HCYmGzZkWXwwRTfgpdwovaM8eLYUH21xCRmTP2
+        73phQfYZJ75sTxE5qn/htkWwIPseFtd3NoEvbl8EC7Lv3t+IN9myXlBTejOBAvHZt6/CBEXkZAP6H46u
+        4sBNwGy2M6C7OHDCuKBO7n1/cWAp9/fBbuLApxy447m/+BpuX7/D31UcuB8RnPFvu4qDxBW9jzhA6nUS
+        yMSx5lr+Bf2SKiliM7eBAAAAAElFTkSuQmCC
+</value>
+  </data>
   <data name="helpToolStripMenuItem1.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAW
