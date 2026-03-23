@@ -32,8 +32,6 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             menuStrip1 = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
-            redactToolStripMenuItem = new ToolStripMenuItem();
-            toolStripSeparator6 = new ToolStripSeparator();
             exitToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem1 = new ToolStripMenuItem();
@@ -58,8 +56,14 @@
             toolStripSeparator2 = new ToolStripSeparator();
             removeToolStripMenuItem = new ToolStripMenuItem();
             removeAllToolStripMenuItem = new ToolStripMenuItem();
+            removeCompletedToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator5 = new ToolStripSeparator();
             openRedactedFileToolStripMenuItem = new ToolStripMenuItem();
+            openOriginalFileToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator7 = new ToolStripSeparator();
+            refreshToolStripMenuItem = new ToolStripMenuItem();
+            imageList1 = new ImageList(components);
+            redactionQueueTimer = new System.Windows.Forms.Timer(components);
             menuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
             contextMenuStrip1.SuspendLayout();
@@ -71,29 +75,16 @@
             menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, helpToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(1026, 33);
+            menuStrip1.Size = new Size(1237, 33);
             menuStrip1.TabIndex = 1;
             menuStrip1.Text = "menuStrip1";
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { redactToolStripMenuItem, toolStripSeparator6, exitToolStripMenuItem });
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { exitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new Size(54, 29);
             fileToolStripMenuItem.Text = "File";
-            // 
-            // redactToolStripMenuItem
-            // 
-            redactToolStripMenuItem.Image = (Image)resources.GetObject("redactToolStripMenuItem.Image");
-            redactToolStripMenuItem.Name = "redactToolStripMenuItem";
-            redactToolStripMenuItem.Size = new Size(270, 34);
-            redactToolStripMenuItem.Text = "Redact...";
-            redactToolStripMenuItem.Click += redactToolStripMenuItem_Click;
-            // 
-            // toolStripSeparator6
-            // 
-            toolStripSeparator6.Name = "toolStripSeparator6";
-            toolStripSeparator6.Size = new Size(267, 6);
             // 
             // exitToolStripMenuItem
             // 
@@ -138,23 +129,22 @@
             // statusStrip1
             // 
             statusStrip1.ImageScalingSize = new Size(24, 24);
-            statusStrip1.Location = new Point(88, 543);
+            statusStrip1.Location = new Point(0, 543);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Padding = new Padding(1, 0, 20, 0);
-            statusStrip1.Size = new Size(938, 22);
+            statusStrip1.Size = new Size(1237, 22);
             statusStrip1.TabIndex = 3;
             statusStrip1.Text = "statusStrip1";
             // 
             // toolStrip1
             // 
-            toolStrip1.Dock = DockStyle.Left;
             toolStrip1.GripStyle = ToolStripGripStyle.Hidden;
             toolStrip1.ImageScalingSize = new Size(24, 24);
             toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonRedactDocuments, toolStripSeparator3, policiesToolStripButton, contextsToolStripButton, toolStripSeparator4, settingsToolStripButton });
             toolStrip1.Location = new Point(0, 33);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new Padding(0, 0, 3, 0);
-            toolStrip1.Size = new Size(88, 532);
+            toolStrip1.Size = new Size(1237, 58);
             toolStrip1.TabIndex = 4;
             toolStrip1.Text = "toolStrip1";
             // 
@@ -164,7 +154,7 @@
             toolStripButtonRedactDocuments.ImageTransparentColor = Color.Magenta;
             toolStripButtonRedactDocuments.Name = "toolStripButtonRedactDocuments";
             toolStripButtonRedactDocuments.Size = new Size(81, 53);
-            toolStripButtonRedactDocuments.Text = "Redact...";
+            toolStripButtonRedactDocuments.Text = "Redact";
             toolStripButtonRedactDocuments.TextImageRelation = TextImageRelation.ImageAboveText;
             toolStripButtonRedactDocuments.ToolTipText = "Select files to redact";
             toolStripButtonRedactDocuments.Click += toolStripButtonRedactDocuments_Click;
@@ -218,9 +208,12 @@
             listView1.ContextMenuStrip = contextMenuStrip1;
             listView1.Dock = DockStyle.Fill;
             listView1.FullRowSelect = true;
-            listView1.Location = new Point(88, 33);
+            listView1.GridLines = true;
+            listView1.LargeImageList = imageList1;
+            listView1.Location = new Point(0, 91);
             listView1.Name = "listView1";
-            listView1.Size = new Size(938, 510);
+            listView1.Size = new Size(1237, 452);
+            listView1.SmallImageList = imageList1;
             listView1.TabIndex = 3;
             listView1.UseCompatibleStateImageBehavior = false;
             listView1.View = View.Details;
@@ -228,7 +221,7 @@
             // columnHeader1
             // 
             columnHeader1.Text = "File Name";
-            columnHeader1.Width = 450;
+            columnHeader1.Width = 350;
             // 
             // columnHeader2
             // 
@@ -248,9 +241,9 @@
             // contextMenuStrip1
             // 
             contextMenuStrip1.ImageScalingSize = new Size(24, 24);
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem });
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new Size(258, 144);
+            contextMenuStrip1.Size = new Size(258, 246);
             // 
             // addFilesToRedactToolStripMenuItem
             // 
@@ -271,12 +264,21 @@
             removeToolStripMenuItem.Name = "removeToolStripMenuItem";
             removeToolStripMenuItem.Size = new Size(257, 32);
             removeToolStripMenuItem.Text = "Remove...";
+            removeToolStripMenuItem.Click += removeToolStripMenuItem_Click;
             // 
             // removeAllToolStripMenuItem
             // 
             removeAllToolStripMenuItem.Name = "removeAllToolStripMenuItem";
             removeAllToolStripMenuItem.Size = new Size(257, 32);
             removeAllToolStripMenuItem.Text = "Remove All...";
+            removeAllToolStripMenuItem.Click += removeAllToolStripMenuItem_Click;
+            // 
+            // removeCompletedToolStripMenuItem
+            // 
+            removeCompletedToolStripMenuItem.Name = "removeCompletedToolStripMenuItem";
+            removeCompletedToolStripMenuItem.Size = new Size(257, 32);
+            removeCompletedToolStripMenuItem.Text = "Remove Completed";
+            removeCompletedToolStripMenuItem.Click += removeCompletedToolStripMenuItem_Click;
             // 
             // toolStripSeparator5
             // 
@@ -289,12 +291,46 @@
             openRedactedFileToolStripMenuItem.Name = "openRedactedFileToolStripMenuItem";
             openRedactedFileToolStripMenuItem.Size = new Size(257, 32);
             openRedactedFileToolStripMenuItem.Text = "Open Redacted File...";
+            openRedactedFileToolStripMenuItem.Click += openRedactedFileToolStripMenuItem_Click;
+            // 
+            // openOriginalFileToolStripMenuItem
+            // 
+            openOriginalFileToolStripMenuItem.Image = (Image)resources.GetObject("openOriginalFileToolStripMenuItem.Image");
+            openOriginalFileToolStripMenuItem.Name = "openOriginalFileToolStripMenuItem";
+            openOriginalFileToolStripMenuItem.Size = new Size(257, 32);
+            openOriginalFileToolStripMenuItem.Text = "Open Original File...";
+            openOriginalFileToolStripMenuItem.Click += openOriginalFileToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator7
+            // 
+            toolStripSeparator7.Name = "toolStripSeparator7";
+            toolStripSeparator7.Size = new Size(254, 6);
+            // 
+            // refreshToolStripMenuItem
+            // 
+            refreshToolStripMenuItem.Image = (Image)resources.GetObject("refreshToolStripMenuItem.Image");
+            refreshToolStripMenuItem.Name = "refreshToolStripMenuItem";
+            refreshToolStripMenuItem.Size = new Size(257, 32);
+            refreshToolStripMenuItem.Text = "Refresh";
+            refreshToolStripMenuItem.Click += refreshToolStripMenuItem_Click;
+            // 
+            // imageList1
+            // 
+            imageList1.ColorDepth = ColorDepth.Depth32Bit;
+            imageList1.ImageStream = (ImageListStreamer)resources.GetObject("imageList1.ImageStream");
+            imageList1.TransparentColor = Color.Transparent;
+            imageList1.Images.SetKeyName(0, "document.ico");
+            // 
+            // redactionQueueTimer
+            // 
+            redactionQueueTimer.Interval = 15000;
+            redactionQueueTimer.Tick += RedactionQueueTimer_Tick;
             // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1026, 565);
+            ClientSize = new Size(1237, 565);
             Controls.Add(listView1);
             Controls.Add(statusStrip1);
             Controls.Add(toolStrip1);
@@ -302,7 +338,7 @@
             Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStrip1;
             Margin = new Padding(4, 5, 4, 5);
-            MinimumSize = new Size(1028, 593);
+            MinimumSize = new Size(1025, 581);
             Name = "MainForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Philter Desktop";
@@ -345,7 +381,11 @@
         private ToolStripMenuItem removeAllToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator5;
         private ToolStripMenuItem openRedactedFileToolStripMenuItem;
-        private ToolStripMenuItem redactToolStripMenuItem;
-        private ToolStripSeparator toolStripSeparator6;
+        private ToolStripMenuItem openOriginalFileToolStripMenuItem;
+        private System.Windows.Forms.Timer redactionQueueTimer;
+        private ToolStripSeparator toolStripSeparator7;
+        private ToolStripMenuItem refreshToolStripMenuItem;
+        private ToolStripMenuItem removeCompletedToolStripMenuItem;
+        private ImageList imageList1;
     }
 }

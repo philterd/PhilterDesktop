@@ -125,6 +125,13 @@ namespace PhilterDesktop
 
             var selectedContext = (ContextEntity)listViewContexts.SelectedItems[0].Tag;
 
+            if (selectedContext.Name.Equals("default", StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("The 'default' context cannot be deleted.", "Cannot Delete",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             var result = MessageBox.Show(
                 $"Are you sure you want to delete the context '{selectedContext.Name}'?",
                 "Confirm Delete",

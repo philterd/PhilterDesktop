@@ -15,19 +15,45 @@ Public Class PolicyEditorForm
     End Sub
 
     Private Sub Policys_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' TODO: Load the policy names
+
+        PoliciesToolStripDropDownButton.Items.Clear()
+        For Each policy As PolicyEntity In _repo.GetAll()
+            PoliciesToolStripDropDownButton.Items.Add(policy.Name)
+        Next
+
+        Dim defaultIndex As Integer = PoliciesToolStripDropDownButton.Items.IndexOf("default")
+        If defaultIndex >= 0 Then
+            PoliciesToolStripDropDownButton.SelectedIndex = defaultIndex
+        End If
+
     End Sub
 
     Private Sub NewToolStripButton_Click(sender As Object, e As EventArgs) Handles NewToolStripButton.Click
 
-        Dim PolicyEntity as new PolicyEntity
-        PolicyEntity.Name = "new policy3"
-        _repo.Insert(PolicyEntity)
+        Dim policyName As String = InputBox("Enter a name for the new policy:", "New Policy", "")
+
+        If String.IsNullOrWhiteSpace(policyName) Then
+            Return
+        End If
+
+        If _repo.FindByName(policyName) IsNot Nothing Then
+            MessageBox.Show("A policy named '" & policyName & "' already exists.", "Duplicate Policy", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        Dim policyEntity As New PolicyEntity
+        policyEntity.Name = policyName
+        _repo.Insert(policyEntity)
 
         PoliciesToolStripDropDownButton.Items.Clear()
-        For each policy as PolicyEntity in _repo.GetAll()
+        For Each policy As PolicyEntity In _repo.GetAll()
             PoliciesToolStripDropDownButton.Items.Add(policy.Name)
         Next
+
+        Dim newIndex As Integer = PoliciesToolStripDropDownButton.Items.IndexOf(policyName)
+        If newIndex >= 0 Then
+            PoliciesToolStripDropDownButton.SelectedIndex = newIndex
+        End If
 
     End Sub
 
@@ -60,43 +86,100 @@ Public Class PolicyEditorForm
 
     Private Sub SaveToolStripButton_Click(sender As Object, e As EventArgs) Handles SaveToolStripButton.Click
 
-        ' Save the policy to the database.
-        Dim PolicyEntity As New PolicyEntity
-        PolicyEntity.Name = "saved"
-        PolicyEntity.Json = JsonConvert.SerializeObject(GetPolicy())
-        _repo.Insert(PolicyEntity)
+        If PoliciesToolStripDropDownButton.SelectedItem Is Nothing Then
+            Return
+        End If
+
+        Dim policyName As String = PoliciesToolStripDropDownButton.SelectedItem.ToString()
+        Dim entity As PolicyEntity = _repo.FindByName(policyName)
+
+        If entity IsNot Nothing Then
+            entity.Json = JsonConvert.SerializeObject(GetPolicy())
+            _repo.Update(entity)
+        End If
 
     End Sub
 
     Private Sub SaveAsToolStripButton_Click(sender As Object, e As EventArgs) Handles SaveAsToolStripButton.Click
 
-        ' TODO: Save the policy under a new file name.
+        Dim policyName As String = InputBox("Enter a name for the new policy:", "Save As", "")
+
+        If String.IsNullOrWhiteSpace(policyName) Then
+            Return
+        End If
+
+        If _repo.FindByName(policyName) IsNot Nothing Then
+            MessageBox.Show("A policy named '" & policyName & "' already exists.", "Duplicate Policy", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        Dim entity As New PolicyEntity
+        entity.Name = policyName
+        entity.Json = JsonConvert.SerializeObject(GetPolicy())
+        _repo.Insert(entity)
+
+        PoliciesToolStripDropDownButton.Items.Clear()
+        For Each policy As PolicyEntity In _repo.GetAll()
+            PoliciesToolStripDropDownButton.Items.Add(policy.Name)
+        Next
+
+        Dim newIndex As Integer = PoliciesToolStripDropDownButton.Items.IndexOf(policyName)
+        If newIndex >= 0 Then
+            PoliciesToolStripDropDownButton.SelectedIndex = newIndex
+        End If
 
     End Sub
 
     Private Sub RefreshToolStripButton_Click(sender As Object, e As EventArgs) Handles RefreshToolStripButton.Click
 
-        ' Refresh the list of policies.
+        Dim currentName As String = If(PoliciesToolStripDropDownButton.SelectedItem IsNot Nothing, PoliciesToolStripDropDownButton.SelectedItem.ToString(), "default")
+
         PoliciesToolStripDropDownButton.Items.Clear()
-        For each policy as PolicyEntity in _repo.GetAll()
+        For Each policy As PolicyEntity In _repo.GetAll().OrderBy(Function(p) p.Name)
             PoliciesToolStripDropDownButton.Items.Add(policy.Name)
         Next
+
+        Dim restoreIndex As Integer = PoliciesToolStripDropDownButton.Items.IndexOf(currentName)
+        If restoreIndex < 0 Then
+            restoreIndex = PoliciesToolStripDropDownButton.Items.IndexOf("default")
+        End If
+        If restoreIndex >= 0 Then
+            PoliciesToolStripDropDownButton.SelectedIndex = restoreIndex
+        End If
 
     End Sub
 
     Private Sub DeleteToolStripButton_Click(sender As Object, e As EventArgs) Handles DeleteToolStripButton.Click
 
-        ' TODO: Get the policy name.
-        If MessageBox.Show("Are you sure you want to delete the policy with name " & "test" & "?", Application.ProductName, MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
+        If PoliciesToolStripDropDownButton.SelectedItem Is Nothing Then
+            Return
+        End If
 
-            ' Delete the policy from the database.
-            _repo.Delete("new policy")
+        Dim policyName As String = PoliciesToolStripDropDownButton.SelectedItem.ToString()
 
-            For each policy as PolicyEntity in _repo.GetAll()
+        If policyName.Equals("default", StringComparison.OrdinalIgnoreCase) Then
+            MessageBox.Show("The 'default' policy cannot be deleted.", "Cannot Delete", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return
+        End If
+
+        If MessageBox.Show("Are you sure you want to delete the policy named '" & policyName & "'?", Application.ProductName, MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
+
+            Dim entity As PolicyEntity = _repo.FindByName(policyName)
+            If entity IsNot Nothing Then
+                _repo.Delete(entity.Id)
+            End If
+
+            PoliciesToolStripDropDownButton.Items.Clear()
+            For Each policy As PolicyEntity In _repo.GetAll()
                 PoliciesToolStripDropDownButton.Items.Add(policy.Name)
             Next
 
             ResetForm()
+
+            PolicyPanel.Enabled = False
+            SaveToolStripButton.Enabled = False
+            SaveAsToolStripButton.Enabled = False
+            DeleteToolStripButton.Enabled = False
 
         End If
 

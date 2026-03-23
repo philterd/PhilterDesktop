@@ -7,15 +7,19 @@ namespace PhilterDesktop
     /// </summary>
     public partial class RedactDocumentsForm : Form
     {
+        private const int MaxFiles = 25;
+
         private readonly PolicyRepository _policyRepository;
         private readonly ContextRepository _contextRepository;
+        private readonly RedactionQueueRepository _redactionQueueRepository;
         private readonly bool _loggingEnabled;
 
-        public RedactDocumentsForm(PolicyRepository policyRepository, ContextRepository contextRepository, bool loggingEnabled)
+        public RedactDocumentsForm(PolicyRepository policyRepository, ContextRepository contextRepository, RedactionQueueRepository redactionQueueRepository, bool loggingEnabled)
         {
             InitializeComponent();
             _policyRepository = policyRepository;
             _contextRepository = contextRepository;
+            _redactionQueueRepository = redactionQueueRepository;
             _loggingEnabled = loggingEnabled;
         }
 
@@ -33,6 +37,7 @@ namespace PhilterDesktop
             {
                 comboBoxPolicy.Items.Add(p.Name);
             }
+            comboBoxPolicy.SelectedIndex = 0;
         }
 
         private void LoadContexts()
@@ -42,6 +47,7 @@ namespace PhilterDesktop
             {
                 comboBoxContext.Items.Add(c.Name);
             }
+            comboBoxContext.SelectedIndex = 0;
         }
 
         private void ComboBoxPolicy_DropDown(object sender, EventArgs e)
@@ -80,6 +86,16 @@ namespace PhilterDesktop
                                 file.EndsWith(".docx", StringComparison.OrdinalIgnoreCase) || 
                                 file.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                             {
+                                if (filesListBox.Items.Count >= MaxFiles)
+                                {
+                                    MessageBox.Show(
+                                        $"The queue is limited to {MaxFiles} documents at a time.",
+                                        "Queue Limit Reached",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Warning);
+                                    break;
+                                }
+
                                 filesListBox.Items.Add(file);
 
                                 if (_loggingEnabled)
@@ -124,6 +140,16 @@ namespace PhilterDesktop
                 {
                     if (!filesListBox.Items.Contains(file))
                     {
+                        if (filesListBox.Items.Count >= MaxFiles)
+                        {
+                            MessageBox.Show(
+                                $"The queue is limited to {MaxFiles} documents at a time.",
+                                "Queue Limit Reached",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
+                            break;
+                        }
+
                         filesListBox.Items.Add(file);
 
                         if (_loggingEnabled)
@@ -200,13 +226,21 @@ namespace PhilterDesktop
                 Logger.LogInfo($"Starting redaction - Policy: {policy}, Context: {context}, Files: {filesListBox.Items.Count}");
             }
 
-            // TODO: Implement actual redaction logic
-            // For now, just show a message
-            MessageBox.Show(
-                $"Redaction queued for {filesListBox.Items.Count} file(s)\n\nPolicy: {policy}\nContext: {context}",
-                "Redaction Queued",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
+            foreach (string file in filesListBox.Items.Cast<string>())
+            {
+                var entity = new RedactionQueueEntity
+                {
+                    Name = file,
+                    Policy = policy,
+                    Context = context
+                };
+                _redactionQueueRepository.Insert(entity);
+
+                if (_loggingEnabled)
+                {
+                    Logger.LogInfo($"Queued for redaction: {file}");
+                }
+            }
 
             DialogResult = DialogResult.OK;
             Close();

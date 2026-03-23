@@ -76,8 +76,10 @@ Partial Class PolicyEditorForm
         RefreshToolStripButton = New ToolStripButton()
         ToolStripSeparator6 = New ToolStripSeparator()
         NewToolStripButton = New ToolStripButton()
+        ToolStripSeparator1 = New ToolStripSeparator()
         SaveToolStripButton = New ToolStripButton()
         SaveAsToolStripButton = New ToolStripButton()
+        ToolStripSeparator2 = New ToolStripSeparator()
         DeleteToolStripButton = New ToolStripButton()
         PolicyPanel.SuspendLayout()
         PolicysToolStrip.SuspendLayout()
@@ -131,10 +133,10 @@ Partial Class PolicyEditorForm
         PolicyPanel.Controls.Add(AgesCheckBox)
         PolicyPanel.Dock = DockStyle.Fill
         PolicyPanel.Enabled = False
-        PolicyPanel.Location = New Point(0, 34)
+        PolicyPanel.Location = New Point(0, 58)
         PolicyPanel.Margin = New Padding(6, 5, 6, 5)
         PolicyPanel.Name = "PolicyPanel"
-        PolicyPanel.Size = New Size(1534, 644)
+        PolicyPanel.Size = New Size(1534, 620)
         PolicyPanel.TabIndex = 10
         ' 
         ' CustomIdentifiersConfigureButton
@@ -623,48 +625,56 @@ Partial Class PolicyEditorForm
         ' 
         ' PolicysToolStrip
         ' 
+        PolicysToolStrip.GripStyle = ToolStripGripStyle.Hidden
         PolicysToolStrip.ImageScalingSize = New Size(24, 24)
-        PolicysToolStrip.Items.AddRange(New ToolStripItem() {ToolStripLabel1, PoliciesToolStripDropDownButton, RefreshToolStripButton, ToolStripSeparator6, NewToolStripButton, SaveToolStripButton, SaveAsToolStripButton, DeleteToolStripButton})
+        PolicysToolStrip.Items.AddRange(New ToolStripItem() {ToolStripLabel1, PoliciesToolStripDropDownButton, RefreshToolStripButton, ToolStripSeparator6, NewToolStripButton, ToolStripSeparator1, SaveToolStripButton, SaveAsToolStripButton, ToolStripSeparator2, DeleteToolStripButton})
         PolicysToolStrip.Location = New Point(0, 0)
         PolicysToolStrip.Name = "PolicysToolStrip"
         PolicysToolStrip.Padding = New Padding(0, 0, 3, 0)
-        PolicysToolStrip.Size = New Size(1534, 34)
+        PolicysToolStrip.Size = New Size(1534, 58)
         PolicysToolStrip.TabIndex = 9
         PolicysToolStrip.Text = "ToolStrip3"
         ' 
         ' ToolStripLabel1
         ' 
         ToolStripLabel1.Name = "ToolStripLabel1"
-        ToolStripLabel1.Size = New Size(126, 29)
+        ToolStripLabel1.Size = New Size(126, 53)
         ToolStripLabel1.Text = "Select a Policy:"
         ' 
         ' PoliciesToolStripDropDownButton
         ' 
         PoliciesToolStripDropDownButton.DropDownStyle = ComboBoxStyle.DropDownList
         PoliciesToolStripDropDownButton.Name = "PoliciesToolStripDropDownButton"
-        PoliciesToolStripDropDownButton.Size = New Size(455, 34)
+        PoliciesToolStripDropDownButton.Size = New Size(455, 58)
         ' 
         ' RefreshToolStripButton
         ' 
-        RefreshToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image
         RefreshToolStripButton.Image = CType(resources.GetObject("RefreshToolStripButton.Image"), Image)
         RefreshToolStripButton.ImageTransparentColor = Color.Magenta
         RefreshToolStripButton.Name = "RefreshToolStripButton"
-        RefreshToolStripButton.Size = New Size(34, 29)
+        RefreshToolStripButton.Size = New Size(74, 53)
         RefreshToolStripButton.Text = "Refresh"
+        RefreshToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText
         ' 
         ' ToolStripSeparator6
         ' 
         ToolStripSeparator6.Name = "ToolStripSeparator6"
-        ToolStripSeparator6.Size = New Size(6, 34)
+        ToolStripSeparator6.Size = New Size(6, 58)
         ' 
         ' NewToolStripButton
         ' 
         NewToolStripButton.Image = CType(resources.GetObject("NewToolStripButton.Image"), Image)
         NewToolStripButton.ImageTransparentColor = Color.Magenta
         NewToolStripButton.Name = "NewToolStripButton"
-        NewToolStripButton.Size = New Size(87, 29)
-        NewToolStripButton.Text = "New..."
+        NewToolStripButton.Size = New Size(101, 53)
+        NewToolStripButton.Text = "New Policy"
+        NewToolStripButton.TextDirection = ToolStripTextDirection.Horizontal
+        NewToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText
+        ' 
+        ' ToolStripSeparator1
+        ' 
+        ToolStripSeparator1.Name = "ToolStripSeparator1"
+        ToolStripSeparator1.Size = New Size(6, 58)
         ' 
         ' SaveToolStripButton
         ' 
@@ -672,8 +682,9 @@ Partial Class PolicyEditorForm
         SaveToolStripButton.Image = CType(resources.GetObject("SaveToolStripButton.Image"), Image)
         SaveToolStripButton.ImageTransparentColor = Color.Magenta
         SaveToolStripButton.Name = "SaveToolStripButton"
-        SaveToolStripButton.Size = New Size(77, 29)
+        SaveToolStripButton.Size = New Size(53, 53)
         SaveToolStripButton.Text = "Save"
+        SaveToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText
         ' 
         ' SaveAsToolStripButton
         ' 
@@ -681,8 +692,14 @@ Partial Class PolicyEditorForm
         SaveAsToolStripButton.Image = CType(resources.GetObject("SaveAsToolStripButton.Image"), Image)
         SaveAsToolStripButton.ImageTransparentColor = Color.Magenta
         SaveAsToolStripButton.Name = "SaveAsToolStripButton"
-        SaveAsToolStripButton.Size = New Size(114, 29)
+        SaveAsToolStripButton.Size = New Size(90, 53)
         SaveAsToolStripButton.Text = "Save As..."
+        SaveAsToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText
+        ' 
+        ' ToolStripSeparator2
+        ' 
+        ToolStripSeparator2.Name = "ToolStripSeparator2"
+        ToolStripSeparator2.Size = New Size(6, 58)
         ' 
         ' DeleteToolStripButton
         ' 
@@ -690,8 +707,9 @@ Partial Class PolicyEditorForm
         DeleteToolStripButton.Image = CType(resources.GetObject("DeleteToolStripButton.Image"), Image)
         DeleteToolStripButton.ImageTransparentColor = Color.Magenta
         DeleteToolStripButton.Name = "DeleteToolStripButton"
-        DeleteToolStripButton.Size = New Size(102, 29)
+        DeleteToolStripButton.Size = New Size(78, 53)
         DeleteToolStripButton.Text = "Delete..."
+        DeleteToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText
         ' 
         ' PolicyEditorForm
         ' 
@@ -704,6 +722,7 @@ Partial Class PolicyEditorForm
         Icon = CType(resources.GetObject("$this.Icon"), Icon)
         Margin = New Padding(6, 5, 6, 5)
         MaximizeBox = False
+        MinimizeBox = False
         MinimumSize = New Size(1546, 699)
         Name = "PolicyEditorForm"
         StartPosition = FormStartPosition.CenterScreen
@@ -771,4 +790,6 @@ Partial Class PolicyEditorForm
     Friend WithEvents SaveToolStripButton As ToolStripButton
     Friend WithEvents SaveAsToolStripButton As ToolStripButton
     Friend WithEvents DeleteToolStripButton As ToolStripButton
+    Friend WithEvents ToolStripSeparator1 As ToolStripSeparator
+    Friend WithEvents ToolStripSeparator2 As ToolStripSeparator
 End Class
