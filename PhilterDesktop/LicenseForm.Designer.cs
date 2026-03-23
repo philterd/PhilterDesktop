@@ -44,44 +44,49 @@ namespace PhilterDesktop
             // 
             lblTitle.AutoSize = true;
             lblTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            lblTitle.Location = new Point(12, 12);
+            lblTitle.Location = new Point(17, 20);
+            lblTitle.Margin = new Padding(4, 0, 4, 0);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(187, 25);
+            lblTitle.Size = new Size(279, 38);
             lblTitle.TabIndex = 0;
             lblTitle.Text = "Software Activation";
             // 
             // lblInstructions
             // 
-            lblInstructions.Location = new Point(12, 45);
+            lblInstructions.Location = new Point(17, 75);
+            lblInstructions.Margin = new Padding(4, 0, 4, 0);
             lblInstructions.Name = "lblInstructions";
-            lblInstructions.Size = new Size(460, 40);
+            lblInstructions.Size = new Size(657, 67);
             lblInstructions.TabIndex = 1;
             lblInstructions.Text = "Enter your activation key below to activate Philter Desktop. You can obtain an activation key from https://www.philterd.ai";
             // 
             // lblActivationKey
             // 
             lblActivationKey.AutoSize = true;
-            lblActivationKey.Location = new Point(6, 28);
+            lblActivationKey.Location = new Point(9, 47);
+            lblActivationKey.Margin = new Padding(4, 0, 4, 0);
             lblActivationKey.Name = "lblActivationKey";
-            lblActivationKey.Size = new Size(86, 15);
+            lblActivationKey.Size = new Size(128, 25);
             lblActivationKey.TabIndex = 2;
             lblActivationKey.Text = "Activation Key:";
             // 
             // txtActivationKey
             // 
             txtActivationKey.Font = new Font("Consolas", 9F);
-            txtActivationKey.Location = new Point(6, 46);
+            txtActivationKey.Location = new Point(9, 77);
+            txtActivationKey.Margin = new Padding(4, 5, 4, 5);
             txtActivationKey.MaxLength = 100;
             txtActivationKey.Multiline = true;
             txtActivationKey.Name = "txtActivationKey";
-            txtActivationKey.Size = new Size(436, 60);
+            txtActivationKey.Size = new Size(621, 97);
             txtActivationKey.TabIndex = 3;
             // 
             // btnActivate
             // 
-            btnActivate.Location = new Point(6, 112);
+            btnActivate.Location = new Point(9, 187);
+            btnActivate.Margin = new Padding(4, 5, 4, 5);
             btnActivate.Name = "btnActivate";
-            btnActivate.Size = new Size(100, 28);
+            btnActivate.Size = new Size(143, 47);
             btnActivate.TabIndex = 4;
             btnActivate.Text = "Activate";
             btnActivate.UseVisualStyleBackColor = true;
@@ -89,9 +94,10 @@ namespace PhilterDesktop
             // 
             // btnClose
             // 
-            btnClose.Location = new Point(382, 274);
+            btnClose.Location = new Point(546, 457);
+            btnClose.Margin = new Padding(4, 5, 4, 5);
             btnClose.Name = "btnClose";
-            btnClose.Size = new Size(90, 28);
+            btnClose.Size = new Size(129, 47);
             btnClose.TabIndex = 5;
             btnClose.Text = "Close";
             btnClose.UseVisualStyleBackColor = true;
@@ -102,17 +108,19 @@ namespace PhilterDesktop
             lblStatus.AutoSize = true;
             lblStatus.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             lblStatus.ForeColor = Color.Gray;
-            lblStatus.Location = new Point(6, 153);
+            lblStatus.Location = new Point(9, 255);
+            lblStatus.Margin = new Padding(4, 0, 4, 0);
             lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(119, 15);
+            lblStatus.Size = new Size(184, 25);
             lblStatus.TabIndex = 6;
             lblStatus.Text = "No license activated";
             // 
             // btnDeactivate
             // 
-            btnDeactivate.Location = new Point(112, 112);
+            btnDeactivate.Location = new Point(160, 187);
+            btnDeactivate.Margin = new Padding(4, 5, 4, 5);
             btnDeactivate.Name = "btnDeactivate";
-            btnDeactivate.Size = new Size(100, 28);
+            btnDeactivate.Size = new Size(143, 47);
             btnDeactivate.TabIndex = 7;
             btnDeactivate.Text = "Deactivate";
             btnDeactivate.UseVisualStyleBackColor = true;
@@ -125,23 +133,26 @@ namespace PhilterDesktop
             groupBoxLicense.Controls.Add(txtActivationKey);
             groupBoxLicense.Controls.Add(lblStatus);
             groupBoxLicense.Controls.Add(btnActivate);
-            groupBoxLicense.Location = new Point(12, 88);
+            groupBoxLicense.Location = new Point(17, 147);
+            groupBoxLicense.Margin = new Padding(4, 5, 4, 5);
             groupBoxLicense.Name = "groupBoxLicense";
-            groupBoxLicense.Size = new Size(460, 180);
+            groupBoxLicense.Padding = new Padding(4, 5, 4, 5);
+            groupBoxLicense.Size = new Size(657, 300);
             groupBoxLicense.TabIndex = 8;
             groupBoxLicense.TabStop = false;
             groupBoxLicense.Text = "License Information";
             // 
             // LicenseForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(484, 313);
+            ClientSize = new Size(691, 522);
             Controls.Add(groupBoxLicense);
             Controls.Add(btnClose);
             Controls.Add(lblInstructions);
             Controls.Add(lblTitle);
             FormBorderStyle = FormBorderStyle.FixedDialog;
+            Margin = new Padding(4, 5, 4, 5);
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "LicenseForm";

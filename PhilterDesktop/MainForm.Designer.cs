@@ -64,6 +64,8 @@
             refreshToolStripMenuItem = new ToolStripMenuItem();
             imageList1 = new ImageList(components);
             redactionQueueTimer = new System.Windows.Forms.Timer(components);
+            toolStripSeparator6 = new ToolStripSeparator();
+            HelpToolStripButton = new ToolStripButton();
             menuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
             contextMenuStrip1.SuspendLayout();
@@ -89,7 +91,7 @@
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new Size(270, 34);
+            exitToolStripMenuItem.Size = new Size(141, 34);
             exitToolStripMenuItem.Text = "Exit";
             exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
             // 
@@ -140,7 +142,7 @@
             // 
             toolStrip1.GripStyle = ToolStripGripStyle.Hidden;
             toolStrip1.ImageScalingSize = new Size(24, 24);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonRedactDocuments, toolStripSeparator3, policiesToolStripButton, contextsToolStripButton, toolStripSeparator4, settingsToolStripButton });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonRedactDocuments, toolStripSeparator3, policiesToolStripButton, contextsToolStripButton, toolStripSeparator4, settingsToolStripButton, toolStripSeparator6, HelpToolStripButton });
             toolStrip1.Location = new Point(0, 33);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new Padding(0, 0, 3, 0);
@@ -153,7 +155,7 @@
             toolStripButtonRedactDocuments.Image = (Image)resources.GetObject("toolStripButtonRedactDocuments.Image");
             toolStripButtonRedactDocuments.ImageTransparentColor = Color.Magenta;
             toolStripButtonRedactDocuments.Name = "toolStripButtonRedactDocuments";
-            toolStripButtonRedactDocuments.Size = new Size(81, 53);
+            toolStripButtonRedactDocuments.Size = new Size(69, 53);
             toolStripButtonRedactDocuments.Text = "Redact";
             toolStripButtonRedactDocuments.TextImageRelation = TextImageRelation.ImageAboveText;
             toolStripButtonRedactDocuments.ToolTipText = "Select files to redact";
@@ -162,14 +164,14 @@
             // toolStripSeparator3
             // 
             toolStripSeparator3.Name = "toolStripSeparator3";
-            toolStripSeparator3.Size = new Size(81, 6);
+            toolStripSeparator3.Size = new Size(6, 58);
             // 
             // policiesToolStripButton
             // 
             policiesToolStripButton.Image = (Image)resources.GetObject("policiesToolStripButton.Image");
             policiesToolStripButton.ImageTransparentColor = Color.Magenta;
             policiesToolStripButton.Name = "policiesToolStripButton";
-            policiesToolStripButton.Size = new Size(81, 53);
+            policiesToolStripButton.Size = new Size(73, 53);
             policiesToolStripButton.Text = "Policies";
             policiesToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
             policiesToolStripButton.ToolTipText = "Create and edit redaction policies";
@@ -180,7 +182,7 @@
             contextsToolStripButton.Image = (Image)resources.GetObject("contextsToolStripButton.Image");
             contextsToolStripButton.ImageTransparentColor = Color.Magenta;
             contextsToolStripButton.Name = "contextsToolStripButton";
-            contextsToolStripButton.Size = new Size(81, 53);
+            contextsToolStripButton.Size = new Size(85, 53);
             contextsToolStripButton.Text = "Contexts";
             contextsToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
             contextsToolStripButton.ToolTipText = "Manage redaction contexts";
@@ -189,14 +191,14 @@
             // toolStripSeparator4
             // 
             toolStripSeparator4.Name = "toolStripSeparator4";
-            toolStripSeparator4.Size = new Size(81, 6);
+            toolStripSeparator4.Size = new Size(6, 58);
             // 
             // settingsToolStripButton
             // 
             settingsToolStripButton.Image = (Image)resources.GetObject("settingsToolStripButton.Image");
             settingsToolStripButton.ImageTransparentColor = Color.Magenta;
             settingsToolStripButton.Name = "settingsToolStripButton";
-            settingsToolStripButton.Size = new Size(81, 53);
+            settingsToolStripButton.Size = new Size(80, 53);
             settingsToolStripButton.Text = "Settings";
             settingsToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
             settingsToolStripButton.ToolTipText = "Modify the application settings";
@@ -326,6 +328,20 @@
             redactionQueueTimer.Interval = 15000;
             redactionQueueTimer.Tick += RedactionQueueTimer_Tick;
             // 
+            // toolStripSeparator6
+            // 
+            toolStripSeparator6.Name = "toolStripSeparator6";
+            toolStripSeparator6.Size = new Size(6, 58);
+            // 
+            // HelpToolStripButton
+            // 
+            HelpToolStripButton.Image = (Image)resources.GetObject("HelpToolStripButton.Image");
+            HelpToolStripButton.ImageTransparentColor = Color.Magenta;
+            HelpToolStripButton.Name = "HelpToolStripButton";
+            HelpToolStripButton.Size = new Size(53, 53);
+            HelpToolStripButton.Text = "Help";
+            HelpToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
@@ -387,5 +403,7 @@
         private ToolStripMenuItem refreshToolStripMenuItem;
         private ToolStripMenuItem removeCompletedToolStripMenuItem;
         private ImageList imageList1;
+        private ToolStripSeparator toolStripSeparator6;
+        private ToolStripButton HelpToolStripButton;
     }
 }

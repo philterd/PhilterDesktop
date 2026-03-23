@@ -78,10 +78,10 @@ namespace PhilterDesktop
             // 
             // btnClearAll
             // 
-            btnClearAll.Location = new Point(800, 350);
-            btnClearAll.Margin = new Padding(4);
+            btnClearAll.Location = new Point(784, 337);
+            btnClearAll.Margin = new Padding(4, 5, 4, 5);
             btnClearAll.Name = "btnClearAll";
-            btnClearAll.Size = new Size(125, 38);
+            btnClearAll.Size = new Size(129, 47);
             btnClearAll.TabIndex = 4;
             btnClearAll.Text = "Clear All";
             btnClearAll.UseVisualStyleBackColor = true;
@@ -90,10 +90,10 @@ namespace PhilterDesktop
             // btnRemoveFile
             // 
             btnRemoveFile.Enabled = false;
-            btnRemoveFile.Location = new Point(650, 350);
-            btnRemoveFile.Margin = new Padding(4);
+            btnRemoveFile.Location = new Point(647, 337);
+            btnRemoveFile.Margin = new Padding(4, 5, 4, 5);
             btnRemoveFile.Name = "btnRemoveFile";
-            btnRemoveFile.Size = new Size(138, 38);
+            btnRemoveFile.Size = new Size(129, 47);
             btnRemoveFile.TabIndex = 3;
             btnRemoveFile.Text = "Remove File";
             btnRemoveFile.UseVisualStyleBackColor = true;
@@ -106,7 +106,7 @@ namespace PhilterDesktop
             filesListBox.Location = new Point(19, 88);
             filesListBox.Margin = new Padding(4);
             filesListBox.Name = "filesListBox";
-            filesListBox.Size = new Size(905, 229);
+            filesListBox.Size = new Size(894, 229);
             filesListBox.TabIndex = 2;
             filesListBox.SelectedIndexChanged += FilesListBox_SelectedIndexChanged;
             // 
@@ -114,7 +114,7 @@ namespace PhilterDesktop
             // 
             labelDropFiles.AutoSize = true;
             labelDropFiles.ForeColor = SystemColors.GrayText;
-            labelDropFiles.Location = new Point(281, 40);
+            labelDropFiles.Location = new Point(264, 42);
             labelDropFiles.Margin = new Padding(4, 0, 4, 0);
             labelDropFiles.Name = "labelDropFiles";
             labelDropFiles.Size = new Size(270, 25);
@@ -124,9 +124,9 @@ namespace PhilterDesktop
             // btnSelectFiles
             // 
             btnSelectFiles.Location = new Point(19, 31);
-            btnSelectFiles.Margin = new Padding(4);
+            btnSelectFiles.Margin = new Padding(4, 5, 4, 5);
             btnSelectFiles.Name = "btnSelectFiles";
-            btnSelectFiles.Size = new Size(250, 44);
+            btnSelectFiles.Size = new Size(237, 47);
             btnSelectFiles.TabIndex = 0;
             btnSelectFiles.Text = "Select Files to Redact...";
             btnSelectFiles.UseVisualStyleBackColor = true;
@@ -191,10 +191,10 @@ namespace PhilterDesktop
             // 
             // btnStartRedaction
             // 
-            btnStartRedaction.Location = new Point(699, 661);
-            btnStartRedaction.Margin = new Padding(4);
+            btnStartRedaction.Location = new Point(656, 661);
+            btnStartRedaction.Margin = new Padding(4, 5, 4, 5);
             btnStartRedaction.Name = "btnStartRedaction";
-            btnStartRedaction.Size = new Size(162, 44);
+            btnStartRedaction.Size = new Size(172, 47);
             btnStartRedaction.TabIndex = 2;
             btnStartRedaction.Text = "Start Redaction";
             btnStartRedaction.UseVisualStyleBackColor = true;
@@ -202,10 +202,10 @@ namespace PhilterDesktop
             // 
             // btnClose
             // 
-            btnClose.Location = new Point(869, 661);
-            btnClose.Margin = new Padding(4);
+            btnClose.Location = new Point(838, 661);
+            btnClose.Margin = new Padding(4, 5, 4, 5);
             btnClose.Name = "btnClose";
-            btnClose.Size = new Size(94, 44);
+            btnClose.Size = new Size(129, 47);
             btnClose.TabIndex = 3;
             btnClose.Text = "Close";
             btnClose.UseVisualStyleBackColor = true;

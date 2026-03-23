@@ -39,53 +39,11 @@ namespace PhilterDesktop
 
         private void BtnCreate_Click(object? sender, EventArgs e)
         {
-            using var inputDialog = new Form();
-            inputDialog.Text = "Create Redaction Context";
-            inputDialog.ClientSize = new Size(400, 120);
-            inputDialog.FormBorderStyle = FormBorderStyle.FixedDialog;
-            inputDialog.StartPosition = FormStartPosition.CenterParent;
-            inputDialog.MaximizeBox = false;
-            inputDialog.MinimizeBox = false;
-
-            var label = new Label
-            {
-                Text = "Context Name:",
-                Location = new Point(10, 15),
-                AutoSize = true
-            };
-
-            var textBox = new TextBox
-            {
-                Location = new Point(10, 35),
-                Width = 370
-            };
-
-            var btnOk = new Button
-            {
-                Text = "OK",
-                DialogResult = DialogResult.OK,
-                Location = new Point(220, 70),
-                Width = 80
-            };
-
-            var btnCancel = new Button
-            {
-                Text = "Cancel",
-                DialogResult = DialogResult.Cancel,
-                Location = new Point(310, 70),
-                Width = 80
-            };
-
-            inputDialog.Controls.Add(label);
-            inputDialog.Controls.Add(textBox);
-            inputDialog.Controls.Add(btnOk);
-            inputDialog.Controls.Add(btnCancel);
-            inputDialog.AcceptButton = btnOk;
-            inputDialog.CancelButton = btnCancel;
+            using var inputDialog = new CreateContextDialog();
 
             if (inputDialog.ShowDialog() == DialogResult.OK)
             {
-                var contextName = textBox.Text.Trim();
+                var contextName = inputDialog.ContextName;
                 
                 if (string.IsNullOrEmpty(contextName))
                 {

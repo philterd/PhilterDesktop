@@ -48,18 +48,21 @@ namespace PhilterDesktop
             groupBoxOutput.Controls.Add(txtCustomFolder);
             groupBoxOutput.Controls.Add(radioCustomFolder);
             groupBoxOutput.Controls.Add(radioOriginalLocation);
-            groupBoxOutput.Location = new Point(12, 12);
+            groupBoxOutput.Location = new Point(17, 20);
+            groupBoxOutput.Margin = new Padding(4, 5, 4, 5);
             groupBoxOutput.Name = "groupBoxOutput";
-            groupBoxOutput.Size = new Size(560, 120);
+            groupBoxOutput.Padding = new Padding(4, 5, 4, 5);
+            groupBoxOutput.Size = new Size(800, 200);
             groupBoxOutput.TabIndex = 0;
             groupBoxOutput.TabStop = false;
             groupBoxOutput.Text = "Output Location";
             // 
             // btnBrowse
             // 
-            btnBrowse.Location = new Point(460, 76);
+            btnBrowse.Location = new Point(657, 127);
+            btnBrowse.Margin = new Padding(4, 5, 4, 5);
             btnBrowse.Name = "btnBrowse";
-            btnBrowse.Size = new Size(85, 28);
+            btnBrowse.Size = new Size(129, 47);
             btnBrowse.TabIndex = 3;
             btnBrowse.Text = "Browse...";
             btnBrowse.UseVisualStyleBackColor = true;
@@ -67,17 +70,19 @@ namespace PhilterDesktop
             // 
             // txtCustomFolder
             // 
-            txtCustomFolder.Location = new Point(40, 78);
+            txtCustomFolder.Location = new Point(57, 130);
+            txtCustomFolder.Margin = new Padding(4, 5, 4, 5);
             txtCustomFolder.Name = "txtCustomFolder";
-            txtCustomFolder.Size = new Size(410, 23);
+            txtCustomFolder.Size = new Size(584, 31);
             txtCustomFolder.TabIndex = 2;
             // 
             // radioCustomFolder
             // 
             radioCustomFolder.AutoSize = true;
-            radioCustomFolder.Location = new Point(20, 55);
+            radioCustomFolder.Location = new Point(29, 92);
+            radioCustomFolder.Margin = new Padding(4, 5, 4, 5);
             radioCustomFolder.Name = "radioCustomFolder";
-            radioCustomFolder.Size = new Size(235, 19);
+            radioCustomFolder.Size = new Size(345, 29);
             radioCustomFolder.TabIndex = 1;
             radioCustomFolder.Text = "Output to the following custom folder:";
             radioCustomFolder.UseVisualStyleBackColor = true;
@@ -86,9 +91,10 @@ namespace PhilterDesktop
             // 
             radioOriginalLocation.AutoSize = true;
             radioOriginalLocation.Checked = true;
-            radioOriginalLocation.Location = new Point(20, 30);
+            radioOriginalLocation.Location = new Point(29, 50);
+            radioOriginalLocation.Margin = new Padding(4, 5, 4, 5);
             radioOriginalLocation.Name = "radioOriginalLocation";
-            radioOriginalLocation.Size = new Size(173, 19);
+            radioOriginalLocation.Size = new Size(248, 29);
             radioOriginalLocation.TabIndex = 0;
             radioOriginalLocation.TabStop = true;
             radioOriginalLocation.Text = "Output to original location";
@@ -99,30 +105,33 @@ namespace PhilterDesktop
             // 
             groupBoxLogging.Controls.Add(btnOpenLog);
             groupBoxLogging.Controls.Add(chkEnableLogging);
-            groupBoxLogging.Location = new Point(12, 138);
+            groupBoxLogging.Location = new Point(17, 230);
+            groupBoxLogging.Margin = new Padding(4, 5, 4, 5);
             groupBoxLogging.Name = "groupBoxLogging";
-            groupBoxLogging.Size = new Size(560, 65);
+            groupBoxLogging.Padding = new Padding(4, 5, 4, 5);
+            groupBoxLogging.Size = new Size(800, 108);
             groupBoxLogging.TabIndex = 1;
             groupBoxLogging.TabStop = false;
             groupBoxLogging.Text = "Logging";
             // 
             // btnOpenLog
             // 
-            btnOpenLog.Location = new Point(165, 27);
+            btnOpenLog.Location = new Point(194, 40);
+            btnOpenLog.Margin = new Padding(4, 5, 4, 5);
             btnOpenLog.Name = "btnOpenLog";
-            btnOpenLog.Size = new Size(100, 25);
+            btnOpenLog.Size = new Size(169, 47);
             btnOpenLog.TabIndex = 1;
             btnOpenLog.Text = "Open Log File";
             btnOpenLog.UseVisualStyleBackColor = true;
-            btnOpenLog.Enabled = true;
             btnOpenLog.Click += BtnOpenLog_Click;
             // 
             // chkEnableLogging
             // 
             chkEnableLogging.AutoSize = true;
-            chkEnableLogging.Location = new Point(20, 30);
+            chkEnableLogging.Location = new Point(29, 50);
+            chkEnableLogging.Margin = new Padding(4, 5, 4, 5);
             chkEnableLogging.Name = "chkEnableLogging";
-            chkEnableLogging.Size = new Size(107, 19);
+            chkEnableLogging.Size = new Size(157, 29);
             chkEnableLogging.TabIndex = 0;
             chkEnableLogging.Text = "Enable logging";
             chkEnableLogging.UseVisualStyleBackColor = true;
@@ -130,9 +139,10 @@ namespace PhilterDesktop
             // 
             // btnSave
             // 
-            btnSave.Location = new Point(390, 216);
+            btnSave.Location = new Point(557, 360);
+            btnSave.Margin = new Padding(4, 5, 4, 5);
             btnSave.Name = "btnSave";
-            btnSave.Size = new Size(90, 30);
+            btnSave.Size = new Size(129, 47);
             btnSave.TabIndex = 2;
             btnSave.Text = "Save";
             btnSave.UseVisualStyleBackColor = true;
@@ -140,9 +150,10 @@ namespace PhilterDesktop
             // 
             // btnCancel
             // 
-            btnCancel.Location = new Point(486, 216);
+            btnCancel.Location = new Point(694, 360);
+            btnCancel.Margin = new Padding(4, 5, 4, 5);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(90, 30);
+            btnCancel.Size = new Size(129, 47);
             btnCancel.TabIndex = 3;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = true;
@@ -150,14 +161,15 @@ namespace PhilterDesktop
             // 
             // SettingsForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(584, 258);
+            ClientSize = new Size(834, 430);
             Controls.Add(btnCancel);
             Controls.Add(btnSave);
             Controls.Add(groupBoxLogging);
             Controls.Add(groupBoxOutput);
             FormBorderStyle = FormBorderStyle.FixedDialog;
+            Margin = new Padding(4, 5, 4, 5);
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "SettingsForm";

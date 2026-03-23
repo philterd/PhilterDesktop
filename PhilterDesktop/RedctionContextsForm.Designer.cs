@@ -43,10 +43,11 @@
             listViewContexts.Columns.AddRange(new ColumnHeader[] { columnHeaderName, columnHeaderEntries });
             listViewContexts.FullRowSelect = true;
             listViewContexts.GridLines = true;
-            listViewContexts.Location = new Point(12, 32);
+            listViewContexts.Location = new Point(17, 53);
+            listViewContexts.Margin = new Padding(4, 5, 4, 5);
             listViewContexts.MultiSelect = false;
             listViewContexts.Name = "listViewContexts";
-            listViewContexts.Size = new Size(560, 364);
+            listViewContexts.Size = new Size(748, 339);
             listViewContexts.TabIndex = 0;
             listViewContexts.UseCompatibleStateImageBehavior = false;
             listViewContexts.View = View.Details;
@@ -64,20 +65,22 @@
             // 
             // btnCreate
             // 
-            btnCreate.Location = new Point(588, 32);
+            btnCreate.Location = new Point(797, 53);
+            btnCreate.Margin = new Padding(4, 5, 4, 5);
             btnCreate.Name = "btnCreate";
-            btnCreate.Size = new Size(100, 30);
+            btnCreate.Size = new Size(172, 47);
             btnCreate.TabIndex = 1;
-            btnCreate.Text = "Create";
+            btnCreate.Text = "New Context...";
             btnCreate.UseVisualStyleBackColor = true;
             btnCreate.Click += BtnCreate_Click;
             // 
             // btnDelete
             // 
             btnDelete.Enabled = false;
-            btnDelete.Location = new Point(588, 68);
+            btnDelete.Location = new Point(797, 113);
+            btnDelete.Margin = new Padding(4, 5, 4, 5);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(100, 30);
+            btnDelete.Size = new Size(172, 47);
             btnDelete.TabIndex = 2;
             btnDelete.Text = "Delete";
             btnDelete.UseVisualStyleBackColor = true;
@@ -86,9 +89,10 @@
             // btnEmpty
             // 
             btnEmpty.Enabled = false;
-            btnEmpty.Location = new Point(588, 104);
+            btnEmpty.Location = new Point(797, 173);
+            btnEmpty.Margin = new Padding(4, 5, 4, 5);
             btnEmpty.Name = "btnEmpty";
-            btnEmpty.Size = new Size(100, 30);
+            btnEmpty.Size = new Size(172, 47);
             btnEmpty.TabIndex = 3;
             btnEmpty.Text = "Empty";
             btnEmpty.UseVisualStyleBackColor = true;
@@ -96,9 +100,10 @@
             // 
             // btnClose
             // 
-            btnClose.Location = new Point(588, 366);
+            btnClose.Location = new Point(797, 345);
+            btnClose.Margin = new Padding(4, 5, 4, 5);
             btnClose.Name = "btnClose";
-            btnClose.Size = new Size(100, 30);
+            btnClose.Size = new Size(172, 47);
             btnClose.TabIndex = 4;
             btnClose.Text = "Close";
             btnClose.UseVisualStyleBackColor = true;
@@ -107,17 +112,18 @@
             // lblContexts
             // 
             lblContexts.AutoSize = true;
-            lblContexts.Location = new Point(12, 9);
+            lblContexts.Location = new Point(17, 15);
+            lblContexts.Margin = new Padding(4, 0, 4, 0);
             lblContexts.Name = "lblContexts";
-            lblContexts.Size = new Size(115, 15);
+            lblContexts.Size = new Size(168, 25);
             lblContexts.TabIndex = 5;
             lblContexts.Text = "Redaction Contexts:";
             // 
             // RedctionContextsForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(700, 408);
+            ClientSize = new Size(994, 420);
             Controls.Add(lblContexts);
             Controls.Add(btnClose);
             Controls.Add(btnEmpty);
@@ -125,6 +131,7 @@
             Controls.Add(btnCreate);
             Controls.Add(listViewContexts);
             FormBorderStyle = FormBorderStyle.FixedDialog;
+            Margin = new Padding(4, 5, 4, 5);
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "RedctionContextsForm";

@@ -28,6 +28,7 @@ namespace PhilterDesktop
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AboutForm));
             lblTitle = new Label();
             lblVersion = new Label();
             lblDescription = new Label();
@@ -35,6 +36,7 @@ namespace PhilterDesktop
             linkLabelWebsite = new LinkLabel();
             btnOK = new Button();
             pictureBox1 = new PictureBox();
+            icons8LinkLabel = new LinkLabel();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
             // 
@@ -42,49 +44,44 @@ namespace PhilterDesktop
             // 
             lblTitle.AutoSize = true;
             lblTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            lblTitle.Location = new Point(105, 12);
-            lblTitle.Margin = new Padding(2, 0, 2, 0);
+            lblTitle.Location = new Point(150, 20);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(149, 25);
+            lblTitle.Size = new Size(221, 38);
             lblTitle.TabIndex = 0;
             lblTitle.Text = "Philter Desktop";
             // 
             // lblVersion
             // 
             lblVersion.AutoSize = true;
-            lblVersion.Location = new Point(105, 39);
-            lblVersion.Margin = new Padding(2, 0, 2, 0);
+            lblVersion.Location = new Point(150, 65);
             lblVersion.Name = "lblVersion";
-            lblVersion.Size = new Size(63, 15);
+            lblVersion.Size = new Size(99, 25);
             lblVersion.TabIndex = 1;
             lblVersion.Text = "Version 1.0";
             // 
             // lblDescription
             // 
-            lblDescription.Location = new Point(105, 60);
-            lblDescription.Margin = new Padding(2, 0, 2, 0);
+            lblDescription.Location = new Point(150, 100);
             lblDescription.Name = "lblDescription";
-            lblDescription.Size = new Size(315, 36);
+            lblDescription.Size = new Size(450, 60);
             lblDescription.TabIndex = 2;
             lblDescription.Text = "Philter Desktop is a Windows application for redacting sensitive information from documents.";
             // 
             // lblCopyright
             // 
             lblCopyright.AutoSize = true;
-            lblCopyright.Location = new Point(105, 102);
-            lblCopyright.Margin = new Padding(2, 0, 2, 0);
+            lblCopyright.Location = new Point(150, 170);
             lblCopyright.Name = "lblCopyright";
-            lblCopyright.Size = new Size(144, 15);
+            lblCopyright.Size = new Size(220, 25);
             lblCopyright.TabIndex = 3;
             lblCopyright.Text = "© 2024-2026 Philterd, LLC";
             // 
             // linkLabelWebsite
             // 
             linkLabelWebsite.AutoSize = true;
-            linkLabelWebsite.Location = new Point(105, 126);
-            linkLabelWebsite.Margin = new Padding(2, 0, 2, 0);
+            linkLabelWebsite.Location = new Point(150, 210);
             linkLabelWebsite.Name = "linkLabelWebsite";
-            linkLabelWebsite.Size = new Size(130, 15);
+            linkLabelWebsite.Size = new Size(192, 25);
             linkLabelWebsite.TabIndex = 4;
             linkLabelWebsite.TabStop = true;
             linkLabelWebsite.Text = "https://www.philterd.ai";
@@ -92,10 +89,10 @@ namespace PhilterDesktop
             // 
             // btnOK
             // 
-            btnOK.Location = new Point(336, 174);
-            btnOK.Margin = new Padding(2, 2, 2, 2);
+            btnOK.Location = new Point(459, 286);
+            btnOK.Margin = new Padding(4, 5, 4, 5);
             btnOK.Name = "btnOK";
-            btnOK.Size = new Size(78, 23);
+            btnOK.Size = new Size(129, 47);
             btnOK.TabIndex = 6;
             btnOK.Text = "OK";
             btnOK.UseVisualStyleBackColor = true;
@@ -103,20 +100,32 @@ namespace PhilterDesktop
             // 
             // pictureBox1
             // 
+            pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
             pictureBox1.InitialImage = null;
-            pictureBox1.Location = new Point(14, 12);
-            pictureBox1.Margin = new Padding(2, 2, 2, 2);
+            pictureBox1.Location = new Point(20, 20);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(70, 60);
+            pictureBox1.Size = new Size(100, 100);
             pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBox1.TabIndex = 7;
             pictureBox1.TabStop = false;
             // 
+            // icons8LinkLabel
+            // 
+            icons8LinkLabel.AutoSize = true;
+            icons8LinkLabel.Location = new Point(20, 297);
+            icons8LinkLabel.Name = "icons8LinkLabel";
+            icons8LinkLabel.Size = new Size(136, 25);
+            icons8LinkLabel.TabIndex = 8;
+            icons8LinkLabel.TabStop = true;
+            icons8LinkLabel.Text = "Icons by Icons8";
+            icons8LinkLabel.LinkClicked += icons8LinkLabel_LinkClicked;
+            // 
             // AboutForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(434, 210);
+            ClientSize = new Size(620, 350);
+            Controls.Add(icons8LinkLabel);
             Controls.Add(pictureBox1);
             Controls.Add(btnOK);
             Controls.Add(linkLabelWebsite);
@@ -125,7 +134,6 @@ namespace PhilterDesktop
             Controls.Add(lblVersion);
             Controls.Add(lblTitle);
             FormBorderStyle = FormBorderStyle.FixedDialog;
-            Margin = new Padding(2, 2, 2, 2);
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "AboutForm";
@@ -145,5 +153,6 @@ namespace PhilterDesktop
         private LinkLabel linkLabelWebsite;
         private Button btnOK;
         private PictureBox pictureBox1;
+        private LinkLabel icons8LinkLabel;
     }
 }
