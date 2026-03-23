@@ -5,7 +5,7 @@ namespace PhilterDesktop
     /// <summary>
     /// Form for managing document redaction queue.
     /// </summary>
-    public partial class RedactDocumentsForm : Form
+    public partial class RedactDocuments : Form
     {
         private const int MaxFiles = 25;
 
@@ -14,7 +14,7 @@ namespace PhilterDesktop
         private readonly RedactionQueueRepository _redactionQueueRepository;
         private readonly bool _loggingEnabled;
 
-        public RedactDocumentsForm(PolicyRepository policyRepository, ContextRepository contextRepository, RedactionQueueRepository redactionQueueRepository, bool loggingEnabled)
+        public RedactDocuments(PolicyRepository policyRepository, ContextRepository contextRepository, RedactionQueueRepository redactionQueueRepository, bool loggingEnabled)
         {
             InitializeComponent();
             _policyRepository = policyRepository;

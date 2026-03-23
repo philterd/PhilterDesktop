@@ -2,12 +2,12 @@
 
 namespace PhilterDesktop
 {
-    public partial class RedctionContextsForm : Form
+    public partial class Contexts : Form
     {
         private ContextRepository _repo;
         private ContextEntryRepository _contextEntryRepository;
 
-        public RedctionContextsForm(ContextRepository contextRepository, ContextEntryRepository contextEntryRepository)
+        public Contexts(ContextRepository contextRepository, ContextEntryRepository contextEntryRepository)
         {
             InitializeComponent();
             _repo = contextRepository;

@@ -143,7 +143,7 @@ namespace PhilterDesktop
                 Logger.LogInfo("Opening Redaction Contexts dialog");
             }
 
-            var redactionContextsForm = new RedctionContextsForm(_contextRepository, _contextEntryRepository);
+            var redactionContextsForm = new Contexts(_contextRepository, _contextEntryRepository);
             redactionContextsForm.ShowDialog();
         }
 
@@ -177,7 +177,7 @@ namespace PhilterDesktop
 
         private void toolStripButtonRedactDocuments_Click(object sender, EventArgs e)
         {
-            var redactDocumentsForm = new RedactDocumentsForm(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled);
+            var redactDocumentsForm = new RedactDocuments(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled);
             redactDocumentsForm.ShowDialog();
             LoadRedactionQueue();
         }
@@ -195,7 +195,7 @@ namespace PhilterDesktop
                 Logger.LogInfo("Opening Redaction Contexts dialog");
             }
 
-            var redactionContextsForm = new RedctionContextsForm(_contextRepository, _contextEntryRepository);
+            var redactionContextsForm = new Contexts(_contextRepository, _contextEntryRepository);
             redactionContextsForm.ShowDialog();
         }
 
@@ -240,7 +240,7 @@ namespace PhilterDesktop
 
         private void addFilesToRedactToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var redactDocumentsForm = new RedactDocumentsForm(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled);
+            var redactDocumentsForm = new RedactDocuments(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled);
             redactDocumentsForm.ShowDialog();
             LoadRedactionQueue();
         }

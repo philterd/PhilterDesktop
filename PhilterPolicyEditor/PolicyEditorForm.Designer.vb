@@ -26,6 +26,8 @@ Partial Class PolicyEditorForm
     Private Sub InitializeComponent()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(PolicyEditorForm))
         PolicyPanel = New Panel()
+        IdentifiersTabControl = New TabControl()
+        IdentifiersTabPage = New TabPage()
         CustomIdentifiersConfigureButton = New Button()
         CustomIdentifiersCheckBox = New CheckBox()
         CustomDictionariesConfigureButton = New Button()
@@ -82,70 +84,95 @@ Partial Class PolicyEditorForm
         ToolStripSeparator2 = New ToolStripSeparator()
         DeleteToolStripButton = New ToolStripButton()
         PolicyPanel.SuspendLayout()
+        IdentifiersTabControl.SuspendLayout()
+        IdentifiersTabPage.SuspendLayout()
         PolicysToolStrip.SuspendLayout()
         SuspendLayout()
         ' 
         ' PolicyPanel
         ' 
-        PolicyPanel.Controls.Add(CustomIdentifiersConfigureButton)
-        PolicyPanel.Controls.Add(CustomIdentifiersCheckBox)
-        PolicyPanel.Controls.Add(CustomDictionariesConfigureButton)
-        PolicyPanel.Controls.Add(CustomDictionariesCheckBox)
-        PolicyPanel.Controls.Add(ZipCodesConfigureButton)
-        PolicyPanel.Controls.Add(ZipCodesCheckBox)
-        PolicyPanel.Controls.Add(VINsConfigureButton)
-        PolicyPanel.Controls.Add(VINsCheckBox)
-        PolicyPanel.Controls.Add(URLsConfigureButton)
-        PolicyPanel.Controls.Add(URLsCheckBox)
-        PolicyPanel.Controls.Add(SurnamesConfigureButton)
-        PolicyPanel.Controls.Add(SurnamesCheckBox)
-        PolicyPanel.Controls.Add(StateAbbreviationsConfigureButton)
-        PolicyPanel.Controls.Add(StateAbbreviationsCheckBox)
-        PolicyPanel.Controls.Add(StatesConfigureButton)
-        PolicyPanel.Controls.Add(StatesCheckBox)
-        PolicyPanel.Controls.Add(SSNsConfigureButton)
-        PolicyPanel.Controls.Add(SSNsCheckBox)
-        PolicyPanel.Controls.Add(PhoneNumberExtsConfigureButton)
-        PolicyPanel.Controls.Add(PhoneNumberExtsCheckBox)
-        PolicyPanel.Controls.Add(PhoneNumbersConfigureButton)
-        PolicyPanel.Controls.Add(PhoneNumbersCheckBox)
-        PolicyPanel.Controls.Add(NERConfigureButton)
-        PolicyPanel.Controls.Add(NERCheckBox)
-        PolicyPanel.Controls.Add(IPAddressesConfigureButton)
-        PolicyPanel.Controls.Add(IPAddressesCheckBox)
-        PolicyPanel.Controls.Add(HospitalsConfigureButton)
-        PolicyPanel.Controls.Add(HospitalsCheckBox)
-        PolicyPanel.Controls.Add(HospitalAbbreviationsConfigureButton)
-        PolicyPanel.Controls.Add(HospitalAbbreviationsCheckBox)
-        PolicyPanel.Controls.Add(FirstNamesConfigureButton)
-        PolicyPanel.Controls.Add(FirstNamesCheckBox)
-        PolicyPanel.Controls.Add(EmailAddressesConfigureButton)
-        PolicyPanel.Controls.Add(EmailAddressesCheckBox)
-        PolicyPanel.Controls.Add(DatesConfigureButton)
-        PolicyPanel.Controls.Add(DatesCheckBox)
-        PolicyPanel.Controls.Add(CreditCardsConfigureButton)
-        PolicyPanel.Controls.Add(CreditCardsCheckBox)
-        PolicyPanel.Controls.Add(CountiesConfigureButton)
-        PolicyPanel.Controls.Add(CountiesCheckBox)
-        PolicyPanel.Controls.Add(CitiesConfigureButton)
-        PolicyPanel.Controls.Add(CitiesCheckBox)
-        PolicyPanel.Controls.Add(AgesConfigureButton)
-        PolicyPanel.Controls.Add(AgesCheckBox)
+        PolicyPanel.Controls.Add(IdentifiersTabControl)
         PolicyPanel.Dock = DockStyle.Fill
         PolicyPanel.Enabled = False
-        PolicyPanel.Location = New Point(0, 58)
-        PolicyPanel.Margin = New Padding(6, 5, 6, 5)
+        PolicyPanel.Location = New Point(0, 46)
+        PolicyPanel.Margin = New Padding(4, 3, 4, 3)
         PolicyPanel.Name = "PolicyPanel"
-        PolicyPanel.Size = New Size(1534, 620)
+        PolicyPanel.Size = New Size(1074, 403)
         PolicyPanel.TabIndex = 10
+        ' 
+        ' IdentifiersTabControl
+        ' 
+        IdentifiersTabControl.Controls.Add(IdentifiersTabPage)
+        IdentifiersTabControl.Dock = DockStyle.Fill
+        IdentifiersTabControl.Location = New Point(0, 0)
+        IdentifiersTabControl.Margin = New Padding(2, 2, 2, 2)
+        IdentifiersTabControl.Name = "IdentifiersTabControl"
+        IdentifiersTabControl.SelectedIndex = 0
+        IdentifiersTabControl.Size = New Size(1074, 403)
+        IdentifiersTabControl.TabIndex = 0
+        ' 
+        ' IdentifiersTabPage
+        ' 
+        IdentifiersTabPage.Controls.Add(CustomIdentifiersConfigureButton)
+        IdentifiersTabPage.Controls.Add(CustomIdentifiersCheckBox)
+        IdentifiersTabPage.Controls.Add(CustomDictionariesConfigureButton)
+        IdentifiersTabPage.Controls.Add(CustomDictionariesCheckBox)
+        IdentifiersTabPage.Controls.Add(ZipCodesConfigureButton)
+        IdentifiersTabPage.Controls.Add(ZipCodesCheckBox)
+        IdentifiersTabPage.Controls.Add(VINsConfigureButton)
+        IdentifiersTabPage.Controls.Add(VINsCheckBox)
+        IdentifiersTabPage.Controls.Add(URLsConfigureButton)
+        IdentifiersTabPage.Controls.Add(URLsCheckBox)
+        IdentifiersTabPage.Controls.Add(SurnamesConfigureButton)
+        IdentifiersTabPage.Controls.Add(SurnamesCheckBox)
+        IdentifiersTabPage.Controls.Add(StateAbbreviationsConfigureButton)
+        IdentifiersTabPage.Controls.Add(StateAbbreviationsCheckBox)
+        IdentifiersTabPage.Controls.Add(StatesConfigureButton)
+        IdentifiersTabPage.Controls.Add(StatesCheckBox)
+        IdentifiersTabPage.Controls.Add(SSNsConfigureButton)
+        IdentifiersTabPage.Controls.Add(SSNsCheckBox)
+        IdentifiersTabPage.Controls.Add(PhoneNumberExtsConfigureButton)
+        IdentifiersTabPage.Controls.Add(PhoneNumberExtsCheckBox)
+        IdentifiersTabPage.Controls.Add(PhoneNumbersConfigureButton)
+        IdentifiersTabPage.Controls.Add(PhoneNumbersCheckBox)
+        IdentifiersTabPage.Controls.Add(NERConfigureButton)
+        IdentifiersTabPage.Controls.Add(NERCheckBox)
+        IdentifiersTabPage.Controls.Add(IPAddressesConfigureButton)
+        IdentifiersTabPage.Controls.Add(IPAddressesCheckBox)
+        IdentifiersTabPage.Controls.Add(HospitalsConfigureButton)
+        IdentifiersTabPage.Controls.Add(HospitalsCheckBox)
+        IdentifiersTabPage.Controls.Add(HospitalAbbreviationsConfigureButton)
+        IdentifiersTabPage.Controls.Add(HospitalAbbreviationsCheckBox)
+        IdentifiersTabPage.Controls.Add(FirstNamesConfigureButton)
+        IdentifiersTabPage.Controls.Add(FirstNamesCheckBox)
+        IdentifiersTabPage.Controls.Add(EmailAddressesConfigureButton)
+        IdentifiersTabPage.Controls.Add(EmailAddressesCheckBox)
+        IdentifiersTabPage.Controls.Add(DatesConfigureButton)
+        IdentifiersTabPage.Controls.Add(DatesCheckBox)
+        IdentifiersTabPage.Controls.Add(CreditCardsConfigureButton)
+        IdentifiersTabPage.Controls.Add(CreditCardsCheckBox)
+        IdentifiersTabPage.Controls.Add(CountiesConfigureButton)
+        IdentifiersTabPage.Controls.Add(CountiesCheckBox)
+        IdentifiersTabPage.Controls.Add(CitiesConfigureButton)
+        IdentifiersTabPage.Controls.Add(CitiesCheckBox)
+        IdentifiersTabPage.Controls.Add(AgesConfigureButton)
+        IdentifiersTabPage.Controls.Add(AgesCheckBox)
+        IdentifiersTabPage.Location = New Point(4, 24)
+        IdentifiersTabPage.Margin = New Padding(2, 2, 2, 2)
+        IdentifiersTabPage.Name = "IdentifiersTabPage"
+        IdentifiersTabPage.Padding = New Padding(2, 2, 2, 2)
+        IdentifiersTabPage.Size = New Size(1066, 375)
+        IdentifiersTabPage.TabIndex = 0
+        IdentifiersTabPage.Text = "PII / PHI Identifiers"
+        IdentifiersTabPage.UseVisualStyleBackColor = True
         ' 
         ' CustomIdentifiersConfigureButton
         ' 
         CustomIdentifiersConfigureButton.Enabled = False
-        CustomIdentifiersConfigureButton.Location = New Point(1321, 97)
-        CustomIdentifiersConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        CustomIdentifiersConfigureButton.Location = New Point(925, 58)
+        CustomIdentifiersConfigureButton.Margin = New Padding(4, 3, 4, 3)
         CustomIdentifiersConfigureButton.Name = "CustomIdentifiersConfigureButton"
-        CustomIdentifiersConfigureButton.Size = New Size(174, 45)
+        CustomIdentifiersConfigureButton.Size = New Size(122, 27)
         CustomIdentifiersConfigureButton.TabIndex = 45
         CustomIdentifiersConfigureButton.Text = "Configure..."
         CustomIdentifiersConfigureButton.UseVisualStyleBackColor = True
@@ -153,10 +180,10 @@ Partial Class PolicyEditorForm
         ' CustomIdentifiersCheckBox
         ' 
         CustomIdentifiersCheckBox.AutoSize = True
-        CustomIdentifiersCheckBox.Location = New Point(1093, 103)
-        CustomIdentifiersCheckBox.Margin = New Padding(6, 5, 6, 5)
+        CustomIdentifiersCheckBox.Location = New Point(765, 62)
+        CustomIdentifiersCheckBox.Margin = New Padding(4, 3, 4, 3)
         CustomIdentifiersCheckBox.Name = "CustomIdentifiersCheckBox"
-        CustomIdentifiersCheckBox.Size = New Size(183, 29)
+        CustomIdentifiersCheckBox.Size = New Size(123, 19)
         CustomIdentifiersCheckBox.TabIndex = 44
         CustomIdentifiersCheckBox.Text = "Custom Identifiers"
         CustomIdentifiersCheckBox.UseVisualStyleBackColor = True
@@ -164,10 +191,10 @@ Partial Class PolicyEditorForm
         ' CustomDictionariesConfigureButton
         ' 
         CustomDictionariesConfigureButton.Enabled = False
-        CustomDictionariesConfigureButton.Location = New Point(1321, 40)
-        CustomDictionariesConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        CustomDictionariesConfigureButton.Location = New Point(925, 24)
+        CustomDictionariesConfigureButton.Margin = New Padding(4, 3, 4, 3)
         CustomDictionariesConfigureButton.Name = "CustomDictionariesConfigureButton"
-        CustomDictionariesConfigureButton.Size = New Size(174, 45)
+        CustomDictionariesConfigureButton.Size = New Size(122, 27)
         CustomDictionariesConfigureButton.TabIndex = 43
         CustomDictionariesConfigureButton.Text = "Configure..."
         CustomDictionariesConfigureButton.UseVisualStyleBackColor = True
@@ -175,10 +202,10 @@ Partial Class PolicyEditorForm
         ' CustomDictionariesCheckBox
         ' 
         CustomDictionariesCheckBox.AutoSize = True
-        CustomDictionariesCheckBox.Location = New Point(1093, 48)
-        CustomDictionariesCheckBox.Margin = New Padding(6, 5, 6, 5)
+        CustomDictionariesCheckBox.Location = New Point(765, 29)
+        CustomDictionariesCheckBox.Margin = New Padding(4, 3, 4, 3)
         CustomDictionariesCheckBox.Name = "CustomDictionariesCheckBox"
-        CustomDictionariesCheckBox.Size = New Size(197, 29)
+        CustomDictionariesCheckBox.Size = New Size(133, 19)
         CustomDictionariesCheckBox.TabIndex = 42
         CustomDictionariesCheckBox.Text = "Custom Dictionaries"
         CustomDictionariesCheckBox.UseVisualStyleBackColor = True
@@ -186,10 +213,10 @@ Partial Class PolicyEditorForm
         ' ZipCodesConfigureButton
         ' 
         ZipCodesConfigureButton.Enabled = False
-        ZipCodesConfigureButton.Location = New Point(791, 547)
-        ZipCodesConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        ZipCodesConfigureButton.Location = New Point(554, 328)
+        ZipCodesConfigureButton.Margin = New Padding(4, 3, 4, 3)
         ZipCodesConfigureButton.Name = "ZipCodesConfigureButton"
-        ZipCodesConfigureButton.Size = New Size(174, 45)
+        ZipCodesConfigureButton.Size = New Size(122, 27)
         ZipCodesConfigureButton.TabIndex = 41
         ZipCodesConfigureButton.Text = "Configure..."
         ZipCodesConfigureButton.UseVisualStyleBackColor = True
@@ -197,10 +224,10 @@ Partial Class PolicyEditorForm
         ' ZipCodesCheckBox
         ' 
         ZipCodesCheckBox.AutoSize = True
-        ZipCodesCheckBox.Location = New Point(563, 553)
-        ZipCodesCheckBox.Margin = New Padding(6, 5, 6, 5)
+        ZipCodesCheckBox.Location = New Point(394, 332)
+        ZipCodesCheckBox.Margin = New Padding(4, 3, 4, 3)
         ZipCodesCheckBox.Name = "ZipCodesCheckBox"
-        ZipCodesCheckBox.Size = New Size(118, 29)
+        ZipCodesCheckBox.Size = New Size(79, 19)
         ZipCodesCheckBox.TabIndex = 40
         ZipCodesCheckBox.Text = "Zip Codes"
         ZipCodesCheckBox.UseVisualStyleBackColor = True
@@ -208,10 +235,10 @@ Partial Class PolicyEditorForm
         ' VINsConfigureButton
         ' 
         VINsConfigureButton.Enabled = False
-        VINsConfigureButton.Location = New Point(791, 490)
-        VINsConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        VINsConfigureButton.Location = New Point(554, 294)
+        VINsConfigureButton.Margin = New Padding(4, 3, 4, 3)
         VINsConfigureButton.Name = "VINsConfigureButton"
-        VINsConfigureButton.Size = New Size(174, 45)
+        VINsConfigureButton.Size = New Size(122, 27)
         VINsConfigureButton.TabIndex = 39
         VINsConfigureButton.Text = "Configure..."
         VINsConfigureButton.UseVisualStyleBackColor = True
@@ -219,10 +246,10 @@ Partial Class PolicyEditorForm
         ' VINsCheckBox
         ' 
         VINsCheckBox.AutoSize = True
-        VINsCheckBox.Location = New Point(563, 498)
-        VINsCheckBox.Margin = New Padding(6, 5, 6, 5)
+        VINsCheckBox.Location = New Point(394, 299)
+        VINsCheckBox.Margin = New Padding(4, 3, 4, 3)
         VINsCheckBox.Name = "VINsCheckBox"
-        VINsCheckBox.Size = New Size(75, 29)
+        VINsCheckBox.Size = New Size(50, 19)
         VINsCheckBox.TabIndex = 38
         VINsCheckBox.Text = "VINs"
         VINsCheckBox.UseVisualStyleBackColor = True
@@ -230,10 +257,10 @@ Partial Class PolicyEditorForm
         ' URLsConfigureButton
         ' 
         URLsConfigureButton.Enabled = False
-        URLsConfigureButton.Location = New Point(791, 435)
-        URLsConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        URLsConfigureButton.Location = New Point(554, 261)
+        URLsConfigureButton.Margin = New Padding(4, 3, 4, 3)
         URLsConfigureButton.Name = "URLsConfigureButton"
-        URLsConfigureButton.Size = New Size(174, 45)
+        URLsConfigureButton.Size = New Size(122, 27)
         URLsConfigureButton.TabIndex = 37
         URLsConfigureButton.Text = "Configure..."
         URLsConfigureButton.UseVisualStyleBackColor = True
@@ -241,10 +268,10 @@ Partial Class PolicyEditorForm
         ' URLsCheckBox
         ' 
         URLsCheckBox.AutoSize = True
-        URLsCheckBox.Location = New Point(563, 442)
-        URLsCheckBox.Margin = New Padding(6, 5, 6, 5)
+        URLsCheckBox.Location = New Point(394, 265)
+        URLsCheckBox.Margin = New Padding(4, 3, 4, 3)
         URLsCheckBox.Name = "URLsCheckBox"
-        URLsCheckBox.Size = New Size(77, 29)
+        URLsCheckBox.Size = New Size(52, 19)
         URLsCheckBox.TabIndex = 36
         URLsCheckBox.Text = "URLs"
         URLsCheckBox.UseVisualStyleBackColor = True
@@ -252,10 +279,10 @@ Partial Class PolicyEditorForm
         ' SurnamesConfigureButton
         ' 
         SurnamesConfigureButton.Enabled = False
-        SurnamesConfigureButton.Location = New Point(791, 378)
-        SurnamesConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        SurnamesConfigureButton.Location = New Point(554, 227)
+        SurnamesConfigureButton.Margin = New Padding(4, 3, 4, 3)
         SurnamesConfigureButton.Name = "SurnamesConfigureButton"
-        SurnamesConfigureButton.Size = New Size(174, 45)
+        SurnamesConfigureButton.Size = New Size(122, 27)
         SurnamesConfigureButton.TabIndex = 35
         SurnamesConfigureButton.Text = "Configure..."
         SurnamesConfigureButton.UseVisualStyleBackColor = True
@@ -263,10 +290,10 @@ Partial Class PolicyEditorForm
         ' SurnamesCheckBox
         ' 
         SurnamesCheckBox.AutoSize = True
-        SurnamesCheckBox.Location = New Point(563, 387)
-        SurnamesCheckBox.Margin = New Padding(6, 5, 6, 5)
+        SurnamesCheckBox.Location = New Point(394, 232)
+        SurnamesCheckBox.Margin = New Padding(4, 3, 4, 3)
         SurnamesCheckBox.Name = "SurnamesCheckBox"
-        SurnamesCheckBox.Size = New Size(116, 29)
+        SurnamesCheckBox.Size = New Size(78, 19)
         SurnamesCheckBox.TabIndex = 34
         SurnamesCheckBox.Text = "Surnames"
         SurnamesCheckBox.UseVisualStyleBackColor = True
@@ -274,10 +301,10 @@ Partial Class PolicyEditorForm
         ' StateAbbreviationsConfigureButton
         ' 
         StateAbbreviationsConfigureButton.Enabled = False
-        StateAbbreviationsConfigureButton.Location = New Point(791, 323)
-        StateAbbreviationsConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        StateAbbreviationsConfigureButton.Location = New Point(554, 194)
+        StateAbbreviationsConfigureButton.Margin = New Padding(4, 3, 4, 3)
         StateAbbreviationsConfigureButton.Name = "StateAbbreviationsConfigureButton"
-        StateAbbreviationsConfigureButton.Size = New Size(174, 45)
+        StateAbbreviationsConfigureButton.Size = New Size(122, 27)
         StateAbbreviationsConfigureButton.TabIndex = 33
         StateAbbreviationsConfigureButton.Text = "Configure..."
         StateAbbreviationsConfigureButton.UseVisualStyleBackColor = True
@@ -285,10 +312,10 @@ Partial Class PolicyEditorForm
         ' StateAbbreviationsCheckBox
         ' 
         StateAbbreviationsCheckBox.AutoSize = True
-        StateAbbreviationsCheckBox.Location = New Point(563, 330)
-        StateAbbreviationsCheckBox.Margin = New Padding(6, 5, 6, 5)
+        StateAbbreviationsCheckBox.Location = New Point(394, 198)
+        StateAbbreviationsCheckBox.Margin = New Padding(4, 3, 4, 3)
         StateAbbreviationsCheckBox.Name = "StateAbbreviationsCheckBox"
-        StateAbbreviationsCheckBox.Size = New Size(192, 29)
+        StateAbbreviationsCheckBox.Size = New Size(128, 19)
         StateAbbreviationsCheckBox.TabIndex = 32
         StateAbbreviationsCheckBox.Text = "State Abbreviations"
         StateAbbreviationsCheckBox.UseVisualStyleBackColor = True
@@ -296,10 +323,10 @@ Partial Class PolicyEditorForm
         ' StatesConfigureButton
         ' 
         StatesConfigureButton.Enabled = False
-        StatesConfigureButton.Location = New Point(791, 267)
-        StatesConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        StatesConfigureButton.Location = New Point(554, 160)
+        StatesConfigureButton.Margin = New Padding(4, 3, 4, 3)
         StatesConfigureButton.Name = "StatesConfigureButton"
-        StatesConfigureButton.Size = New Size(174, 45)
+        StatesConfigureButton.Size = New Size(122, 27)
         StatesConfigureButton.TabIndex = 31
         StatesConfigureButton.Text = "Configure..."
         StatesConfigureButton.UseVisualStyleBackColor = True
@@ -307,10 +334,10 @@ Partial Class PolicyEditorForm
         ' StatesCheckBox
         ' 
         StatesCheckBox.AutoSize = True
-        StatesCheckBox.Location = New Point(563, 275)
-        StatesCheckBox.Margin = New Padding(6, 5, 6, 5)
+        StatesCheckBox.Location = New Point(394, 165)
+        StatesCheckBox.Margin = New Padding(4, 3, 4, 3)
         StatesCheckBox.Name = "StatesCheckBox"
-        StatesCheckBox.Size = New Size(85, 29)
+        StatesCheckBox.Size = New Size(57, 19)
         StatesCheckBox.TabIndex = 30
         StatesCheckBox.Text = "States"
         StatesCheckBox.UseVisualStyleBackColor = True
@@ -318,10 +345,10 @@ Partial Class PolicyEditorForm
         ' SSNsConfigureButton
         ' 
         SSNsConfigureButton.Enabled = False
-        SSNsConfigureButton.Location = New Point(791, 212)
-        SSNsConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        SSNsConfigureButton.Location = New Point(554, 127)
+        SSNsConfigureButton.Margin = New Padding(4, 3, 4, 3)
         SSNsConfigureButton.Name = "SSNsConfigureButton"
-        SSNsConfigureButton.Size = New Size(174, 45)
+        SSNsConfigureButton.Size = New Size(122, 27)
         SSNsConfigureButton.TabIndex = 29
         SSNsConfigureButton.Text = "Configure..."
         SSNsConfigureButton.UseVisualStyleBackColor = True
@@ -329,10 +356,10 @@ Partial Class PolicyEditorForm
         ' SSNsCheckBox
         ' 
         SSNsCheckBox.AutoSize = True
-        SSNsCheckBox.Location = New Point(563, 220)
-        SSNsCheckBox.Margin = New Padding(6, 5, 6, 5)
+        SSNsCheckBox.Location = New Point(394, 132)
+        SSNsCheckBox.Margin = New Padding(4, 3, 4, 3)
         SSNsCheckBox.Name = "SSNsCheckBox"
-        SSNsCheckBox.Size = New Size(79, 29)
+        SSNsCheckBox.Size = New Size(52, 19)
         SSNsCheckBox.TabIndex = 28
         SSNsCheckBox.Text = "SSNs"
         SSNsCheckBox.UseVisualStyleBackColor = True
@@ -340,10 +367,10 @@ Partial Class PolicyEditorForm
         ' PhoneNumberExtsConfigureButton
         ' 
         PhoneNumberExtsConfigureButton.Enabled = False
-        PhoneNumberExtsConfigureButton.Location = New Point(791, 155)
-        PhoneNumberExtsConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        PhoneNumberExtsConfigureButton.Location = New Point(554, 93)
+        PhoneNumberExtsConfigureButton.Margin = New Padding(4, 3, 4, 3)
         PhoneNumberExtsConfigureButton.Name = "PhoneNumberExtsConfigureButton"
-        PhoneNumberExtsConfigureButton.Size = New Size(174, 45)
+        PhoneNumberExtsConfigureButton.Size = New Size(122, 27)
         PhoneNumberExtsConfigureButton.TabIndex = 27
         PhoneNumberExtsConfigureButton.Text = "Configure..."
         PhoneNumberExtsConfigureButton.UseVisualStyleBackColor = True
@@ -351,10 +378,10 @@ Partial Class PolicyEditorForm
         ' PhoneNumberExtsCheckBox
         ' 
         PhoneNumberExtsCheckBox.AutoSize = True
-        PhoneNumberExtsCheckBox.Location = New Point(563, 163)
-        PhoneNumberExtsCheckBox.Margin = New Padding(6, 5, 6, 5)
+        PhoneNumberExtsCheckBox.Location = New Point(394, 98)
+        PhoneNumberExtsCheckBox.Margin = New Padding(4, 3, 4, 3)
         PhoneNumberExtsCheckBox.Name = "PhoneNumberExtsCheckBox"
-        PhoneNumberExtsCheckBox.Size = New Size(198, 29)
+        PhoneNumberExtsCheckBox.Size = New Size(133, 19)
         PhoneNumberExtsCheckBox.TabIndex = 26
         PhoneNumberExtsCheckBox.Text = "Phone Number Exts."
         PhoneNumberExtsCheckBox.UseVisualStyleBackColor = True
@@ -362,10 +389,10 @@ Partial Class PolicyEditorForm
         ' PhoneNumbersConfigureButton
         ' 
         PhoneNumbersConfigureButton.Enabled = False
-        PhoneNumbersConfigureButton.Location = New Point(791, 100)
-        PhoneNumbersConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        PhoneNumbersConfigureButton.Location = New Point(554, 60)
+        PhoneNumbersConfigureButton.Margin = New Padding(4, 3, 4, 3)
         PhoneNumbersConfigureButton.Name = "PhoneNumbersConfigureButton"
-        PhoneNumbersConfigureButton.Size = New Size(174, 45)
+        PhoneNumbersConfigureButton.Size = New Size(122, 27)
         PhoneNumbersConfigureButton.TabIndex = 25
         PhoneNumbersConfigureButton.Text = "Configure..."
         PhoneNumbersConfigureButton.UseVisualStyleBackColor = True
@@ -373,10 +400,10 @@ Partial Class PolicyEditorForm
         ' PhoneNumbersCheckBox
         ' 
         PhoneNumbersCheckBox.AutoSize = True
-        PhoneNumbersCheckBox.Location = New Point(563, 108)
-        PhoneNumbersCheckBox.Margin = New Padding(6, 5, 6, 5)
+        PhoneNumbersCheckBox.Location = New Point(394, 65)
+        PhoneNumbersCheckBox.Margin = New Padding(4, 3, 4, 3)
         PhoneNumbersCheckBox.Name = "PhoneNumbersCheckBox"
-        PhoneNumbersCheckBox.Size = New Size(166, 29)
+        PhoneNumbersCheckBox.Size = New Size(112, 19)
         PhoneNumbersCheckBox.TabIndex = 24
         PhoneNumbersCheckBox.Text = "Phone Numbers"
         PhoneNumbersCheckBox.UseVisualStyleBackColor = True
@@ -384,10 +411,10 @@ Partial Class PolicyEditorForm
         ' NERConfigureButton
         ' 
         NERConfigureButton.Enabled = False
-        NERConfigureButton.Location = New Point(791, 45)
-        NERConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        NERConfigureButton.Location = New Point(554, 27)
+        NERConfigureButton.Margin = New Padding(4, 3, 4, 3)
         NERConfigureButton.Name = "NERConfigureButton"
-        NERConfigureButton.Size = New Size(174, 45)
+        NERConfigureButton.Size = New Size(122, 27)
         NERConfigureButton.TabIndex = 23
         NERConfigureButton.Text = "Configure..."
         NERConfigureButton.UseVisualStyleBackColor = True
@@ -395,10 +422,10 @@ Partial Class PolicyEditorForm
         ' NERCheckBox
         ' 
         NERCheckBox.AutoSize = True
-        NERCheckBox.Location = New Point(563, 52)
-        NERCheckBox.Margin = New Padding(6, 5, 6, 5)
+        NERCheckBox.Location = New Point(394, 31)
+        NERCheckBox.Margin = New Padding(4, 3, 4, 3)
         NERCheckBox.Name = "NERCheckBox"
-        NERCheckBox.Size = New Size(208, 29)
+        NERCheckBox.Size = New Size(141, 19)
         NERCheckBox.TabIndex = 22
         NERCheckBox.Text = "NER (English Persons)"
         NERCheckBox.UseVisualStyleBackColor = True
@@ -406,10 +433,10 @@ Partial Class PolicyEditorForm
         ' IPAddressesConfigureButton
         ' 
         IPAddressesConfigureButton.Enabled = False
-        IPAddressesConfigureButton.Location = New Point(260, 538)
-        IPAddressesConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        IPAddressesConfigureButton.Location = New Point(182, 323)
+        IPAddressesConfigureButton.Margin = New Padding(4, 3, 4, 3)
         IPAddressesConfigureButton.Name = "IPAddressesConfigureButton"
-        IPAddressesConfigureButton.Size = New Size(174, 45)
+        IPAddressesConfigureButton.Size = New Size(122, 27)
         IPAddressesConfigureButton.TabIndex = 21
         IPAddressesConfigureButton.Text = "Configure..."
         IPAddressesConfigureButton.UseVisualStyleBackColor = True
@@ -417,10 +444,10 @@ Partial Class PolicyEditorForm
         ' IPAddressesCheckBox
         ' 
         IPAddressesCheckBox.AutoSize = True
-        IPAddressesCheckBox.Location = New Point(31, 547)
-        IPAddressesCheckBox.Margin = New Padding(6, 5, 6, 5)
+        IPAddressesCheckBox.Location = New Point(22, 328)
+        IPAddressesCheckBox.Margin = New Padding(4, 3, 4, 3)
         IPAddressesCheckBox.Name = "IPAddressesCheckBox"
-        IPAddressesCheckBox.Size = New Size(140, 29)
+        IPAddressesCheckBox.Size = New Size(92, 19)
         IPAddressesCheckBox.TabIndex = 20
         IPAddressesCheckBox.Text = "IP Addresses"
         IPAddressesCheckBox.UseVisualStyleBackColor = True
@@ -428,10 +455,10 @@ Partial Class PolicyEditorForm
         ' HospitalsConfigureButton
         ' 
         HospitalsConfigureButton.Enabled = False
-        HospitalsConfigureButton.Location = New Point(260, 483)
-        HospitalsConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        HospitalsConfigureButton.Location = New Point(182, 290)
+        HospitalsConfigureButton.Margin = New Padding(4, 3, 4, 3)
         HospitalsConfigureButton.Name = "HospitalsConfigureButton"
-        HospitalsConfigureButton.Size = New Size(174, 45)
+        HospitalsConfigureButton.Size = New Size(122, 27)
         HospitalsConfigureButton.TabIndex = 17
         HospitalsConfigureButton.Text = "Configure..."
         HospitalsConfigureButton.UseVisualStyleBackColor = True
@@ -439,10 +466,10 @@ Partial Class PolicyEditorForm
         ' HospitalsCheckBox
         ' 
         HospitalsCheckBox.AutoSize = True
-        HospitalsCheckBox.Location = New Point(31, 490)
-        HospitalsCheckBox.Margin = New Padding(6, 5, 6, 5)
+        HospitalsCheckBox.Location = New Point(22, 294)
+        HospitalsCheckBox.Margin = New Padding(4, 3, 4, 3)
         HospitalsCheckBox.Name = "HospitalsCheckBox"
-        HospitalsCheckBox.Size = New Size(112, 29)
+        HospitalsCheckBox.Size = New Size(75, 19)
         HospitalsCheckBox.TabIndex = 16
         HospitalsCheckBox.Text = "Hospitals"
         HospitalsCheckBox.UseVisualStyleBackColor = True
@@ -450,10 +477,10 @@ Partial Class PolicyEditorForm
         ' HospitalAbbreviationsConfigureButton
         ' 
         HospitalAbbreviationsConfigureButton.Enabled = False
-        HospitalAbbreviationsConfigureButton.Location = New Point(260, 427)
-        HospitalAbbreviationsConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        HospitalAbbreviationsConfigureButton.Location = New Point(182, 256)
+        HospitalAbbreviationsConfigureButton.Margin = New Padding(4, 3, 4, 3)
         HospitalAbbreviationsConfigureButton.Name = "HospitalAbbreviationsConfigureButton"
-        HospitalAbbreviationsConfigureButton.Size = New Size(174, 45)
+        HospitalAbbreviationsConfigureButton.Size = New Size(122, 27)
         HospitalAbbreviationsConfigureButton.TabIndex = 15
         HospitalAbbreviationsConfigureButton.Text = "Configure..."
         HospitalAbbreviationsConfigureButton.UseVisualStyleBackColor = True
@@ -461,10 +488,10 @@ Partial Class PolicyEditorForm
         ' HospitalAbbreviationsCheckBox
         ' 
         HospitalAbbreviationsCheckBox.AutoSize = True
-        HospitalAbbreviationsCheckBox.Location = New Point(31, 435)
-        HospitalAbbreviationsCheckBox.Margin = New Padding(6, 5, 6, 5)
+        HospitalAbbreviationsCheckBox.Location = New Point(22, 261)
+        HospitalAbbreviationsCheckBox.Margin = New Padding(4, 3, 4, 3)
         HospitalAbbreviationsCheckBox.Name = "HospitalAbbreviationsCheckBox"
-        HospitalAbbreviationsCheckBox.Size = New Size(219, 29)
+        HospitalAbbreviationsCheckBox.Size = New Size(146, 19)
         HospitalAbbreviationsCheckBox.TabIndex = 14
         HospitalAbbreviationsCheckBox.Text = "Hospital Abbreviations"
         HospitalAbbreviationsCheckBox.UseVisualStyleBackColor = True
@@ -472,10 +499,10 @@ Partial Class PolicyEditorForm
         ' FirstNamesConfigureButton
         ' 
         FirstNamesConfigureButton.Enabled = False
-        FirstNamesConfigureButton.Location = New Point(260, 372)
-        FirstNamesConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        FirstNamesConfigureButton.Location = New Point(182, 223)
+        FirstNamesConfigureButton.Margin = New Padding(4, 3, 4, 3)
         FirstNamesConfigureButton.Name = "FirstNamesConfigureButton"
-        FirstNamesConfigureButton.Size = New Size(174, 45)
+        FirstNamesConfigureButton.Size = New Size(122, 27)
         FirstNamesConfigureButton.TabIndex = 13
         FirstNamesConfigureButton.Text = "Configure..."
         FirstNamesConfigureButton.UseVisualStyleBackColor = True
@@ -483,10 +510,10 @@ Partial Class PolicyEditorForm
         ' FirstNamesCheckBox
         ' 
         FirstNamesCheckBox.AutoSize = True
-        FirstNamesCheckBox.Location = New Point(31, 378)
-        FirstNamesCheckBox.Margin = New Padding(6, 5, 6, 5)
+        FirstNamesCheckBox.Location = New Point(22, 227)
+        FirstNamesCheckBox.Margin = New Padding(4, 3, 4, 3)
         FirstNamesCheckBox.Name = "FirstNamesCheckBox"
-        FirstNamesCheckBox.Size = New Size(131, 29)
+        FirstNamesCheckBox.Size = New Size(88, 19)
         FirstNamesCheckBox.TabIndex = 12
         FirstNamesCheckBox.Text = "First Names"
         FirstNamesCheckBox.UseVisualStyleBackColor = True
@@ -494,10 +521,10 @@ Partial Class PolicyEditorForm
         ' EmailAddressesConfigureButton
         ' 
         EmailAddressesConfigureButton.Enabled = False
-        EmailAddressesConfigureButton.Location = New Point(260, 315)
-        EmailAddressesConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        EmailAddressesConfigureButton.Location = New Point(182, 189)
+        EmailAddressesConfigureButton.Margin = New Padding(4, 3, 4, 3)
         EmailAddressesConfigureButton.Name = "EmailAddressesConfigureButton"
-        EmailAddressesConfigureButton.Size = New Size(174, 45)
+        EmailAddressesConfigureButton.Size = New Size(122, 27)
         EmailAddressesConfigureButton.TabIndex = 11
         EmailAddressesConfigureButton.Text = "Configure..."
         EmailAddressesConfigureButton.UseVisualStyleBackColor = True
@@ -505,10 +532,10 @@ Partial Class PolicyEditorForm
         ' EmailAddressesCheckBox
         ' 
         EmailAddressesCheckBox.AutoSize = True
-        EmailAddressesCheckBox.Location = New Point(31, 323)
-        EmailAddressesCheckBox.Margin = New Padding(6, 5, 6, 5)
+        EmailAddressesCheckBox.Location = New Point(22, 194)
+        EmailAddressesCheckBox.Margin = New Padding(4, 3, 4, 3)
         EmailAddressesCheckBox.Name = "EmailAddressesCheckBox"
-        EmailAddressesCheckBox.Size = New Size(150, 29)
+        EmailAddressesCheckBox.Size = New Size(100, 19)
         EmailAddressesCheckBox.TabIndex = 10
         EmailAddressesCheckBox.Text = "Email Address"
         EmailAddressesCheckBox.UseVisualStyleBackColor = True
@@ -516,10 +543,10 @@ Partial Class PolicyEditorForm
         ' DatesConfigureButton
         ' 
         DatesConfigureButton.Enabled = False
-        DatesConfigureButton.Location = New Point(260, 260)
-        DatesConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        DatesConfigureButton.Location = New Point(182, 156)
+        DatesConfigureButton.Margin = New Padding(4, 3, 4, 3)
         DatesConfigureButton.Name = "DatesConfigureButton"
-        DatesConfigureButton.Size = New Size(174, 45)
+        DatesConfigureButton.Size = New Size(122, 27)
         DatesConfigureButton.TabIndex = 9
         DatesConfigureButton.Text = "Configure..."
         DatesConfigureButton.UseVisualStyleBackColor = True
@@ -527,10 +554,10 @@ Partial Class PolicyEditorForm
         ' DatesCheckBox
         ' 
         DatesCheckBox.AutoSize = True
-        DatesCheckBox.Location = New Point(31, 267)
-        DatesCheckBox.Margin = New Padding(6, 5, 6, 5)
+        DatesCheckBox.Location = New Point(22, 160)
+        DatesCheckBox.Margin = New Padding(4, 3, 4, 3)
         DatesCheckBox.Name = "DatesCheckBox"
-        DatesCheckBox.Size = New Size(83, 29)
+        DatesCheckBox.Size = New Size(55, 19)
         DatesCheckBox.TabIndex = 8
         DatesCheckBox.Text = "Dates"
         DatesCheckBox.UseVisualStyleBackColor = True
@@ -538,10 +565,10 @@ Partial Class PolicyEditorForm
         ' CreditCardsConfigureButton
         ' 
         CreditCardsConfigureButton.Enabled = False
-        CreditCardsConfigureButton.Location = New Point(260, 203)
-        CreditCardsConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        CreditCardsConfigureButton.Location = New Point(182, 122)
+        CreditCardsConfigureButton.Margin = New Padding(4, 3, 4, 3)
         CreditCardsConfigureButton.Name = "CreditCardsConfigureButton"
-        CreditCardsConfigureButton.Size = New Size(174, 45)
+        CreditCardsConfigureButton.Size = New Size(122, 27)
         CreditCardsConfigureButton.TabIndex = 7
         CreditCardsConfigureButton.Text = "Configure..."
         CreditCardsConfigureButton.UseVisualStyleBackColor = True
@@ -549,10 +576,10 @@ Partial Class PolicyEditorForm
         ' CreditCardsCheckBox
         ' 
         CreditCardsCheckBox.AutoSize = True
-        CreditCardsCheckBox.Location = New Point(31, 212)
-        CreditCardsCheckBox.Margin = New Padding(6, 5, 6, 5)
+        CreditCardsCheckBox.Location = New Point(22, 127)
+        CreditCardsCheckBox.Margin = New Padding(4, 3, 4, 3)
         CreditCardsCheckBox.Name = "CreditCardsCheckBox"
-        CreditCardsCheckBox.Size = New Size(135, 29)
+        CreditCardsCheckBox.Size = New Size(91, 19)
         CreditCardsCheckBox.TabIndex = 6
         CreditCardsCheckBox.Text = "Credit Cards"
         CreditCardsCheckBox.UseVisualStyleBackColor = True
@@ -560,10 +587,10 @@ Partial Class PolicyEditorForm
         ' CountiesConfigureButton
         ' 
         CountiesConfigureButton.Enabled = False
-        CountiesConfigureButton.Location = New Point(260, 148)
-        CountiesConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        CountiesConfigureButton.Location = New Point(182, 89)
+        CountiesConfigureButton.Margin = New Padding(4, 3, 4, 3)
         CountiesConfigureButton.Name = "CountiesConfigureButton"
-        CountiesConfigureButton.Size = New Size(174, 45)
+        CountiesConfigureButton.Size = New Size(122, 27)
         CountiesConfigureButton.TabIndex = 5
         CountiesConfigureButton.Text = "Configure..."
         CountiesConfigureButton.UseVisualStyleBackColor = True
@@ -571,10 +598,10 @@ Partial Class PolicyEditorForm
         ' CountiesCheckBox
         ' 
         CountiesCheckBox.AutoSize = True
-        CountiesCheckBox.Location = New Point(31, 155)
-        CountiesCheckBox.Margin = New Padding(6, 5, 6, 5)
+        CountiesCheckBox.Location = New Point(22, 93)
+        CountiesCheckBox.Margin = New Padding(4, 3, 4, 3)
         CountiesCheckBox.Name = "CountiesCheckBox"
-        CountiesCheckBox.Size = New Size(107, 29)
+        CountiesCheckBox.Size = New Size(73, 19)
         CountiesCheckBox.TabIndex = 4
         CountiesCheckBox.Text = "Counties"
         CountiesCheckBox.UseVisualStyleBackColor = True
@@ -582,10 +609,10 @@ Partial Class PolicyEditorForm
         ' CitiesConfigureButton
         ' 
         CitiesConfigureButton.Enabled = False
-        CitiesConfigureButton.Location = New Point(260, 92)
-        CitiesConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        CitiesConfigureButton.Location = New Point(182, 55)
+        CitiesConfigureButton.Margin = New Padding(4, 3, 4, 3)
         CitiesConfigureButton.Name = "CitiesConfigureButton"
-        CitiesConfigureButton.Size = New Size(174, 45)
+        CitiesConfigureButton.Size = New Size(122, 27)
         CitiesConfigureButton.TabIndex = 3
         CitiesConfigureButton.Text = "Configure..."
         CitiesConfigureButton.UseVisualStyleBackColor = True
@@ -593,10 +620,10 @@ Partial Class PolicyEditorForm
         ' CitiesCheckBox
         ' 
         CitiesCheckBox.AutoSize = True
-        CitiesCheckBox.Location = New Point(31, 100)
-        CitiesCheckBox.Margin = New Padding(6, 5, 6, 5)
+        CitiesCheckBox.Location = New Point(22, 60)
+        CitiesCheckBox.Margin = New Padding(4, 3, 4, 3)
         CitiesCheckBox.Name = "CitiesCheckBox"
-        CitiesCheckBox.Size = New Size(80, 29)
+        CitiesCheckBox.Size = New Size(55, 19)
         CitiesCheckBox.TabIndex = 2
         CitiesCheckBox.Text = "Cities"
         CitiesCheckBox.UseVisualStyleBackColor = True
@@ -604,10 +631,10 @@ Partial Class PolicyEditorForm
         ' AgesConfigureButton
         ' 
         AgesConfigureButton.Enabled = False
-        AgesConfigureButton.Location = New Point(260, 37)
-        AgesConfigureButton.Margin = New Padding(6, 5, 6, 5)
+        AgesConfigureButton.Location = New Point(182, 22)
+        AgesConfigureButton.Margin = New Padding(4, 3, 4, 3)
         AgesConfigureButton.Name = "AgesConfigureButton"
-        AgesConfigureButton.Size = New Size(174, 45)
+        AgesConfigureButton.Size = New Size(122, 27)
         AgesConfigureButton.TabIndex = 1
         AgesConfigureButton.Text = "Configure..."
         AgesConfigureButton.UseVisualStyleBackColor = True
@@ -615,10 +642,10 @@ Partial Class PolicyEditorForm
         ' AgesCheckBox
         ' 
         AgesCheckBox.AutoSize = True
-        AgesCheckBox.Location = New Point(31, 45)
-        AgesCheckBox.Margin = New Padding(6, 5, 6, 5)
+        AgesCheckBox.Location = New Point(22, 27)
+        AgesCheckBox.Margin = New Padding(4, 3, 4, 3)
         AgesCheckBox.Name = "AgesCheckBox"
-        AgesCheckBox.Size = New Size(78, 29)
+        AgesCheckBox.Size = New Size(52, 19)
         AgesCheckBox.TabIndex = 0
         AgesCheckBox.Text = "Ages"
         AgesCheckBox.UseVisualStyleBackColor = True
@@ -630,43 +657,43 @@ Partial Class PolicyEditorForm
         PolicysToolStrip.Items.AddRange(New ToolStripItem() {ToolStripLabel1, PoliciesToolStripDropDownButton, RefreshToolStripButton, ToolStripSeparator6, NewToolStripButton, ToolStripSeparator1, SaveToolStripButton, SaveAsToolStripButton, ToolStripSeparator2, DeleteToolStripButton})
         PolicysToolStrip.Location = New Point(0, 0)
         PolicysToolStrip.Name = "PolicysToolStrip"
-        PolicysToolStrip.Padding = New Padding(0, 0, 3, 0)
-        PolicysToolStrip.Size = New Size(1534, 58)
+        PolicysToolStrip.Padding = New Padding(0, 0, 2, 0)
+        PolicysToolStrip.Size = New Size(1074, 46)
         PolicysToolStrip.TabIndex = 9
         PolicysToolStrip.Text = "ToolStrip3"
         ' 
         ' ToolStripLabel1
         ' 
         ToolStripLabel1.Name = "ToolStripLabel1"
-        ToolStripLabel1.Size = New Size(126, 53)
+        ToolStripLabel1.Size = New Size(85, 43)
         ToolStripLabel1.Text = "Select a Policy:"
         ' 
         ' PoliciesToolStripDropDownButton
         ' 
         PoliciesToolStripDropDownButton.DropDownStyle = ComboBoxStyle.DropDownList
         PoliciesToolStripDropDownButton.Name = "PoliciesToolStripDropDownButton"
-        PoliciesToolStripDropDownButton.Size = New Size(455, 58)
+        PoliciesToolStripDropDownButton.Size = New Size(320, 46)
         ' 
         ' RefreshToolStripButton
         ' 
         RefreshToolStripButton.Image = CType(resources.GetObject("RefreshToolStripButton.Image"), Image)
         RefreshToolStripButton.ImageTransparentColor = Color.Magenta
         RefreshToolStripButton.Name = "RefreshToolStripButton"
-        RefreshToolStripButton.Size = New Size(74, 53)
+        RefreshToolStripButton.Size = New Size(50, 43)
         RefreshToolStripButton.Text = "Refresh"
         RefreshToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText
         ' 
         ' ToolStripSeparator6
         ' 
         ToolStripSeparator6.Name = "ToolStripSeparator6"
-        ToolStripSeparator6.Size = New Size(6, 58)
+        ToolStripSeparator6.Size = New Size(6, 46)
         ' 
         ' NewToolStripButton
         ' 
         NewToolStripButton.Image = CType(resources.GetObject("NewToolStripButton.Image"), Image)
         NewToolStripButton.ImageTransparentColor = Color.Magenta
         NewToolStripButton.Name = "NewToolStripButton"
-        NewToolStripButton.Size = New Size(101, 53)
+        NewToolStripButton.Size = New Size(70, 43)
         NewToolStripButton.Text = "New Policy"
         NewToolStripButton.TextDirection = ToolStripTextDirection.Horizontal
         NewToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText
@@ -674,7 +701,7 @@ Partial Class PolicyEditorForm
         ' ToolStripSeparator1
         ' 
         ToolStripSeparator1.Name = "ToolStripSeparator1"
-        ToolStripSeparator1.Size = New Size(6, 58)
+        ToolStripSeparator1.Size = New Size(6, 46)
         ' 
         ' SaveToolStripButton
         ' 
@@ -682,7 +709,7 @@ Partial Class PolicyEditorForm
         SaveToolStripButton.Image = CType(resources.GetObject("SaveToolStripButton.Image"), Image)
         SaveToolStripButton.ImageTransparentColor = Color.Magenta
         SaveToolStripButton.Name = "SaveToolStripButton"
-        SaveToolStripButton.Size = New Size(53, 53)
+        SaveToolStripButton.Size = New Size(35, 43)
         SaveToolStripButton.Text = "Save"
         SaveToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText
         ' 
@@ -692,14 +719,14 @@ Partial Class PolicyEditorForm
         SaveAsToolStripButton.Image = CType(resources.GetObject("SaveAsToolStripButton.Image"), Image)
         SaveAsToolStripButton.ImageTransparentColor = Color.Magenta
         SaveAsToolStripButton.Name = "SaveAsToolStripButton"
-        SaveAsToolStripButton.Size = New Size(90, 53)
+        SaveAsToolStripButton.Size = New Size(60, 43)
         SaveAsToolStripButton.Text = "Save As..."
         SaveAsToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText
         ' 
         ' ToolStripSeparator2
         ' 
         ToolStripSeparator2.Name = "ToolStripSeparator2"
-        ToolStripSeparator2.Size = New Size(6, 58)
+        ToolStripSeparator2.Size = New Size(6, 46)
         ' 
         ' DeleteToolStripButton
         ' 
@@ -707,28 +734,30 @@ Partial Class PolicyEditorForm
         DeleteToolStripButton.Image = CType(resources.GetObject("DeleteToolStripButton.Image"), Image)
         DeleteToolStripButton.ImageTransparentColor = Color.Magenta
         DeleteToolStripButton.Name = "DeleteToolStripButton"
-        DeleteToolStripButton.Size = New Size(78, 53)
+        DeleteToolStripButton.Size = New Size(53, 43)
         DeleteToolStripButton.Text = "Delete..."
         DeleteToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText
         ' 
         ' PolicyEditorForm
         ' 
-        AutoScaleDimensions = New SizeF(10F, 25F)
+        AutoScaleDimensions = New SizeF(7F, 15F)
         AutoScaleMode = AutoScaleMode.Font
-        ClientSize = New Size(1534, 678)
+        ClientSize = New Size(1074, 449)
         Controls.Add(PolicyPanel)
         Controls.Add(PolicysToolStrip)
         FormBorderStyle = FormBorderStyle.FixedDialog
         Icon = CType(resources.GetObject("$this.Icon"), Icon)
-        Margin = New Padding(6, 5, 6, 5)
+        Margin = New Padding(4, 3, 4, 3)
         MaximizeBox = False
         MinimizeBox = False
-        MinimumSize = New Size(1546, 699)
+        MinimumSize = New Size(1087, 435)
         Name = "PolicyEditorForm"
         StartPosition = FormStartPosition.CenterScreen
         Text = "Philter Policy Editor"
         PolicyPanel.ResumeLayout(False)
-        PolicyPanel.PerformLayout()
+        IdentifiersTabControl.ResumeLayout(False)
+        IdentifiersTabPage.ResumeLayout(False)
+        IdentifiersTabPage.PerformLayout()
         PolicysToolStrip.ResumeLayout(False)
         PolicysToolStrip.PerformLayout()
         ResumeLayout(False)
@@ -781,6 +810,8 @@ Partial Class PolicyEditorForm
     Friend WithEvents CitiesCheckBox As CheckBox
     Friend WithEvents AgesConfigureButton As Button
     Friend WithEvents AgesCheckBox As CheckBox
+    Friend WithEvents IdentifiersTabControl As TabControl
+    Friend WithEvents IdentifiersTabPage As TabPage
     Friend WithEvents PolicysToolStrip As ToolStrip
     Friend WithEvents ToolStripLabel1 As ToolStripLabel
     Friend WithEvents PoliciesToolStripDropDownButton As ToolStripComboBox

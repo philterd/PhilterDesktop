@@ -1,6 +1,6 @@
 namespace PhilterDesktop
 {
-    partial class RedactDocumentsForm
+    partial class RedactDocuments
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@ namespace PhilterDesktop
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(RedactDocumentsForm));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(RedactDocuments));
             groupBoxFiles = new GroupBox();
             filesPanel = new Panel();
             btnClearAll = new Button();

@@ -1,6 +1,6 @@
 ﻿namespace PhilterDesktop
 {
-    partial class RedctionContextsForm
+    partial class Contexts
     {
         /// <summary>
         /// Required designer variable.
@@ -36,6 +36,7 @@
             btnEmpty = new Button();
             btnClose = new Button();
             lblContexts = new Label();
+            helpButton = new Button();
             SuspendLayout();
             // 
             // listViewContexts
@@ -43,11 +44,10 @@
             listViewContexts.Columns.AddRange(new ColumnHeader[] { columnHeaderName, columnHeaderEntries });
             listViewContexts.FullRowSelect = true;
             listViewContexts.GridLines = true;
-            listViewContexts.Location = new Point(17, 53);
-            listViewContexts.Margin = new Padding(4, 5, 4, 5);
+            listViewContexts.Location = new Point(12, 32);
             listViewContexts.MultiSelect = false;
             listViewContexts.Name = "listViewContexts";
-            listViewContexts.Size = new Size(748, 339);
+            listViewContexts.Size = new Size(525, 205);
             listViewContexts.TabIndex = 0;
             listViewContexts.UseCompatibleStateImageBehavior = false;
             listViewContexts.View = View.Details;
@@ -56,7 +56,7 @@
             // columnHeaderName
             // 
             columnHeaderName.Text = "Context Name";
-            columnHeaderName.Width = 350;
+            columnHeaderName.Width = 250;
             // 
             // columnHeaderEntries
             // 
@@ -65,22 +65,20 @@
             // 
             // btnCreate
             // 
-            btnCreate.Location = new Point(797, 53);
-            btnCreate.Margin = new Padding(4, 5, 4, 5);
+            btnCreate.Location = new Point(558, 32);
             btnCreate.Name = "btnCreate";
-            btnCreate.Size = new Size(172, 47);
+            btnCreate.Size = new Size(120, 28);
             btnCreate.TabIndex = 1;
-            btnCreate.Text = "New Context...";
+            btnCreate.Text = "New Context";
             btnCreate.UseVisualStyleBackColor = true;
             btnCreate.Click += BtnCreate_Click;
             // 
             // btnDelete
             // 
             btnDelete.Enabled = false;
-            btnDelete.Location = new Point(797, 113);
-            btnDelete.Margin = new Padding(4, 5, 4, 5);
+            btnDelete.Location = new Point(558, 68);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(172, 47);
+            btnDelete.Size = new Size(120, 28);
             btnDelete.TabIndex = 2;
             btnDelete.Text = "Delete";
             btnDelete.UseVisualStyleBackColor = true;
@@ -89,10 +87,9 @@
             // btnEmpty
             // 
             btnEmpty.Enabled = false;
-            btnEmpty.Location = new Point(797, 173);
-            btnEmpty.Margin = new Padding(4, 5, 4, 5);
+            btnEmpty.Location = new Point(558, 104);
             btnEmpty.Name = "btnEmpty";
-            btnEmpty.Size = new Size(172, 47);
+            btnEmpty.Size = new Size(120, 28);
             btnEmpty.TabIndex = 3;
             btnEmpty.Text = "Empty";
             btnEmpty.UseVisualStyleBackColor = true;
@@ -100,10 +97,9 @@
             // 
             // btnClose
             // 
-            btnClose.Location = new Point(797, 345);
-            btnClose.Margin = new Padding(4, 5, 4, 5);
+            btnClose.Location = new Point(558, 209);
             btnClose.Name = "btnClose";
-            btnClose.Size = new Size(172, 47);
+            btnClose.Size = new Size(120, 28);
             btnClose.TabIndex = 4;
             btnClose.Text = "Close";
             btnClose.UseVisualStyleBackColor = true;
@@ -112,18 +108,27 @@
             // lblContexts
             // 
             lblContexts.AutoSize = true;
-            lblContexts.Location = new Point(17, 15);
-            lblContexts.Margin = new Padding(4, 0, 4, 0);
+            lblContexts.Location = new Point(12, 9);
             lblContexts.Name = "lblContexts";
-            lblContexts.Size = new Size(168, 25);
+            lblContexts.Size = new Size(112, 15);
             lblContexts.TabIndex = 5;
             lblContexts.Text = "Redaction Contexts:";
             // 
-            // RedctionContextsForm
+            // helpButton
             // 
-            AutoScaleDimensions = new SizeF(10F, 25F);
+            helpButton.Location = new Point(558, 138);
+            helpButton.Name = "helpButton";
+            helpButton.Size = new Size(120, 28);
+            helpButton.TabIndex = 6;
+            helpButton.Text = "Help";
+            helpButton.UseVisualStyleBackColor = true;
+            // 
+            // Contexts
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(994, 420);
+            ClientSize = new Size(696, 252);
+            Controls.Add(helpButton);
             Controls.Add(lblContexts);
             Controls.Add(btnClose);
             Controls.Add(btnEmpty);
@@ -131,10 +136,9 @@
             Controls.Add(btnCreate);
             Controls.Add(listViewContexts);
             FormBorderStyle = FormBorderStyle.FixedDialog;
-            Margin = new Padding(4, 5, 4, 5);
             MaximizeBox = false;
             MinimizeBox = false;
-            Name = "RedctionContextsForm";
+            Name = "Contexts";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Redaction Contexts";
             Load += RedctionContextsForm_Load;
@@ -152,5 +156,6 @@
         private Button btnEmpty;
         private Button btnClose;
         private Label lblContexts;
+        private Button helpButton;
     }
 }

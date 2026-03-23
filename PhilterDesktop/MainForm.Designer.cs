@@ -46,6 +46,8 @@
             contextsToolStripButton = new ToolStripButton();
             toolStripSeparator4 = new ToolStripSeparator();
             settingsToolStripButton = new ToolStripButton();
+            toolStripSeparator6 = new ToolStripSeparator();
+            HelpToolStripButton = new ToolStripButton();
             listView1 = new ListView();
             columnHeader1 = new ColumnHeader();
             columnHeader2 = new ColumnHeader();
@@ -64,8 +66,6 @@
             refreshToolStripMenuItem = new ToolStripMenuItem();
             imageList1 = new ImageList(components);
             redactionQueueTimer = new System.Windows.Forms.Timer(components);
-            toolStripSeparator6 = new ToolStripSeparator();
-            HelpToolStripButton = new ToolStripButton();
             menuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
             contextMenuStrip1.SuspendLayout();
@@ -204,6 +204,20 @@
             settingsToolStripButton.ToolTipText = "Modify the application settings";
             settingsToolStripButton.Click += settingsToolStripButton_Click;
             // 
+            // toolStripSeparator6
+            // 
+            toolStripSeparator6.Name = "toolStripSeparator6";
+            toolStripSeparator6.Size = new Size(6, 58);
+            // 
+            // HelpToolStripButton
+            // 
+            HelpToolStripButton.Image = (Image)resources.GetObject("HelpToolStripButton.Image");
+            HelpToolStripButton.ImageTransparentColor = Color.Magenta;
+            HelpToolStripButton.Name = "HelpToolStripButton";
+            HelpToolStripButton.Size = new Size(53, 53);
+            HelpToolStripButton.Text = "Help";
+            HelpToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
+            // 
             // listView1
             // 
             listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader2, columnHeader4, columnHeader3 });
@@ -327,20 +341,6 @@
             // 
             redactionQueueTimer.Interval = 15000;
             redactionQueueTimer.Tick += RedactionQueueTimer_Tick;
-            // 
-            // toolStripSeparator6
-            // 
-            toolStripSeparator6.Name = "toolStripSeparator6";
-            toolStripSeparator6.Size = new Size(6, 58);
-            // 
-            // HelpToolStripButton
-            // 
-            HelpToolStripButton.Image = (Image)resources.GetObject("HelpToolStripButton.Image");
-            HelpToolStripButton.ImageTransparentColor = Color.Magenta;
-            HelpToolStripButton.Name = "HelpToolStripButton";
-            HelpToolStripButton.Size = new Size(53, 53);
-            HelpToolStripButton.Text = "Help";
-            HelpToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
             // 
             // MainForm
             // 

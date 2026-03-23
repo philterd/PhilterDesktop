@@ -199,9 +199,9 @@ Public Class PolicyEditorForm
 
         PolicyPanel.Tag = fp
 
-        If Not fp.Identifiers is Nothing then
+        If Not fp.Identifiers Is Nothing Then
 
-            If not fp.Identifiers.Age is Nothing Then
+            If Not fp.Identifiers.Age Is Nothing Then
                 AgesCheckBox.Checked = True
             End If
 
@@ -287,7 +287,7 @@ Public Class PolicyEditorForm
 
         Else
 
-            fp.Identifiers = new Identifiers()
+            fp.Identifiers = New Identifiers()
             PolicyPanel.Tag = fp
 
         End If
