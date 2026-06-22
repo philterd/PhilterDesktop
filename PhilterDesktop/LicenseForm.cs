@@ -8,6 +8,7 @@ namespace PhilterDesktop
         public LicenseForm()
         {
             InitializeComponent();
+            ModernTheme.Apply(this);
             LoadLicenseStatus();
         }
 

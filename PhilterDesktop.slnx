@@ -1,5 +1,4 @@
 <Solution>
-  <Project Path="../phileas-net/src/Phileas/Phileas.csproj" />
   <Project Path="PhilterPolicyEditor/PhilterPolicyEditor.vbproj" />
   <Project Path="Policies/Policies.csproj" />
   <Project Path="PhilterData/PhilterData.csproj" Id="adecd482-1a8d-4494-ac1e-45c1576e2602" />

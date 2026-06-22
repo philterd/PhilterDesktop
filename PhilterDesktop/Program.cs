@@ -11,6 +11,11 @@ namespace PhilterDesktop
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
+
+            // Use the modern Windows 11 UI font everywhere, including dialogs that
+            // are not individually themed.
+            Application.SetDefaultFont(ModernTheme.UiFont);
+
             Application.Run(new MainForm());
         }
     }

@@ -10,6 +10,7 @@ namespace PhilterDesktop
         public Contexts(ContextRepository contextRepository, ContextEntryRepository contextEntryRepository)
         {
             InitializeComponent();
+            ModernTheme.Apply(this);
             _repo = contextRepository;
             _contextEntryRepository = contextEntryRepository;
         }

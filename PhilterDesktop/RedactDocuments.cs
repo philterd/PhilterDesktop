@@ -17,6 +17,7 @@ namespace PhilterDesktop
         public RedactDocuments(PolicyRepository policyRepository, ContextRepository contextRepository, RedactionQueueRepository redactionQueueRepository, bool loggingEnabled)
         {
             InitializeComponent();
+            ModernTheme.Apply(this);
             _policyRepository = policyRepository;
             _contextRepository = contextRepository;
             _redactionQueueRepository = redactionQueueRepository;

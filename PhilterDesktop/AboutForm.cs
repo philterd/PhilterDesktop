@@ -11,6 +11,7 @@ namespace PhilterDesktop
         public AboutForm()
         {
             InitializeComponent();
+            ModernTheme.Apply(this);
             LoadVersionInfo();
         }
 

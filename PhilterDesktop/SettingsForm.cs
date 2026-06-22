@@ -14,6 +14,7 @@ namespace PhilterDesktop
         public SettingsForm(SettingsRepository settingsRepository)
         {
             InitializeComponent();
+            ModernTheme.Apply(this);
             _settingsRepository = settingsRepository;
             _settings = new SettingsEntity();
         }

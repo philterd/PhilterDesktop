@@ -7,6 +7,7 @@ namespace PhilterDesktop
         public CreateContextDialog()
         {
             InitializeComponent();
+            ModernTheme.Apply(this);
         }
 
         private void BtnOk_Click(object sender, EventArgs e)

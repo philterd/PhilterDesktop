@@ -22,6 +22,7 @@ namespace PhilterDesktop
         public MainForm()
         {
             InitializeComponent();
+            ModernTheme.Apply(this);
 
             string root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
