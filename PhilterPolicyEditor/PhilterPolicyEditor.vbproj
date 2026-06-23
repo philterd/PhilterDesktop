@@ -56,9 +56,6 @@
     <Compile Update="PolicyEditor\FilterReplacementStrategies\AddFirstNameFilterStrategyForm.Designer.vb">
       <DependentUpon>AddFirstNameFilterStrategyForm.vb</DependentUpon>
     </Compile>
-    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddHospitalAbbreviationFilterStrategyForm.Designer.vb">
-      <DependentUpon>AddHospitalAbbreviationFilterStrategyForm.vb</DependentUpon>
-    </Compile>
     <Compile Update="PolicyEditor\FilterReplacementStrategies\AddHospitalFilterStrategyForm.Designer.vb">
       <DependentUpon>AddHospitalFilterStrategyForm.vb</DependentUpon>
     </Compile>
@@ -67,9 +64,6 @@
     </Compile>
     <Compile Update="PolicyEditor\FilterReplacementStrategies\AddIpAddressFilterStrategyForm.Designer.vb">
       <DependentUpon>AddIpAddressFilterStrategyForm.vb</DependentUpon>
-    </Compile>
-    <Compile Update="PolicyEditor\FilterReplacementStrategies\AddNerFilterStrategyForm.Designer.vb">
-      <DependentUpon>AddNerFilterStrategyForm.vb</DependentUpon>
     </Compile>
     <Compile Update="PolicyEditor\FilterReplacementStrategies\AddPhoneNumberExtensionFilterStrategyForm.Designer.vb">
       <DependentUpon>AddPhoneNumberExtensionFilterStrategyForm.vb</DependentUpon>
@@ -153,9 +147,9 @@
     <PackageReference Include="log4net" Version="3.3.0" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.6" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Philterd.Phileas" Version="1.2.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PhilterData\PhilterData.csproj" />
-    <ProjectReference Include="..\Policies\Policies.csproj" />
   </ItemGroup>
 </Project>

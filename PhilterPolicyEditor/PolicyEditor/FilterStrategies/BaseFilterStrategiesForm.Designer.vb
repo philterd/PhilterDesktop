@@ -1,8 +1,8 @@
 ﻿Imports System.Windows.Forms
-Imports Philter.Model.Policy.Filters.Strategies
+Imports Phileas.Policy.Filters.Strategies
 
 <Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
-Partial Class BaseFilterStrategiesForm(Of T As BaseFilterStrategy)
+Partial Class BaseFilterStrategiesForm(Of T As AbstractFilterStrategy)
     Inherits System.Windows.Forms.Form
 
     'Form overrides dispose to clean up the component list.

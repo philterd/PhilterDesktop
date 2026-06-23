@@ -1,5 +1,5 @@
 ﻿Imports System.Windows.Forms
-Imports Philter.Model.Policy.Filters
+Imports Phileas.Policy.Filters
 
 Public Class CustomIdentifiersForm
 
@@ -14,7 +14,7 @@ Public Class CustomIdentifiersForm
 
         For Each i As Identifier In CustomIdentifiers
 
-            Dim lvi As New ListViewItem(i.Label)
+            Dim lvi As New ListViewItem(i.Classification)
             lvi.SubItems.Add(i.Pattern)
             lvi.Tag = i
 
@@ -49,7 +49,7 @@ Public Class CustomIdentifiersForm
 
             Dim i As Identifier = ci.CustomIdentifier
 
-            Dim lvi As New ListViewItem(i.Label)
+            Dim lvi As New ListViewItem(i.Classification)
             lvi.SubItems.Add(i.Pattern)
             lvi.Tag = i
 

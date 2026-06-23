@@ -18,7 +18,17 @@ namespace PhilterDesktop
         /// <summary>Returns the Xceed license key, or null if none is configured.</summary>
         public static string? GetXceedLicenseKey()
         {
-            foreach (string path in CandidatePaths())
+            return ResolveKey(CandidatePaths(), Environment.GetEnvironmentVariable("XCEED_LICENSE_KEY"));
+        }
+
+        /// <summary>
+        /// Pure resolution logic: returns the first valid key from the candidate files
+        /// (in order), otherwise the environment value, otherwise null. Keys are trimmed;
+        /// missing files and malformed JSON are skipped. Exposed for unit testing.
+        /// </summary>
+        internal static string? ResolveKey(IEnumerable<string> candidatePaths, string? envValue)
+        {
+            foreach (string path in candidatePaths)
             {
                 if (!File.Exists(path))
                 {
@@ -40,8 +50,7 @@ namespace PhilterDesktop
                 }
             }
 
-            string? fromEnv = Environment.GetEnvironmentVariable("XCEED_LICENSE_KEY");
-            return string.IsNullOrWhiteSpace(fromEnv) ? null : fromEnv.Trim();
+            return string.IsNullOrWhiteSpace(envValue) ? null : envValue.Trim();
         }
 
         private static IEnumerable<string> CandidatePaths()

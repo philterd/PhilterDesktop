@@ -1,5 +1,5 @@
-﻿Imports Philter.Model.Policy
-Imports Philter.Model.Policy.Filters.Strategies
+﻿Imports Phileas.Policy
+Imports Phileas.Policy.Filters.Strategies
 
 Public Class CountyFilterStrategiesForm
     Inherits BaseFilterStrategiesForm(Of CountyFilterStrategy)

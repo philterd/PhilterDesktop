@@ -1,5 +1,5 @@
 ﻿Imports System.Windows.Forms
-Imports Philter.Model.Policy.Filters.Strategies
+Imports Phileas.Policy.Filters.Strategies
 
 <Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class AddSsnFilterStrategyForm

@@ -1,5 +1,5 @@
-﻿Imports Philter.Model.Policy
-Imports Philter.Model.Policy.Filters.Strategies
+﻿Imports Phileas.Policy
+Imports Phileas.Policy.Filters.Strategies
 
 Public Class EmailAddressFilterStrategiesForm
     Inherits BaseFilterStrategiesForm(Of EmailAddressFilterStrategy)

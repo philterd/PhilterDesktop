@@ -1,7 +1,7 @@
 ﻿Imports System.Windows.Forms
 Imports Newtonsoft.Json
-Imports Philter.Model.Policy
-Imports Philter.Model.Policy.Filters
+Imports Phileas.Policy
+Imports Phileas.Policy.Filters
 Imports PhilterData
 Imports PhilterDesktop
 
@@ -15,6 +15,13 @@ Public Class PolicyEditorForm
     End Sub
 
     Private Sub Policys_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
+        ' NER and Hospital Abbreviation are not supported by the Phileas model and
+        ' have been retired from the editor (enabling them previously did nothing).
+        NERCheckBox.Visible = False
+        NERConfigureButton.Visible = False
+        HospitalAbbreviationsCheckBox.Visible = False
+        HospitalAbbreviationsConfigureButton.Visible = False
 
         PoliciesToolStripDropDownButton.Items.Clear()
         For Each policy As PolicyEntity In _repo.GetAll()
@@ -94,7 +101,7 @@ Public Class PolicyEditorForm
         Dim entity As PolicyEntity = _repo.FindByName(policyName)
 
         If entity IsNot Nothing Then
-            entity.Json = JsonConvert.SerializeObject(GetPolicy())
+            entity.Json = PolicySerializer.SerializeToJson(GetPolicy())
             _repo.Update(entity)
         End If
 
@@ -115,7 +122,7 @@ Public Class PolicyEditorForm
 
         Dim entity As New PolicyEntity
         entity.Name = policyName
-        entity.Json = JsonConvert.SerializeObject(GetPolicy())
+        entity.Json = PolicySerializer.SerializeToJson(GetPolicy())
         _repo.Insert(entity)
 
         PoliciesToolStripDropDownButton.Items.Clear()
@@ -193,7 +200,7 @@ Public Class PolicyEditorForm
         Dim json As String = PolicyEntity.Json
         System.Diagnostics.Debug.WriteLine(json)
 
-        Dim fp As Policy = JsonConvert.DeserializeObject(Of Policy)(json)
+        Dim fp As Policy = PolicySerializer.DeserializeFromJson(json)
 
         ResetForm()
 
@@ -237,20 +244,12 @@ Public Class PolicyEditorForm
                 HospitalsCheckBox.Checked = True
             End If
 
-            If Not fp.Identifiers.HospitalAbbreviation Is Nothing Then
-                HospitalAbbreviationsCheckBox.Checked = True
-            End If
-
             If Not fp.Identifiers.CustomIdentifiers Is Nothing Then
                 CustomIdentifiersCheckBox.Checked = True
             End If
 
             If Not fp.Identifiers.IpAddress Is Nothing Then
                 IPAddressesCheckBox.Checked = True
-            End If
-
-            If Not fp.Identifiers.Ner Is Nothing Then
-                NERCheckBox.Checked = True
             End If
 
             If Not fp.Identifiers.PhoneNumber Is Nothing Then
@@ -283,6 +282,10 @@ Public Class PolicyEditorForm
 
             If Not fp.Identifiers.Vin Is Nothing Then
                 VINsCheckBox.Checked = True
+            End If
+
+            If Not fp.Identifiers.ZipCode Is Nothing Then
+                ZipCodesCheckBox.Checked = True
             End If
 
         Else
@@ -324,13 +327,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.Age = New Filters.Age
         End If
 
-        Dim fs As New AgeFilterStrategiesForm(Policy, Age.GetName(), Policy.Identifiers.Age.AgeFilterStrategies)
+        Dim fs As New AgeFilterStrategiesForm(Policy, "Age", Policy.Identifiers.Age.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.Age.AgeFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.Age.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -487,26 +490,6 @@ Public Class PolicyEditorForm
 
     End Sub
 
-    Private Sub HospitalAbbreviationsCheckBox_CheckedChanged(sender As Object, e As EventArgs) Handles HospitalAbbreviationsCheckBox.CheckedChanged
-
-        HospitalAbbreviationsConfigureButton.Enabled = HospitalAbbreviationsCheckBox.Checked
-
-        If HospitalAbbreviationsCheckBox.Checked = True Then
-
-            If GetPolicy().Identifiers().HospitalAbbreviation Is Nothing Then
-                GetPolicy().Identifiers().HospitalAbbreviation = New Filters.HospitalAbbreviation
-            End If
-
-            GetPolicy().Identifiers().HospitalAbbreviation.Enabled = HospitalAbbreviationsCheckBox.Checked
-
-        Else
-
-            GetPolicy().Identifiers().HospitalAbbreviation = Nothing
-
-        End If
-
-    End Sub
-
     Private Sub HospitalsCheckBox_CheckedChanged(sender As Object, e As EventArgs) Handles HospitalsCheckBox.CheckedChanged
 
         HospitalsConfigureButton.Enabled = HospitalsCheckBox.Checked
@@ -542,26 +525,6 @@ Public Class PolicyEditorForm
         Else
 
             GetPolicy().Identifiers().IpAddress = Nothing
-
-        End If
-
-    End Sub
-
-    Private Sub NERCheckBox_CheckedChanged(sender As Object, e As EventArgs) Handles NERCheckBox.CheckedChanged
-
-        NERConfigureButton.Enabled = NERCheckBox.Checked
-
-        If NERCheckBox.Checked = True Then
-
-            If GetPolicy().Identifiers().Ner Is Nothing Then
-                GetPolicy().Identifiers().Ner = New Filters.Ner
-            End If
-
-            GetPolicy().Identifiers().Ner.Enabled = NERCheckBox.Checked
-
-        Else
-
-            GetPolicy().Identifiers().Ner = Nothing
 
         End If
 
@@ -799,49 +762,18 @@ Public Class PolicyEditorForm
             Policy.Identifiers.City = New Filters.City
         End If
 
-        Dim fs As New CityFilterStrategiesForm(Policy, City.GetName(), Policy.Identifiers.City.CityFilterStrategies)
+        Dim fs As New CityFilterStrategiesForm(Policy, "City", Policy.Identifiers.City.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.City.CityFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.City.Strategies = fs.GetFilterStrategies
 
             Else
 
                 ' No strategies so remove it.
                 Policy.Identifiers.City = Nothing
-
-            End If
-
-        End If
-
-        PolicyPanel.Tag = Policy
-
-        fs.Dispose()
-
-    End Sub
-
-    Private Sub NERConfigureButton_Click(sender As Object, e As EventArgs) Handles NERConfigureButton.Click
-
-        Dim Policy As Policy = GetPolicy()
-
-        If Policy.Identifiers.Ner Is Nothing Then
-            Policy.Identifiers.Ner = New Filters.Ner
-        End If
-
-        Dim fs As New NerFilterStrategiesForm(Policy, Ner.GetName(), Policy.Identifiers.Ner.nerFilterStrategies)
-
-        If fs.ShowDialog = DialogResult.OK Then
-
-            If fs.GetFilterStrategies.Count > 0 Then
-
-                Policy.Identifiers.Ner.nerFilterStrategies = fs.GetFilterStrategies
-
-            Else
-
-                ' No strategies so remove it.
-                Policy.Identifiers.Ner = Nothing
 
             End If
 
@@ -861,13 +793,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.County = New Filters.County
         End If
 
-        Dim fs As New CountyFilterStrategiesForm(Policy, County.GetName(), Policy.Identifiers.County.CountyFilterStrategies)
+        Dim fs As New CountyFilterStrategiesForm(Policy, "County", Policy.Identifiers.County.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.County.CountyFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.County.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -892,13 +824,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.CreditCard = New Filters.CreditCard
         End If
 
-        Dim fs As New CreditCardFilterStrategiesForm(Policy, CreditCard.GetName(), Policy.Identifiers.CreditCard.CreditCardFilterStrategies)
+        Dim fs As New CreditCardFilterStrategiesForm(Policy, "CreditCard", Policy.Identifiers.CreditCard.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.CreditCard.CreditCardFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.CreditCard.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -923,13 +855,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.Date = New Filters.Date
         End If
 
-        Dim fs As New DateFilterStrategiesForm(Policy, [Date].GetName(), Policy.Identifiers.Date.DateFilterStrategies)
+        Dim fs As New DateFilterStrategiesForm(Policy, "Date", Policy.Identifiers.Date.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.Date.DateFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.Date.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -954,13 +886,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.EmailAddress = New Filters.EmailAddress
         End If
 
-        Dim fs As New EmailAddressFilterStrategiesForm(Policy, EmailAddress.GetName(), Policy.Identifiers.EmailAddress.EmailAddressFilterStrategies)
+        Dim fs As New EmailAddressFilterStrategiesForm(Policy, "EmailAddress", Policy.Identifiers.EmailAddress.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.EmailAddress.EmailAddressFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.EmailAddress.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -985,49 +917,18 @@ Public Class PolicyEditorForm
             Policy.Identifiers.FirstName = New Filters.FirstName
         End If
 
-        Dim fs As New FirstNameFilterStrategiesForm(Policy, FirstName.GetName(), Policy.Identifiers.FirstName.FirstNameFilterStrategies)
+        Dim fs As New FirstNameFilterStrategiesForm(Policy, "FirstName", Policy.Identifiers.FirstName.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.FirstName.FirstNameFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.FirstName.Strategies = fs.GetFilterStrategies
 
             Else
 
                 ' No strategies so remove it.
                 Policy.Identifiers.FirstName = Nothing
-
-            End If
-
-        End If
-
-        PolicyPanel.Tag = Policy
-
-        fs.Dispose()
-
-    End Sub
-
-    Private Sub HospitalAbbreviationsConfigureButton_Click(sender As Object, e As EventArgs) Handles HospitalAbbreviationsConfigureButton.Click
-
-        Dim Policy As Policy = GetPolicy()
-
-        If Policy.Identifiers.HospitalAbbreviation Is Nothing Then
-            Policy.Identifiers.HospitalAbbreviation = New Filters.HospitalAbbreviation
-        End If
-
-        Dim fs As New HospitalAbbreviationFilterStrategiesForm(Policy, HospitalAbbreviation.GetName(), Policy.Identifiers.HospitalAbbreviation.HospitalAbbreviationFilterStrategies)
-
-        If fs.ShowDialog = DialogResult.OK Then
-
-            If fs.GetFilterStrategies.Count > 0 Then
-
-                Policy.Identifiers.HospitalAbbreviation.HospitalAbbreviationFilterStrategies = fs.GetFilterStrategies
-
-            Else
-
-                ' No strategies so remove it.
-                Policy.Identifiers.HospitalAbbreviation = Nothing
 
             End If
 
@@ -1047,13 +948,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.Hospital = New Filters.Hospital
         End If
 
-        Dim fs As New HospitalFilterStrategiesForm(Policy, Hospital.GetName(), Policy.Identifiers.Hospital.HospitalFilterStrategies)
+        Dim fs As New HospitalFilterStrategiesForm(Policy, "Hospital", Policy.Identifiers.Hospital.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.Hospital.HospitalFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.Hospital.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -1078,13 +979,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.IpAddress = New Filters.IpAddress
         End If
 
-        Dim fs As New IpAddressFilterStrategiesForm(Policy, IpAddress.GetName(), Policy.Identifiers.IpAddress.IpAddressFilterStrategies)
+        Dim fs As New IpAddressFilterStrategiesForm(Policy, "IpAddress", Policy.Identifiers.IpAddress.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.IpAddress.IpAddressFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.IpAddress.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -1109,13 +1010,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.PhoneNumber = New Filters.PhoneNumber
         End If
 
-        Dim fs As New PhoneNumberFilterStrategiesForm(Policy, PhoneNumber.GetName(), Policy.Identifiers.PhoneNumber.PhoneNumberFilterStrategies)
+        Dim fs As New PhoneNumberFilterStrategiesForm(Policy, "PhoneNumber", Policy.Identifiers.PhoneNumber.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.PhoneNumber.PhoneNumberFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.PhoneNumber.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -1140,13 +1041,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.PhoneNumberExtension = New Filters.PhoneNumberExtension
         End If
 
-        Dim fs As New PhoneNumberExtensionFilterStrategiesForm(Policy, PhoneNumberExtension.GetName(), Policy.Identifiers.PhoneNumberExtension.PhoneNumberExtensionFilterStrategies)
+        Dim fs As New PhoneNumberExtensionFilterStrategiesForm(Policy, "PhoneNumberExtension", Policy.Identifiers.PhoneNumberExtension.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.PhoneNumberExtension.PhoneNumberExtensionFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.PhoneNumberExtension.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -1171,13 +1072,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.Ssn = New Filters.Ssn
         End If
 
-        Dim fs As New SsnFilterStrategiesForm(Policy, Ssn.GetName(), Policy.Identifiers.Ssn.ssnFilterStrategies)
+        Dim fs As New SsnFilterStrategiesForm(Policy, "Ssn", Policy.Identifiers.Ssn.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.Ssn.ssnFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.Ssn.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -1202,13 +1103,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.State = New Filters.State
         End If
 
-        Dim fs As New StateFilterStrategiesForm(Policy, State.GetName(), Policy.Identifiers.State.StateFilterStrategies)
+        Dim fs As New StateFilterStrategiesForm(Policy, "State", Policy.Identifiers.State.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.State.StateFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.State.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -1233,13 +1134,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.StateAbbreviation = New Filters.StateAbbreviation
         End If
 
-        Dim fs As New StateAbbreviationFilterStrategiesForm(Policy, StateAbbreviation.GetName(), Policy.Identifiers.StateAbbreviation.StateAbbreviationFilterStrategies)
+        Dim fs As New StateAbbreviationFilterStrategiesForm(Policy, "StateAbbreviation", Policy.Identifiers.StateAbbreviation.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.StateAbbreviation.StateAbbreviationFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.StateAbbreviation.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -1264,13 +1165,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.Surname = New Filters.Surname
         End If
 
-        Dim fs As New SurnameFilterStrategiesForm(Policy, StateAbbreviation.GetName(), Policy.Identifiers.Surname.SurnameFilterStrategies)
+        Dim fs As New SurnameFilterStrategiesForm(Policy, "StateAbbreviation", Policy.Identifiers.Surname.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.Surname.SurnameFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.Surname.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -1295,13 +1196,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.Url = New Filters.Url
         End If
 
-        Dim fs As New UrlFilterStrategiesForm(Policy, Url.GetName(), Policy.Identifiers.Url.UrlFilterStrategies)
+        Dim fs As New UrlFilterStrategiesForm(Policy, "Url", Policy.Identifiers.Url.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.Url.UrlFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.Url.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -1326,13 +1227,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.Vin = New Filters.Vin
         End If
 
-        Dim fs As New VinFilterStrategiesForm(Policy, Vin.GetName(), Policy.Identifiers.Vin.VinFilterStrategies)
+        Dim fs As New VinFilterStrategiesForm(Policy, "Vin", Policy.Identifiers.Vin.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.Vin.VinFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.Vin.Strategies = fs.GetFilterStrategies
 
             Else
 
@@ -1357,13 +1258,13 @@ Public Class PolicyEditorForm
             Policy.Identifiers.ZipCode = New Filters.ZipCode
         End If
 
-        Dim fs As New ZipCodeFilterStrategiesForm(Policy, ZipCode.GetName(), Policy.Identifiers.ZipCode.ZipCodeFilterStrategies)
+        Dim fs As New ZipCodeFilterStrategiesForm(Policy, "ZipCode", Policy.Identifiers.ZipCode.Strategies)
 
         If fs.ShowDialog = DialogResult.OK Then
 
             If fs.GetFilterStrategies.Count > 0 Then
 
-                Policy.Identifiers.ZipCode.ZipCodeFilterStrategies = fs.GetFilterStrategies
+                Policy.Identifiers.ZipCode.Strategies = fs.GetFilterStrategies
 
             Else
 

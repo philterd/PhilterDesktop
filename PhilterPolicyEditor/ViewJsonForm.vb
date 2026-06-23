@@ -1,7 +1,7 @@
 ﻿Imports System.Windows.Forms
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
-Imports Philter.Model.Policy
+Imports Phileas.Policy
 
 Public Class ViewJsonForm
 
@@ -21,7 +21,7 @@ Public Class ViewJsonForm
 
         Me.Text = Chr(34) & Policy.Name & Chr(34) & " Policy JSON"
 
-        Dim Json As String = Policy.ToString()
+        Dim Json As String = PolicySerializer.SerializeToJson(Policy)
         Dim prettyJson As String = JToken.Parse(Json).ToString(Formatting.Indented)
         JsonTextBox.Text = prettyJson
 

@@ -9,6 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>PhilterDesktop.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Philterd.Phileas" Version="1.2.0" />
     <PackageReference Include="Xceed.Words.NET" Version="5.0.25228.6154" />
     <ProjectReference Include="..\PhilterData\PhilterData.csproj" />

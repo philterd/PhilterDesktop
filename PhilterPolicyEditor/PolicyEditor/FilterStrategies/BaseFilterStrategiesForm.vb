@@ -1,9 +1,9 @@
 ﻿Imports System.Windows.Forms
-Imports Philter.Model
-Imports Philter.Model.Policy
-Imports Philter.Model.Policy.Filters.Strategies
+Imports Phileas.Model
+Imports Phileas.Policy
+Imports Phileas.Policy.Filters.Strategies
 
-Public MustInherit Class BaseFilterStrategiesForm(Of T As BaseFilterStrategy)
+Public MustInherit Class BaseFilterStrategiesForm(Of T As AbstractFilterStrategy)
     Inherits Form
 
     Public ReadOnly Property Policy As Policy

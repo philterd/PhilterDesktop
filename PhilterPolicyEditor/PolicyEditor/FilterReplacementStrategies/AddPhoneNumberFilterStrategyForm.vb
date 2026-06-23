@@ -1,4 +1,4 @@
-﻿Imports Philter.Model.Policy.Filters.Strategies
+﻿Imports Phileas.Policy.Filters.Strategies
 
 Public Class AddPhoneNumberFilterStrategyForm
 
@@ -17,17 +17,17 @@ Public Class AddPhoneNumberFilterStrategyForm
     Private Sub OK_Button_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles OkButton.Click
 
         If RedactRadioButton.Checked = True Then
-            FilterStrategy.Strategy = BaseFilterStrategy.REDACT
+            FilterStrategy.Strategy = AbstractFilterStrategy.Redact
             FilterStrategy.RedactionFormat = RedactionFormatTextBox.Text
         End If
 
         If StaticReplaceRadioButton.Checked = True Then
-            FilterStrategy.Strategy = BaseFilterStrategy.STATIC_REPLACEMENT
+            FilterStrategy.Strategy = AbstractFilterStrategy.StaticReplace
             FilterStrategy.StaticReplacement = StaticReplacementValueTextBox.Text
         End If
 
         If RandomReplacementRadioButton.Checked = True Then
-            FilterStrategy.Strategy = BaseFilterStrategy.RANDOM_REPLACEMENT
+            FilterStrategy.Strategy = AbstractFilterStrategy.RandomReplace
         End If
 
         If EnableConditionalCheckBox.Checked = True Then
@@ -37,9 +37,9 @@ Public Class AddPhoneNumberFilterStrategyForm
         End If
 
         If RandomReplacementRadioButton.Checked = True Then
-            FilterStrategy.ReplacementScope = BaseFilterStrategy.SCOPE_CONTEXT
+            FilterStrategy.ReplacementScope = AbstractFilterStrategy.ReplacementScopeContext
         Else
-            FilterStrategy.ReplacementScope = BaseFilterStrategy.SCOPE_DOCUMENT
+            FilterStrategy.ReplacementScope = AbstractFilterStrategy.ReplacementScopeDocument
         End If
 
         Me.FilterStrategy = FilterStrategy
@@ -82,17 +82,17 @@ Public Class AddPhoneNumberFilterStrategyForm
 
         ' Set values.
 
-        If FilterStrategy.Strategy = BaseFilterStrategy.REDACT Then
+        If FilterStrategy.Strategy = AbstractFilterStrategy.Redact Then
             RedactRadioButton.Checked = True
             RedactionFormatTextBox.Text = FilterStrategy.RedactionFormat
         End If
 
-        If FilterStrategy.Strategy = BaseFilterStrategy.STATIC_REPLACEMENT Then
+        If FilterStrategy.Strategy = AbstractFilterStrategy.StaticReplace Then
             StaticReplaceRadioButton.Checked = True
             StaticReplacementValueTextBox.Text = FilterStrategy.StaticReplacement
         End If
 
-        If FilterStrategy.Strategy = BaseFilterStrategy.RANDOM_REPLACEMENT Then
+        If FilterStrategy.Strategy = AbstractFilterStrategy.RandomReplace Then
             RandomReplacementRadioButton.Checked = True
         End If
 
@@ -104,7 +104,7 @@ Public Class AddPhoneNumberFilterStrategyForm
             FilterStrategy.Condition = String.Empty
         End If
 
-        If FilterStrategy.ReplacementScope = BaseFilterStrategy.SCOPE_CONTEXT Then
+        If FilterStrategy.ReplacementScope = AbstractFilterStrategy.ReplacementScopeContext Then
             RandomReplacementRadioButton.Checked = True
         Else
             RandomReplacementRadioButton.Checked = False
