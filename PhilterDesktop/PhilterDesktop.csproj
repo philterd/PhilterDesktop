@@ -27,6 +27,17 @@
     </None>
   </ItemGroup>
 
+  <!-- Guard against accidentally shipping a Release/MSIX build without the Xceed
+       license (which would silently run Word redaction in trial mode). It's a warning
+       by default (so CI's keyless Release build still passes); set
+       XceedLicenseRequired=true (e.g. when packaging the installer) to make it an error. -->
+  <Target Name="CheckXceedLicense" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <Warning Condition="!Exists('xceed-license.json') And '$(XceedLicenseRequired)' != 'true'"
+             Text="xceed-license.json is missing: this Release build will use Xceed trial mode for Word redaction. Add the key file before packaging the installer (or set XceedLicenseRequired=true to fail the build)." />
+    <Error Condition="!Exists('xceed-license.json') And '$(XceedLicenseRequired)' == 'true'"
+           Text="xceed-license.json is missing: refusing to build Release with XceedLicenseRequired=true. Add PhilterDesktop\xceed-license.json before packaging." />
+  </Target>
+
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>

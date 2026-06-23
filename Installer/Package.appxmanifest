@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <!-- Publisher MUST match the subject of the signing certificate used to sign the
+       package (e.g. "CN=Philterd, LLC"). Update Version (x.y.z.0) per release. -->
+  <Identity
+    Name="Philterd.PhilterDesktop"
+    Publisher="CN=Philterd, LLC"
+    Version="1.0.0.0" />
+
+  <Properties>
+    <DisplayName>Philter Desktop</DisplayName>
+    <PublisherDisplayName>Philterd, LLC</PublisherDisplayName>
+    <Logo>Images\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-US" />
+  </Resources>
+
+  <Applications>
+    <Application Id="PhilterDesktop" Executable="PhilterDesktop.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Philter Desktop"
+        Description="Redact personally identifiable information (PII) from text and Microsoft Word documents."
+        BackgroundColor="transparent"
+        Square150x150Logo="Images\Square150x150Logo.png"
+        Square44x44Logo="Images\Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="Images\Wide310x150Logo.png"
+          Square71x71Logo="Images\Square71x71Logo.png"
+          Square310x310Logo="Images\Square310x310Logo.png" />
+        <uap:SplashScreen Image="Images\SplashScreen.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <!-- Desktop (Win32) app packaged as MSIX runs with full trust. -->
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

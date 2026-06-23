@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+  <PropertyGroup>
+    <WapProjPath Condition="'$(WapProjPath)'==''">$(MSBuildExtensionsPath)\Microsoft\DesktopBridge\</WapProjPath>
+  </PropertyGroup>
+  <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.props" />
+  <PropertyGroup>
+    <ProjectGuid>F104C8C0-258D-4AF1-B4E7-7F64E549EB98</ProjectGuid>
+    <TargetPlatformVersion>10.0.22621.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <AppxBundle>Never</AppxBundle>
+    <AppxBundlePlatforms>x64</AppxBundlePlatforms>
+    <EntryPointProjectUniqueName>..\PhilterDesktop\PhilterDesktop.csproj</EntryPointProjectUniqueName>
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxPackageSigningEnabled>False</AppxPackageSigningEnabled>
+  </PropertyGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Images\Square44x44Logo.png" />
+    <Content Include="Images\Square71x71Logo.png" />
+    <Content Include="Images\Square150x150Logo.png" />
+    <Content Include="Images\Square310x310Logo.png" />
+    <Content Include="Images\Wide310x150Logo.png" />
+    <Content Include="Images\StoreLogo.png" />
+    <Content Include="Images\SplashScreen.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Building the package enforces the Xceed license (hard error if the key file is
+         missing); plain Release/CI builds of the app only warn. See PhilterDesktop.csproj. -->
+    <ProjectReference Include="..\PhilterDesktop\PhilterDesktop.csproj">
+      <AdditionalProperties>XceedLicenseRequired=true</AdditionalProperties>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
+</Project>
