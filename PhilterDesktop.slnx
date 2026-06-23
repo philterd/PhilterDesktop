@@ -1,6 +1,4 @@
 <Solution>
-  <Project Path="PhilterPolicyEditor/PhilterPolicyEditor.vbproj" />
-  <Project Path="PhilterData/PhilterData.csproj" Id="adecd482-1a8d-4494-ac1e-45c1576e2602" />
   <Project Path="PhilterDesktop/PhilterDesktop.csproj" />
   <Project Path="PhilterDesktop.Tests/PhilterDesktop.Tests.csproj" />
 </Solution>
