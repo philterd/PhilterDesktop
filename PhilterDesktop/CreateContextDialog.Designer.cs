@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Philterd, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 namespace PhilterDesktop
 {
     partial class CreateContextDialog
@@ -42,9 +58,9 @@ namespace PhilterDesktop
             // btnOk
             // 
             btnOk.DialogResult = DialogResult.OK;
-            btnOk.Location = new Point(247, 90);
+            btnOk.Location = new Point(229, 90);
             btnOk.Name = "btnOk";
-            btnOk.Size = new Size(78, 28);
+            btnOk.Size = new Size(90, 34);
             btnOk.TabIndex = 2;
             btnOk.Text = "OK";
             btnOk.Click += BtnOk_Click;
@@ -52,9 +68,9 @@ namespace PhilterDesktop
             // btnCancel
             // 
             btnCancel.DialogResult = DialogResult.Cancel;
-            btnCancel.Location = new Point(331, 90);
+            btnCancel.Location = new Point(325, 90);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(78, 28);
+            btnCancel.Size = new Size(90, 34);
             btnCancel.TabIndex = 3;
             btnCancel.Text = "Cancel";
             btnCancel.Click += BtnCancel_Click;

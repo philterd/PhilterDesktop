@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Philterd, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 using Phileas.Policy.Filters.Strategies;
 
 namespace PhilterDesktop.PolicyEditing
@@ -34,7 +50,7 @@ namespace PhilterDesktop.PolicyEditing
             MinimizeBox = false;
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(460, 320);
+            ClientSize = new Size(460, 340);
             AcceptButton = _ok;
             CancelButton = _cancel;
 
@@ -81,8 +97,8 @@ namespace PhilterDesktop.PolicyEditing
             _conditionValue.SetBounds(150, 17, 270, 23);
             conditionBox.Controls.AddRange(new Control[] { _enableCondition, _conditionValue });
 
-            _ok.SetBounds(284, 286, 80, 26);
-            _cancel.SetBounds(368, 286, 80, 26);
+            _ok.SetBounds(262, 294, 90, 34);
+            _cancel.SetBounds(358, 294, 90, 34);
 
             Controls.AddRange(new Control[] { strategyBox, conditionBox, _ok, _cancel });
         }

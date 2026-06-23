@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Philterd, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 using Phileas.Policy.Filters;
 
 namespace PhilterDesktop.PolicyEditing
@@ -15,11 +31,13 @@ namespace PhilterDesktop.PolicyEditing
             FullRowSelect = true,
             HideSelection = false
         };
-        private readonly Button _add = new() { Text = "Add…", AutoSize = true };
-        private readonly Button _edit = new() { Text = "Edit…", AutoSize = true, Enabled = false };
-        private readonly Button _remove = new() { Text = "Remove", AutoSize = true, Enabled = false };
-        private readonly Button _ok = new() { Text = "OK", DialogResult = DialogResult.OK, AutoSize = true };
-        private readonly Button _cancel = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, AutoSize = true };
+        private static readonly Size ButtonSize = new(90, 34);
+
+        private readonly Button _add = new() { Text = "Add…", Size = ButtonSize };
+        private readonly Button _edit = new() { Text = "Edit…", Size = ButtonSize, Enabled = false };
+        private readonly Button _remove = new() { Text = "Remove", Size = ButtonSize, Enabled = false };
+        private readonly Button _ok = new() { Text = "OK", DialogResult = DialogResult.OK, Size = ButtonSize };
+        private readonly Button _cancel = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, Size = ButtonSize };
 
         public List<Identifier> Identifiers => _items;
 
@@ -29,8 +47,8 @@ namespace PhilterDesktop.PolicyEditing
 
             Text = "Custom Identifiers";
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(540, 300);
-            MinimumSize = new Size(420, 240);
+            ClientSize = new Size(540, 340);
+            MinimumSize = new Size(420, 300);
             AcceptButton = _ok;
             CancelButton = _cancel;
 
@@ -51,10 +69,10 @@ namespace PhilterDesktop.PolicyEditing
 
         private void BuildLayout()
         {
-            var buttons = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.TopDown, Width = 100, Padding = new Padding(8) };
+            var buttons = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.TopDown, Width = 112, Padding = new Padding(8) };
             buttons.Controls.AddRange(new Control[] { _add, _edit, _remove });
 
-            var bottom = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = 44, Padding = new Padding(8) };
+            var bottom = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = 58, Padding = new Padding(8) };
             bottom.Controls.AddRange(new Control[] { _cancel, _ok });
 
             var listPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(8) };
@@ -155,7 +173,7 @@ namespace PhilterDesktop.PolicyEditing
             MinimizeBox = false;
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(420, 160);
+            ClientSize = new Size(420, 175);
             AcceptButton = _ok;
             CancelButton = _cancel;
 
@@ -164,8 +182,8 @@ namespace PhilterDesktop.PolicyEditing
             var patternLabel = new Label { Text = "Pattern (regex):", AutoSize = true, Location = new Point(12, 50) };
             _pattern.SetBounds(120, 47, 285, 23);
             _caseSensitive.Location = new Point(120, 80);
-            _ok.SetBounds(244, 120, 80, 26);
-            _cancel.SetBounds(328, 120, 80, 26);
+            _ok.SetBounds(222, 126, 90, 34);
+            _cancel.SetBounds(318, 126, 90, 34);
 
             Controls.AddRange(new Control[] { classLabel, _classification, patternLabel, _pattern, _caseSensitive, _ok, _cancel });
 

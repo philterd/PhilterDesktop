@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Philterd, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 using LiteDB;
 using Phileas.Policy;
 using Phileas.Policy.Filters;
@@ -692,23 +708,8 @@ namespace PhilterDesktop
                         }
 
                         var policy = PolicySerializer.DeserializeFromJson(policyEntity.Json);
-                        string outputPath = GetOutputPath(entity.Name, settings);
-                        string extension = Path.GetExtension(entity.Name).ToLowerInvariant();
-
-                        if (extension == ".docx")
-                        {
-                            // Word redaction is synchronous; run it off the UI thread.
-                            await Task.Run(() => WordDocumentRedactor.Redact(
-                                entity.Name,
-                                outputPath,
-                                text => filterService.Filter(policy, entity.Context, 0, text).FilteredText));
-                        }
-                        else
-                        {
-                            string input = await File.ReadAllTextAsync(entity.Name);
-                            var result = filterService.Filter(policy, entity.Context, 0, input);
-                            await File.WriteAllTextAsync(outputPath, result.FilteredText);
-                        }
+                        string outputPath = RedactionService.GetOutputPath(entity.Name, settings);
+                        await RedactionService.RedactFileAsync(entity.Name, outputPath, policy, entity.Context, filterService);
 
                         UpdateEntityStatus(entity, "Completed");
 
@@ -751,18 +752,6 @@ namespace PhilterDesktop
             }
 
             EnsureStatusAnimation();
-        }
-
-        private static string GetOutputPath(string inputPath, SettingsEntity settings)
-        {
-            string directory = settings.OutputToOriginalLocation
-                ? Path.GetDirectoryName(inputPath) ?? string.Empty
-                : settings.CustomOutputFolder;
-
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(inputPath);
-            string extension = Path.GetExtension(inputPath);
-
-            return Path.Combine(directory, $"{fileNameWithoutExt}_redacted{extension}");
         }
 
         private void LoadRedactionQueue()
@@ -834,7 +823,7 @@ namespace PhilterDesktop
                 return;
             }
 
-            string outputPath = GetOutputPath(entity.Name, _settingsRepository.GetSettings());
+            string outputPath = RedactionService.GetOutputPath(entity.Name, _settingsRepository.GetSettings());
 
             if (!File.Exists(outputPath))
             {

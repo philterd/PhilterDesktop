@@ -1,32 +1,52 @@
+/*
+ * Copyright 2026 Philterd, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+using System.Collections;
 using Phileas.Policy.Filters.Strategies;
 
 namespace PhilterDesktop.PolicyEditing
 {
     /// <summary>
-    /// Lists and edits the strategies for one filter type. Generic over the concrete
-    /// strategy type, replacing the 19 thin VB "XFilterStrategiesForm" subclasses.
+    /// Lists and edits the strategies for one filter type. Driven by a runtime strategy
+    /// <see cref="Type"/> so the reflection-based editor can use it for any filter.
     /// </summary>
-    internal sealed class FilterStrategiesForm<TStrategy> : Form
-        where TStrategy : AbstractFilterStrategy, new()
+    internal sealed class FilterStrategiesForm : Form
     {
         private readonly string _display;
-        private readonly List<TStrategy> _items;
-        private readonly ListBox _list = new() { Dock = DockStyle.Fill, IntegralHeight = false };
-        private readonly Button _new = new() { Text = "New…", AutoSize = true };
-        private readonly Button _edit = new() { Text = "Edit…", AutoSize = true, Enabled = false };
-        private readonly Button _remove = new() { Text = "Remove", AutoSize = true, Enabled = false };
-        private readonly Button _ok = new() { Text = "OK", DialogResult = DialogResult.OK, AutoSize = true };
-        private readonly Button _cancel = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, AutoSize = true };
+        private readonly Type _strategyType;
+        private readonly List<AbstractFilterStrategy> _items;
+        private static readonly Size ButtonSize = new(90, 34);
 
-        public FilterStrategiesForm(string filterTypeDisplay, IEnumerable<TStrategy> existing)
+        private readonly ListBox _list = new() { Dock = DockStyle.Fill, IntegralHeight = false };
+        private readonly Button _new = new() { Text = "New…", Size = ButtonSize };
+        private readonly Button _edit = new() { Text = "Edit…", Size = ButtonSize, Enabled = false };
+        private readonly Button _remove = new() { Text = "Remove", Size = ButtonSize, Enabled = false };
+        private readonly Button _ok = new() { Text = "OK", DialogResult = DialogResult.OK, Size = ButtonSize };
+        private readonly Button _cancel = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, Size = ButtonSize };
+
+        public FilterStrategiesForm(string filterTypeDisplay, IEnumerable existing, Type strategyType)
         {
             _display = filterTypeDisplay;
-            _items = existing.ToList();
+            _strategyType = strategyType;
+            _items = existing.Cast<AbstractFilterStrategy>().ToList();
 
             Text = $"{filterTypeDisplay} Filter Strategies";
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(460, 280);
-            MinimumSize = new Size(380, 240);
+            ClientSize = new Size(460, 340);
+            MinimumSize = new Size(380, 300);
             AcceptButton = _ok;
             CancelButton = _cancel;
 
@@ -42,14 +62,23 @@ namespace PhilterDesktop.PolicyEditing
             ModernTheme.MakePrimary(_ok);
         }
 
-        public List<TStrategy> GetStrategies() => _items;
+        /// <summary>Builds a strongly-typed <c>List&lt;TStrategy&gt;</c> of the edited items.</summary>
+        public IList BuildResultList()
+        {
+            var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(_strategyType))!;
+            foreach (AbstractFilterStrategy item in _items)
+            {
+                list.Add(item);
+            }
+            return list;
+        }
 
         private void BuildLayout()
         {
-            var buttons = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.TopDown, Width = 100, Padding = new Padding(8) };
+            var buttons = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.TopDown, Width = 112, Padding = new Padding(8) };
             buttons.Controls.AddRange(new Control[] { _new, _edit, _remove });
 
-            var bottom = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = 44, Padding = new Padding(8) };
+            var bottom = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = 58, Padding = new Padding(8) };
             bottom.Controls.AddRange(new Control[] { _cancel, _ok });
 
             var listPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(8) };
@@ -65,7 +94,7 @@ namespace PhilterDesktop.PolicyEditing
             int selected = _list.SelectedIndex;
             _list.BeginUpdate();
             _list.Items.Clear();
-            foreach (TStrategy s in _items)
+            foreach (AbstractFilterStrategy s in _items)
             {
                 _list.Items.Add(Describe(s));
             }
@@ -85,7 +114,7 @@ namespace PhilterDesktop.PolicyEditing
 
         private void OnNew(object? sender, EventArgs e)
         {
-            var strategy = new TStrategy();
+            var strategy = (AbstractFilterStrategy)Activator.CreateInstance(_strategyType)!;
             using var dlg = new AddFilterStrategyForm(strategy, _display);
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {

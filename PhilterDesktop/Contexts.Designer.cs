@@ -1,4 +1,20 @@
-﻿namespace PhilterDesktop
+﻿/*
+ * Copyright 2026 Philterd, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+namespace PhilterDesktop
 {
     partial class Contexts
     {
@@ -67,7 +83,7 @@
             // 
             btnCreate.Location = new Point(558, 32);
             btnCreate.Name = "btnCreate";
-            btnCreate.Size = new Size(120, 28);
+            btnCreate.Size = new Size(120, 34);
             btnCreate.TabIndex = 1;
             btnCreate.Text = "New Context";
             btnCreate.UseVisualStyleBackColor = true;
@@ -76,9 +92,9 @@
             // btnDelete
             // 
             btnDelete.Enabled = false;
-            btnDelete.Location = new Point(558, 68);
+            btnDelete.Location = new Point(558, 74);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(120, 28);
+            btnDelete.Size = new Size(120, 34);
             btnDelete.TabIndex = 2;
             btnDelete.Text = "Delete";
             btnDelete.UseVisualStyleBackColor = true;
@@ -87,9 +103,9 @@
             // btnEmpty
             // 
             btnEmpty.Enabled = false;
-            btnEmpty.Location = new Point(558, 104);
+            btnEmpty.Location = new Point(558, 116);
             btnEmpty.Name = "btnEmpty";
-            btnEmpty.Size = new Size(120, 28);
+            btnEmpty.Size = new Size(120, 34);
             btnEmpty.TabIndex = 3;
             btnEmpty.Text = "Empty";
             btnEmpty.UseVisualStyleBackColor = true;
@@ -99,7 +115,7 @@
             // 
             btnClose.Location = new Point(558, 209);
             btnClose.Name = "btnClose";
-            btnClose.Size = new Size(120, 28);
+            btnClose.Size = new Size(120, 34);
             btnClose.TabIndex = 4;
             btnClose.Text = "Close";
             btnClose.UseVisualStyleBackColor = true;
@@ -116,9 +132,9 @@
             // 
             // helpButton
             // 
-            helpButton.Location = new Point(558, 138);
+            helpButton.Location = new Point(558, 158);
             helpButton.Name = "helpButton";
-            helpButton.Size = new Size(120, 28);
+            helpButton.Size = new Size(120, 34);
             helpButton.TabIndex = 6;
             helpButton.Text = "Help";
             helpButton.UseVisualStyleBackColor = true;

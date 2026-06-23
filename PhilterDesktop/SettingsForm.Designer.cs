@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Philterd, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 namespace PhilterDesktop
 {
     partial class SettingsForm
@@ -116,10 +132,13 @@ namespace PhilterDesktop
             // 
             // btnOpenLog
             // 
+            btnOpenLog.AutoSize = true;
+            btnOpenLog.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             btnOpenLog.Location = new Point(194, 40);
             btnOpenLog.Margin = new Padding(4, 5, 4, 5);
             btnOpenLog.Name = "btnOpenLog";
-            btnOpenLog.Size = new Size(169, 47);
+            btnOpenLog.Padding = new Padding(12, 6, 12, 6);
+            btnOpenLog.Size = new Size(230, 47);
             btnOpenLog.TabIndex = 1;
             btnOpenLog.Text = "Open Log File";
             btnOpenLog.UseVisualStyleBackColor = true;
