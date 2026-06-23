@@ -17,7 +17,11 @@ WinForms executable) with the manifest and visual assets here.
 
 ## Build in Visual Studio (recommended)
 
-1. Open `PhilterDesktop.slnx`.
+> Open **`PhilterDesktop.sln`** (not `PhilterDesktop.slnx`). The packaging project is a
+> `.wapproj`, which the `.slnx` solution format does not support — it's only in the classic
+> `.sln`. (`PhilterDesktop.slnx` contains just the app + tests for `dotnet`/CLI use.)
+
+1. Open `PhilterDesktop.sln`.
 2. Set **PhilterDesktop.Package** as the startup project (or right-click it).
 3. **Publish → Create App Packages…** and follow the wizard. It builds the MSIX and can create
    or select a signing certificate.

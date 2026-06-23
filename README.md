@@ -24,10 +24,14 @@ cd PhilterDesktop
 dotnet build PhilterDesktop.slnx
 ```
 
-The solution contains two projects:
+`PhilterDesktop.slnx` contains two projects:
 
 - **PhilterDesktop** — the WinForms application (UI, data access, redaction, and the policy editor)
 - **PhilterDesktop.Tests** — the xUnit test suite
+
+To build the **MSIX installer** in Visual Studio, open **`PhilterDesktop.sln`** instead — it adds
+the `Installer/PhilterDesktop.Package.wapproj` packaging project (the `.slnx` format doesn't
+support `.wapproj`). See `Installer/README.md`.
 
 ### Running
 

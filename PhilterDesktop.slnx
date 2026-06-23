@@ -1,5 +1,4 @@
 <Solution>
   <Project Path="PhilterDesktop/PhilterDesktop.csproj" />
   <Project Path="PhilterDesktop.Tests/PhilterDesktop.Tests.csproj" />
-  <Project Path="Installer/PhilterDesktop.Package.wapproj" />
 </Solution>

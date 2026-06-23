@@ -1,0 +1,35 @@
+site_name: Philter Desktop
+site_description: User documentation for Philter Desktop, a Windows application for redacting PII from documents
+site_url: https://philterd.github.io/philterdesktop/
+repo_url: https://www.github.com/philterd/PhilterDesktop
+edit_uri: edit/main/docs/docs
+copyright: Copyright 2026 Philterd, LLC
+site_author: philterd
+
+theme:
+  name: material
+  logo: img/philterd.png
+  locale: en
+  palette:
+    primary: red
+  features:
+    - navigation.expand
+    - navigation.footer
+
+extra:
+  homepage: https://www.philterd.ai
+  social:
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/philterd/
+    - icon: fontawesome/brands/github
+      link: https://www.github.com/philterd/
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Redacting Documents: redacting-documents.md
+  - Policies: policies.md
+  - Filter Strategies: filter-strategies.md
+  - Supported Filters: supported-filters.md
+  - Contexts: contexts.md
+  - Settings: settings.md
