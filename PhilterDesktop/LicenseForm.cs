@@ -9,6 +9,7 @@ namespace PhilterDesktop
         {
             InitializeComponent();
             ModernTheme.Apply(this);
+            ModernTheme.MakePrimary(btnActivate);
             LoadLicenseStatus();
         }
 

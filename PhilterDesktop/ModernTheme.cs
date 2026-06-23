@@ -1,3 +1,5 @@
+using System.Drawing.Drawing2D;
+using System.Drawing.Text;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 
@@ -201,6 +203,53 @@ namespace PhilterDesktop
             button.BackColor = Surface;
             button.ForeColor = Text;
             button.Padding = new Padding(10, 4, 10, 4);
+        }
+
+        /// <summary>
+        /// Renders a Segoe Fluent Icons / Segoe MDL2 Assets glyph to a bitmap so it
+        /// can be used as a monochrome, theme-colored toolbar icon (no asset files).
+        /// </summary>
+        public static Image CreateGlyphImage(string glyph, int size, Color color)
+        {
+            var bmp = new Bitmap(size, size);
+            bmp.MakeTransparent();
+
+            using var g = Graphics.FromImage(bmp);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+
+            using var font = GetIconFont(size * 0.62f);
+            using var brush = new SolidBrush(color);
+            using var format = new StringFormat
+            {
+                Alignment = StringAlignment.Center,
+                LineAlignment = StringAlignment.Center
+            };
+            g.DrawString(glyph, font, brush, new RectangleF(0, 0, size, size), format);
+
+            return bmp;
+        }
+
+        private static Font GetIconFont(float size)
+        {
+            foreach (string family in new[] { "Segoe Fluent Icons", "Segoe MDL2 Assets" })
+            {
+                try
+                {
+                    var font = new Font(family, size, GraphicsUnit.Pixel);
+                    if (string.Equals(font.Name, family, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return font;
+                    }
+                    font.Dispose();
+                }
+                catch
+                {
+                    // Try the next icon font.
+                }
+            }
+            // Last resort: a normal font (glyphs will render as boxes, but never crash).
+            return new Font("Segoe UI", size, GraphicsUnit.Pixel);
         }
 
         /// <summary>Promotes a button to the accent-colored primary action style.</summary>

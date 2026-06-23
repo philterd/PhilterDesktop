@@ -12,6 +12,15 @@ namespace PhilterDesktop
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
 
+            // Register the Xceed Words for .NET license (read from an untracked config
+            // file or the XCEED_LICENSE_KEY environment variable). Without it, Word
+            // redaction falls back to Xceed's trial behavior.
+            string? xceedKey = LicenseConfig.GetXceedLicenseKey();
+            if (!string.IsNullOrEmpty(xceedKey))
+            {
+                Xceed.Words.NET.Licenser.LicenseKey = xceedKey;
+            }
+
             // Use the modern Windows 11 UI font everywhere, including dialogs that
             // are not individually themed.
             Application.SetDefaultFont(ModernTheme.UiFont);

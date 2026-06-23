@@ -18,6 +18,7 @@ namespace PhilterDesktop
         {
             InitializeComponent();
             ModernTheme.Apply(this);
+            ModernTheme.MakePrimary(btnStartRedaction);
             _policyRepository = policyRepository;
             _contextRepository = contextRepository;
             _redactionQueueRepository = redactionQueueRepository;

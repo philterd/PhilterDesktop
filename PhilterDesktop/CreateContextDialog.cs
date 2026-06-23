@@ -8,6 +8,7 @@ namespace PhilterDesktop
         {
             InitializeComponent();
             ModernTheme.Apply(this);
+            ModernTheme.MakePrimary(btnOk);
         }
 
         private void BtnOk_Click(object sender, EventArgs e)

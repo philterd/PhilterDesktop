@@ -12,6 +12,7 @@ namespace PhilterDesktop
         {
             InitializeComponent();
             ModernTheme.Apply(this);
+            ModernTheme.MakePrimary(btnOK);
             LoadVersionInfo();
         }
 

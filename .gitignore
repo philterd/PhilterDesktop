@@ -28,6 +28,9 @@ nupkg/
 *.userosscache
 *.sln.docstates
 
+# Xceed license key (per-developer; must not be committed)
+xceed-license.json
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

@@ -10,8 +10,16 @@
 
   <ItemGroup>
     <PackageReference Include="Philterd.Phileas" Version="1.2.0" />
+    <PackageReference Include="Xceed.Words.NET" Version="5.0.25228.6154" />
     <ProjectReference Include="..\PhilterData\PhilterData.csproj" />
     <ProjectReference Include="..\PhilterPolicyEditor\PhilterPolicyEditor.vbproj" />
+  </ItemGroup>
+
+  <!-- Untracked Xceed license key file; copied to output when present (see .gitignore). -->
+  <ItemGroup>
+    <None Include="xceed-license.json" Condition="Exists('xceed-license.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

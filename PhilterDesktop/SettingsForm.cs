@@ -15,6 +15,7 @@ namespace PhilterDesktop
         {
             InitializeComponent();
             ModernTheme.Apply(this);
+            ModernTheme.MakePrimary(btnSave);
             _settingsRepository = settingsRepository;
             _settings = new SettingsEntity();
         }
