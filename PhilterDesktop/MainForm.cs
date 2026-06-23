@@ -35,10 +35,24 @@ namespace PhilterDesktop
         private readonly ContextEntryRepository _contextEntryRepository;
         private readonly SettingsRepository _settingsRepository;
         private readonly RedactionQueueRepository _redactionQueueRepository;
+        private readonly WatchedFolderRepository _watchedFolderRepository;
+        private readonly WatchedFolderLogRepository _watchedFolderLogRepository;
+        private readonly FolderWatcherService _folderWatcher;
         private bool _loggingEnabled;
 
-        private const string HelpUrl = "https://philterd.github.io/philterdesktop";
-        private static readonly string[] SupportedExtensions = { ".txt", ".docx", ".pdf" };
+        private NotifyIcon _trayIcon = null!;
+        private ToolStripMenuItem _pauseResumeItem = null!;
+        private System.Windows.Forms.Timer? _logPruneTimer;
+        private bool _exiting;
+        private bool _watchingPaused;
+        private bool _started;
+        private bool _startMinimized;
+
+        private readonly List<WatchedFileProcessedEventArgs> _pendingNotifications = new();
+        private System.Windows.Forms.Timer? _notifyCoalesceTimer;
+        private string? _lastNotifyDirectory;
+
+        private const string HelpUrl = "https://philterd.github.io/PhilterDesktop/";
 
         private Label _emptyStateLabel = null!;
         private ToolStripStatusLabel _queueSummaryLabel = null!;
@@ -48,11 +62,17 @@ namespace PhilterDesktop
 
         private const int RowHeight = 32;
 
-        public MainForm()
+        public MainForm() : this(startMinimized: false)
+        {
+        }
+
+        public MainForm(bool startMinimized)
         {
             InitializeComponent();
             ModernTheme.Apply(this);
             InitializeQueueUi();
+            InitializeTray();
+            _startMinimized = startMinimized;
 
             string root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
@@ -75,6 +95,10 @@ namespace PhilterDesktop
             _contextEntryRepository = new ContextEntryRepository(_database);
             _settingsRepository = new SettingsRepository(_database);
             _redactionQueueRepository = new RedactionQueueRepository(_database);
+            _watchedFolderRepository = new WatchedFolderRepository(_database);
+            _watchedFolderLogRepository = new WatchedFolderLogRepository(_database);
+            _folderWatcher = new FolderWatcherService(_policyRepository, _loggingEnabled, _watchedFolderLogRepository);
+            _folderWatcher.FileProcessed += OnWatchedFileProcessed;
 
             // Load settings and check if logging is enabled
             var settings = _settingsRepository.GetSettings();
@@ -148,6 +172,10 @@ namespace PhilterDesktop
             listView1.AllowDrop = true;
             listView1.DragEnter += QueueList_DragEnter;
             listView1.DragDrop += QueueList_DragDrop;
+            listView1.DoubleClick += ListView1_DoubleClick;
+
+            // Enable/disable context-menu items based on selection and queue state.
+            contextMenuStrip1.Opening += ContextMenuStrip1_Opening;
 
             // --- Empty state overlay ---
             _emptyStateLabel = new Label
@@ -233,9 +261,301 @@ namespace PhilterDesktop
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            EnsureStarted();
+        }
+
+        // Startup work runs once, whether the window is shown normally or the app launched
+        // straight to the tray (in which case the handle is created but the form stays hidden).
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            EnsureStarted();
+        }
+
+        private void EnsureStarted()
+        {
+            if (_started)
+            {
+                return;
+            }
+            _started = true;
+
             redactionQueueTimer.Start();
             AdjustColumns();
             LoadRedactionQueue();
+            StartFolderWatcher();
+            StartLogPruning();
+        }
+
+        // Watched-folder activity logs are pruned by age (30 days). Prune at startup and once a day
+        // while the app keeps running (it may stay open in the tray for a long time).
+        private void StartLogPruning()
+        {
+            PruneWatchedFolderLogs();
+            _logPruneTimer = new System.Windows.Forms.Timer { Interval = 24 * 60 * 60 * 1000 }; // 24h
+            _logPruneTimer.Tick += (_, _) => PruneWatchedFolderLogs();
+            _logPruneTimer.Start();
+        }
+
+        private void PruneWatchedFolderLogs()
+        {
+            try
+            {
+                int removed = _watchedFolderLogRepository.PruneOldEntries();
+                if (removed > 0 && _loggingEnabled)
+                {
+                    Logger.LogInfo($"Pruned {removed} watched-folder log entr{(removed == 1 ? "y" : "ies")} older than {WatchedFolderLogRepository.RetentionDays} days.");
+                }
+            }
+            catch
+            {
+                // pruning is best-effort and must never disrupt the app
+            }
+        }
+
+        private void StartFolderWatcher()
+        {
+            if (_watchingPaused)
+            {
+                return;
+            }
+            _folderWatcher.LoggingEnabled = _loggingEnabled;
+            _folderWatcher.Restart(_watchedFolderRepository.GetAll());
+        }
+
+        // --- System tray --------------------------------------------------------
+
+        private void InitializeTray()
+        {
+            _pauseResumeItem = new ToolStripMenuItem("Pause watching", null, (_, _) => ToggleWatchingPaused());
+
+            var menu = new ContextMenuStrip();
+            menu.Items.Add(new ToolStripMenuItem("Open Philter Desktop", null, (_, _) => ShowFromTray()));
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(_pauseResumeItem);
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(new ToolStripMenuItem("Exit", null, (_, _) => ExitApplication()));
+
+            _trayIcon = new NotifyIcon
+            {
+                Icon = Icon ?? SystemIcons.Application,
+                Text = "Philter Desktop",
+                Visible = true,
+                ContextMenuStrip = menu
+            };
+            _trayIcon.DoubleClick += (_, _) => ShowFromTray();
+            _trayIcon.BalloonTipClicked += (_, _) => OpenLastNotifyDirectory();
+
+            // Coalesce a burst of redactions into a single notification.
+            _notifyCoalesceTimer = new System.Windows.Forms.Timer { Interval = 1500 };
+            _notifyCoalesceTimer.Tick += (_, _) => FlushNotifications();
+        }
+
+        // --- Watched-folder redaction notifications -----------------------------
+
+        private void OnWatchedFileProcessed(object? sender, WatchedFileProcessedEventArgs e)
+        {
+            // Raised on a background thread; marshal to the UI thread.
+            if (IsDisposed || !IsHandleCreated)
+            {
+                return;
+            }
+            try
+            {
+                BeginInvoke(new Action(() => QueueNotification(e)));
+            }
+            catch
+            {
+                // form may be closing
+            }
+        }
+
+        private void QueueNotification(WatchedFileProcessedEventArgs e)
+        {
+            // No point notifying about what the user is already looking at.
+            if (Visible && WindowState != FormWindowState.Minimized)
+            {
+                return;
+            }
+            _pendingNotifications.Add(e);
+            _notifyCoalesceTimer!.Stop();
+            _notifyCoalesceTimer!.Start();
+        }
+
+        private void FlushNotifications()
+        {
+            _notifyCoalesceTimer!.Stop();
+            if (_pendingNotifications.Count == 0)
+            {
+                return;
+            }
+
+            List<WatchedFileProcessedEventArgs> items = _pendingNotifications.ToList();
+            _pendingNotifications.Clear();
+
+            int succeeded = items.Count(i => i.Success);
+            int failed = items.Count - succeeded;
+
+            // The most recent successful output drives click-to-open.
+            WatchedFileProcessedEventArgs? lastSuccess =
+                items.LastOrDefault(i => i.Success && !string.IsNullOrEmpty(i.OutputPath));
+            _lastNotifyDirectory = lastSuccess is null ? null : Path.GetDirectoryName(lastSuccess.OutputPath);
+
+            string title;
+            string text;
+            if (items.Count == 1)
+            {
+                WatchedFileProcessedEventArgs only = items[0];
+                if (only.Success)
+                {
+                    title = "File redacted";
+                    text = $"{Path.GetFileName(only.InputPath)} → {Path.GetDirectoryName(only.OutputPath)}";
+                }
+                else
+                {
+                    title = "Redaction failed";
+                    text = $"{Path.GetFileName(only.InputPath)}: {only.ErrorMessage}";
+                }
+            }
+            else
+            {
+                title = "Philter Desktop";
+                var parts = new List<string>();
+                if (succeeded > 0)
+                {
+                    parts.Add($"Redacted {succeeded} file{(succeeded == 1 ? "" : "s")}");
+                }
+                if (failed > 0)
+                {
+                    parts.Add($"{failed} failed");
+                }
+                text = string.Join(", ", parts) + ".";
+            }
+
+            _trayIcon.BalloonTipIcon = failed > 0 && succeeded == 0 ? ToolTipIcon.Warning : ToolTipIcon.Info;
+            _trayIcon.BalloonTipTitle = title;
+            _trayIcon.BalloonTipText = text;
+            _trayIcon.ShowBalloonTip(5000);
+        }
+
+        private void OpenLastNotifyDirectory()
+        {
+            if (string.IsNullOrEmpty(_lastNotifyDirectory) || !Directory.Exists(_lastNotifyDirectory))
+            {
+                return;
+            }
+            try
+            {
+                Process.Start(new ProcessStartInfo { FileName = _lastNotifyDirectory, UseShellExecute = true });
+            }
+            catch
+            {
+                // best effort
+            }
+        }
+
+        private void ShowFromTray()
+        {
+            Show();
+            ShowInTaskbar = true;
+            if (WindowState == FormWindowState.Minimized)
+            {
+                WindowState = FormWindowState.Normal;
+            }
+            Activate();
+            BringToFront();
+        }
+
+        private void HideToTray()
+        {
+            Hide();
+            ShowInTaskbar = false;
+            ShowTrayHintIfFirstTime();
+        }
+
+        private void ShowTrayHintIfFirstTime()
+        {
+            SettingsEntity settings = _settingsRepository.GetSettings();
+            if (settings.TrayHintShown)
+            {
+                return;
+            }
+            _trayIcon.BalloonTipTitle = "Philter Desktop is still running";
+            _trayIcon.BalloonTipText =
+                "It keeps watching your folders in the background. Right-click the tray icon to open it again or exit.";
+            _trayIcon.ShowBalloonTip(5000);
+
+            settings.TrayHintShown = true;
+            _settingsRepository.SaveSettings(settings);
+        }
+
+        private void ToggleWatchingPaused()
+        {
+            _watchingPaused = !_watchingPaused;
+            if (_watchingPaused)
+            {
+                _folderWatcher.Stop();
+            }
+            else
+            {
+                StartFolderWatcher();
+            }
+            UpdateTrayWatchState();
+
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo(_watchingPaused ? "Folder watching paused" : "Folder watching resumed");
+            }
+        }
+
+        private void UpdateTrayWatchState()
+        {
+            _pauseResumeItem.Text = _watchingPaused ? "Resume watching" : "Pause watching";
+            _trayIcon.Text = _watchingPaused ? "Philter Desktop (watching paused)" : "Philter Desktop";
+        }
+
+        private void ExitApplication()
+        {
+            _exiting = true;
+            Close();
+        }
+
+        // Closing the window (the X button) hides to the tray instead of exiting, so watching
+        // continues. The tray menu's Exit (or a non-user close) performs a real shutdown.
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (!_exiting && e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                HideToTray();
+                return;
+            }
+            base.OnFormClosing(e);
+        }
+
+        // Start hidden in the tray when launched with --minimized (e.g., at sign-in).
+        protected override void SetVisibleCore(bool value)
+        {
+            if (_startMinimized && !_started)
+            {
+                if (!IsHandleCreated)
+                {
+                    CreateHandle();
+                }
+                _startMinimized = false;
+                value = false;
+            }
+            base.SetVisibleCore(value);
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            _logPruneTimer?.Dispose();
+            _notifyCoalesceTimer?.Dispose();
+            _folderWatcher.Dispose();
+            _trayIcon.Visible = false;
+            _trayIcon.Dispose();
+            base.OnFormClosed(e);
         }
 
         // --- Owner-draw handlers ---------------------------------------------
@@ -408,7 +728,7 @@ namespace PhilterDesktop
                 return;
             }
 
-            int added = 0;
+            var valid = new List<string>();
             var skipped = new List<string>();
 
             foreach (string path in paths)
@@ -417,40 +737,98 @@ namespace PhilterDesktop
                 {
                     continue;
                 }
-
-                string ext = Path.GetExtension(path);
-                if (!SupportedExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase))
+                if (RedactionService.IsSupported(path))
+                {
+                    valid.Add(path);
+                }
+                else
                 {
                     skipped.Add(Path.GetFileName(path));
-                    continue;
-                }
-
-                _redactionQueueRepository.Insert(new RedactionQueueEntity
-                {
-                    Name = path,
-                    Policy = "default",
-                    Context = "default"
-                });
-                added++;
-
-                if (_loggingEnabled)
-                {
-                    Logger.LogInfo($"File queued via drag-drop onto main window: {path}");
                 }
             }
 
-            if (added > 0)
+            // Ask which policy/context to apply to the dropped files (rather than silently
+            // using the default policy, which may redact nothing).
+            if (valid.Count > 0 && PromptPolicyContext(out string policy, out string context))
             {
+                foreach (string path in valid)
+                {
+                    _redactionQueueRepository.Insert(new RedactionQueueEntity { Name = path, Policy = policy, Context = context });
+
+                    if (_loggingEnabled)
+                    {
+                        Logger.LogInfo($"File queued via drag-drop: {path} (policy={policy}, context={context})");
+                    }
+                }
                 LoadRedactionQueue();
             }
 
             if (skipped.Count > 0)
             {
                 MessageBox.Show(
-                    $"These files were skipped (supported types: .txt, .docx, .pdf):\n\n{string.Join("\n", skipped)}",
+                    $"These files were skipped (supported types: {string.Join(", ", RedactionService.SupportedExtensions)}):\n\n{string.Join("\n", skipped)}",
                     "Unsupported File Type",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
+            }
+        }
+
+        /// <summary>
+        /// Prompts for the policy and context to apply to dropped files. Returns false if cancelled.
+        /// </summary>
+        private bool PromptPolicyContext(out string policy, out string context)
+        {
+            policy = "default";
+            context = "default";
+
+            using var form = new Form
+            {
+                Text = "Redact Dropped Files",
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                StartPosition = FormStartPosition.CenterParent,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                ShowInTaskbar = false,
+                ClientSize = new Size(370, 165)
+            };
+            var policyLabel = new Label { Text = "Policy:", AutoSize = true, Location = new Point(14, 20) };
+            var policyCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(95, 17), Width = 255 };
+            var contextLabel = new Label { Text = "Context:", AutoSize = true, Location = new Point(14, 56) };
+            var contextCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(95, 53), Width = 255 };
+            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Size = new Size(90, 32), Location = new Point(170, 115) };
+            var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Size = new Size(90, 32), Location = new Point(266, 115) };
+
+            foreach (PolicyEntity p in _policyRepository.GetAll().OrderBy(p => p.Name))
+            {
+                policyCombo.Items.Add(p.Name);
+            }
+            foreach (ContextEntity c in _contextRepository.GetAll().OrderBy(c => c.Name))
+            {
+                contextCombo.Items.Add(c.Name);
+            }
+            SelectDefault(policyCombo);
+            SelectDefault(contextCombo);
+
+            form.Controls.AddRange(new Control[] { policyLabel, policyCombo, contextLabel, contextCombo, ok, cancel });
+            form.AcceptButton = ok;
+            form.CancelButton = cancel;
+            ModernTheme.Apply(form);
+            ModernTheme.MakePrimary(ok);
+
+            if (form.ShowDialog(this) != DialogResult.OK ||
+                policyCombo.SelectedItem is null || contextCombo.SelectedItem is null)
+            {
+                return false;
+            }
+
+            policy = policyCombo.SelectedItem.ToString()!;
+            context = contextCombo.SelectedItem.ToString()!;
+            return true;
+
+            static void SelectDefault(ComboBox combo)
+            {
+                int i = combo.Items.IndexOf("default");
+                combo.SelectedIndex = i >= 0 ? i : (combo.Items.Count > 0 ? 0 : -1);
             }
         }
 
@@ -536,33 +914,7 @@ namespace PhilterDesktop
             redactionContextsForm.ShowDialog();
         }
 
-        private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (_loggingEnabled)
-            {
-                Logger.LogInfo("Opening Settings dialog");
-            }
-
-            var settingsForm = new SettingsForm(_settingsRepository);
-            var result = settingsForm.ShowDialog();
-
-            // Reload logging setting in case it changed
-            if (result == DialogResult.OK)
-            {
-                var settings = _settingsRepository.GetSettings();
-                bool previousLoggingState = _loggingEnabled;
-                _loggingEnabled = settings.LoggingEnabled;
-
-                if (_loggingEnabled && !previousLoggingState)
-                {
-                    Logger.LogInfo("Logging enabled via settings");
-                }
-                else if (!_loggingEnabled && previousLoggingState)
-                {
-                    Logger.LogInfo("Logging disabled via settings");
-                }
-            }
-        }
+        private void settingsToolStripMenuItem_Click(object sender, EventArgs e) => OpenSettings();
 
         private void toolStripButtonRedactDocuments_Click(object sender, EventArgs e)
         {
@@ -588,17 +940,20 @@ namespace PhilterDesktop
             redactionContextsForm.ShowDialog();
         }
 
-        private void settingsToolStripButton_Click(object sender, EventArgs e)
+        private void settingsToolStripButton_Click(object sender, EventArgs e) => OpenSettings();
+
+        private void OpenSettings()
         {
             if (_loggingEnabled)
             {
                 Logger.LogInfo("Opening Settings dialog");
             }
 
-            var settingsForm = new SettingsForm(_settingsRepository);
+            using var settingsForm = new SettingsForm(
+                _settingsRepository, _policyRepository, _contextRepository, _watchedFolderRepository, _watchedFolderLogRepository);
             var result = settingsForm.ShowDialog();
 
-            // Reload logging setting in case it changed
+            // Reload logging setting in case it changed.
             if (result == DialogResult.OK)
             {
                 var settings = _settingsRepository.GetSettings();
@@ -613,6 +968,17 @@ namespace PhilterDesktop
                 {
                     Logger.LogInfo("Logging disabled via settings");
                 }
+            }
+
+            // Watched folders are persisted immediately (independent of Save/Cancel); restart the
+            // watcher if the list changed so monitoring reflects the new configuration.
+            if (settingsForm.WatchedFoldersChanged)
+            {
+                StartFolderWatcher();
+            }
+            else
+            {
+                _folderWatcher.LoggingEnabled = _loggingEnabled;
             }
         }
 
@@ -645,6 +1011,33 @@ namespace PhilterDesktop
             _redactionQueueRepository.DeleteWhere(x => x.Status == "Completed");
             LoadRedactionQueue();
         }
+
+        private void ContextMenuStrip1_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            bool hasSelection = listView1.SelectedItems.Count > 0;
+            bool hasItems = listView1.Items.Count > 0;
+            bool selectedCompleted = hasSelection && IsCompleted(listView1.SelectedItems[0]);
+
+            bool anyCompleted = false;
+            foreach (ListViewItem item in listView1.Items)
+            {
+                if (IsCompleted(item))
+                {
+                    anyCompleted = true;
+                    break;
+                }
+            }
+
+            // "Add Files…" and "Refresh" don't depend on the queue and stay enabled.
+            removeToolStripMenuItem.Enabled = hasSelection;
+            removeAllToolStripMenuItem.Enabled = hasItems;
+            removeCompletedToolStripMenuItem.Enabled = anyCompleted;
+            openRedactedFileToolStripMenuItem.Enabled = selectedCompleted; // exists only once redacted
+            openOriginalFileToolStripMenuItem.Enabled = hasSelection;
+        }
+
+        private static bool IsCompleted(ListViewItem item) =>
+            item.SubItems.Count > 1 && string.Equals(item.SubItems[1].Text, "Completed", StringComparison.OrdinalIgnoreCase);
 
         private void addFilesToRedactToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -709,7 +1102,7 @@ namespace PhilterDesktop
 
                         var policy = PolicySerializer.DeserializeFromJson(policyEntity.Json);
                         string outputPath = RedactionService.GetOutputPath(entity.Name, settings);
-                        await RedactionService.RedactFileAsync(entity.Name, outputPath, policy, entity.Context, filterService);
+                        await RedactionService.RedactFileAsync(entity.Name, outputPath, policy, entity.Context, filterService, entity.Highlight);
 
                         UpdateEntityStatus(entity, "Completed");
 
@@ -801,6 +1194,17 @@ namespace PhilterDesktop
             }
 
             _queueSummaryLabel.Text = string.Join("  ·  ", parts);
+        }
+
+        private void ListView1_DoubleClick(object? sender, EventArgs e)
+        {
+            // Double-clicking a completed item opens its redacted file.
+            if (listView1.SelectedItems.Count > 0 &&
+                listView1.SelectedItems[0].SubItems.Count > 1 &&
+                listView1.SelectedItems[0].SubItems[1].Text == "Completed")
+            {
+                openRedactedFileToolStripMenuItem_Click(sender!, e);
+            }
         }
 
         private void openRedactedFileToolStripMenuItem_Click(object sender, EventArgs e)

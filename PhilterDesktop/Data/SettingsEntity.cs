@@ -47,6 +47,12 @@ namespace PhilterData
         public bool LoggingEnabled { get; set; } = false;
 
         /// <summary>
+        /// Gets or sets a value indicating whether the one-time "still running in the tray" hint
+        /// has been shown (so closing the window to the tray is only explained once).
+        /// </summary>
+        public bool TrayHintShown { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets the date and time when the settings were last modified.
         /// </summary>
         public DateTime LastModified { get; set; } = DateTime.UtcNow;

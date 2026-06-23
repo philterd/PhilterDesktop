@@ -1,7 +1,11 @@
 # Settings
 
 Open **Settings** from the main toolbar to control where redacted files go and how the
-application behaves.
+application behaves. The dialog has two tabs: **General** and **Watched Folder**.
+
+## General
+
+The **General** tab holds the output-location and logging settings below.
 
 ## Output location
 
@@ -17,6 +21,13 @@ never modified.
 
 Enable **logging** to record application activity to a log file (useful for troubleshooting). Use
 **Open Log File** to view it. Logging is off by default.
+
+## Watched folders
+
+The **Watched Folder** tab lets you set up folders that Philter Desktop continuously monitors and
+redacts automatically, and turn on starting at sign-in. Philter Desktop runs from the system tray
+so monitoring continues even when the window is closed. See the dedicated
+[Watched Folders](watched-folders.md) page for full details.
 
 ## Word redaction license
 

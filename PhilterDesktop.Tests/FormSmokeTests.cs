@@ -84,6 +84,20 @@ namespace PhilterDesktop.Tests
             ConstructWithDb(db => new SettingsForm(new SettingsRepository(db)));
 
         [Fact]
+        public void SettingsForm_WithWatchedFolderTab_Constructs() =>
+            ConstructWithDb(db => new SettingsForm(
+                new SettingsRepository(db), new PolicyRepository(db), new ContextRepository(db), new WatchedFolderRepository(db)));
+
+        [Fact]
+        public void WatchedFolderForm_Constructs() =>
+            ConstructWithDb(db => new WatchedFolderForm(new PolicyRepository(db), new ContextRepository(db)));
+
+        [Fact]
+        public void WatchedFolderLogForm_Constructs() =>
+            ConstructWithDb(db => new WatchedFolderLogForm(
+                new WatchedFolderLogRepository(db), new WatchedFolderEntity { FolderPath = @"C:\watched" }));
+
+        [Fact]
         public void AboutForm_Constructs() => Sta(() => { using var f = new AboutForm(); _ = f.Handle; });
 
         [Fact]

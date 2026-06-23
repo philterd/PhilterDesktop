@@ -37,6 +37,20 @@ A filter with no explicit strategy uses a sensible default (redaction). See
 
 The **default** policy cannot be deleted.
 
+## AI name detection
+
+The **Personal** group contains **Names (on-device AI)**. Check it to detect person names with a
+bundled machine-learning model that runs entirely on your computer — no text ever leaves the
+machine. This complements the pattern-based filters: names have no fixed format and depend on
+context, so a model finds them more reliably than a rule could.
+
+There is nothing to configure — enable the checkbox and save the policy. The first document
+redacted with it loads the model (a brief one-time delay); subsequent documents are fast.
+
+> Installed builds of Philter Desktop include the model already. If you build or run the
+> application yourself, the model is downloaded automatically on a Release build (or run
+> `scripts/download-pheye-model.ps1`). If the model is not present, the option simply has no effect.
+
 ## Custom Identifiers
 
 In addition to the built-in PII types, **Custom Identifiers** let you redact text that matches

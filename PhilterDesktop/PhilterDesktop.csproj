@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- MSIX targets x64; declaring the RID makes the packaging build lay out the native PDF
+         dependencies (PDFium, SkiaSharp, ONNX Runtime) deterministically. -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,6 +39,45 @@
              Text="xceed-license.json is missing: this Release build will use Xceed trial mode for Word redaction. Add the key file before packaging the installer (or set XceedLicenseRequired=true to fail the build)." />
     <Error Condition="!Exists('xceed-license.json') And '$(XceedLicenseRequired)' == 'true'"
            Text="xceed-license.json is missing: refusing to build Release with XceedLicenseRequired=true. Add PhilterDesktop\xceed-license.json before packaging." />
+  </Target>
+
+  <!-- On-device PhEye name-detection model (GLiNER xsmall, ~90 MB). Kept out of git (see
+       .gitignore) and bundled with the app instead. The model files live under
+       Models\ph-eye-pii-en-xsmall\ and are copied to the output (and into the MSIX). -->
+  <PropertyGroup>
+    <PhEyeModelName>ph-eye-pii-en-xsmall</PhEyeModelName>
+    <PhEyeModelDir>$(MSBuildProjectDirectory)\Models\$(PhEyeModelName)</PhEyeModelDir>
+    <PhEyeModelBaseUrl>https://huggingface.co/philterd/$(PhEyeModelName)/resolve/main/onnx</PhEyeModelBaseUrl>
+  </PropertyGroup>
+
+  <!-- Keep the model out of the default item globs; the target below includes it explicitly
+       with copy metadata, which would otherwise collide with the SDK's auto-included None items. -->
+  <ItemGroup>
+    <None Remove="Models\**\*" />
+    <Compile Remove="Models\**\*" />
+    <EmbeddedResource Remove="Models\**\*" />
+    <Content Remove="Models\**\*" />
+  </ItemGroup>
+
+  <!-- Downloads the model on Release builds (or when -p:DownloadPhEyeModel=true) if missing,
+       then bundles whatever model files are present. Debug/CI builds skip the download (so they
+       stay fast and offline); if no model is bundled the app simply disables name detection.
+       Run scripts\download-pheye-model.ps1 to populate it for a Debug run. -->
+  <Target Name="DownloadPhEyeModel" BeforeTargets="AssignTargetPaths" Condition="'$(SkipPhEyeModelDownload)' != 'true'">
+    <PropertyGroup>
+      <_PhEyeShouldDownload Condition="!Exists('$(PhEyeModelDir)\model.onnx') And ('$(Configuration)' == 'Release' Or '$(DownloadPhEyeModel)' == 'true')">true</_PhEyeShouldDownload>
+    </PropertyGroup>
+    <MakeDir Condition="'$(_PhEyeShouldDownload)' == 'true'" Directories="$(PhEyeModelDir)" />
+    <Message Condition="'$(_PhEyeShouldDownload)' == 'true'" Importance="high" Text="Downloading PhEye model '$(PhEyeModelName)' (~90 MB) to $(PhEyeModelDir)..." />
+    <DownloadFile Condition="'$(_PhEyeShouldDownload)' == 'true'" SourceUrl="$(PhEyeModelBaseUrl)/gliner_config.json" DestinationFolder="$(PhEyeModelDir)" DestinationFileName="gliner_config.json" SkipUnchangedFiles="true" Retries="3" />
+    <DownloadFile Condition="'$(_PhEyeShouldDownload)' == 'true'" SourceUrl="$(PhEyeModelBaseUrl)/spm.model" DestinationFolder="$(PhEyeModelDir)" DestinationFileName="spm.model" SkipUnchangedFiles="true" Retries="3" />
+    <DownloadFile Condition="'$(_PhEyeShouldDownload)' == 'true'" SourceUrl="$(PhEyeModelBaseUrl)/model.onnx" DestinationFolder="$(PhEyeModelDir)" DestinationFileName="model.onnx" SkipUnchangedFiles="true" Retries="3" />
+
+    <ItemGroup Condition="Exists('$(PhEyeModelDir)\model.onnx')">
+      <None Include="$(PhEyeModelDir)\**\*" LinkBase="Models\$(PhEyeModelName)">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
   </Target>
 
   <ItemGroup>

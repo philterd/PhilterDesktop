@@ -8,6 +8,7 @@ Philter Desktop can detect and redact the following types of PII. Enable the one
 - First Name
 - Surname
 - Age
+- **Names (on-device AI)** — see [AI name detection](#ai-name-detection) below
 
 ## Contact
 
@@ -53,6 +54,14 @@ Philter Desktop can detect and redact the following types of PII. Enable the one
 ## Other
 
 - Date
+
+## AI name detection
+
+The **Names (on-device AI)** filter (in the **Personal** group) detects person names using a
+bundled machine-learning model ([PhEye](https://github.com/philterd/phileas-net)) that runs
+entirely on your computer with no network call. Names are the one PII type that genuinely needs a
+model, because they have no fixed format and depend on context; the pattern-based filters above
+handle the rest. See [Policies → AI name detection](policies.md#ai-name-detection).
 
 ## Custom Identifiers
 

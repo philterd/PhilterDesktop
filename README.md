@@ -1,7 +1,7 @@
 # Philter Desktop
 
 A Windows desktop application for redacting personally identifiable information (PII) from
-plain text (`.txt`) and Microsoft Word (`.docx`) documents.
+plain text (`.txt`), Microsoft Word (`.docx`), and PDF (`.pdf`) documents.
 
 ![build-and-test](https://github.com/philterd/PhilterDesktop/actions/workflows/ci.yml/badge.svg)
 
@@ -56,12 +56,23 @@ Without a key, plain-text redaction still works; Word redaction runs in Xceed tr
 
 ## Features
 
-- **Redaction queue** — add `.txt`/`.docx` files (button or drag-and-drop); they are redacted
-  in the background with live, color-coded status.
+- **Redaction queue** — add `.txt`/`.docx`/`.pdf` files (button or drag-and-drop); they are
+  redacted in the background with live, color-coded status. PDF redaction is image-based (the
+  output has no recoverable text layer).
 - **Policy editor** — enable PII filters and configure their replacement strategies. Filters are
   discovered automatically from the Phileas model and grouped by category (Personal, Contact,
   Location, Financial, Identifiers, Technical, Medical, …), with a search box and an
   enabled-count indicator.
+- **On-device name detection** — an optional **AI Detection → Names** filter uses a bundled
+  [PhEye](https://github.com/philterd/phileas-net) GLiNER model to find person names contextually,
+  running entirely on the machine with no network call. The model is downloaded at build time and
+  shipped inside the installer (see [Bundled models](PhilterDesktop/Models/README.md)).
+- **Highlight redactions** — optionally highlight the replacement text in redacted Word (`.docx`)
+  documents for clearer visual review (a per-document option on the Redact Documents form).
+- **Watched folders** — monitor folders for new `.txt`/`.docx`/`.pdf` files and redact them
+  automatically to an output folder, each with its own policy, context, and highlight option
+  (configured on the **Watched Folder** tab of Settings). Philter Desktop runs in the **system
+  tray** (closing the window keeps it watching) and can **start at sign-in**.
 - **Contexts** — manage redaction contexts for consistent replacement.
 - **Settings** — output location, logging, and the redaction policy defaults.
 
@@ -80,8 +91,10 @@ dotnet test PhilterDesktop.Tests/PhilterDesktop.Tests.csproj
 ```
 
 The suite covers the data layer (LiteDB repositories), the redaction service, license-key
-resolution, Word redaction, the editor↔engine policy contract, and form construction smoke
-tests. Word-redaction tests are skipped automatically when no Xceed license is configured.
+resolution, Word redaction, on-device name detection, the editor↔engine policy contract, and
+form construction smoke tests. Word-redaction tests are skipped automatically when no Xceed
+license is configured, and on-device name-detection tests are skipped when the PhEye model is
+not bundled.
 The same build-and-test flow runs in CI on every push and pull request
 (`.github/workflows/ci.yml`).
 

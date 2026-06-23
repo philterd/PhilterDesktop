@@ -4,7 +4,9 @@
 
 - Windows 10 or Windows 11.
 - A [Microsoft Word (`.docx`) redaction license](settings.md#word-redaction-license) is required
-  only if you redact Word documents. Plain-text redaction needs no license.
+  only if you redact Word documents. Plain-text redaction needs no license. Installed builds of
+  Philter Desktop typically include the key already; this is only relevant if you build or run the
+  application yourself.
 
 ## Installing
 

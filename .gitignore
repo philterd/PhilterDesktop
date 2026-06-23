@@ -31,6 +31,14 @@ nupkg/
 # Xceed license key (per-developer; must not be committed)
 xceed-license.json
 
+# Bundled on-device PhEye model (~90 MB; downloaded at build time, not committed)
+PhilterDesktop/Models/ph-eye-pii-en-xsmall/
+!PhilterDesktop/Models/README.md
+
+# Installer build artifacts
+Installer/Output/
+Installer/AppPackages/
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

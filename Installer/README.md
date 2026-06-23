@@ -1,4 +1,57 @@
-# MSIX packaging
+# Installers
+
+Philter Desktop can be distributed two ways:
+
+- **MSIX** (`PhilterDesktop.Package.wapproj`) — clean install/uninstall and Store-style updates, but
+  must be **signed** and is more friction to sideload. Documented below.
+- **Setup .exe** (`PhilterDesktop.iss`, Inno Setup) — a traditional installer for the **unpackaged**
+  build; easiest for direct download. See [Setup .exe (Inno Setup)](#setup-exe-inno-setup).
+
+---
+
+## Setup .exe (Inno Setup)
+
+`PhilterDesktop.iss` packages a `dotnet publish` (win-x64) output into a single setup executable —
+a good option when you're not code-signing an MSIX or need non-Store / scripted deployment.
+
+**Build it:**
+
+```powershell
+# Publishes the app, then compiles the installer with Inno Setup's ISCC.
+pwsh Installer\build-setup.ps1 -Version 1.0.0
+# Smaller build that requires the .NET 10 Desktop Runtime on the target:
+pwsh Installer\build-setup.ps1 -Version 1.0.0 -FrameworkDependent
+```
+
+Or use the double-clickable wrapper (no PowerShell execution-policy setup needed):
+
+```bat
+Installer\build-setup.cmd                 :: version 1.0.0, self-contained
+Installer\build-setup.cmd 1.2.3           :: specific version
+Installer\build-setup.cmd 1.2.3 fdd       :: framework-dependent (needs .NET runtime)
+```
+
+Requires **Inno Setup 6.3+** (`ISCC.exe` on PATH or in the default install location). The setup
+`.exe` is written to `Installer\Output\`.
+
+**What it does:**
+
+- Installs **per-user by default** (no admin); users can choose all-users in the wizard or via
+  `/ALLUSERS`. Default build is **self-contained**, so the target needs no .NET runtime.
+- Bundles everything `publish` produces: the app, native PDF libraries, the on-device PhEye model
+  under `Models\`, and `xceed-license.json` if present at build time.
+- Optional tasks: a desktop icon, and **start at sign-in** — which writes the *same*
+  `HKCU\…\Run` value (with `--minimized`) that the in-app "Start at sign-in" toggle uses, so the two
+  stay in sync. The entry is removed on uninstall.
+- Leaves user data (`%LocalAppData%\PhilterDesktop\`, including the database and logs) in place on
+  uninstall.
+
+> Like the MSIX, distributing the `.exe` without a code-signing certificate will trigger a Windows
+> SmartScreen prompt; sign it for a smooth install experience.
+
+---
+
+## MSIX packaging
 
 `PhilterDesktop.Package.wapproj` is a Windows Application Packaging Project that produces an
 MSIX installer for Philter Desktop. It packages the `PhilterDesktop` app (the full-trust Win32

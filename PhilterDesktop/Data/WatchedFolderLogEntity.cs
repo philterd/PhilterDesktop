@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2026 Philterd, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,25 +15,25 @@
  */
 
 using LiteDB;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PhilterData
 {
-    public class RedactionQueueEntity
+    /// <summary>
+    /// A single activity entry for a watched folder: when a file was found, redacted (and where),
+    /// skipped, or failed.
+    /// </summary>
+    public class WatchedFolderLogEntity
     {
         public ObjectId Id { get; set; } = ObjectId.NewObjectId();
-        public string Name { get; set; } = string.Empty;
-        public string Status { get; set; } = "Pending";
-        public string Policy { get; set; } = string.Empty;
-        public string Context { get; set; } = string.Empty;
 
-        /// <summary>When true, redacted replacements in .docx output are highlighted.</summary>
-        public bool Highlight { get; set; }
+        /// <summary>The <see cref="WatchedFolderEntity.Id"/> this entry belongs to.</summary>
+        public ObjectId FolderId { get; set; } = ObjectId.Empty;
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+        /// <summary>"Info" or "Error".</summary>
+        public string Level { get; set; } = "Info";
+
+        public string Message { get; set; } = string.Empty;
     }
 }

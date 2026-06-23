@@ -7,6 +7,11 @@ redacted, with their status, policy, and context.
 
 - **Plain text** — `.txt`
 - **Microsoft Word** — `.docx` (requires a [Word redaction license](settings.md#word-redaction-license))
+- **PDF** — `.pdf`
+
+> **PDF redaction is image-based.** Each page of a redacted PDF is rasterized to an image with the
+> detected PII covered, so the output has **no recoverable text layer** — nothing can be copied or
+> searched from it. (This also means the redacted PDF is not text-selectable.)
 
 ## Adding documents
 
@@ -34,7 +39,8 @@ Redaction never modifies your original file. A new copy is written with a `_reda
 
 ## Managing the queue
 
-Right-click a row (or use the toolbar) to:
+**Double-click** a **Completed** item to open its redacted file. You can also right-click a row
+(or use the toolbar) to:
 
 - **Open redacted file** / **Open original file**
 - **Remove**, **Remove completed**, or **Remove all**

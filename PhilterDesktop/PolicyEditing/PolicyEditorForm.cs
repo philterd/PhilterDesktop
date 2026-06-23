@@ -163,6 +163,14 @@ namespace PhilterDesktop.PolicyEditing
                     AddFilterRow(inner, prop);
                     placed.Add(prop.Name);
                 }
+
+                if (category == "Personal")
+                {
+                    // On-device AI name detection belongs with the other personal-name filters.
+                    AddPhEyeRow(inner);
+                    // The Personal group is short; stack Custom Identifiers beneath it to fill the column.
+                    AddCustomIdentifiersRow(NewGroup("Custom"));
+                }
             }
 
             // Any filter not assigned to a category goes under "Other".
@@ -178,8 +186,6 @@ namespace PhilterDesktop.PolicyEditing
                     AddFilterRow(inner, prop);
                 }
             }
-
-            AddCustomIdentifiersRow(NewGroup("Custom"));
         }
 
         private FlowLayoutPanel NewGroup(string title)
@@ -325,6 +331,38 @@ namespace PhilterDesktop.PolicyEditing
                 checkBox.Checked = enabled;
                 configure.Visible = enabled;
                 configure.Enabled = configure.Visible;
+            });
+        }
+
+        private void AddPhEyeRow(FlowLayoutPanel inner)
+        {
+            const string name = "Names (on-device AI)";
+            (Panel row, CheckBox checkBox, Button configure) = NewRow(name);
+            configure.Dispose(); // PhEye name detection has no per-policy options to configure.
+            row.Controls.Remove(configure);
+            inner.Controls.Add(row);
+            _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = (GroupBox)inner.Parent! });
+
+            var tip = new ToolTip();
+            tip.SetToolTip(checkBox,
+                "Detects person names using the bundled on-device PhEye model.\n" +
+                "Runs locally with no network call; complements the pattern-based filters.");
+
+            checkBox.CheckedChanged += (_, _) =>
+            {
+                if (!_loading && _policy is not null)
+                {
+                    _policy.Identifiers.PhEyes = checkBox.Checked
+                        ? new List<PhEye> { PhEyeModel.CreateDefaultFilter() }
+                        : null;
+                    _dirty = true;
+                }
+                UpdateCount();
+            };
+
+            _loaders.Add(() =>
+            {
+                checkBox.Checked = _policy?.Identifiers.PhEyes is { Count: > 0 };
             });
         }
 

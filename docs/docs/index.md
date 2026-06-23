@@ -1,15 +1,15 @@
 # Philter Desktop
 
 **Philter Desktop** is a Windows application for redacting personally identifiable information
-(PII) from documents. Add files to the redaction queue, choose a policy that describes what to
-redact and how, and Philter Desktop produces redacted copies of your documents — leaving the
-originals untouched.
+(PII) from plain text, Microsoft Word, and PDF documents. Add files to the redaction queue, choose
+a policy that describes what to redact and how, and Philter Desktop produces redacted copies of
+your documents — leaving the originals untouched.
 
 It is powered by the [Phileas](https://github.com/philterd/phileas-net) redaction engine.
 
 ## What it does
 
-- Redacts **plain text (`.txt`)** and **Microsoft Word (`.docx`)** documents.
+- Redacts **plain text (`.txt`)**, **Microsoft Word (`.docx`)**, and **PDF (`.pdf`)** documents.
 - Detects a wide range of PII — names, email addresses, phone numbers, SSNs, credit cards,
   addresses, dates, and more (see [Supported Filters](supported-filters.md)).
 - Lets you control **what** is redacted and **how** it is replaced using

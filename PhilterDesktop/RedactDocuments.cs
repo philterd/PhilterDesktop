@@ -100,9 +100,7 @@ namespace PhilterDesktop
                     {
                         if (!filesListBox.Items.Contains(file))
                         {
-                            if (file.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) || 
-                                file.EndsWith(".docx", StringComparison.OrdinalIgnoreCase) || 
-                                file.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                            if (RedactionService.IsSupported(file))
                             {
                                 if (filesListBox.Items.Count >= MaxFiles)
                                 {
@@ -129,7 +127,7 @@ namespace PhilterDesktop
                                 }
 
                                 MessageBox.Show(
-                                    $"File '{Path.GetFileName(file)}' is not a supported file type.\n\nSupported types: .txt, .docx, .pdf",
+                                    $"File '{Path.GetFileName(file)}' is not a supported file type.\n\nSupported types: {string.Join(", ", RedactionService.SupportedExtensions)}",
                                     "Unsupported File Type",
                                     MessageBoxButtons.OK,
                                     MessageBoxIcon.Warning);
@@ -147,7 +145,7 @@ namespace PhilterDesktop
                 CheckFileExists = true,
                 CheckPathExists = true,
                 Multiselect = true,
-                Filter = "Text Files (*.txt)|*.txt|PDF Documents (*.pdf)|*.pdf|Microsoft Word Documents (*.docx)|*.docx|All Supported Files|*.txt;*.pdf;*.docx",
+                Filter = "Text Files (*.txt)|*.txt|Microsoft Word Documents (*.docx)|*.docx|PDF Documents (*.pdf)|*.pdf|All Supported Files|*.txt;*.docx;*.pdf",
                 FilterIndex = 4,
                 Title = "Select Files to Redact"
             };
@@ -250,7 +248,8 @@ namespace PhilterDesktop
                 {
                     Name = file,
                     Policy = policy,
-                    Context = context
+                    Context = context,
+                    Highlight = chkHighlightRedactions.Checked
                 };
                 _redactionQueueRepository.Insert(entity);
 
@@ -272,6 +271,11 @@ namespace PhilterDesktop
         private void FilesListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             btnRemoveFile.Enabled = filesListBox.SelectedIndex >= 0;
+        }
+
+        private void labelDropFiles_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

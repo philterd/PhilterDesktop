@@ -22,7 +22,7 @@ namespace PhilterDesktop
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
@@ -41,7 +41,12 @@ namespace PhilterDesktop
             // are not individually themed.
             Application.SetDefaultFont(ModernTheme.UiFont);
 
-            Application.Run(new MainForm());
+            // Launched at sign-in (or with --minimized): start hidden in the system tray.
+            bool startMinimized = args.Any(a =>
+                a.Equals(StartupManager.MinimizedSwitch, StringComparison.OrdinalIgnoreCase) ||
+                a.Equals("-m", StringComparison.OrdinalIgnoreCase));
+
+            Application.Run(new MainForm(startMinimized));
         }
     }
 }

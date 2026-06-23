@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-using PhilterDesktop;
+using System.IO.Compression;
+using Phileas.Model;
+using Phileas.Policy;
+using Phileas.Policy.Filters;
+using Phileas.Services;
 using Xceed.Words.NET;
 using Xunit;
+using PhileasPolicy = Phileas.Policy.Policy;
 
 namespace PhilterDesktop.Tests
 {
@@ -51,6 +56,16 @@ namespace PhilterDesktop.Tests
     {
         private const string SkipReason =
             "Xceed license not configured (place xceed-license.json next to the build output or set XCEED_LICENSE_KEY).";
+
+        private static readonly PhileasPolicy EmailPolicy = new()
+        {
+            Name = "email",
+            Identifiers = new Identifiers { EmailAddress = new EmailAddress() }
+        };
+
+        // Real filter producing spans; emails redact to {{{REDACTED-email-address}}}.
+        private static Func<string, TextFilterResult> Filter =>
+            t => new FilterService().Filter(EmailPolicy, "ctx", 0, t);
 
         private readonly XceedLicenseFixture _license;
         private readonly string _tempDir;
@@ -88,25 +103,24 @@ namespace PhilterDesktop.Tests
         }
 
         // Regression test for the bug we hit: emptying a paragraph with the 2-arg
-        // RemoveText overload deleted the whole paragraph, so Append was lost.
+        // RemoveText overload deleted the whole paragraph, so the rebuild was lost.
         [SkippableFact]
         public void Redact_ReplacesChangedParagraphs_WithoutDeletingThem()
         {
             Skip.IfNot(_license.HasLicense, SkipReason);
 
-            string input = CreateDocx("keep one", "SECRET two", "SECRET three", "keep four");
+            string input = CreateDocx("keep one", "email aaa@example.com here", "email bbb@example.com too", "keep four");
             int originalCount = ReadParagraphs(input).Length;
             string output = NewPath("out.docx");
 
-            WordDocumentRedactor.Redact(input, output, t => t.Replace("SECRET", "[X]"));
+            WordDocumentRedactor.Redact(input, output, Filter);
 
             string[] result = ReadParagraphs(output);
             Assert.Equal(originalCount, result.Length); // no paragraph deleted
             Assert.Contains("keep one", result);
-            Assert.Contains("[X] two", result);
-            Assert.Contains("[X] three", result);
             Assert.Contains("keep four", result);
-            Assert.DoesNotContain(result, p => p.Contains("SECRET"));
+            Assert.Contains("email {{{REDACTED-email-address}}} here", result);
+            Assert.DoesNotContain(result, p => p.Contains("@example.com"));
         }
 
         [SkippableFact]
@@ -114,10 +128,10 @@ namespace PhilterDesktop.Tests
         {
             Skip.IfNot(_license.HasLicense, SkipReason);
 
-            string input = CreateDocx("alpha", "beta", "gamma");
+            string input = CreateDocx("alpha", "beta", "gamma"); // no PII
             string output = NewPath("out.docx");
 
-            WordDocumentRedactor.Redact(input, output, t => t); // identity filter
+            WordDocumentRedactor.Redact(input, output, Filter);
 
             Assert.Equal(ReadParagraphs(input), ReadParagraphs(output));
         }
@@ -133,26 +147,24 @@ namespace PhilterDesktop.Tests
                 doc.AddHeaders();
                 doc.AddFooters();
                 doc.DifferentFirstPage = false;
-                doc.Headers.Odd.InsertParagraph("SECRET header");
-                doc.Footers.Odd.InsertParagraph("SECRET footer");
-                doc.InsertParagraph("SECRET body");
+                doc.Headers.Odd.InsertParagraph("header hh@example.com");
+                doc.Footers.Odd.InsertParagraph("footer ff@example.com");
+                doc.InsertParagraph("body bb@example.com");
                 doc.Save();
             }
             string output = NewPath("hf_out.docx");
 
-            WordDocumentRedactor.Redact(input, output, t => t.Replace("SECRET", "[X]"));
+            WordDocumentRedactor.Redact(input, output, Filter);
 
             using var redacted = DocX.Load(output);
             string body = string.Join("|", redacted.Paragraphs.Select(p => p.Text));
             string header = string.Join("|", redacted.Headers.Odd.Paragraphs.Select(p => p.Text));
             string footer = string.Join("|", redacted.Footers.Odd.Paragraphs.Select(p => p.Text));
 
-            Assert.DoesNotContain("SECRET", body);
-            Assert.DoesNotContain("SECRET", header);
-            Assert.DoesNotContain("SECRET", footer);
-            Assert.Contains("[X] header", header);
-            Assert.Contains("[X] footer", footer);
-            Assert.Contains("[X] body", body);
+            Assert.DoesNotContain("@example.com", body + header + footer);
+            Assert.Contains("REDACTED", header);
+            Assert.Contains("REDACTED", footer);
+            Assert.Contains("REDACTED", body);
         }
 
         [SkippableFact]
@@ -160,12 +172,38 @@ namespace PhilterDesktop.Tests
         {
             Skip.IfNot(_license.HasLicense, SkipReason);
 
-            string input = CreateDocx("SECRET data");
+            string input = CreateDocx("contact data@example.com");
             string output = NewPath("out.docx");
 
-            WordDocumentRedactor.Redact(input, output, t => t.Replace("SECRET", "[X]"));
+            WordDocumentRedactor.Redact(input, output, Filter);
 
-            Assert.Contains(ReadParagraphs(input), p => p.Contains("SECRET"));
+            Assert.Contains(ReadParagraphs(input), p => p.Contains("@example.com"));
+        }
+
+        [SkippableFact]
+        public void Redact_WithHighlight_HighlightsTheReplacement()
+        {
+            Skip.IfNot(_license.HasLicense, SkipReason);
+
+            string input = CreateDocx("email zzz@example.com end");
+            string output = NewPath("out.docx");
+
+            WordDocumentRedactor.Redact(input, output, Filter, highlight: true);
+
+            Assert.Contains("email {{{REDACTED-email-address}}} end", ReadParagraphs(output));
+
+            // The replacement run carries Word's native yellow highlight.
+            string xml = ReadDocumentXml(output);
+            Assert.Contains("highlight", xml);
+            Assert.Contains("yellow", xml);
+        }
+
+        private static string ReadDocumentXml(string docxPath)
+        {
+            using ZipArchive zip = ZipFile.OpenRead(docxPath);
+            ZipArchiveEntry entry = zip.GetEntry("word/document.xml")!;
+            using var reader = new StreamReader(entry.Open());
+            return reader.ReadToEnd();
         }
     }
 }

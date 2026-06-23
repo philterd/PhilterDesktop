@@ -25,20 +25,221 @@ namespace PhilterDesktop
     public partial class SettingsForm : Form
     {
         private readonly SettingsRepository _settingsRepository;
+        private readonly PolicyRepository? _policyRepository;
+        private readonly ContextRepository? _contextRepository;
+        private readonly WatchedFolderRepository? _watchedFolderRepository;
+        private readonly WatchedFolderLogRepository? _watchedFolderLogRepository;
+        private readonly StartupManager _startupManager = StartupManager.CreateDefault();
+        private bool _suppressStartupToggle;
         private SettingsEntity _settings;
 
+        /// <summary>
+        /// True if the watched-folder list was changed (added/removed) while the dialog was open,
+        /// so the caller knows to restart the folder watcher. Watched folders are persisted
+        /// immediately on add/remove, independent of the Save button.
+        /// </summary>
+        public bool WatchedFoldersChanged { get; private set; }
+
         public SettingsForm(SettingsRepository settingsRepository)
+            : this(settingsRepository, null, null, null, null)
+        {
+        }
+
+        public SettingsForm(
+            SettingsRepository settingsRepository,
+            PolicyRepository? policyRepository,
+            ContextRepository? contextRepository,
+            WatchedFolderRepository? watchedFolderRepository,
+            WatchedFolderLogRepository? watchedFolderLogRepository = null)
         {
             InitializeComponent();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(btnSave);
             _settingsRepository = settingsRepository;
+            _policyRepository = policyRepository;
+            _contextRepository = contextRepository;
+            _watchedFolderRepository = watchedFolderRepository;
+            _watchedFolderLogRepository = watchedFolderLogRepository;
             _settings = new SettingsEntity();
+
+            // The watched-folder tab needs the policy/context/watched repositories; hide it otherwise.
+            if (_policyRepository is null || _contextRepository is null || _watchedFolderRepository is null)
+            {
+                tabControl.TabPages.Remove(tabWatched);
+            }
         }
 
         private void SettingsForm_Load(object sender, EventArgs e)
         {
             LoadSettings();
+            LoadWatchedFolders();
+            ConfigureStartupToggle();
+        }
+
+        private void ConfigureStartupToggle()
+        {
+            _suppressStartupToggle = true;
+            try
+            {
+                if (StartupManager.IsPackaged)
+                {
+                    // For installed (MSIX) builds, auto-start is the package's startup task and is
+                    // turned on/off by Windows, not by writing the registry.
+                    chkStartWithWindows.Checked = true;
+                    chkStartWithWindows.Enabled = false;
+                    lblStartupHint.Text = "Managed by Windows — change this in Task Manager → Startup apps.";
+                }
+                else
+                {
+                    chkStartWithWindows.Checked = _startupManager.IsEnabled();
+                    lblStartupHint.Text = string.Empty;
+                }
+            }
+            finally
+            {
+                _suppressStartupToggle = false;
+            }
+        }
+
+        private void ChkStartWithWindows_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_suppressStartupToggle || StartupManager.IsPackaged)
+            {
+                return;
+            }
+
+            try
+            {
+                if (chkStartWithWindows.Checked)
+                {
+                    _startupManager.Enable();
+                }
+                else
+                {
+                    _startupManager.Disable();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Could not update the start-at-sign-in setting: {ex.Message}",
+                    "Settings",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+        }
+
+        private void LoadWatchedFolders()
+        {
+            if (_watchedFolderRepository is null)
+            {
+                return;
+            }
+
+            listWatched.BeginUpdate();
+            listWatched.Items.Clear();
+            foreach (WatchedFolderEntity folder in _watchedFolderRepository.GetAll().OrderBy(f => f.FolderPath))
+            {
+                var item = new ListViewItem(folder.FolderPath) { Tag = folder };
+                item.SubItems.Add(folder.Policy);
+                item.SubItems.Add(folder.Context);
+                item.SubItems.Add(folder.OutputFolder);
+                item.SubItems.Add(folder.Highlight ? "Yes" : "No");
+                listWatched.Items.Add(item);
+            }
+            listWatched.EndUpdate();
+            UpdateWatchedButtons();
+        }
+
+        private void UpdateWatchedButtons()
+        {
+            bool hasSelection = listWatched.SelectedItems.Count > 0;
+            btnEditWatched.Enabled = hasSelection;
+            btnRemoveWatched.Enabled = hasSelection;
+            btnViewLog.Enabled = hasSelection && _watchedFolderLogRepository is not null;
+        }
+
+        private void ListWatched_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateWatchedButtons();
+        }
+
+        private void BtnViewLog_Click(object sender, EventArgs e)
+        {
+            if (_watchedFolderLogRepository is null || listWatched.SelectedItems.Count == 0)
+            {
+                return;
+            }
+            if (listWatched.SelectedItems[0].Tag is not WatchedFolderEntity folder)
+            {
+                return;
+            }
+            using var dialog = new WatchedFolderLogForm(_watchedFolderLogRepository, folder);
+            dialog.ShowDialog(this);
+        }
+
+        private void BtnAddWatched_Click(object sender, EventArgs e)
+        {
+            if (_policyRepository is null || _contextRepository is null || _watchedFolderRepository is null)
+            {
+                return;
+            }
+
+            using var dialog = new WatchedFolderForm(_policyRepository, _contextRepository);
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                _watchedFolderRepository.Insert(dialog.WatchedFolder);
+                WatchedFoldersChanged = true;
+                LoadWatchedFolders();
+            }
+        }
+
+        private void BtnEditWatched_Click(object sender, EventArgs e)
+        {
+            if (_policyRepository is null || _contextRepository is null || _watchedFolderRepository is null ||
+                listWatched.SelectedItems.Count == 0)
+            {
+                return;
+            }
+            if (listWatched.SelectedItems[0].Tag is not WatchedFolderEntity folder)
+            {
+                return;
+            }
+
+            using var dialog = new WatchedFolderForm(_policyRepository, _contextRepository, folder);
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                _watchedFolderRepository.Update(dialog.WatchedFolder);
+                WatchedFoldersChanged = true;
+                LoadWatchedFolders();
+            }
+        }
+
+        private void BtnRemoveWatched_Click(object sender, EventArgs e)
+        {
+            if (_watchedFolderRepository is null || listWatched.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
+            if (listWatched.SelectedItems[0].Tag is not WatchedFolderEntity folder)
+            {
+                return;
+            }
+
+            if (MessageBox.Show(
+                    $"Stop watching '{folder.FolderPath}'?",
+                    "Remove Watched Folder",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question) != DialogResult.Yes)
+            {
+                return;
+            }
+
+            _watchedFolderRepository.Delete(folder.Id);
+            _watchedFolderLogRepository?.DeleteForFolder(folder.Id);
+            WatchedFoldersChanged = true;
+            LoadWatchedFolders();
         }
 
         private void LoadSettings()

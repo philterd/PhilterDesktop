@@ -43,6 +43,18 @@ namespace PhilterDesktop.Tests
             try { Directory.Delete(_tempDir, recursive: true); } catch { /* best effort */ }
         }
 
+        [Theory]
+        [InlineData("report.txt", true)]
+        [InlineData("report.docx", true)]
+        [InlineData("report.DOCX", true)]
+        [InlineData("report.pdf", true)]
+        [InlineData("report.doc", false)]   // legacy binary Word is not supported
+        [InlineData("report", false)]
+        public void IsSupported_RecognizesRedactableTypes(string name, bool expected)
+        {
+            Assert.Equal(expected, RedactionService.IsSupported(name));
+        }
+
         [Fact]
         public void GetOutputPath_OriginalLocation_AddsSuffixKeepsExtension()
         {

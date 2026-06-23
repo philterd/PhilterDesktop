@@ -30,4 +30,12 @@
     </None>
   </ItemGroup>
 
+  <!-- Sample documents redacted by the integration tests. -->
+  <ItemGroup>
+    <None Include="..\test-documents\**\*">
+      <Link>test-documents\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
