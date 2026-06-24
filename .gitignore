@@ -1,4 +1,6 @@
-images/
+images/*
+# The application icon is referenced by <ApplicationIcon> and must be available to the build (incl. CI).
+!images/PhilterDesktop.ico
 *.swp
 *.*~
 project.lock.json
