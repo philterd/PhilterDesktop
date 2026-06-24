@@ -22,6 +22,9 @@ namespace PhilterDesktop.PolicyEditing
     /// Edits a single filter strategy. Replaces the 19 near-identical VB
     /// "AddXFilterStrategyForm" dialogs with one form that works against the
     /// shared <see cref="AbstractFilterStrategy"/> base type.
+    ///
+    /// The layout is built entirely from layout panels (no absolute coordinates), so it
+    /// stays correct at any DPI / font scaling.
     /// </summary>
     internal sealed class AddFilterStrategyForm : Form
     {
@@ -30,13 +33,15 @@ namespace PhilterDesktop.PolicyEditing
         private readonly RadioButton _redactRadio = new() { Text = "Redact (replace with a redaction format)", AutoSize = true };
         private readonly RadioButton _staticRadio = new() { Text = "Replace with a static value", AutoSize = true };
         private readonly RadioButton _randomRadio = new() { Text = "Replace with a random value", AutoSize = true };
-        private readonly TextBox _redactionFormat = new() { Text = "{{{REDACTED-%t}}}" };
-        private readonly TextBox _staticValue = new();
+        private readonly TextBox _redactionFormat = new() { Text = "{{{REDACTED-%t}}}", Width = 440 };
+        private readonly TextBox _staticValue = new() { Width = 440 };
         private readonly CheckBox _scopeContext = new() { Text = "Replace consistently across document contexts", AutoSize = true };
         private readonly CheckBox _enableCondition = new() { Text = "Only apply when:", AutoSize = true };
-        private readonly TextBox _conditionValue = new();
-        private readonly Button _ok = new() { Text = "OK", DialogResult = DialogResult.OK };
-        private readonly Button _cancel = new() { Text = "Cancel", DialogResult = DialogResult.Cancel };
+        private readonly TextBox _conditionValue = new() { Width = 440 };
+        private readonly Button _ok = new() { Text = "OK", DialogResult = DialogResult.OK, Size = ModernTheme.StandardButtonSize };
+        private readonly Button _cancel = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, Size = ModernTheme.StandardButtonSize };
+
+        private TableLayoutPanel _root = null!;
 
         public AbstractFilterStrategy Strategy => _strategy;
 
@@ -50,9 +55,8 @@ namespace PhilterDesktop.PolicyEditing
             MinimizeBox = false;
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(460, 340);
-            AcceptButton = _ok;
-            CancelButton = _cancel;
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
 
             BuildLayout();
 
@@ -71,36 +75,93 @@ namespace PhilterDesktop.PolicyEditing
 
         private void BuildLayout()
         {
-            var strategyBox = new GroupBox { Text = "Filter Strategy", Location = new Point(12, 12), Size = new Size(436, 210) };
+            var strategy = StackPanel();
+            strategy.Controls.Add(Indented(_redactRadio, 0, 10));
+            strategy.Controls.Add(Indented(SubLabel("Redaction format:"), 24, 12));
+            strategy.Controls.Add(Indented(_redactionFormat, 24, 4));
+            strategy.Controls.Add(Indented(Hint("%t is replaced by the filter type."), 24, 4, bottom: 14));
+            strategy.Controls.Add(Indented(_staticRadio, 0, 12));
+            strategy.Controls.Add(Indented(SubLabel("Static value:"), 24, 12));
+            strategy.Controls.Add(Indented(_staticValue, 24, 4, bottom: 14));
+            strategy.Controls.Add(Indented(_randomRadio, 0, 12));
+            strategy.Controls.Add(Indented(_scopeContext, 24, 8, bottom: 8));
 
-            _redactRadio.Location = new Point(15, 25);
-            var fmtLabel = new Label { Text = "Redaction format:", AutoSize = true, Location = new Point(35, 50) };
-            _redactionFormat.SetBounds(150, 47, 270, 23);
-            var fmtHint = new Label { Text = "%t is replaced by the filter type.", AutoSize = true, ForeColor = ModernTheme.SubtleText, Location = new Point(150, 73) };
+            var condition = StackPanel();
+            condition.Controls.Add(Indented(_enableCondition, 0, 10));
+            condition.Controls.Add(Indented(_conditionValue, 24, 6, bottom: 8));
 
-            _staticRadio.Location = new Point(15, 100);
-            var staticLabel = new Label { Text = "Static value:", AutoSize = true, Location = new Point(35, 125) };
-            _staticValue.SetBounds(150, 122, 270, 23);
-
-            _randomRadio.Location = new Point(15, 155);
-            _scopeContext.Location = new Point(35, 180);
-
-            strategyBox.Controls.AddRange(new Control[]
+            var buttons = new FlowLayoutPanel
             {
-                _redactRadio, fmtLabel, _redactionFormat, fmtHint,
-                _staticRadio, staticLabel, _staticValue,
-                _randomRadio, _scopeContext
-            });
+                FlowDirection = FlowDirection.RightToLeft,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 14, 0, 0)
+            };
+            _cancel.Margin = new Padding(8, 3, 0, 3);
+            buttons.Controls.Add(_cancel);
+            buttons.Controls.Add(_ok);
 
-            var conditionBox = new GroupBox { Text = "Conditional", Location = new Point(12, 228), Size = new Size(436, 50) };
-            _enableCondition.Location = new Point(15, 20);
-            _conditionValue.SetBounds(150, 17, 270, 23);
-            conditionBox.Controls.AddRange(new Control[] { _enableCondition, _conditionValue });
+            _root = new TableLayoutPanel
+            {
+                ColumnCount = 1,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(14)
+            };
+            _root.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            _root.Controls.Add(GroupHost("Filter Strategy", strategy));
+            _root.Controls.Add(GroupHost("Conditional", condition));
+            _root.Controls.Add(buttons);
 
-            _ok.SetBounds(262, 294, 90, 34);
-            _cancel.SetBounds(358, 294, 90, 34);
+            Controls.Add(_root);
+        }
 
-            Controls.AddRange(new Control[] { strategyBox, conditionBox, _ok, _cancel });
+        // Size the window to its content once layout/scaling has settled, so the buttons are never
+        // clipped (more reliable than Form.AutoSize for a dialog).
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            ClientSize = _root.PreferredSize;
+            CenterToParent();
+        }
+
+        // --- Layout helpers (all sizing is driven by the layout engine) -------
+
+        private static TableLayoutPanel StackPanel() => new()
+        {
+            ColumnCount = 1,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Dock = DockStyle.Fill,
+            GrowStyle = TableLayoutPanelGrowStyle.AddRows,
+            Margin = Padding.Empty
+        };
+
+        private static Control Indented(Control control, int left, int top, int bottom = 0)
+        {
+            control.Margin = new Padding(left, top, 3, bottom);
+            control.Anchor = AnchorStyles.Left;
+            return control;
+        }
+
+        private static Label SubLabel(string text) => new() { Text = text, AutoSize = true };
+
+        private static Label Hint(string text) => new() { Text = text, AutoSize = true, ForeColor = ModernTheme.SubtleText };
+
+        private static GroupBox GroupHost(string title, Control inner)
+        {
+            var box = new GroupBox
+            {
+                Text = title,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Fill,
+                Padding = new Padding(10, 4, 10, 10),
+                Margin = new Padding(0, 0, 0, 10)
+            };
+            box.Controls.Add(inner);
+            return box;
         }
 
         private void SyncEnabled()

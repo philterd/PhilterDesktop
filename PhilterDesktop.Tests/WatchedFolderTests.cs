@@ -92,7 +92,7 @@ namespace PhilterDesktop.Tests
             using var watcher = new FolderWatcherService(_policyRepo, loggingEnabled: false);
             watcher.Restart(new[] { Folder(watched, output) });
 
-            string expected = Path.Combine(output, "doc_redacted.txt");
+            string expected = Path.Combine(output, "doc_redacted-draft.txt");
             string redacted = await WaitForFileAsync(expected);
 
             Assert.DoesNotContain("jane@example.com", redacted);
@@ -113,7 +113,7 @@ namespace PhilterDesktop.Tests
             string input = Path.Combine(watched, "new.txt");
             await File.WriteAllTextAsync(input, "Email bob@example.com now.");
 
-            string expected = Path.Combine(output, "new_redacted.txt");
+            string expected = Path.Combine(output, "new_redacted-draft.txt");
             string redacted = await WaitForFileAsync(expected);
 
             Assert.DoesNotContain("bob@example.com", redacted);
@@ -132,12 +132,12 @@ namespace PhilterDesktop.Tests
             string input = Path.Combine(watched, "memo.txt");
             await File.WriteAllTextAsync(input, "Email amy@example.com today.");
 
-            string expected = Path.Combine(watched, "memo_redacted.txt");
+            string expected = Path.Combine(watched, "memo_redacted-draft.txt");
             await WaitForFileAsync(expected);
 
             // Give any (incorrect) cascade a chance to occur, then assert it didn't.
             await Task.Delay(800);
-            Assert.False(File.Exists(Path.Combine(watched, "memo_redacted_redacted.txt")),
+            Assert.False(File.Exists(Path.Combine(watched, "memo_redacted-draft_redacted-draft.txt")),
                 "redacted output must not be re-redacted");
         }
 
@@ -165,7 +165,7 @@ namespace PhilterDesktop.Tests
             await File.WriteAllTextAsync(input, "Email deep@example.com here.");
 
             // Output mirrors the relative subfolder path under the output folder.
-            string expected = Path.Combine(output, "2025", "march", "deep_redacted.txt");
+            string expected = Path.Combine(output, "2025", "march", "deep_redacted-draft.txt");
             string redacted = await WaitForFileAsync(expected);
 
             Assert.DoesNotContain("deep@example.com", redacted);
@@ -187,9 +187,9 @@ namespace PhilterDesktop.Tests
             // A top-level file should still be processed, proving the watcher is alive.
             await File.WriteAllTextAsync(Path.Combine(watched, "top.txt"), "Email top@example.com here.");
 
-            await WaitForFileAsync(Path.Combine(output, "top_redacted.txt"));
+            await WaitForFileAsync(Path.Combine(output, "top_redacted-draft.txt"));
 
-            Assert.False(File.Exists(Path.Combine(output, "deep_redacted.txt")),
+            Assert.False(File.Exists(Path.Combine(output, "deep_redacted-draft.txt")),
                 "subfolder files must be ignored when IncludeSubfolders is false");
         }
 
@@ -218,9 +218,9 @@ namespace PhilterDesktop.Tests
             await File.WriteAllTextAsync(Path.Combine(watched, "note.txt"), "Email text@example.com here.");
 
             // The .txt is redacted; the .docx is ignored because it isn't a selected type.
-            await WaitForFileAsync(Path.Combine(output, "note_redacted.txt"));
+            await WaitForFileAsync(Path.Combine(output, "note_redacted-draft.txt"));
             await Task.Delay(400);
-            Assert.False(File.Exists(Path.Combine(output, "doc_redacted.docx")),
+            Assert.False(File.Exists(Path.Combine(output, "doc_redacted-draft.docx")),
                 "a .docx must be ignored when only .txt is selected");
         }
 
@@ -250,7 +250,7 @@ namespace PhilterDesktop.Tests
             WatchedFileProcessedEventArgs evt = await WaitForEventAsync(events, e => e.Success);
             Assert.True(evt.Success);
             Assert.Contains("n.txt", evt.InputPath);
-            Assert.Equal(Path.Combine(output, "n_redacted.txt"), evt.OutputPath);
+            Assert.Equal(Path.Combine(output, "n_redacted-draft.txt"), evt.OutputPath);
         }
 
         [Fact]
@@ -268,7 +268,7 @@ namespace PhilterDesktop.Tests
             await File.WriteAllTextAsync(Path.Combine(watched, "q.txt"), "Email q@example.com here.");
 
             // Wait until it's actually redacted, then confirm no event fired.
-            await WaitForFileAsync(Path.Combine(output, "q_redacted.txt"));
+            await WaitForFileAsync(Path.Combine(output, "q_redacted-draft.txt"));
             await Task.Delay(400);
             Assert.False(raised);
         }
@@ -314,7 +314,7 @@ namespace PhilterDesktop.Tests
                        log.Any(e => e.Message.Contains("Redacted")));
 
             Assert.Contains(entries, e => e.Level == "Info" && e.Message.Contains("Found") && e.Message.Contains("doc.txt"));
-            Assert.Contains(entries, e => e.Level == "Info" && e.Message.Contains("Redacted") && e.Message.Contains("doc_redacted.txt"));
+            Assert.Contains(entries, e => e.Level == "Info" && e.Message.Contains("Redacted") && e.Message.Contains("doc_redacted-draft.txt"));
         }
 
         private async Task<IReadOnlyList<WatchedFolderLogEntity>> WaitForLogAsync(

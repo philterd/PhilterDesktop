@@ -33,6 +33,7 @@ DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 UninstallDisplayIcon={app}\{#AppExe}
+SetupIconFile=..\images\PhilterDesktop.ico
 OutputDir=Output
 OutputBaseFilename=PhilterDesktop-Setup-{#AppVersion}
 Compression=lzma2
@@ -55,7 +56,7 @@ Name: "autostart"; Description: "Start {#AppName} automatically when I sign in (
 
 [Files]
 ; The entire publish output (app, dependencies, native PDF libs under runtimes\..\native that
-; publish flattens to the app root, the bundled Models\ folder, and xceed-license.json if present).
+; publish flattens to the app root, and the bundled Models\ folder).
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
@@ -75,8 +76,19 @@ Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags
 [Code]
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
-  // Always remove the auto-start entry on uninstall, however it was set.
   if CurUninstallStep = usUninstall then
+  begin
+    // Always remove the auto-start entry on uninstall, however it was set.
     RegDeleteValue(HKEY_CURRENT_USER,
       'Software\Microsoft\Windows\CurrentVersion\Run', 'PhilterDesktop');
+
+    // Always remove the Explorer right-click ("Redact with Philter Desktop") entries, which the
+    // app writes per-user when the context-menu setting is enabled.
+    RegDeleteKeyIncludingSubkeys(HKEY_CURRENT_USER,
+      'Software\Classes\SystemFileAssociations\.pdf\shell\PhilterDesktop');
+    RegDeleteKeyIncludingSubkeys(HKEY_CURRENT_USER,
+      'Software\Classes\SystemFileAssociations\.docx\shell\PhilterDesktop');
+    RegDeleteKeyIncludingSubkeys(HKEY_CURRENT_USER,
+      'Software\Classes\SystemFileAssociations\.txt\shell\PhilterDesktop');
+  end;
 end;

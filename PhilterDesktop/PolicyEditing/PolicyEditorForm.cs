@@ -53,10 +53,14 @@ namespace PhilterDesktop.PolicyEditing
         private readonly ToolStripButton _saveAs = new() { Text = "Save As", Enabled = false };
         private readonly ToolStripButton _delete = new() { Text = "Delete", Enabled = false };
         private readonly ToolStripButton _viewJson = new() { Text = "View JSON", Enabled = false };
-        private readonly ToolStripTextBox _search = new() { AutoSize = false, Size = new Size(170, 23) };
+        private readonly ToolStripButton _ignoreList = new() { Text = "Ignore List", Enabled = false };
+        private readonly ToolStripButton _alwaysRedact = new() { Text = "Always Redact", Enabled = false };
 
-        private readonly StatusStrip _statusStrip = new();
-        private readonly ToolStripStatusLabel _countLabel = new() { Spring = true, TextAlign = ContentAlignment.MiddleLeft };
+        // Identifies the editor-managed ignored-terms set, so other ignored sets in a policy are left alone.
+        private const string IgnoredTermsName = "ignored-terms";
+
+        // Identifies the editor-managed always-redact dictionary, leaving any other dictionaries alone.
+        private const string AlwaysRedactName = "always-redact";
 
         private readonly FlowLayoutPanel _filters = new()
         {
@@ -77,14 +81,19 @@ namespace PhilterDesktop.PolicyEditing
 
             Text = "Policy Editor";
             StartPosition = FormStartPosition.CenterScreen;
-            // Fixed size large enough to show every filter group (~3 columns) without scrolling.
-            ClientSize = new Size(960, 780);
-            FormBorderStyle = FormBorderStyle.FixedSingle;
+            // Fixed (non-resizable) window sized to show all filter groups; the filter panel still
+            // scrolls if the content doesn't fit (e.g. on a smaller display).
+            ClientSize = new Size(1210, 860);
+            MinimumSize = new Size(760, 600);
+            FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
+
+            // Don't open larger than the screen on smaller displays (the panel still scrolls).
+            Rectangle workingArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1024, 768);
+            Size = new Size(Math.Min(Width, workingArea.Width), Math.Min(Height, workingArea.Height));
 
             BuildLayout();
             RegisterFilters();
-            UpdateCount();
 
             _policyCombo.SelectedIndexChanged += (_, _) => OnPolicySelectionChanged();
             _new.Click += OnNew;
@@ -92,7 +101,8 @@ namespace PhilterDesktop.PolicyEditing
             _saveAs.Click += OnSaveAs;
             _delete.Click += OnDelete;
             _viewJson.Click += OnViewJson;
-            _search.TextChanged += (_, _) => ApplySearch(_search.Text);
+            _ignoreList.Click += OnIgnoredTerms;
+            _alwaysRedact.Click += OnAlwaysRedact;
 
             ModernTheme.Apply(this);
 
@@ -106,21 +116,15 @@ namespace PhilterDesktop.PolicyEditing
             _saveAs.Image = ModernTheme.CreateGlyphImage("\uE792", 16, ModernTheme.Text);  // SaveAs
             _delete.Image = ModernTheme.CreateGlyphImage("\uE74D", 16, ModernTheme.Text);  // Delete
             _viewJson.Image = ModernTheme.CreateGlyphImage("\uE943", 16, ModernTheme.Text); // Code
+            _ignoreList.Image = ModernTheme.CreateGlyphImage("\uE71C", 16, ModernTheme.Text);     // Filter
+            _alwaysRedact.Image = ModernTheme.CreateGlyphImage("\uE72E", 16, ModernTheme.Accent); // Lock
 
             _toolStrip.Items.Add(new ToolStripLabel("Policy:"));
             _toolStrip.Items.Add(_policyCombo);
             _toolStrip.Items.Add(new ToolStripSeparator());
-            _toolStrip.Items.AddRange(new ToolStripItem[] { _new, _save, _saveAs, _delete, new ToolStripSeparator(), _viewJson });
-
-            // Search box, right-aligned (add the box first so it sits rightmost).
-            _search.Alignment = ToolStripItemAlignment.Right;
-            _toolStrip.Items.Add(_search);
-            _toolStrip.Items.Add(new ToolStripLabel("Search:") { Alignment = ToolStripItemAlignment.Right });
-
-            _statusStrip.Items.Add(_countLabel);
+            _toolStrip.Items.AddRange(new ToolStripItem[] { _new, _save, _saveAs, _delete, new ToolStripSeparator(), _viewJson, new ToolStripSeparator(), _ignoreList, _alwaysRedact });
 
             Controls.Add(_filters);
-            Controls.Add(_statusStrip);
             Controls.Add(_toolStrip);
             SetEditingEnabled(false);
         }
@@ -204,7 +208,7 @@ namespace PhilterDesktop.PolicyEditing
                 Text = title,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                MinimumSize = new Size(290, 0),
+                MinimumSize = new Size(370, 0),
                 Margin = new Padding(8),
                 Padding = new Padding(0, 0, 10, 10)
             };
@@ -216,9 +220,30 @@ namespace PhilterDesktop.PolicyEditing
 
         private static (Panel row, CheckBox checkBox, Button configure) NewRow(string name)
         {
-            var checkBox = new CheckBox { Text = name, AutoSize = true, Location = new Point(6, 10) };
-            var configure = new Button { Text = "Configure…", Size = new Size(105, 30), Location = new Point(165, 5), Enabled = false, Visible = false, Font = new Font(ModernTheme.UiFont.FontFamily, 8.25f) };
-            var row = new Panel { Width = 275, Height = 40, Margin = Padding.Empty };
+            // A horizontal flow row: the Configure button always sits just right of the checkbox,
+            // whatever the label's width or the DPI — so it can never be overlapped or clipped.
+            var checkBox = new CheckBox { Text = name, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(3, 8, 0, 4) };
+            var configure = new Button
+            {
+                Text = "Configure…",
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Anchor = AnchorStyles.Left,
+                Margin = new Padding(10, 3, 3, 3),
+                Enabled = false,
+                Visible = false,
+                Font = new Font(ModernTheme.UiFont.FontFamily, 8.25f)
+            };
+            // Fixed-width row: it already reserves room for the checkbox and the Configure button,
+            // so showing/hiding the button never changes the row's (or the group's) size.
+            var row = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                AutoSize = false,
+                WrapContents = false,
+                Size = new Size(350, 34),
+                Margin = Padding.Empty
+            };
             row.Controls.Add(checkBox);
             row.Controls.Add(configure);
             return (row, checkBox, configure);
@@ -251,7 +276,6 @@ namespace PhilterDesktop.PolicyEditing
                 }
                 configure.Visible = checkBox.Checked && strategiesProp is not null;
                 configure.Enabled = configure.Visible;
-                UpdateCount();
             };
 
             configure.Click += (_, _) =>
@@ -306,7 +330,6 @@ namespace PhilterDesktop.PolicyEditing
                 }
                 configure.Visible = checkBox.Checked;
                 configure.Enabled = configure.Visible;
-                UpdateCount();
             };
 
             configure.Click += (_, _) =>
@@ -338,8 +361,6 @@ namespace PhilterDesktop.PolicyEditing
         {
             const string name = "Names (on-device AI)";
             (Panel row, CheckBox checkBox, Button configure) = NewRow(name);
-            configure.Dispose(); // PhEye name detection has no per-policy options to configure.
-            row.Controls.Remove(configure);
             inner.Controls.Add(row);
             _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = (GroupBox)inner.Parent! });
 
@@ -357,12 +378,42 @@ namespace PhilterDesktop.PolicyEditing
                         : null;
                     _dirty = true;
                 }
-                UpdateCount();
+                configure.Visible = checkBox.Checked;
+                configure.Enabled = configure.Visible;
+            };
+
+            configure.Click += (_, _) =>
+            {
+                if (_policy is null)
+                {
+                    return;
+                }
+                _policy.Identifiers.PhEyes ??= new List<PhEye>();
+                if (_policy.Identifiers.PhEyes.Count == 0)
+                {
+                    _policy.Identifiers.PhEyes.Add(PhEyeModel.CreateDefaultFilter());
+                }
+                checkBox.Checked = true;
+                PhEye phEye = _policy.Identifiers.PhEyes[0];
+
+                IEnumerable existing = (IEnumerable?)phEye.Strategies ?? Array.Empty<object>();
+                using var dlg = new FilterStrategiesForm(name, existing, typeof(Phileas.Policy.Filters.Strategies.PhEyeFilterStrategy));
+                if (dlg.ShowDialog(this) == DialogResult.OK)
+                {
+                    IList result = dlg.BuildResultList();
+                    phEye.Strategies = result.Count > 0
+                        ? result.Cast<Phileas.Policy.Filters.Strategies.PhEyeFilterStrategy>().ToList()
+                        : null;
+                    _dirty = true;
+                }
             };
 
             _loaders.Add(() =>
             {
-                checkBox.Checked = _policy?.Identifiers.PhEyes is { Count: > 0 };
+                bool enabled = _policy?.Identifiers.PhEyes is { Count: > 0 };
+                checkBox.Checked = enabled;
+                configure.Visible = enabled;
+                configure.Enabled = enabled;
             });
         }
 
@@ -371,35 +422,6 @@ namespace PhilterDesktop.PolicyEditing
             var filter = (AbstractPolicyFilter)Activator.CreateInstance(filterType)!;
             filter.Enabled = true;
             return filter;
-        }
-
-        // --- Search + count --------------------------------------------------
-
-        private void ApplySearch(string query)
-        {
-            query = query.Trim();
-            _filters.SuspendLayout();
-            var groupsWithMatch = new HashSet<GroupBox>();
-            foreach (FilterRow r in _rows)
-            {
-                bool match = query.Length == 0 || r.Name.Contains(query, StringComparison.OrdinalIgnoreCase);
-                r.Panel.Visible = match;
-                if (match)
-                {
-                    groupsWithMatch.Add(r.Group);
-                }
-            }
-            foreach (GroupBox g in _groups)
-            {
-                g.Visible = groupsWithMatch.Contains(g);
-            }
-            _filters.ResumeLayout();
-        }
-
-        private void UpdateCount()
-        {
-            int enabled = _rows.Count(r => r.CheckBox.Checked);
-            _countLabel.Text = $"{enabled} of {_rows.Count} filters enabled";
         }
 
         // --- Policy list / load / save ---------------------------------------
@@ -496,7 +518,6 @@ namespace PhilterDesktop.PolicyEditing
             _loading = false;
 
             SetEditingEnabled(true);
-            UpdateCount();
             _currentPolicyName = name;
             _dirty = false;
         }
@@ -621,8 +642,15 @@ namespace PhilterDesktop.PolicyEditing
             };
             var box = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Both, WordWrap = false, Dock = DockStyle.Fill, Text = PrettyJson(PolicySerializer.SerializeToJson(_policy)) };
 
-            var copy = new Button { Text = "Copy to Clipboard", Size = new Size(160, 34) };
-            var close = new Button { Text = "Close", DialogResult = DialogResult.OK, Size = new Size(90, 34) };
+            var copy = new Button
+            {
+                Text = "Copy to Clipboard",
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                MinimumSize = new Size(160, 34),
+                Padding = new Padding(12, 0, 12, 0)
+            };
+            var close = new Button { Text = "Close", DialogResult = DialogResult.OK, Size = ModernTheme.StandardButtonSize };
             copy.Click += (_, _) =>
             {
                 if (!string.IsNullOrEmpty(box.Text))
@@ -643,6 +671,71 @@ namespace PhilterDesktop.PolicyEditing
             dlg.ShowDialog(this);
         }
 
+        private void OnIgnoredTerms(object? sender, EventArgs e)
+        {
+            if (_policy is null)
+            {
+                return;
+            }
+
+            Ignored? existing = _policy.Ignored?.FirstOrDefault(i => i.Name == IgnoredTermsName);
+
+            using var dlg = new IgnoredTermsForm(
+                existing?.Terms ?? new List<string>(),
+                existing?.CaseSensitive ?? false);
+
+            if (dlg.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            // Replace only the editor-managed set; leave any other ignored sets (e.g. file-based) intact.
+            _policy.Ignored?.RemoveAll(i => i.Name == IgnoredTermsName);
+            if (dlg.Terms.Count > 0)
+            {
+                _policy.Ignored ??= new List<Ignored>();
+                _policy.Ignored.Add(new Ignored
+                {
+                    Name = IgnoredTermsName,
+                    Terms = dlg.Terms.ToList(),
+                    Files = new List<string>(),
+                    CaseSensitive = dlg.CaseSensitive
+                });
+            }
+            _dirty = true;
+        }
+
+        private void OnAlwaysRedact(object? sender, EventArgs e)
+        {
+            if (_policy is null)
+            {
+                return;
+            }
+
+            Phileas.Policy.Filters.Dictionary? existing =
+                _policy.Identifiers.Dictionaries?.FirstOrDefault(d => d.Name == AlwaysRedactName);
+
+            using var dlg = new AlwaysRedactTermsForm(existing?.Terms ?? new List<string>());
+            if (dlg.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            // Replace only the editor-managed dictionary; leave any other dictionaries intact.
+            _policy.Identifiers.Dictionaries?.RemoveAll(d => d.Name == AlwaysRedactName);
+            if (dlg.Terms.Count > 0)
+            {
+                _policy.Identifiers.Dictionaries ??= new List<Phileas.Policy.Filters.Dictionary>();
+                _policy.Identifiers.Dictionaries.Add(new Phileas.Policy.Filters.Dictionary
+                {
+                    Name = AlwaysRedactName,
+                    Terms = dlg.Terms.ToList(),
+                    Enabled = true
+                });
+            }
+            _dirty = true;
+        }
+
         private void SetEditingEnabled(bool enabled)
         {
             _filters.Enabled = enabled;
@@ -650,6 +743,8 @@ namespace PhilterDesktop.PolicyEditing
             _saveAs.Enabled = enabled;
             _delete.Enabled = enabled;
             _viewJson.Enabled = enabled;
+            _ignoreList.Enabled = enabled;
+            _alwaysRedact.Enabled = enabled;
         }
 
         private static string PrettyJson(string json)
@@ -680,8 +775,8 @@ namespace PhilterDesktop.PolicyEditing
             };
             var label = new Label { Text = message, AutoSize = true, Location = new Point(12, 15) };
             var textBox = new TextBox { Location = new Point(15, 40), Width = 350 };
-            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(182, 84), Size = new Size(90, 34) };
-            var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Location = new Point(278, 84), Size = new Size(90, 34) };
+            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(139, 84), Size = ModernTheme.StandardButtonSize };
+            var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Location = new Point(255, 84), Size = ModernTheme.StandardButtonSize };
             form.Controls.AddRange(new Control[] { label, textBox, ok, cancel });
             form.AcceptButton = ok;
             form.CancelButton = cancel;

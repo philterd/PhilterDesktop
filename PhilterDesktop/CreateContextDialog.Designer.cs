@@ -58,9 +58,9 @@ namespace PhilterDesktop
             // btnOk
             // 
             btnOk.DialogResult = DialogResult.OK;
-            btnOk.Location = new Point(229, 90);
+            btnOk.Location = new Point(195, 90);
             btnOk.Name = "btnOk";
-            btnOk.Size = new Size(90, 34);
+            btnOk.Size = new Size(110, 34);
             btnOk.TabIndex = 2;
             btnOk.Text = "OK";
             btnOk.Click += BtnOk_Click;
@@ -68,9 +68,9 @@ namespace PhilterDesktop
             // btnCancel
             // 
             btnCancel.DialogResult = DialogResult.Cancel;
-            btnCancel.Location = new Point(325, 90);
+            btnCancel.Location = new Point(311, 90);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(90, 34);
+            btnCancel.Size = new Size(110, 34);
             btnCancel.TabIndex = 3;
             btnCancel.Text = "Cancel";
             btnCancel.Click += BtnCancel_Click;

@@ -35,6 +35,8 @@ namespace PhilterDesktop
         private readonly ContextEntryRepository _contextEntryRepository;
         private readonly SettingsRepository _settingsRepository;
         private readonly RedactionQueueRepository _redactionQueueRepository;
+        private readonly RedactionVersionRepository _redactionVersionRepository;
+        private readonly RedactionSpanRepository _redactionSpanRepository;
         private readonly WatchedFolderRepository _watchedFolderRepository;
         private readonly WatchedFolderLogRepository _watchedFolderLogRepository;
         private readonly FolderWatcherService _folderWatcher;
@@ -86,8 +88,8 @@ namespace PhilterDesktop
                 Directory.CreateDirectory(folder);
             }
 
-            // Create a single shared database instance
-            _database = new LiteDatabase(dbPath);
+            // Create a single shared database instance, encrypted at rest (it stores detected PII).
+            _database = EncryptedDatabase.Open(dbPath);
 
             // Pass the shared database to all repositories
             _policyRepository = new PolicyRepository(_database);
@@ -95,9 +97,11 @@ namespace PhilterDesktop
             _contextEntryRepository = new ContextEntryRepository(_database);
             _settingsRepository = new SettingsRepository(_database);
             _redactionQueueRepository = new RedactionQueueRepository(_database);
+            _redactionVersionRepository = new RedactionVersionRepository(_database);
+            _redactionSpanRepository = new RedactionSpanRepository(_database);
             _watchedFolderRepository = new WatchedFolderRepository(_database);
             _watchedFolderLogRepository = new WatchedFolderLogRepository(_database);
-            _folderWatcher = new FolderWatcherService(_policyRepository, _loggingEnabled, _watchedFolderLogRepository);
+            _folderWatcher = new FolderWatcherService(_policyRepository, _loggingEnabled, _watchedFolderLogRepository, _settingsRepository);
             _folderWatcher.FileProcessed += OnWatchedFileProcessed;
 
             // Load settings and check if logging is enabled
@@ -795,8 +799,8 @@ namespace PhilterDesktop
             var policyCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(95, 17), Width = 255 };
             var contextLabel = new Label { Text = "Context:", AutoSize = true, Location = new Point(14, 56) };
             var contextCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(95, 53), Width = 255 };
-            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Size = new Size(90, 32), Location = new Point(170, 115) };
-            var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Size = new Size(90, 32), Location = new Point(266, 115) };
+            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Size = ModernTheme.StandardButtonSize, Location = new Point(130, 115) };
+            var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Size = ModernTheme.StandardButtonSize, Location = new Point(246, 115) };
 
             foreach (PolicyEntity p in _policyRepository.GetAll().OrderBy(p => p.Name))
             {
@@ -881,16 +885,6 @@ namespace PhilterDesktop
             aboutForm.ShowDialog();
         }
 
-        private void licenseToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (_loggingEnabled)
-            {
-                Logger.LogInfo("Opening License dialog");
-            }
-
-            var licenseForm = new LicenseForm();
-            licenseForm.ShowDialog();
-        }
 
         private void policiesToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -987,6 +981,101 @@ namespace PhilterDesktop
             LoadRedactionQueue();
         }
 
+        private void modifyRedactionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return;
+            }
+
+            using var form = new ModifyRedactionForm(
+                id, _redactionVersionRepository, _redactionSpanRepository, _policyRepository,
+                _settingsRepository.GetSettings().RedactedSuffix);
+            form.ShowDialog(this);
+        }
+
+        // Stores the initial redaction as version 1 (with its spans) so it can be reviewed/modified.
+        private void SaveRedactionVersion(RedactionQueueEntity entity, string outputPath, List<RedactionSpanEntity> spans)
+        {
+            try
+            {
+                var version = new RedactionVersionEntity
+                {
+                    DocumentId = entity.Id,
+                    Version = _redactionVersionRepository.NextVersionNumber(entity.Id),
+                    SourcePath = entity.Name,
+                    OutputPath = outputPath,
+                    FileType = Path.GetExtension(entity.Name).ToLowerInvariant(),
+                    Policy = entity.Policy,
+                    Context = entity.Context,
+                    Highlight = entity.Highlight
+                };
+                _redactionVersionRepository.Insert(version);
+
+                int order = 0;
+                foreach (RedactionSpanEntity s in spans)
+                {
+                    s.VersionId = version.Id;
+                    s.Order = order++;
+                }
+                if (spans.Count > 0)
+                {
+                    _redactionSpanRepository.InsertBulk(spans);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (_loggingEnabled)
+                {
+                    Logger.LogWarning($"Failed to store redaction spans: {ex.Message}");
+                }
+            }
+        }
+
+        private void clearRedactionHistoryToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            int versionCount = _redactionVersionRepository.Count();
+            if (versionCount == 0)
+            {
+                MessageBox.Show("There is no stored redaction history to clear.", "Clear Redaction History",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            DialogResult result = MessageBox.Show(
+                "Permanently delete all saved redaction history (every version and its stored spans, " +
+                "including the detected text)?\n\nThis does not delete any redacted output files already on disk.",
+                "Clear Redaction History",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
+
+            _redactionSpanRepository.DeleteAll();
+            _redactionVersionRepository.DeleteAll();
+
+            if (_loggingEnabled)
+            {
+                Logger.LogInfo("Cleared all stored redaction history.");
+            }
+
+            MessageBox.Show("Redaction history cleared.", "Clear Redaction History",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        // Removes all stored versions and spans for a document (used when the queue item is removed).
+        private void DeleteRedactionHistory(ObjectId documentId)
+        {
+            foreach (RedactionVersionEntity v in _redactionVersionRepository.GetForDocument(documentId))
+            {
+                _redactionSpanRepository.DeleteForVersion(v.Id);
+            }
+            _redactionVersionRepository.DeleteForDocument(documentId);
+        }
+
         private void removeCompletedToolStripMenuItem_Click(object sender, EventArgs e)
         {
             int completed = listView1.Items.Cast<ListViewItem>()
@@ -1008,6 +1097,10 @@ namespace PhilterDesktop
                 return;
             }
 
+            foreach (RedactionQueueEntity done in _redactionQueueRepository.Find(x => x.Status == "Completed").ToList())
+            {
+                DeleteRedactionHistory(done.Id);
+            }
             _redactionQueueRepository.DeleteWhere(x => x.Status == "Completed");
             LoadRedactionQueue();
         }
@@ -1034,6 +1127,7 @@ namespace PhilterDesktop
             removeCompletedToolStripMenuItem.Enabled = anyCompleted;
             openRedactedFileToolStripMenuItem.Enabled = selectedCompleted; // exists only once redacted
             openOriginalFileToolStripMenuItem.Enabled = hasSelection;
+            modifyRedactionToolStripMenuItem.Enabled = selectedCompleted; // versions exist once redacted
         }
 
         private static bool IsCompleted(ListViewItem item) =>
@@ -1102,7 +1196,10 @@ namespace PhilterDesktop
 
                         var policy = PolicySerializer.DeserializeFromJson(policyEntity.Json);
                         string outputPath = RedactionService.GetOutputPath(entity.Name, settings);
-                        await RedactionService.RedactFileAsync(entity.Name, outputPath, policy, entity.Context, filterService, entity.Highlight);
+                        List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(
+                            entity.Name, outputPath, policy, entity.Context, filterService, entity.Highlight);
+
+                        SaveRedactionVersion(entity, outputPath, spans);
 
                         UpdateEntityStatus(entity, "Completed");
 
@@ -1301,6 +1398,10 @@ namespace PhilterDesktop
                 return;
             }
 
+            foreach (RedactionQueueEntity removable in _redactionQueueRepository.Find(x => x.Status != "Processing").ToList())
+            {
+                DeleteRedactionHistory(removable.Id);
+            }
             _redactionQueueRepository.DeleteWhere(x => x.Status != "Processing");
             LoadRedactionQueue();
         }
@@ -1336,6 +1437,7 @@ namespace PhilterDesktop
             }
 
             _redactionQueueRepository.Delete(id);
+            DeleteRedactionHistory(id);
             listView1.Items.Remove(selected);
         }
     }

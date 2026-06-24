@@ -38,8 +38,8 @@ Requires **Inno Setup 6.3+** (`ISCC.exe` on PATH or in the default install locat
 
 - Installs **per-user by default** (no admin); users can choose all-users in the wizard or via
   `/ALLUSERS`. Default build is **self-contained**, so the target needs no .NET runtime.
-- Bundles everything `publish` produces: the app, native PDF libraries, the on-device PhEye model
-  under `Models\`, and `xceed-license.json` if present at build time.
+- Bundles everything `publish` produces: the app, native PDF libraries, and the on-device PhEye
+  model under `Models\`.
 - Optional tasks: a desktop icon, and **start at sign-in** — which writes the *same*
   `HKCU\…\Run` value (with `--minimized`) that the in-app "Start at sign-in" toggle uses, so the two
   stay in sync. The entry is removed on uninstall.
@@ -97,10 +97,11 @@ The resulting `.msix` is written under `Installer\AppPackages\`.
 MSIX cannot be installed unless it is signed by a certificate the target machine trusts.
 Signing is **not** configured here (`AppxPackageSigningEnabled=False`).
 
-- **Testing** — create a self-signed cert whose subject matches the manifest `Publisher`, then
-  sign and trust it:
+- **Testing** — create a self-signed cert whose subject matches the manifest `Publisher`
+  (`CN="Philterd, LLC"` — keep the inner quotes so the comma is part of the name), then sign and
+  trust it:
   ```powershell
-  New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=Philterd, LLC" `
+  New-SelfSignedCertificate -Type CodeSigningCert -Subject 'CN="Philterd, LLC"' `
     -CertStoreLocation "Cert:\CurrentUser\My"
   # export to a .pfx, then:
   signtool sign /fd SHA256 /a /f philterd.pfx /p <password> `
@@ -116,6 +117,5 @@ Signing is **not** configured here (`AppxPackageSigningEnabled=False`).
 
 - **Data**: the app stores its LiteDB under `LocalApplicationData`, which MSIX redirects to the
   package's per-user store — no code change needed.
-- **Word redaction / Xceed license**: a packaged `xceed-license.json` (in the app output) is
-  readable at runtime, or set the `XCEED_LICENSE_KEY` environment variable. Decide how the key is
-  supplied for distributed builds (it is git-ignored and not committed).
+- **Word redaction**: uses the open-source Open XML SDK — no license key or third-party
+  component to supply for distributed builds.

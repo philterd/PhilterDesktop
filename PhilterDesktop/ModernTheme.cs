@@ -62,6 +62,13 @@ namespace PhilterDesktop
         /// <summary>Segoe UI Variable is the Windows 11 UI font; fall back to Segoe UI.</summary>
         public static readonly Font UiFont = BuildUiFont(9.75f);
 
+        /// <summary>
+        /// The standard size for ordinary push buttons (OK/Cancel/Add/Remove/etc.) across the app.
+        /// 34px tall is a comfortable, modern click target; 110px wide fits the common labels.
+        /// Buttons with long labels should auto-size instead of using this.
+        /// </summary>
+        public static readonly Size StandardButtonSize = new(110, 34);
+
         private static Font BuildUiFont(float size)
         {
             foreach (string family in new[] { "Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI" })
@@ -211,14 +218,10 @@ namespace PhilterDesktop
 
         private static void StyleButton(Button button)
         {
-            button.FlatStyle = FlatStyle.Flat;
-            button.FlatAppearance.BorderSize = 1;
-            button.FlatAppearance.BorderColor = Border;
-            button.FlatAppearance.MouseOverBackColor = Hover;
-            button.FlatAppearance.MouseDownBackColor = Pressed;
-            button.BackColor = Surface;
-            button.ForeColor = Text;
-            button.Padding = new Padding(10, 4, 10, 4);
+            // Use the standard Windows (visual-styled) push button everywhere.
+            button.FlatStyle = FlatStyle.Standard;
+            button.UseVisualStyleBackColor = true;
+            button.ForeColor = SystemColors.ControlText;
         }
 
         /// <summary>
@@ -268,16 +271,16 @@ namespace PhilterDesktop
             return new Font("Segoe UI", size, GraphicsUnit.Pixel);
         }
 
-        /// <summary>Promotes a button to the accent-colored primary action style.</summary>
+        /// <summary>
+        /// Retained for callers that designate a default/primary action. Buttons use the standard
+        /// Windows style app-wide, so this keeps the button standard (no accent fill). The form's
+        /// AcceptButton still gives it default-button emphasis.
+        /// </summary>
         public static void MakePrimary(Button button)
         {
-            button.FlatStyle = FlatStyle.Flat;
-            button.FlatAppearance.BorderSize = 0;
-            button.FlatAppearance.MouseOverBackColor = ControlPaint.Light(Accent, 0.1f);
-            button.FlatAppearance.MouseDownBackColor = ControlPaint.Dark(Accent, 0.1f);
-            button.BackColor = Accent;
-            button.ForeColor = Color.White;
-            button.Padding = new Padding(10, 4, 10, 4);
+            button.FlatStyle = FlatStyle.Standard;
+            button.UseVisualStyleBackColor = true;
+            button.ForeColor = SystemColors.ControlText;
         }
     }
 

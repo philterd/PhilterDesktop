@@ -30,7 +30,9 @@ namespace PhilterDesktop
         private readonly WatchedFolderRepository? _watchedFolderRepository;
         private readonly WatchedFolderLogRepository? _watchedFolderLogRepository;
         private readonly StartupManager _startupManager = StartupManager.CreateDefault();
+        private readonly ContextMenuManager _contextMenuManager = ContextMenuManager.CreateDefault();
         private bool _suppressStartupToggle;
+        private bool _suppressContextMenuToggle;
         private SettingsEntity _settings;
 
         /// <summary>
@@ -74,6 +76,60 @@ namespace PhilterDesktop
             LoadSettings();
             LoadWatchedFolders();
             ConfigureStartupToggle();
+            ConfigureContextMenuToggle();
+        }
+
+        private void ConfigureContextMenuToggle()
+        {
+            _suppressContextMenuToggle = true;
+            try
+            {
+                if (StartupManager.IsPackaged)
+                {
+                    // Packaged (MSIX) builds virtualize HKCU\Software\Classes, so a runtime-written
+                    // context menu wouldn't surface in Explorer; it must be declared in the package.
+                    chkContextMenu.Checked = false;
+                    chkContextMenu.Enabled = false;
+                    lblContextMenuHint.Text = "Managed by the installed package for Store/MSIX builds.";
+                }
+                else
+                {
+                    chkContextMenu.Checked = _contextMenuManager.IsEnabled();
+                    lblContextMenuHint.Text = string.Empty;
+                }
+            }
+            finally
+            {
+                _suppressContextMenuToggle = false;
+            }
+        }
+
+        private void ChkContextMenu_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_suppressContextMenuToggle || StartupManager.IsPackaged)
+            {
+                return;
+            }
+
+            try
+            {
+                if (chkContextMenu.Checked)
+                {
+                    _contextMenuManager.Enable();
+                }
+                else
+                {
+                    _contextMenuManager.Disable();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Could not update the Explorer context-menu setting: {ex.Message}",
+                    "Settings",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
         }
 
         private void ConfigureStartupToggle()
@@ -252,6 +308,7 @@ namespace PhilterDesktop
             txtCustomFolder.Text = _settings.CustomOutputFolder;
             txtCustomFolder.Enabled = !_settings.OutputToOriginalLocation;
             btnBrowse.Enabled = !_settings.OutputToOriginalLocation;
+            txtSuffix.Text = RedactionService.NormalizeSuffix(_settings.RedactedSuffix);
             chkEnableLogging.Checked = _settings.LoggingEnabled;
         }
 
@@ -369,6 +426,7 @@ namespace PhilterDesktop
             // Save settings
             _settings.OutputToOriginalLocation = radioOriginalLocation.Checked;
             _settings.CustomOutputFolder = txtCustomFolder.Text.Trim();
+            _settings.RedactedSuffix = RedactionService.NormalizeSuffix(txtSuffix.Text);
             _settings.LoggingEnabled = chkEnableLogging.Checked;
             
             _settingsRepository.SaveSettings(_settings);

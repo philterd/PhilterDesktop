@@ -97,9 +97,9 @@ namespace PhilterDesktop
             // 
             // btnClearAll
             // 
-            btnClearAll.Location = new Point(549, 202);
+            btnClearAll.Location = new Point(544, 202);
             btnClearAll.Name = "btnClearAll";
-            btnClearAll.Size = new Size(90, 28);
+            btnClearAll.Size = new Size(110, 34);
             btnClearAll.TabIndex = 4;
             btnClearAll.Text = "Clear All";
             btnClearAll.UseVisualStyleBackColor = true;
@@ -108,9 +108,9 @@ namespace PhilterDesktop
             // btnRemoveFile
             // 
             btnRemoveFile.Enabled = false;
-            btnRemoveFile.Location = new Point(453, 202);
+            btnRemoveFile.Location = new Point(428, 202);
             btnRemoveFile.Name = "btnRemoveFile";
-            btnRemoveFile.Size = new Size(90, 28);
+            btnRemoveFile.Size = new Size(110, 34);
             btnRemoveFile.TabIndex = 3;
             btnRemoveFile.Text = "Remove File";
             btnRemoveFile.UseVisualStyleBackColor = true;
@@ -227,9 +227,9 @@ namespace PhilterDesktop
             //
             // btnStartRedaction
             //
-            btnStartRedaction.Location = new Point(459, 462);
+            btnStartRedaction.Location = new Point(448, 462);
             btnStartRedaction.Name = "btnStartRedaction";
-            btnStartRedaction.Size = new Size(120, 28);
+            btnStartRedaction.Size = new Size(110, 34);
             btnStartRedaction.TabIndex = 2;
             btnStartRedaction.Text = "Start Redaction";
             btnStartRedaction.UseVisualStyleBackColor = true;
@@ -237,9 +237,9 @@ namespace PhilterDesktop
             // 
             // btnClose
             // 
-            btnClose.Location = new Point(587, 462);
+            btnClose.Location = new Point(564, 462);
             btnClose.Name = "btnClose";
-            btnClose.Size = new Size(90, 28);
+            btnClose.Size = new Size(110, 34);
             btnClose.TabIndex = 3;
             btnClose.Text = "Close";
             btnClose.UseVisualStyleBackColor = true;

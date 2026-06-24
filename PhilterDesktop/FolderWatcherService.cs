@@ -26,13 +26,10 @@ namespace PhilterDesktop
     /// each one (with its folder's policy/context) to the folder's output directory. Uses a
     /// <see cref="FileSystemWatcher"/> per folder plus an initial scan so files dropped while the
     /// app was closed are still picked up. Redactions are serialized to avoid overloading the
-    /// machine, and redacted output (the <c>_redacted</c> files) is ignored to prevent loops.
+    /// machine, and redacted output (files ending with the configured suffix) is ignored to prevent loops.
     /// </summary>
     internal sealed class FolderWatcherService : IDisposable
     {
-        /// <summary>Suffix appended to redacted output files (also used to skip re-processing them).</summary>
-        public const string RedactedSuffix = "_redacted";
-
         /// <summary>
         /// Raised after a watched file is processed, but only for folders with
         /// <see cref="WatchedFolderEntity.Notify"/> enabled. May fire on a background thread.
@@ -41,6 +38,7 @@ namespace PhilterDesktop
 
         private readonly PolicyRepository _policyRepository;
         private readonly WatchedFolderLogRepository? _logRepository;
+        private readonly SettingsRepository? _settingsRepository;
         private readonly FilterService _filterService = new();
         private readonly List<FileSystemWatcher> _watchers = new();
         private readonly object _gate = new();
@@ -50,12 +48,21 @@ namespace PhilterDesktop
         private bool _loggingEnabled;
         private bool _disposed;
 
-        public FolderWatcherService(PolicyRepository policyRepository, bool loggingEnabled, WatchedFolderLogRepository? logRepository = null)
+        public FolderWatcherService(
+            PolicyRepository policyRepository,
+            bool loggingEnabled,
+            WatchedFolderLogRepository? logRepository = null,
+            SettingsRepository? settingsRepository = null)
         {
             _policyRepository = policyRepository ?? throw new ArgumentNullException(nameof(policyRepository));
             _loggingEnabled = loggingEnabled;
             _logRepository = logRepository;
+            _settingsRepository = settingsRepository;
         }
+
+        /// <summary>The current redacted-output suffix from settings (or the default).</summary>
+        private string CurrentSuffix() =>
+            RedactionService.NormalizeSuffix(_settingsRepository?.GetSettings().RedactedSuffix);
 
         public bool LoggingEnabled
         {
@@ -247,7 +254,7 @@ namespace PhilterDesktop
             _ = HandleFileAsync(fullPath, folder);
         }
 
-        private static bool ShouldProcess(string fullPath, WatchedFolderEntity folder)
+        private bool ShouldProcess(string fullPath, WatchedFolderEntity folder)
         {
             string fileName = Path.GetFileName(fullPath);
             if (string.IsNullOrEmpty(fileName) || fileName.StartsWith("~$", StringComparison.Ordinal))
@@ -262,8 +269,8 @@ namespace PhilterDesktop
             {
                 return false;
             }
-            // Never redact our own output (prevents x_redacted -> x_redacted_redacted loops).
-            return !Path.GetFileNameWithoutExtension(fileName).EndsWith(RedactedSuffix, StringComparison.OrdinalIgnoreCase);
+            // Never redact our own output (prevents redacting an already-redacted file in a loop).
+            return !Path.GetFileNameWithoutExtension(fileName).EndsWith(CurrentSuffix(), StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>True if the file's extension is among the folder's selected types (empty = all).</summary>
@@ -327,9 +334,7 @@ namespace PhilterDesktop
                 string outputDir = ResolveOutputDirectory(fullPath, folder);
                 Directory.CreateDirectory(outputDir);
 
-                string outputPath = Path.Combine(
-                    outputDir,
-                    $"{Path.GetFileNameWithoutExtension(fullPath)}{RedactedSuffix}{Path.GetExtension(fullPath)}");
+                string outputPath = Path.Combine(outputDir, RedactionService.ApplySuffix(fullPath, CurrentSuffix()));
 
                 // Skip if we already produced an up-to-date redaction (e.g., on restart re-scan).
                 if (File.Exists(outputPath) &&

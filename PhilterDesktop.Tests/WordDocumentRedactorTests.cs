@@ -19,44 +19,17 @@ using Phileas.Model;
 using Phileas.Policy;
 using Phileas.Policy.Filters;
 using Phileas.Services;
-using Xceed.Words.NET;
 using Xunit;
 using PhileasPolicy = Phileas.Policy.Policy;
 
 namespace PhilterDesktop.Tests
 {
     /// <summary>
-    /// Registers the Xceed license once for the test class (from the same sources the
-    /// app uses). If no license is configured, <see cref="HasLicense"/> is false and the
-    /// Word tests skip rather than fail.
+    /// Tests Word (.docx) redaction via the Open XML SDK implementation. No license required, so
+    /// these run unconditionally.
     /// </summary>
-    public sealed class XceedLicenseFixture
+    public sealed class WordDocumentRedactorTests : IDisposable
     {
-        public bool HasLicense { get; }
-
-        public XceedLicenseFixture()
-        {
-            string? key = LicenseConfig.GetXceedLicenseKey();
-            if (!string.IsNullOrEmpty(key))
-            {
-                try
-                {
-                    Licenser.LicenseKey = key;
-                    HasLicense = true;
-                }
-                catch
-                {
-                    HasLicense = false;
-                }
-            }
-        }
-    }
-
-    public sealed class WordDocumentRedactorTests : IClassFixture<XceedLicenseFixture>, IDisposable
-    {
-        private const string SkipReason =
-            "Xceed license not configured (place xceed-license.json next to the build output or set XCEED_LICENSE_KEY).";
-
         private static readonly PhileasPolicy EmailPolicy = new()
         {
             Name = "email",
@@ -67,12 +40,10 @@ namespace PhilterDesktop.Tests
         private static Func<string, TextFilterResult> Filter =>
             t => new FilterService().Filter(EmailPolicy, "ctx", 0, t);
 
-        private readonly XceedLicenseFixture _license;
         private readonly string _tempDir;
 
-        public WordDocumentRedactorTests(XceedLicenseFixture license)
+        public WordDocumentRedactorTests()
         {
-            _license = license;
             _tempDir = Path.Combine(Path.GetTempPath(), "philter-word-tests-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_tempDir);
         }
@@ -87,35 +58,22 @@ namespace PhilterDesktop.Tests
         private string CreateDocx(params string[] paragraphs)
         {
             string path = NewPath("in_" + Guid.NewGuid().ToString("N") + ".docx");
-            using var doc = DocX.Create(path);
-            foreach (string p in paragraphs)
-            {
-                doc.InsertParagraph(p);
-            }
-            doc.Save();
+            WordDocs.Create(path, paragraphs);
             return path;
         }
 
-        private static string[] ReadParagraphs(string path)
-        {
-            using var doc = DocX.Load(path);
-            return doc.Paragraphs.Select(p => p.Text).ToArray();
-        }
-
-        // Regression test for the bug we hit: emptying a paragraph with the 2-arg
-        // RemoveText overload deleted the whole paragraph, so the rebuild was lost.
-        [SkippableFact]
+        // Regression test for the bug we hit: emptying a changed paragraph must not delete the
+        // paragraph itself, so the rebuild is preserved and the paragraph count is unchanged.
+        [Fact]
         public void Redact_ReplacesChangedParagraphs_WithoutDeletingThem()
         {
-            Skip.IfNot(_license.HasLicense, SkipReason);
-
             string input = CreateDocx("keep one", "email aaa@example.com here", "email bbb@example.com too", "keep four");
-            int originalCount = ReadParagraphs(input).Length;
+            int originalCount = WordDocs.BodyParagraphs(input).Length;
             string output = NewPath("out.docx");
 
             WordDocumentRedactor.Redact(input, output, Filter);
 
-            string[] result = ReadParagraphs(output);
+            string[] result = WordDocs.BodyParagraphs(output);
             Assert.Equal(originalCount, result.Length); // no paragraph deleted
             Assert.Contains("keep one", result);
             Assert.Contains("keep four", result);
@@ -123,43 +81,29 @@ namespace PhilterDesktop.Tests
             Assert.DoesNotContain(result, p => p.Contains("@example.com"));
         }
 
-        [SkippableFact]
-        public void Redact_UnchangedText_LeavesDocumentIdentical()
+        [Fact]
+        public void Redact_UnchangedText_LeavesParagraphsIdentical()
         {
-            Skip.IfNot(_license.HasLicense, SkipReason);
-
             string input = CreateDocx("alpha", "beta", "gamma"); // no PII
             string output = NewPath("out.docx");
 
             WordDocumentRedactor.Redact(input, output, Filter);
 
-            Assert.Equal(ReadParagraphs(input), ReadParagraphs(output));
+            Assert.Equal(WordDocs.BodyParagraphs(input), WordDocs.BodyParagraphs(output));
         }
 
-        [SkippableFact]
+        [Fact]
         public void Redact_RedactsHeadersAndFooters()
         {
-            Skip.IfNot(_license.HasLicense, SkipReason);
-
             string input = NewPath("hf.docx");
-            using (var doc = DocX.Create(input))
-            {
-                doc.AddHeaders();
-                doc.AddFooters();
-                doc.DifferentFirstPage = false;
-                doc.Headers.Odd.InsertParagraph("header hh@example.com");
-                doc.Footers.Odd.InsertParagraph("footer ff@example.com");
-                doc.InsertParagraph("body bb@example.com");
-                doc.Save();
-            }
+            WordDocs.CreateWithHeaderFooter(input, "header hh@example.com", "footer ff@example.com", "body bb@example.com");
             string output = NewPath("hf_out.docx");
 
             WordDocumentRedactor.Redact(input, output, Filter);
 
-            using var redacted = DocX.Load(output);
-            string body = string.Join("|", redacted.Paragraphs.Select(p => p.Text));
-            string header = string.Join("|", redacted.Headers.Odd.Paragraphs.Select(p => p.Text));
-            string footer = string.Join("|", redacted.Footers.Odd.Paragraphs.Select(p => p.Text));
+            string body = WordDocs.AllBodyText(output);
+            string header = WordDocs.HeadersText(output);
+            string footer = WordDocs.FootersText(output);
 
             Assert.DoesNotContain("@example.com", body + header + footer);
             Assert.Contains("REDACTED", header);
@@ -167,30 +111,26 @@ namespace PhilterDesktop.Tests
             Assert.Contains("REDACTED", body);
         }
 
-        [SkippableFact]
+        [Fact]
         public void Redact_LeavesInputFileUnchanged()
         {
-            Skip.IfNot(_license.HasLicense, SkipReason);
-
             string input = CreateDocx("contact data@example.com");
             string output = NewPath("out.docx");
 
             WordDocumentRedactor.Redact(input, output, Filter);
 
-            Assert.Contains(ReadParagraphs(input), p => p.Contains("@example.com"));
+            Assert.Contains(WordDocs.BodyParagraphs(input), p => p.Contains("@example.com"));
         }
 
-        [SkippableFact]
+        [Fact]
         public void Redact_WithHighlight_HighlightsTheReplacement()
         {
-            Skip.IfNot(_license.HasLicense, SkipReason);
-
             string input = CreateDocx("email zzz@example.com end");
             string output = NewPath("out.docx");
 
             WordDocumentRedactor.Redact(input, output, Filter, highlight: true);
 
-            Assert.Contains("email {{{REDACTED-email-address}}} end", ReadParagraphs(output));
+            Assert.Contains("email {{{REDACTED-email-address}}} end", WordDocs.BodyParagraphs(output));
 
             // The replacement run carries Word's native yellow highlight.
             string xml = ReadDocumentXml(output);

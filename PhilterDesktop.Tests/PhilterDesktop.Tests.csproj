@@ -14,20 +14,11 @@
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageReference Include="Xunit.SkippableFact" Version="1.5.23" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PhilterDesktop\PhilterDesktop.csproj" />
-  </ItemGroup>
-
-  <!-- Copy the developer's untracked Xceed license (if present) next to the test
-       binaries so the Word redaction tests can run locally; otherwise they skip. -->
-  <ItemGroup>
-    <None Include="..\PhilterDesktop\xceed-license.json"
-          Condition="Exists('..\PhilterDesktop\xceed-license.json')"
-          Link="xceed-license.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <!-- Sample documents redacted by the integration tests. -->

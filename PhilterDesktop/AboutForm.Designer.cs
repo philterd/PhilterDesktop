@@ -90,7 +90,7 @@ namespace PhilterDesktop
             lblCopyright.Name = "lblCopyright";
             lblCopyright.Size = new Size(220, 25);
             lblCopyright.TabIndex = 3;
-            lblCopyright.Text = "© 2024-2026 Philterd, LLC";
+            lblCopyright.Text = "ï¿½ 2024-2026 Philterd, LLC";
             // 
             // linkLabelWebsite
             // 
@@ -105,10 +105,10 @@ namespace PhilterDesktop
             // 
             // btnOK
             // 
-            btnOK.Location = new Point(459, 286);
+            btnOK.Location = new Point(478, 286);
             btnOK.Margin = new Padding(4, 5, 4, 5);
             btnOK.Name = "btnOK";
-            btnOK.Size = new Size(129, 47);
+            btnOK.Size = new Size(110, 34);
             btnOK.TabIndex = 6;
             btnOK.Text = "OK";
             btnOK.UseVisualStyleBackColor = true;

@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- The configuration/platform combinations this package supports. Required by MSBuild/VS;
+       the solution maps this project to Debug|x64 and Release|x64. The app ships x64-only. -->
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
@@ -33,11 +45,7 @@
     <Content Include="Images\SplashScreen.png" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Building the package enforces the Xceed license (hard error if the key file is
-         missing); plain Release/CI builds of the app only warn. See PhilterDesktop.csproj. -->
-    <ProjectReference Include="..\PhilterDesktop\PhilterDesktop.csproj">
-      <AdditionalProperties>XceedLicenseRequired=true</AdditionalProperties>
-    </ProjectReference>
+    <ProjectReference Include="..\PhilterDesktop\PhilterDesktop.csproj" />
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
 </Project>

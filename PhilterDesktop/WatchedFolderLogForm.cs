@@ -22,63 +22,36 @@ namespace PhilterDesktop
     /// Read-only view of a watched folder's activity log (files found, redacted, skipped, and
     /// errors), with refresh and clear actions.
     /// </summary>
-    public sealed class WatchedFolderLogForm : Form
+    public partial class WatchedFolderLogForm : Form
     {
-        private readonly WatchedFolderLogRepository _repository;
-        private readonly WatchedFolderEntity _folder;
+        private readonly WatchedFolderLogRepository? _repository;
+        private readonly WatchedFolderEntity? _folder;
 
-        private readonly ListView _list = new()
+        /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
+        public WatchedFolderLogForm()
         {
-            View = View.Details,
-            FullRowSelect = true,
-            GridLines = true,
-            Location = new Point(12, 12),
-            Size = new Size(736, 360),
-            Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
-        };
-        private readonly Button _refresh = new() { Text = "Refresh", Size = new Size(110, 34) };
-        private readonly Button _clear = new() { Text = "Clear Log", Size = new Size(110, 34) };
-        private readonly Button _close = new() { Text = "Close", DialogResult = DialogResult.OK, Size = new Size(110, 34) };
+            InitializeComponent();
+            ModernTheme.Apply(this);
+            ModernTheme.MakePrimary(_close);
+        }
 
         public WatchedFolderLogForm(WatchedFolderLogRepository repository, WatchedFolderEntity folder)
+            : this()
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _folder = folder ?? throw new ArgumentNullException(nameof(folder));
 
             Text = $"Activity Log — {folder.FolderPath}";
-            StartPosition = FormStartPosition.CenterParent;
-            MinimizeBox = false;
-            MaximizeBox = false;
-            ShowInTaskbar = false;
-            ClientSize = new Size(760, 432);
-            MinimumSize = new Size(560, 360);
-
-            _list.Columns.Add("Time", 150);
-            _list.Columns.Add("Level", 70);
-            _list.Columns.Add("Message", 500);
-
-            int buttonsY = 384;
-            _refresh.Location = new Point(12, buttonsY);
-            _clear.Location = new Point(130, buttonsY);
-            _close.Location = new Point(638, buttonsY);
-            _refresh.Anchor = _clear.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            _close.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-
-            Controls.AddRange(new Control[] { _list, _refresh, _clear, _close });
-            AcceptButton = _close;
-            CancelButton = _close;
-
-            _refresh.Click += (_, _) => LoadEntries();
-            _clear.Click += OnClear;
-
-            ModernTheme.Apply(this);
-            ModernTheme.MakePrimary(_close);
-
             LoadEntries();
         }
 
         private void LoadEntries()
         {
+            if (_repository is null || _folder is null)
+            {
+                return;
+            }
+
             _list.BeginUpdate();
             _list.Items.Clear();
             foreach (WatchedFolderLogEntity entry in _repository.GetForFolder(_folder.Id))
@@ -100,8 +73,14 @@ namespace PhilterDesktop
             }
         }
 
-        private void OnClear(object? sender, EventArgs e)
+        private void RefreshButton_Click(object? sender, EventArgs e) => LoadEntries();
+
+        private void ClearButton_Click(object? sender, EventArgs e)
         {
+            if (_repository is null || _folder is null)
+            {
+                return;
+            }
             if (MessageBox.Show(
                     "Clear all log entries for this watched folder?",
                     "Clear Log",

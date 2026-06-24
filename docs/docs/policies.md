@@ -37,6 +37,26 @@ A filter with no explicit strategy uses a sensible default (redaction). See
 
 The **default** policy cannot be deleted.
 
+## Ignore list (always-ignore terms)
+
+Click **Ignore List** on the toolbar to enter terms that should **never be redacted**, even when a
+filter would otherwise detect them — one term per line. This is useful for keeping known-safe values
+(your own company name, a public support address, a product code) intact.
+
+Matching is on the whole detected value (a detected entity equal to a term is left alone) and is
+case-insensitive unless you check **Match case**. The terms are saved in the policy and applied to
+every document redacted with it.
+
+## Always-redact list
+
+Click **Always Redact** on the toolbar to enter terms that should **always be redacted**, even when
+no built-in filter would otherwise detect them — one term per line. This is the opposite of the
+ignore list, and is useful for organization-specific words that aren't standard PII (project
+codenames, internal identifiers, specific names).
+
+Matching is case-insensitive. The terms are saved in the policy (as a custom dictionary) and
+applied to every document redacted with it.
+
 ## AI name detection
 
 The **Personal** group contains **Names (on-device AI)**. Check it to detect person names with a

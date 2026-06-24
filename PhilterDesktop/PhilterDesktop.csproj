@@ -6,9 +6,18 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Embed the Philter brand icon into the .exe so Windows (taskbar, Explorer, the file icon, and
+         the right-click "Redact with Philter Desktop" menu, which points its Icon at the exe) shows
+         it instead of a generic icon. -->
+    <ApplicationIcon>..\images\PhilterDesktop.ico</ApplicationIcon>
     <!-- MSIX targets x64; declaring the RID makes the packaging build lay out the native PDF
          dependencies (PDFium, SkiaSharp, ONNX Runtime) deterministically. -->
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <!-- Run the WinForms designer DPI-unaware (effectively 100%) so it always serializes layouts at
+         the 96-DPI baseline, regardless of the developer's monitor scaling. This prevents the
+         designer from re-inflating *.Designer.cs on high-DPI machines. Runtime DPI behavior is
+         unaffected. Requires Visual Studio 2022 17.8+. -->
+    <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,27 +28,11 @@
 
   <ItemGroup>
     <PackageReference Include="Philterd.Phileas" Version="1.2.0" />
-    <PackageReference Include="Xceed.Words.NET" Version="5.0.25228.6154" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
     <PackageReference Include="LiteDB" Version="5.0.21" />
+    <!-- DPAPI (ProtectedData) for encrypting the database key at rest (Windows, per-user). -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.9" />
   </ItemGroup>
-
-  <!-- Untracked Xceed license key file; copied to output when present (see .gitignore). -->
-  <ItemGroup>
-    <None Include="xceed-license.json" Condition="Exists('xceed-license.json')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <!-- Guard against accidentally shipping a Release/MSIX build without the Xceed
-       license (which would silently run Word redaction in trial mode). It's a warning
-       by default (so CI's keyless Release build still passes); set
-       XceedLicenseRequired=true (e.g. when packaging the installer) to make it an error. -->
-  <Target Name="CheckXceedLicense" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
-    <Warning Condition="!Exists('xceed-license.json') And '$(XceedLicenseRequired)' != 'true'"
-             Text="xceed-license.json is missing: this Release build will use Xceed trial mode for Word redaction. Add the key file before packaging the installer (or set XceedLicenseRequired=true to fail the build)." />
-    <Error Condition="!Exists('xceed-license.json') And '$(XceedLicenseRequired)' == 'true'"
-           Text="xceed-license.json is missing: refusing to build Release with XceedLicenseRequired=true. Add PhilterDesktop\xceed-license.json before packaging." />
-  </Target>
 
   <!-- On-device PhEye name-detection model (GLiNER xsmall, ~90 MB). Kept out of git (see
        .gitignore) and bundled with the app instead. The model files live under

@@ -16,7 +16,6 @@
 
 using Phileas.Policy;
 using Phileas.Policy.Filters;
-using Xceed.Words.NET;
 using Xunit;
 using PhileasPolicy = Phileas.Policy.Policy;
 
@@ -27,7 +26,7 @@ namespace PhilterDesktop.Tests
     /// through <see cref="RedactionService"/> and compare the redacted output to the expected
     /// result. The .txt and .docx samples contain identical text, so they must redact identically.
     /// </summary>
-    public sealed class SampleDocumentRedactionTests : IClassFixture<XceedLicenseFixture>, IDisposable
+    public sealed class SampleDocumentRedactionTests : IDisposable
     {
         // The samples contain: "...an email george@fake.com and SSN 123-45-6789."
         private const string Email = "george@fake.com";
@@ -37,12 +36,10 @@ namespace PhilterDesktop.Tests
 
         private static readonly string SamplesDir = Path.Combine(AppContext.BaseDirectory, "test-documents");
 
-        private readonly XceedLicenseFixture _license;
         private readonly string _tempDir;
 
-        public SampleDocumentRedactionTests(XceedLicenseFixture license)
+        public SampleDocumentRedactionTests()
         {
-            _license = license;
             _tempDir = Path.Combine(Path.GetTempPath(), "philter-sample-tests-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_tempDir);
         }
@@ -84,18 +81,16 @@ namespace PhilterDesktop.Tests
             Assert.Contains("REDACTED", result);
         }
 
-        [SkippableFact]
+        [Fact]
         public async Task WordSample2_RedactsPersonNames()
         {
-            Skip.IfNot(_license.HasLicense, "Xceed license not configured.");
-
             string input = Path.Combine(SamplesDir, "test2.docx");
             Assert.True(File.Exists(input), $"Sample not found: {input}");
             string output = Path.Combine(_tempDir, "test2_redacted.docx");
 
             await RedactionService.RedactFileAsync(input, output, NamePolicy(), "ctx");
 
-            string result = ReadDocxText(output);
+            string result = WordDocs.AllBodyText(output);
             foreach (string name in Names)
             {
                 Assert.DoesNotContain(name, result);
@@ -118,37 +113,33 @@ namespace PhilterDesktop.Tests
             Assert.DoesNotContain(Ssn, result);
         }
 
-        [SkippableFact]
+        [Fact]
         public async Task WordSample_RedactsToExpectedResult()
         {
-            Skip.IfNot(_license.HasLicense, "Xceed license not configured.");
-
             string input = Path.Combine(SamplesDir, "test1.docx");
             Assert.True(File.Exists(input), $"Sample not found: {input}");
             string output = Path.Combine(_tempDir, "test1_redacted.docx");
 
             await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
 
-            string result = ReadDocxText(output);
+            string result = WordDocs.AllBodyText(output);
             Assert.Equal(ExpectedRedacted, result);
             Assert.DoesNotContain(Email, result);
             Assert.DoesNotContain(Ssn, result);
 
             // The original sample must be untouched.
-            Assert.Contains(Ssn, ReadDocxText(input));
+            Assert.Contains(Ssn, WordDocs.AllBodyText(input));
         }
 
-        [SkippableFact]
+        [Fact]
         public async Task TextAndWordSamples_RedactToSameText()
         {
-            Skip.IfNot(_license.HasLicense, "Xceed license not configured.");
-
             string txtOut = Path.Combine(_tempDir, "t.txt");
             string docxOut = Path.Combine(_tempDir, "t.docx");
             await RedactionService.RedactFileAsync(Path.Combine(SamplesDir, "test1.txt"), txtOut, SamplePolicy(), "ctx");
             await RedactionService.RedactFileAsync(Path.Combine(SamplesDir, "test1.docx"), docxOut, SamplePolicy(), "ctx");
 
-            Assert.Equal(File.ReadAllText(txtOut).Trim(), ReadDocxText(docxOut));
+            Assert.Equal(File.ReadAllText(txtOut).Trim(), WordDocs.AllBodyText(docxOut));
         }
 
         [Fact]
@@ -168,12 +159,6 @@ namespace PhilterDesktop.Tests
             string asBytes = System.Text.Encoding.Latin1.GetString(bytes);
             Assert.DoesNotContain(Email, asBytes);
             Assert.DoesNotContain(Ssn, asBytes);
-        }
-
-        private static string ReadDocxText(string path)
-        {
-            using DocX doc = DocX.Load(path);
-            return string.Concat(doc.Paragraphs.Select(p => p.Text)).Trim();
         }
     }
 }

@@ -26,14 +26,12 @@ namespace PhilterDesktop.Tests
     /// Tests for the extracted <see cref="RedactionService"/> — output-path resolution and
     /// file-type redaction dispatch (the core pipeline that used to live in MainForm).
     /// </summary>
-    public sealed class RedactionServiceTests : IClassFixture<XceedLicenseFixture>, IDisposable
+    public sealed class RedactionServiceTests : IDisposable
     {
-        private readonly XceedLicenseFixture _license;
         private readonly string _tempDir;
 
-        public RedactionServiceTests(XceedLicenseFixture license)
+        public RedactionServiceTests()
         {
-            _license = license;
             _tempDir = Path.Combine(Path.GetTempPath(), "philter-redact-svc-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_tempDir);
         }
@@ -63,7 +61,7 @@ namespace PhilterDesktop.Tests
 
             string output = RedactionService.GetOutputPath(input, settings);
 
-            Assert.Equal(Path.Combine(_tempDir, "report_redacted.txt"), output);
+            Assert.Equal(Path.Combine(_tempDir, "report_redacted-draft.txt"), output);
         }
 
         [Fact]
@@ -75,7 +73,30 @@ namespace PhilterDesktop.Tests
 
             string output = RedactionService.GetOutputPath(input, settings);
 
-            Assert.Equal(Path.Combine(custom, "memo_redacted.docx"), output);
+            Assert.Equal(Path.Combine(custom, "memo_redacted-draft.docx"), output);
+        }
+
+        [Fact]
+        public void GetOutputPath_UsesConfiguredSuffix()
+        {
+            var settings = new SettingsEntity { OutputToOriginalLocation = true, RedactedSuffix = "_clean" };
+            string input = Path.Combine(_tempDir, "report.txt");
+
+            string output = RedactionService.GetOutputPath(input, settings);
+
+            Assert.Equal(Path.Combine(_tempDir, "report_clean.txt"), output);
+        }
+
+        [Theory]
+        [InlineData(null, "_redacted-draft")]
+        [InlineData("", "_redacted-draft")]
+        [InlineData("   ", "_redacted-draft")]
+        [InlineData("_clean", "_clean")]
+        [InlineData("  _spaced  ", "_spaced")]
+        [InlineData("_bad:/\\name", "_badname")] // invalid file-name chars stripped
+        public void NormalizeSuffix_CleansOrFallsBackToDefault(string? input, string expected)
+        {
+            Assert.Equal(expected, RedactionService.NormalizeSuffix(input));
         }
 
         [Fact]
@@ -95,23 +116,16 @@ namespace PhilterDesktop.Tests
             Assert.DoesNotContain("123-45-6789", result);
         }
 
-        [SkippableFact]
+        [Fact]
         public async Task RedactFileAsync_Docx_RedactsViaWordRedactor()
         {
-            Skip.IfNot(_license.HasLicense, "Xceed license not configured.");
-
             string input = Path.Combine(_tempDir, "in.docx");
             string output = Path.Combine(_tempDir, "out.docx");
-            using (var doc = Xceed.Words.NET.DocX.Create(input))
-            {
-                doc.InsertParagraph("ssn 123-45-6789 here.");
-                doc.Save();
-            }
+            WordDocs.Create(input, "ssn 123-45-6789 here.");
 
             await RedactionService.RedactFileAsync(input, output, EditorStylePolicy(), "ctx");
 
-            using var redacted = Xceed.Words.NET.DocX.Load(output);
-            string text = string.Join("\n", redacted.Paragraphs.Select(p => p.Text));
+            string text = string.Join("\n", WordDocs.BodyParagraphs(output));
             Assert.DoesNotContain("123-45-6789", text);
         }
 

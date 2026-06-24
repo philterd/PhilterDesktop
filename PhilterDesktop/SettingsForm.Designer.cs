@@ -49,6 +49,8 @@ namespace PhilterDesktop
             txtCustomFolder = new TextBox();
             radioCustomFolder = new RadioButton();
             radioOriginalLocation = new RadioButton();
+            lblSuffix = new Label();
+            txtSuffix = new TextBox();
             groupBoxLogging = new GroupBox();
             btnOpenLog = new Button();
             chkEnableLogging = new CheckBox();
@@ -56,6 +58,8 @@ namespace PhilterDesktop
             btnCancel = new Button();
             tabControl = new TabControl();
             tabGeneral = new TabPage();
+            chkContextMenu = new CheckBox();
+            lblContextMenuHint = new Label();
             tabWatched = new TabPage();
             listWatched = new ListView();
             colFolder = new ColumnHeader();
@@ -69,11 +73,11 @@ namespace PhilterDesktop
             btnViewLog = new Button();
             chkStartWithWindows = new CheckBox();
             lblStartupHint = new Label();
+            groupBoxOutput.SuspendLayout();
+            groupBoxLogging.SuspendLayout();
             tabControl.SuspendLayout();
             tabGeneral.SuspendLayout();
             tabWatched.SuspendLayout();
-            groupBoxOutput.SuspendLayout();
-            groupBoxLogging.SuspendLayout();
             SuspendLayout();
             // 
             // groupBoxOutput
@@ -82,21 +86,20 @@ namespace PhilterDesktop
             groupBoxOutput.Controls.Add(txtCustomFolder);
             groupBoxOutput.Controls.Add(radioCustomFolder);
             groupBoxOutput.Controls.Add(radioOriginalLocation);
-            groupBoxOutput.Location = new Point(4, 8);
-            groupBoxOutput.Margin = new Padding(4, 5, 4, 5);
+            groupBoxOutput.Controls.Add(lblSuffix);
+            groupBoxOutput.Controls.Add(txtSuffix);
+            groupBoxOutput.Location = new Point(3, 5);
             groupBoxOutput.Name = "groupBoxOutput";
-            groupBoxOutput.Padding = new Padding(4, 5, 4, 5);
-            groupBoxOutput.Size = new Size(800, 200);
+            groupBoxOutput.Size = new Size(560, 154);
             groupBoxOutput.TabIndex = 0;
             groupBoxOutput.TabStop = false;
             groupBoxOutput.Text = "Output Location";
             // 
             // btnBrowse
             // 
-            btnBrowse.Location = new Point(657, 127);
-            btnBrowse.Margin = new Padding(4, 5, 4, 5);
+            btnBrowse.Location = new Point(440, 73);
             btnBrowse.Name = "btnBrowse";
-            btnBrowse.Size = new Size(129, 47);
+            btnBrowse.Size = new Size(110, 34);
             btnBrowse.TabIndex = 3;
             btnBrowse.Text = "Browse...";
             btnBrowse.UseVisualStyleBackColor = true;
@@ -104,19 +107,17 @@ namespace PhilterDesktop
             // 
             // txtCustomFolder
             // 
-            txtCustomFolder.Location = new Point(57, 130);
-            txtCustomFolder.Margin = new Padding(4, 5, 4, 5);
+            txtCustomFolder.Location = new Point(40, 78);
             txtCustomFolder.Name = "txtCustomFolder";
-            txtCustomFolder.Size = new Size(584, 31);
+            txtCustomFolder.Size = new Size(394, 23);
             txtCustomFolder.TabIndex = 2;
             // 
             // radioCustomFolder
             // 
             radioCustomFolder.AutoSize = true;
-            radioCustomFolder.Location = new Point(29, 92);
-            radioCustomFolder.Margin = new Padding(4, 5, 4, 5);
+            radioCustomFolder.Location = new Point(20, 55);
             radioCustomFolder.Name = "radioCustomFolder";
-            radioCustomFolder.Size = new Size(345, 29);
+            radioCustomFolder.Size = new Size(230, 19);
             radioCustomFolder.TabIndex = 1;
             radioCustomFolder.Text = "Output to the following custom folder:";
             radioCustomFolder.UseVisualStyleBackColor = true;
@@ -125,25 +126,38 @@ namespace PhilterDesktop
             // 
             radioOriginalLocation.AutoSize = true;
             radioOriginalLocation.Checked = true;
-            radioOriginalLocation.Location = new Point(29, 50);
-            radioOriginalLocation.Margin = new Padding(4, 5, 4, 5);
+            radioOriginalLocation.Location = new Point(20, 30);
             radioOriginalLocation.Name = "radioOriginalLocation";
-            radioOriginalLocation.Size = new Size(248, 29);
+            radioOriginalLocation.Size = new Size(166, 19);
             radioOriginalLocation.TabIndex = 0;
             radioOriginalLocation.TabStop = true;
             radioOriginalLocation.Text = "Output to original location";
             radioOriginalLocation.UseVisualStyleBackColor = true;
             radioOriginalLocation.CheckedChanged += RadioOriginalLocation_CheckedChanged;
             // 
+            // lblSuffix
+            // 
+            lblSuffix.AutoSize = true;
+            lblSuffix.Location = new Point(20, 122);
+            lblSuffix.Name = "lblSuffix";
+            lblSuffix.Size = new Size(142, 15);
+            lblSuffix.TabIndex = 4;
+            lblSuffix.Text = "Redacted file name suffix:";
+            // 
+            // txtSuffix
+            // 
+            txtSuffix.Location = new Point(200, 119);
+            txtSuffix.Name = "txtSuffix";
+            txtSuffix.Size = new Size(200, 23);
+            txtSuffix.TabIndex = 5;
+            // 
             // groupBoxLogging
             // 
             groupBoxLogging.Controls.Add(btnOpenLog);
             groupBoxLogging.Controls.Add(chkEnableLogging);
-            groupBoxLogging.Location = new Point(4, 216);
-            groupBoxLogging.Margin = new Padding(4, 5, 4, 5);
+            groupBoxLogging.Location = new Point(3, 164);
             groupBoxLogging.Name = "groupBoxLogging";
-            groupBoxLogging.Padding = new Padding(4, 5, 4, 5);
-            groupBoxLogging.Size = new Size(800, 108);
+            groupBoxLogging.Size = new Size(560, 65);
             groupBoxLogging.TabIndex = 1;
             groupBoxLogging.TabStop = false;
             groupBoxLogging.Text = "Logging";
@@ -152,11 +166,10 @@ namespace PhilterDesktop
             // 
             btnOpenLog.AutoSize = true;
             btnOpenLog.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            btnOpenLog.Location = new Point(194, 40);
-            btnOpenLog.Margin = new Padding(4, 5, 4, 5);
+            btnOpenLog.Location = new Point(136, 24);
             btnOpenLog.Name = "btnOpenLog";
-            btnOpenLog.Padding = new Padding(12, 6, 12, 6);
-            btnOpenLog.Size = new Size(230, 47);
+            btnOpenLog.Padding = new Padding(8, 4, 8, 4);
+            btnOpenLog.Size = new Size(106, 33);
             btnOpenLog.TabIndex = 1;
             btnOpenLog.Text = "Open Log File";
             btnOpenLog.UseVisualStyleBackColor = true;
@@ -165,29 +178,85 @@ namespace PhilterDesktop
             // chkEnableLogging
             // 
             chkEnableLogging.AutoSize = true;
-            chkEnableLogging.Location = new Point(29, 50);
-            chkEnableLogging.Margin = new Padding(4, 5, 4, 5);
+            chkEnableLogging.Location = new Point(20, 30);
             chkEnableLogging.Name = "chkEnableLogging";
-            chkEnableLogging.Size = new Size(157, 29);
+            chkEnableLogging.Size = new Size(105, 19);
             chkEnableLogging.TabIndex = 0;
             chkEnableLogging.Text = "Enable logging";
             chkEnableLogging.UseVisualStyleBackColor = true;
             chkEnableLogging.CheckedChanged += ChkEnableLogging_CheckedChanged;
-            //
+            // 
+            // btnSave
+            // 
+            btnSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnSave.Location = new Point(346, 326);
+            btnSave.Name = "btnSave";
+            btnSave.Size = new Size(110, 34);
+            btnSave.TabIndex = 1;
+            btnSave.Text = "Save";
+            btnSave.UseVisualStyleBackColor = true;
+            btnSave.Click += BtnSave_Click;
+            // 
+            // btnCancel
+            // 
+            btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnCancel.Location = new Point(462, 326);
+            btnCancel.Name = "btnCancel";
+            btnCancel.Size = new Size(110, 34);
+            btnCancel.TabIndex = 2;
+            btnCancel.Text = "Cancel";
+            btnCancel.UseVisualStyleBackColor = true;
+            btnCancel.Click += BtnCancel_Click;
+            // 
+            // tabControl
+            // 
+            tabControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            tabControl.Controls.Add(tabGeneral);
+            tabControl.Controls.Add(tabWatched);
+            tabControl.Location = new Point(6, 7);
+            tabControl.Margin = new Padding(2);
+            tabControl.Name = "tabControl";
+            tabControl.SelectedIndex = 0;
+            tabControl.Size = new Size(573, 316);
+            tabControl.TabIndex = 0;
+            // 
             // tabGeneral
-            //
+            // 
             tabGeneral.Controls.Add(groupBoxOutput);
             tabGeneral.Controls.Add(groupBoxLogging);
-            tabGeneral.Location = new Point(4, 34);
+            tabGeneral.Controls.Add(chkContextMenu);
+            tabGeneral.Controls.Add(lblContextMenuHint);
+            tabGeneral.Location = new Point(4, 24);
+            tabGeneral.Margin = new Padding(2);
             tabGeneral.Name = "tabGeneral";
-            tabGeneral.Padding = new Padding(3);
-            tabGeneral.Size = new Size(810, 432);
+            tabGeneral.Padding = new Padding(2);
+            tabGeneral.Size = new Size(565, 288);
             tabGeneral.TabIndex = 0;
             tabGeneral.Text = "General";
             tabGeneral.UseVisualStyleBackColor = true;
-            //
+            // 
+            // chkContextMenu
+            // 
+            chkContextMenu.AutoSize = true;
+            chkContextMenu.Location = new Point(12, 239);
+            chkContextMenu.Name = "chkContextMenu";
+            chkContextMenu.Size = new Size(464, 19);
+            chkContextMenu.TabIndex = 2;
+            chkContextMenu.Text = "Add \"Redact with Philter Desktop\" to the Explorer right-click menu (.pdf, .docx, .txt)";
+            chkContextMenu.UseVisualStyleBackColor = true;
+            chkContextMenu.CheckedChanged += ChkContextMenu_CheckedChanged;
+            // 
+            // lblContextMenuHint
+            // 
+            lblContextMenuHint.AutoSize = true;
+            lblContextMenuHint.ForeColor = SystemColors.GrayText;
+            lblContextMenuHint.Location = new Point(30, 262);
+            lblContextMenuHint.Name = "lblContextMenuHint";
+            lblContextMenuHint.Size = new Size(0, 15);
+            lblContextMenuHint.TabIndex = 3;
+            // 
             // tabWatched
-            //
+            // 
             tabWatched.Controls.Add(listWatched);
             tabWatched.Controls.Add(btnAddWatched);
             tabWatched.Controls.Add(btnEditWatched);
@@ -195,169 +264,149 @@ namespace PhilterDesktop
             tabWatched.Controls.Add(btnViewLog);
             tabWatched.Controls.Add(chkStartWithWindows);
             tabWatched.Controls.Add(lblStartupHint);
-            tabWatched.Location = new Point(4, 34);
+            tabWatched.Location = new Point(4, 24);
+            tabWatched.Margin = new Padding(2);
             tabWatched.Name = "tabWatched";
-            tabWatched.Padding = new Padding(3);
-            tabWatched.Size = new Size(810, 432);
+            tabWatched.Padding = new Padding(2);
+            tabWatched.Size = new Size(565, 288);
             tabWatched.TabIndex = 1;
-            tabWatched.Text = "Watched Folder";
+            tabWatched.Text = "Watched Folders";
             tabWatched.UseVisualStyleBackColor = true;
-            //
+            // 
             // listWatched
-            //
+            // 
+            listWatched.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             listWatched.Columns.AddRange(new ColumnHeader[] { colFolder, colPolicy, colContext, colOutput, colHighlight });
             listWatched.FullRowSelect = true;
             listWatched.GridLines = true;
-            listWatched.Location = new Point(8, 12);
+            listWatched.Location = new Point(6, 7);
+            listWatched.Margin = new Padding(2);
             listWatched.MultiSelect = false;
             listWatched.Name = "listWatched";
-            listWatched.Size = new Size(794, 300);
+            listWatched.Size = new Size(557, 182);
             listWatched.TabIndex = 0;
             listWatched.UseCompatibleStateImageBehavior = false;
             listWatched.View = View.Details;
             listWatched.SelectedIndexChanged += ListWatched_SelectedIndexChanged;
-            //
+            // 
             // colFolder
-            //
+            // 
             colFolder.Text = "Watched Folder";
             colFolder.Width = 260;
-            //
+            // 
             // colPolicy
-            //
+            // 
             colPolicy.Text = "Policy";
             colPolicy.Width = 120;
-            //
+            // 
             // colContext
-            //
+            // 
             colContext.Text = "Context";
             colContext.Width = 120;
-            //
+            // 
             // colOutput
-            //
+            // 
             colOutput.Text = "Output Folder";
             colOutput.Width = 220;
-            //
+            // 
             // colHighlight
-            //
+            // 
             colHighlight.Text = "Highlight";
             colHighlight.Width = 70;
-            //
+            // 
             // btnAddWatched
-            //
-            btnAddWatched.Location = new Point(8, 322);
+            // 
+            btnAddWatched.Location = new Point(6, 193);
+            btnAddWatched.Margin = new Padding(2);
             btnAddWatched.Name = "btnAddWatched";
-            btnAddWatched.Size = new Size(129, 47);
+            btnAddWatched.Size = new Size(110, 34);
             btnAddWatched.TabIndex = 1;
             btnAddWatched.Text = "Add...";
             btnAddWatched.UseVisualStyleBackColor = true;
             btnAddWatched.Click += BtnAddWatched_Click;
-            //
+            // 
             // btnEditWatched
-            //
+            // 
             btnEditWatched.Enabled = false;
-            btnEditWatched.Location = new Point(145, 322);
+            btnEditWatched.Location = new Point(122, 193);
+            btnEditWatched.Margin = new Padding(2);
             btnEditWatched.Name = "btnEditWatched";
-            btnEditWatched.Size = new Size(129, 47);
+            btnEditWatched.Size = new Size(110, 34);
             btnEditWatched.TabIndex = 2;
             btnEditWatched.Text = "Edit...";
             btnEditWatched.UseVisualStyleBackColor = true;
             btnEditWatched.Click += BtnEditWatched_Click;
-            //
+            // 
             // btnRemoveWatched
-            //
+            // 
             btnRemoveWatched.Enabled = false;
-            btnRemoveWatched.Location = new Point(282, 322);
+            btnRemoveWatched.Location = new Point(238, 193);
+            btnRemoveWatched.Margin = new Padding(2);
             btnRemoveWatched.Name = "btnRemoveWatched";
-            btnRemoveWatched.Size = new Size(129, 47);
+            btnRemoveWatched.Size = new Size(110, 34);
             btnRemoveWatched.TabIndex = 3;
             btnRemoveWatched.Text = "Remove";
             btnRemoveWatched.UseVisualStyleBackColor = true;
             btnRemoveWatched.Click += BtnRemoveWatched_Click;
-            //
+            // 
             // btnViewLog
-            //
+            // 
             btnViewLog.Enabled = false;
-            btnViewLog.Location = new Point(419, 322);
+            btnViewLog.Location = new Point(354, 193);
+            btnViewLog.Margin = new Padding(2);
             btnViewLog.Name = "btnViewLog";
-            btnViewLog.Size = new Size(129, 47);
+            btnViewLog.Size = new Size(110, 34);
             btnViewLog.TabIndex = 4;
             btnViewLog.Text = "View Log...";
             btnViewLog.UseVisualStyleBackColor = true;
             btnViewLog.Click += BtnViewLog_Click;
-            //
+            // 
             // chkStartWithWindows
-            //
+            // 
             chkStartWithWindows.AutoSize = true;
-            chkStartWithWindows.Location = new Point(8, 384);
+            chkStartWithWindows.Location = new Point(6, 230);
+            chkStartWithWindows.Margin = new Padding(2);
             chkStartWithWindows.Name = "chkStartWithWindows";
+            chkStartWithWindows.Size = new Size(444, 19);
             chkStartWithWindows.TabIndex = 5;
             chkStartWithWindows.Text = "Start Philter Desktop at sign-in (runs minimized to the tray and keeps watching)";
             chkStartWithWindows.UseVisualStyleBackColor = true;
             chkStartWithWindows.CheckedChanged += ChkStartWithWindows_CheckedChanged;
-            //
+            // 
             // lblStartupHint
-            //
+            // 
             lblStartupHint.AutoSize = true;
             lblStartupHint.ForeColor = SystemColors.GrayText;
-            lblStartupHint.Location = new Point(28, 412);
+            lblStartupHint.Location = new Point(20, 247);
+            lblStartupHint.Margin = new Padding(2, 0, 2, 0);
             lblStartupHint.Name = "lblStartupHint";
-            lblStartupHint.Text = "";
-            //
-            // tabControl
-            //
-            tabControl.Controls.Add(tabGeneral);
-            tabControl.Controls.Add(tabWatched);
-            tabControl.Location = new Point(8, 12);
-            tabControl.Name = "tabControl";
-            tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(818, 470);
-            tabControl.TabIndex = 0;
-            //
-            // btnSave
-            //
-            btnSave.Location = new Point(557, 494);
-            btnSave.Margin = new Padding(4, 5, 4, 5);
-            btnSave.Name = "btnSave";
-            btnSave.Size = new Size(129, 47);
-            btnSave.TabIndex = 1;
-            btnSave.Text = "Save";
-            btnSave.UseVisualStyleBackColor = true;
-            btnSave.Click += BtnSave_Click;
-            //
-            // btnCancel
-            //
-            btnCancel.Location = new Point(694, 494);
-            btnCancel.Margin = new Padding(4, 5, 4, 5);
-            btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(129, 47);
-            btnCancel.TabIndex = 2;
-            btnCancel.Text = "Cancel";
-            btnCancel.UseVisualStyleBackColor = true;
-            btnCancel.Click += BtnCancel_Click;
-            //
+            lblStartupHint.Size = new Size(0, 15);
+            lblStartupHint.TabIndex = 6;
+            // 
             // SettingsForm
-            //
-            AutoScaleDimensions = new SizeF(10F, 25F);
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(834, 553);
+            ClientSize = new Size(584, 366);
             Controls.Add(btnCancel);
             Controls.Add(btnSave);
             Controls.Add(tabControl);
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            Margin = new Padding(4, 5, 4, 5);
             MaximizeBox = false;
             MinimizeBox = false;
+            MinimumSize = new Size(600, 405);
             Name = "SettingsForm";
             StartPosition = FormStartPosition.CenterParent;
             Text = "Settings";
             Load += SettingsForm_Load;
-            tabControl.ResumeLayout(false);
-            tabGeneral.ResumeLayout(false);
-            tabWatched.ResumeLayout(false);
             groupBoxOutput.ResumeLayout(false);
             groupBoxOutput.PerformLayout();
             groupBoxLogging.ResumeLayout(false);
             groupBoxLogging.PerformLayout();
+            tabControl.ResumeLayout(false);
+            tabGeneral.ResumeLayout(false);
+            tabGeneral.PerformLayout();
+            tabWatched.ResumeLayout(false);
+            tabWatched.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -368,6 +417,8 @@ namespace PhilterDesktop
         private RadioButton radioCustomFolder;
         private TextBox txtCustomFolder;
         private Button btnBrowse;
+        private Label lblSuffix;
+        private TextBox txtSuffix;
         private GroupBox groupBoxLogging;
         private CheckBox chkEnableLogging;
         private Button btnOpenLog;
@@ -388,5 +439,7 @@ namespace PhilterDesktop
         private Button btnViewLog;
         private CheckBox chkStartWithWindows;
         private Label lblStartupHint;
+        private CheckBox chkContextMenu;
+        private Label lblContextMenuHint;
     }
 }

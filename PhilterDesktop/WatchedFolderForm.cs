@@ -20,74 +20,37 @@ namespace PhilterDesktop
 {
     /// <summary>
     /// Dialog to add or edit a watched folder: the folder to monitor, the policy and context to
-    /// redact with, whether to highlight .docx replacements, and the output folder.
+    /// redact with, the file types, subfolder/highlight/notify options, and the output folder.
     /// </summary>
-    public sealed class WatchedFolderForm : Form
+    public partial class WatchedFolderForm : Form
     {
-        private readonly TextBox _folder = new() { Location = new Point(12, 44), Width = 416 };
-        private readonly Button _browseFolder = new() { Text = "Browse…", Location = new Point(436, 42), Size = new Size(110, 34) };
-        private readonly ComboBox _policy = new() { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(12, 104), Width = 255 };
-        private readonly ComboBox _context = new() { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(290, 104), Width = 256 };
-        private readonly CheckBox _typePdf = new() { Text = "PDF (.pdf)", AutoSize = true, Location = new Point(95, 146) };
-        private readonly CheckBox _typeDocx = new() { Text = "Word (.docx)", AutoSize = true, Location = new Point(190, 146) };
-        private readonly CheckBox _typeTxt = new() { Text = "Text (.txt)", AutoSize = true, Location = new Point(310, 146) };
-        private readonly CheckBox _includeSubfolders = new() { Text = "Include subfolders", AutoSize = true, Location = new Point(12, 182) };
-        private readonly CheckBox _highlight = new() { Text = "Highlight redactions in Word (.docx) documents", AutoSize = true, Location = new Point(12, 212) };
-        private readonly CheckBox _notify = new() { Text = "Show a notification when a file is redacted", AutoSize = true, Location = new Point(12, 242) };
-        private readonly TextBox _output = new() { Location = new Point(12, 304), Width = 416 };
-        private readonly Button _browseOutput = new() { Text = "Browse…", Location = new Point(436, 302), Size = new Size(110, 34) };
-        private readonly Button _ok = new() { Text = "OK", Location = new Point(316, 358), Size = new Size(110, 40) };
-        private readonly Button _cancel = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, Location = new Point(436, 358), Size = new Size(110, 40) };
-
-        private readonly WatchedFolderEntity _entity;
+        private WatchedFolderEntity _entity = new();
 
         /// <summary>The configured watched folder (valid after the dialog returns <see cref="DialogResult.OK"/>).</summary>
         public WatchedFolderEntity WatchedFolder => _entity;
 
+        /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
+        public WatchedFolderForm()
+        {
+            InitializeComponent();
+            ModernTheme.Apply(this);
+            ModernTheme.MakePrimary(_ok);
+        }
+
         public WatchedFolderForm(PolicyRepository policyRepository, ContextRepository contextRepository, WatchedFolderEntity? existing = null)
+            : this()
         {
             ArgumentNullException.ThrowIfNull(policyRepository);
             ArgumentNullException.ThrowIfNull(contextRepository);
 
             _entity = existing ?? new WatchedFolderEntity();
-
-            Text = existing is null ? "Add Watched Folder" : "Edit Watched Folder";
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            StartPosition = FormStartPosition.CenterParent;
-            MaximizeBox = false;
-            MinimizeBox = false;
-            ShowInTaskbar = false;
-            ClientSize = new Size(560, 416);
-
-            Controls.AddRange(new Control[]
+            if (existing is not null)
             {
-                new Label { Text = "Folder to watch:", AutoSize = true, Location = new Point(12, 20) },
-                _folder, _browseFolder,
-                new Label { Text = "Policy:", AutoSize = true, Location = new Point(12, 84) },
-                new Label { Text = "Context:", AutoSize = true, Location = new Point(290, 84) },
-                _policy, _context,
-                new Label { Text = "File types:", AutoSize = true, Location = new Point(12, 148) },
-                _typePdf, _typeDocx, _typeTxt,
-                _includeSubfolders,
-                _highlight,
-                _notify,
-                new Label { Text = "Output folder:", AutoSize = true, Location = new Point(12, 282) },
-                _output, _browseOutput,
-                _ok, _cancel
-            });
-
-            AcceptButton = _ok;
-            CancelButton = _cancel;
+                Text = "Edit Watched Folder";
+            }
 
             LoadNames(policyRepository, contextRepository);
             PopulateFromEntity();
-
-            _browseFolder.Click += (_, _) => BrowseInto(_folder, "Select the folder to watch for new files");
-            _browseOutput.Click += (_, _) => BrowseInto(_output, "Select the folder to write redacted files to");
-            _ok.Click += OnOk;
-
-            ModernTheme.Apply(this);
-            ModernTheme.MakePrimary(_ok);
         }
 
         private void LoadNames(PolicyRepository policyRepository, ContextRepository contextRepository)
@@ -133,6 +96,12 @@ namespace PhilterDesktop
             }
         }
 
+        private void BrowseFolder_Click(object? sender, EventArgs e) =>
+            BrowseInto(_folder, "Select the folder to watch for new files");
+
+        private void BrowseOutput_Click(object? sender, EventArgs e) =>
+            BrowseInto(_output, "Select the folder to write redacted files to");
+
         private static void BrowseInto(TextBox target, string description)
         {
             using var dialog = new FolderBrowserDialog
@@ -147,7 +116,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void OnOk(object? sender, EventArgs e)
+        private void OkButton_Click(object? sender, EventArgs e)
         {
             string folder = _folder.Text.Trim();
             string output = _output.Text.Trim();

@@ -22,8 +22,9 @@ It is powered by the [Phileas](https://github.com/philterd/phileas-net) redactio
 1. **Add documents** to the redaction queue (button or drag-and-drop).
 2. Each document is assigned a **policy** (which PII to find) and a **context** (for consistent
    replacement).
-3. Philter Desktop redacts each file and writes a `*_redacted` copy to your chosen
-   [output location](settings.md).
+3. Philter Desktop redacts each file and writes a separate copy (named with a configurable suffix,
+   default `_redacted-draft`) to your chosen [output location](settings.md). Always review redacted
+   output before sharing it.
 
 ## Next steps
 

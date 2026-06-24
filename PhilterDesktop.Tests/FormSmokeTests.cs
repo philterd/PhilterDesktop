@@ -98,10 +98,37 @@ namespace PhilterDesktop.Tests
                 new WatchedFolderLogRepository(db), new WatchedFolderEntity { FolderPath = @"C:\watched" }));
 
         [Fact]
+        public void ModifyRedactionForm_Constructs() =>
+            ConstructWithDb(db => new ModifyRedactionForm(
+                ObjectId.NewObjectId(),
+                new RedactionVersionRepository(db),
+                new RedactionSpanRepository(db),
+                new PolicyRepository(db)));
+
+        [Fact]
+        public void ContextMenuRedactForm_Constructs() =>
+            ConstructWithDb(db => new ContextMenuRedactForm(
+                new[] { @"C:\docs\a.pdf", @"C:\docs\b.txt" },
+                new PolicyRepository(db),
+                new ContextRepository(db),
+                new RedactionQueueRepository(db)));
+
+        [Fact]
+        public void SpanEditForm_Constructs() => Sta(() =>
+        {
+            using var f = new SpanEditForm(
+                "Add Redaction",
+                SpanPositionKind.TextOffset,
+                new RedactionSpanEntity { UserAdded = true, CharacterStart = 0, CharacterEnd = 5, Replacement = "[X]" },
+                positionEditable: true);
+            _ = f.Handle;
+        });
+
+        [Fact]
         public void AboutForm_Constructs() => Sta(() => { using var f = new AboutForm(); _ = f.Handle; });
 
         [Fact]
-        public void LicenseForm_Constructs() => Sta(() => { using var f = new LicenseForm(); _ = f.Handle; });
+        public void WelcomeForm_Constructs() => Sta(() => { using var f = new WelcomeForm(); _ = f.Handle; });
 
         [Fact]
         public void CreateContextDialog_Constructs() => Sta(() => { using var f = new CreateContextDialog(); _ = f.Handle; });
@@ -124,6 +151,20 @@ namespace PhilterDesktop.Tests
         public void CustomIdentifiersForm_Constructs() => Sta(() =>
         {
             using var f = new CustomIdentifiersForm(new List<Identifier>());
+            _ = f.Handle;
+        });
+
+        [Fact]
+        public void IgnoredTermsForm_Constructs() => Sta(() =>
+        {
+            using var f = new IgnoredTermsForm(new List<string> { "Acme" }, caseSensitive: false);
+            _ = f.Handle;
+        });
+
+        [Fact]
+        public void AlwaysRedactTermsForm_Constructs() => Sta(() =>
+        {
+            using var f = new AlwaysRedactTermsForm(new List<string> { "Voldemort" });
             _ = f.Handle;
         });
     }

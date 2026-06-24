@@ -41,18 +41,9 @@ support `.wapproj`). See `Installer/README.md`.
   dotnet run --project PhilterDesktop/PhilterDesktop.csproj
   ```
 
-### Word (.docx) redaction license
-
-Word redaction uses [Xceed Words for .NET](https://xceed.com/), which requires a license.
-Supply your key in one of two ways (both are git-ignored / outside source control):
-
-- Create `PhilterDesktop/xceed-license.json` (see `xceed-license.example.json`):
-  ```json
-  { "XceedLicenseKey": "your-key-here" }
-  ```
-- Or set the `XCEED_LICENSE_KEY` environment variable.
-
-Without a key, plain-text redaction still works; Word redaction runs in Xceed trial mode.
+Word (`.docx`) redaction uses the open-source [Open XML SDK](https://github.com/dotnet/Open-XML-SDK)
+— no license key or third-party component is required. All supported formats (`.txt`, `.docx`,
+`.pdf`) redact out of the box.
 
 ## Features
 
@@ -74,6 +65,12 @@ Without a key, plain-text redaction still works; Word redaction runs in Xceed tr
   (configured on the **Watched Folder** tab of Settings). Philter Desktop runs in the **system
   tray** (closing the window keeps it watching) and can **start at sign-in**.
 - **Contexts** — manage redaction contexts for consistent replacement.
+- **Command-line redaction** — redact files headlessly for scripting/automation:
+  `PhilterDesktop.exe /p mypolicy /c mycontext file1.pdf file2.pdf` (policy/context optional,
+  defaulting to the default policy/context). Works even while the app is running.
+- **Explorer right-click menu** — an optional **"Redact with Philter Desktop"** context-menu entry
+  for `.pdf`/`.docx`/`.txt` files (toggled in Settings). Right-clicking files opens a dialog to pick
+  the policy/context and adds them to the redaction queue; a multi-file selection opens one dialog.
 - **Settings** — output location, logging, and the redaction policy defaults.
 
 Each filter supports multiple replacement strategies:
@@ -90,11 +87,10 @@ Each filter supports multiple replacement strategies:
 dotnet test PhilterDesktop.Tests/PhilterDesktop.Tests.csproj
 ```
 
-The suite covers the data layer (LiteDB repositories), the redaction service, license-key
-resolution, Word redaction, on-device name detection, the editor↔engine policy contract, and
-form construction smoke tests. Word-redaction tests are skipped automatically when no Xceed
-license is configured, and on-device name-detection tests are skipped when the PhEye model is
-not bundled.
+The suite covers the data layer (LiteDB repositories), the redaction service, Word redaction
+(via the Open XML SDK — no license needed, so these always run), the editor↔engine policy
+contract, and form construction smoke tests. On-device name-detection tests are skipped when the
+PhEye model is not bundled.
 The same build-and-test flow runs in CI on every push and pull request
 (`.github/workflows/ci.yml`).
 

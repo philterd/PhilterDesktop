@@ -39,8 +39,9 @@ folder, select it and click **Remove**. Changes to the watched-folder list take 
 ## How redaction works
 
 - **File types:** only `.txt`, `.docx`, and `.pdf` files are redacted; other files are ignored.
-- **Output naming:** redacted copies are written to the output folder with a `_redacted` suffix
-  (for example, `invoice.pdf` becomes `invoice_redacted.pdf`). Your originals are never modified.
+- **Output naming:** redacted copies are written to the output folder with the configured suffix
+  (default `_redacted-draft`, e.g. `invoice.pdf` becomes `invoice_redacted-draft.pdf`). Your
+  originals are never modified.
 - **Existing files:** files already present in a watched folder when Philter Desktop starts are
   picked up too, not just files added afterward.
 - **No re-redaction:** the redacted output files are ignored, so they are never redacted again, and

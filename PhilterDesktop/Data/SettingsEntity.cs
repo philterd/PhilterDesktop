@@ -42,6 +42,13 @@ namespace PhilterData
         public string CustomOutputFolder { get; set; } = string.Empty;
 
         /// <summary>
+        /// Suffix appended to the redacted output file name (before the extension). Defaults to
+        /// <c>_redacted-draft</c> — deliberately not just "_redacted", so the name doesn't imply the
+        /// output is verified safe (redaction is statistical and must always be reviewed by a person).
+        /// </summary>
+        public string RedactedSuffix { get; set; } = "_redacted-draft";
+
+        /// <summary>
         /// Gets or sets a value indicating whether logging is enabled.
         /// </summary>
         public bool LoggingEnabled { get; set; } = false;
