@@ -73,11 +73,17 @@ namespace PhilterDesktop
             btnViewLog = new Button();
             chkStartWithWindows = new CheckBox();
             lblStartupHint = new Label();
+            tabSecurity = new TabPage();
+            lblSecurityInfo = new Label();
+            chkPassphrase = new CheckBox();
+            btnChangePassphrase = new Button();
+            lblSecurityStatus = new Label();
             groupBoxOutput.SuspendLayout();
             groupBoxLogging.SuspendLayout();
             tabControl.SuspendLayout();
             tabGeneral.SuspendLayout();
             tabWatched.SuspendLayout();
+            tabSecurity.SuspendLayout();
             SuspendLayout();
             // 
             // groupBoxOutput
@@ -213,6 +219,7 @@ namespace PhilterDesktop
             tabControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             tabControl.Controls.Add(tabGeneral);
             tabControl.Controls.Add(tabWatched);
+            tabControl.Controls.Add(tabSecurity);
             tabControl.Location = new Point(6, 7);
             tabControl.Margin = new Padding(2);
             tabControl.Name = "tabControl";
@@ -382,9 +389,61 @@ namespace PhilterDesktop
             lblStartupHint.Name = "lblStartupHint";
             lblStartupHint.Size = new Size(0, 15);
             lblStartupHint.TabIndex = 6;
-            // 
+            //
+            // tabSecurity
+            //
+            tabSecurity.Controls.Add(lblSecurityInfo);
+            tabSecurity.Controls.Add(chkPassphrase);
+            tabSecurity.Controls.Add(btnChangePassphrase);
+            tabSecurity.Controls.Add(lblSecurityStatus);
+            tabSecurity.Location = new Point(4, 24);
+            tabSecurity.Name = "tabSecurity";
+            tabSecurity.Padding = new Padding(3);
+            tabSecurity.Size = new Size(565, 288);
+            tabSecurity.TabIndex = 2;
+            tabSecurity.Text = "Security";
+            tabSecurity.UseVisualStyleBackColor = true;
+            //
+            // lblSecurityInfo
+            //
+            lblSecurityInfo.Location = new Point(12, 15);
+            lblSecurityInfo.Name = "lblSecurityInfo";
+            lblSecurityInfo.Size = new Size(540, 70);
+            lblSecurityInfo.TabIndex = 0;
+            lblSecurityInfo.Text = "The database (which can contain detected personal data) is always encrypted at rest. By default the key is protected by your Windows account. You can also require a passphrase to open Philter Desktop. If you forget the passphrase, the data cannot be recovered.";
+            //
+            // chkPassphrase
+            //
+            chkPassphrase.AutoSize = true;
+            chkPassphrase.Location = new Point(12, 95);
+            chkPassphrase.Name = "chkPassphrase";
+            chkPassphrase.Size = new Size(266, 19);
+            chkPassphrase.TabIndex = 1;
+            chkPassphrase.Text = "Require a passphrase to open the database";
+            chkPassphrase.UseVisualStyleBackColor = true;
+            chkPassphrase.CheckedChanged += ChkPassphrase_CheckedChanged;
+            //
+            // btnChangePassphrase
+            //
+            btnChangePassphrase.Location = new Point(32, 124);
+            btnChangePassphrase.Name = "btnChangePassphrase";
+            btnChangePassphrase.Size = new Size(170, 34);
+            btnChangePassphrase.TabIndex = 2;
+            btnChangePassphrase.Text = "Change Passphrase…";
+            btnChangePassphrase.UseVisualStyleBackColor = true;
+            btnChangePassphrase.Click += BtnChangePassphrase_Click;
+            //
+            // lblSecurityStatus
+            //
+            lblSecurityStatus.AutoSize = true;
+            lblSecurityStatus.ForeColor = SystemColors.GrayText;
+            lblSecurityStatus.Location = new Point(12, 175);
+            lblSecurityStatus.Name = "lblSecurityStatus";
+            lblSecurityStatus.Size = new Size(0, 15);
+            lblSecurityStatus.TabIndex = 3;
+            //
             // SettingsForm
-            // 
+            //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(584, 366);
@@ -407,6 +466,8 @@ namespace PhilterDesktop
             tabGeneral.PerformLayout();
             tabWatched.ResumeLayout(false);
             tabWatched.PerformLayout();
+            tabSecurity.ResumeLayout(false);
+            tabSecurity.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -427,6 +488,11 @@ namespace PhilterDesktop
         private TabControl tabControl;
         private TabPage tabGeneral;
         private TabPage tabWatched;
+        private TabPage tabSecurity;
+        private Label lblSecurityInfo;
+        private CheckBox chkPassphrase;
+        private Button btnChangePassphrase;
+        private Label lblSecurityStatus;
         private ListView listWatched;
         private ColumnHeader colFolder;
         private ColumnHeader colPolicy;

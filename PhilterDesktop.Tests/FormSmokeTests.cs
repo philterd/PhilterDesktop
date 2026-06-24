@@ -131,6 +131,28 @@ namespace PhilterDesktop.Tests
         public void WelcomeForm_Constructs() => Sta(() => { using var f = new WelcomeForm(); _ = f.Handle; });
 
         [Fact]
+        public void PassphraseForm_Constructs() => Sta(() =>
+        {
+            using var f = new PassphraseForm(PassphraseFormMode.Set);
+            _ = f.Handle;
+        });
+
+        [Fact]
+        public void DiffViewerForm_Constructs() => Sta(() =>
+        {
+            using var f = new DiffViewerForm("line one\nsecret\nline three", "line one\n[REDACTED]\nline three", "a.txt", "a_redacted.txt");
+            _ = f.Handle;
+        });
+
+        [Fact]
+        public void PdfCompareForm_Constructs() => Sta(() =>
+        {
+            // Construction doesn't render (rendering happens on load), so no PDF bytes are needed.
+            using var f = new PdfCompareForm(Array.Empty<byte>(), Array.Empty<byte>(), "a.pdf", "a_redacted.pdf");
+            _ = f.Handle;
+        });
+
+        [Fact]
         public void CreateContextDialog_Constructs() => Sta(() => { using var f = new CreateContextDialog(); _ = f.Handle; });
 
         [Fact]

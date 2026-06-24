@@ -944,7 +944,8 @@ namespace PhilterDesktop
             }
 
             using var settingsForm = new SettingsForm(
-                _settingsRepository, _policyRepository, _contextRepository, _watchedFolderRepository, _watchedFolderLogRepository);
+                _settingsRepository, _policyRepository, _contextRepository, _watchedFolderRepository,
+                _watchedFolderLogRepository, EncryptedDatabase.CurrentKeyStore);
             var result = settingsForm.ShowDialog();
 
             // Reload logging setting in case it changed.
@@ -1128,10 +1129,73 @@ namespace PhilterDesktop
             openRedactedFileToolStripMenuItem.Enabled = selectedCompleted; // exists only once redacted
             openOriginalFileToolStripMenuItem.Enabled = hasSelection;
             modifyRedactionToolStripMenuItem.Enabled = selectedCompleted; // versions exist once redacted
+
+            // Enable for a completed .txt (text diff) or .pdf (side-by-side page comparison).
+            viewDiffToolStripMenuItem.Enabled = selectedCompleted &&
+                SelectedSourcePath() is { } src &&
+                (src.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) ||
+                 src.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>The source file path of the selected queue item, or null.</summary>
+        private string? SelectedSourcePath()
+        {
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return null;
+            }
+            return _redactionQueueRepository.GetById(id)?.Name;
         }
 
         private static bool IsCompleted(ListViewItem item) =>
             item.SubItems.Count > 1 && string.Equals(item.SubItems[1].Text, "Completed", StringComparison.OrdinalIgnoreCase);
+
+        private void viewDiffToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string? source = SelectedSourcePath();
+            if (source is null)
+            {
+                return;
+            }
+
+            string output = RedactionService.GetOutputPath(source, _settingsRepository.GetSettings());
+
+            if (!File.Exists(source))
+            {
+                MessageBox.Show($"The original file could not be found:\n\n{source}", "View Diff",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (!File.Exists(output))
+            {
+                MessageBox.Show($"The redacted file could not be found:\n\n{output}", "View Diff",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                if (source.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] before = File.ReadAllBytes(source);
+                    byte[] after = File.ReadAllBytes(output);
+                    using var compare = new PdfCompareForm(before, after, Path.GetFileName(source), Path.GetFileName(output));
+                    compare.ShowDialog(this);
+                }
+                else
+                {
+                    string before = File.ReadAllText(source);
+                    string after = File.ReadAllText(output);
+                    using var diff = new DiffViewerForm(before, after, Path.GetFileName(source), Path.GetFileName(output));
+                    diff.ShowDialog(this);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not show the diff: {ex.Message}", "View Diff",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
         private void addFilesToRedactToolStripMenuItem_Click(object sender, EventArgs e)
         {

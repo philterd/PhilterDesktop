@@ -29,10 +29,12 @@ namespace PhilterDesktop
         private readonly ContextRepository? _contextRepository;
         private readonly WatchedFolderRepository? _watchedFolderRepository;
         private readonly WatchedFolderLogRepository? _watchedFolderLogRepository;
+        private readonly DatabaseKeyStore? _keyStore;
         private readonly StartupManager _startupManager = StartupManager.CreateDefault();
         private readonly ContextMenuManager _contextMenuManager = ContextMenuManager.CreateDefault();
         private bool _suppressStartupToggle;
         private bool _suppressContextMenuToggle;
+        private bool _suppressPassphraseToggle;
         private SettingsEntity _settings;
 
         /// <summary>
@@ -52,7 +54,8 @@ namespace PhilterDesktop
             PolicyRepository? policyRepository,
             ContextRepository? contextRepository,
             WatchedFolderRepository? watchedFolderRepository,
-            WatchedFolderLogRepository? watchedFolderLogRepository = null)
+            WatchedFolderLogRepository? watchedFolderLogRepository = null,
+            DatabaseKeyStore? keyStore = null)
         {
             InitializeComponent();
             ModernTheme.Apply(this);
@@ -62,12 +65,19 @@ namespace PhilterDesktop
             _contextRepository = contextRepository;
             _watchedFolderRepository = watchedFolderRepository;
             _watchedFolderLogRepository = watchedFolderLogRepository;
+            _keyStore = keyStore;
             _settings = new SettingsEntity();
 
             // The watched-folder tab needs the policy/context/watched repositories; hide it otherwise.
             if (_policyRepository is null || _contextRepository is null || _watchedFolderRepository is null)
             {
                 tabControl.TabPages.Remove(tabWatched);
+            }
+
+            // The security tab manages the database passphrase; hide it without a key store.
+            if (_keyStore is null)
+            {
+                tabControl.TabPages.Remove(tabSecurity);
             }
         }
 
@@ -77,6 +87,117 @@ namespace PhilterDesktop
             LoadWatchedFolders();
             ConfigureStartupToggle();
             ConfigureContextMenuToggle();
+            ConfigureSecurityTab();
+        }
+
+        private void ConfigureSecurityTab()
+        {
+            if (_keyStore is null)
+            {
+                return;
+            }
+            _suppressPassphraseToggle = true;
+            try
+            {
+                bool isProtected = _keyStore.IsPassphraseProtected;
+                chkPassphrase.Checked = isProtected;
+                btnChangePassphrase.Enabled = isProtected;
+                lblSecurityStatus.Text = isProtected
+                    ? "Protected with a passphrase — you'll be asked for it when Philter Desktop starts."
+                    : "Protected by your Windows account (no passphrase required to open).";
+            }
+            finally
+            {
+                _suppressPassphraseToggle = false;
+            }
+        }
+
+        private void SetPassphraseCheck(bool value)
+        {
+            _suppressPassphraseToggle = true;
+            try { chkPassphrase.Checked = value; }
+            finally { _suppressPassphraseToggle = false; }
+        }
+
+        private void ChkPassphrase_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_suppressPassphraseToggle || _keyStore is null)
+            {
+                return;
+            }
+
+            try
+            {
+                if (chkPassphrase.Checked)
+                {
+                    using var dialog = new PassphraseForm(PassphraseFormMode.Set);
+                    if (dialog.ShowDialog(this) == DialogResult.OK)
+                    {
+                        _keyStore.EnablePassphrase(dialog.NewPassphrase);
+                    }
+                    else
+                    {
+                        SetPassphraseCheck(false); // user cancelled
+                    }
+                }
+                else
+                {
+                    DialogResult confirm = MessageBox.Show(
+                        this,
+                        "Remove passphrase protection? The database will then be protected only by your Windows account.",
+                        "Passphrase",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+                    if (confirm == DialogResult.Yes)
+                    {
+                        _keyStore.DisablePassphrase();
+                    }
+                    else
+                    {
+                        SetPassphraseCheck(true); // keep protection
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"Could not update passphrase protection: {ex.Message}",
+                    "Passphrase", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
+            ConfigureSecurityTab();
+        }
+
+        private void BtnChangePassphrase_Click(object sender, EventArgs e)
+        {
+            if (_keyStore is null || !_keyStore.IsPassphraseProtected)
+            {
+                return;
+            }
+
+            using var dialog = new PassphraseForm(PassphraseFormMode.Change);
+            if (dialog.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            if (!_keyStore.VerifyPassphrase(dialog.CurrentPassphrase))
+            {
+                MessageBox.Show(this, "The current passphrase is incorrect.",
+                    "Passphrase", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                _keyStore.ChangePassphrase(dialog.NewPassphrase);
+                MessageBox.Show(this, "Passphrase changed.",
+                    "Passphrase", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"Could not change the passphrase: {ex.Message}",
+                    "Passphrase", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void ConfigureContextMenuToggle()

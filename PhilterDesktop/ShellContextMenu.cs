@@ -47,10 +47,24 @@ namespace PhilterDesktop
             ApplicationConfiguration.Initialize();
             Application.SetDefaultFont(ModernTheme.UiFont);
 
+            string dbPath = DatabasePath();
             LiteDatabase database;
             try
             {
-                database = EncryptedDatabase.Open(DatabasePath());
+                DatabaseKeyStore keyStore = DatabaseKeyStore.ForDatabase(dbPath);
+                if (keyStore.IsPassphraseProtected)
+                {
+                    if (!PassphraseForm.Unlock(keyStore, owner: null))
+                    {
+                        return 0; // user cancelled the unlock prompt
+                    }
+                }
+                else
+                {
+                    keyStore.UnlockWithDpapi();
+                }
+                EncryptedDatabase.Prepare(keyStore);
+                database = EncryptedDatabase.Open(dbPath);
             }
             catch (Exception ex)
             {

@@ -1,7 +1,7 @@
 # Settings
 
 Open **Settings** from the main toolbar to control where redacted files go and how the
-application behaves. The dialog has two tabs: **General** and **Watched Folder**.
+application behaves. The dialog has three tabs: **General**, **Watched Folder**, and **Security**.
 
 ## General
 
@@ -69,6 +69,26 @@ encrypted automatically the first time the updated app runs.
 
 > This protects the data from being read off disk by another user or from a stolen copy of the file.
 > It does not protect against software running as your own Windows account.
+
+### Passphrase protection (Security tab)
+
+By default the database is protected by your Windows account (DPAPI), which doesn't stop software
+running *as you* from reading it. For stronger protection, the **Security** tab lets you require a
+**passphrase** to open the database:
+
+- Tick **Require a passphrase to open the database** and choose a passphrase (at least 8 characters,
+  entered twice). From then on, Philter Desktop asks for it each time it starts.
+- Use **Change Passphrase…** to change it (you'll confirm the current one first).
+- Untick the box to remove passphrase protection and go back to Windows-account protection.
+
+The passphrase unlocks the encryption key; it is **never stored anywhere** — only a salted,
+derived verifier is kept. Turning protection on or off (or changing the passphrase) is **instant**:
+the database is re-keyed at the wrapper level only and is **never re-encrypted**, so it's safe to
+toggle at any time.
+
+> **There is no recovery if you forget the passphrase** — the data cannot be decrypted without it, so
+> store it somewhere safe. Because the app must be unlocked to do anything, you'll be prompted for the
+> passphrase even when Philter Desktop starts at sign-in (so watched folders keep working).
 
 To delete all saved redaction history, use **File → Clear Redaction History…** on the main window.
 (This removes the stored versions and spans, including the detected text; it does not delete any

@@ -91,6 +91,28 @@ writing that version's output file (using the configured suffix — Version 1 �
 file must still exist at its original location, since
 the redaction is produced from it. The redacted document opens automatically when it's done.
 
+## Comparing the original and redacted file
+
+To confirm exactly what was redacted, right-click a **Completed** item and choose **View Diff…**
+(enabled for `.txt` and `.pdf` documents). The original is shown on the **left** ("Before") and the
+redacted output on the **right** ("After"). The view is read-only and never changes either file.
+
+### Text files (`.txt`)
+
+A line-by-line diff with the lines kept aligned and color-coded:
+
+- **Red** — text that was removed,
+- **Green** — text that was added (the replacements), and
+- **Yellow** — lines that were changed.
+
+Long lines **wrap**, and both panes scroll together.
+
+### PDF files (`.pdf`)
+
+A **side-by-side page view**: each page of the original is rendered next to the same page of the
+redacted PDF, so you can visually confirm the redactions. Use **Previous/Next** to move through the
+pages. (Because redacted PDFs are image-based, this is a visual comparison rather than a text diff.)
+
 ## Command-line (headless) redaction
 
 Philter Desktop can redact files from the command line without opening the window — useful for

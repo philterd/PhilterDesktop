@@ -80,6 +80,7 @@ namespace PhilterDesktop
             openRedactedFileToolStripMenuItem = new ToolStripMenuItem();
             openOriginalFileToolStripMenuItem = new ToolStripMenuItem();
             modifyRedactionToolStripMenuItem = new ToolStripMenuItem();
+            viewDiffToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator7 = new ToolStripSeparator();
             refreshToolStripMenuItem = new ToolStripMenuItem();
             imageList1 = new ImageList(components);
@@ -281,7 +282,7 @@ namespace PhilterDesktop
             // contextMenuStrip1
             // 
             contextMenuStrip1.ImageScalingSize = new Size(24, 24);
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, modifyRedactionToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, modifyRedactionToolStripMenuItem, viewDiffToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(197, 262);
             // 
@@ -347,6 +348,13 @@ namespace PhilterDesktop
             modifyRedactionToolStripMenuItem.Size = new Size(196, 30);
             modifyRedactionToolStripMenuItem.Text = "Modify Redaction...";
             modifyRedactionToolStripMenuItem.Click += modifyRedactionToolStripMenuItem_Click;
+            //
+            // viewDiffToolStripMenuItem
+            //
+            viewDiffToolStripMenuItem.Name = "viewDiffToolStripMenuItem";
+            viewDiffToolStripMenuItem.Size = new Size(196, 30);
+            viewDiffToolStripMenuItem.Text = "View Diff...";
+            viewDiffToolStripMenuItem.Click += viewDiffToolStripMenuItem_Click;
             // 
             // toolStripSeparator7
             // 
@@ -430,6 +438,7 @@ namespace PhilterDesktop
         private ToolStripMenuItem openRedactedFileToolStripMenuItem;
         private ToolStripMenuItem openOriginalFileToolStripMenuItem;
         private ToolStripMenuItem modifyRedactionToolStripMenuItem;
+        private ToolStripMenuItem viewDiffToolStripMenuItem;
         private System.Windows.Forms.Timer redactionQueueTimer;
         private ToolStripSeparator toolStripSeparator7;
         private ToolStripMenuItem refreshToolStripMenuItem;

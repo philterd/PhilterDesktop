@@ -106,6 +106,33 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void Open_WithPassphrase_PreservesDataWithoutRebuild()
+        {
+            using (LiteDatabase db = EncryptedDatabase.Open(DbPath))
+            {
+                db.GetCollection<Note>("n").Insert(new Note { Id = 1, Secret = "keep-me" });
+            }
+
+            // Turn on passphrase protection over the existing key.
+            DatabaseKeyStore store = DatabaseKeyStore.ForDatabase(DbPath);
+            store.UnlockWithDpapi();
+            store.EnablePassphrase("open sesame please");
+
+            // The plain DPAPI open now refuses.
+            Assert.Throws<PassphraseRequiredException>(() => EncryptedDatabase.Open(DbPath));
+
+            // Unlock with the passphrase, hand off the key, and the original data is still readable
+            // (the database was never re-encrypted).
+            DatabaseKeyStore unlocked = DatabaseKeyStore.ForDatabase(DbPath);
+            Assert.True(unlocked.TryUnlockWithPassphrase("open sesame please"));
+            EncryptedDatabase.Prepare(unlocked);
+            using (LiteDatabase db = EncryptedDatabase.Open(DbPath))
+            {
+                Assert.Equal("keep-me", db.GetCollection<Note>("n").FindById(1).Secret);
+            }
+        }
+
+        [Fact]
         public void KeyFile_DoesNotContainRawKey()
         {
             using (EncryptedDatabase.Open(DbPath)) { }

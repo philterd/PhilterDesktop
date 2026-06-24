@@ -65,6 +65,10 @@ Word (`.docx`) redaction uses the open-source [Open XML SDK](https://github.com/
   (configured on the **Watched Folder** tab of Settings). Philter Desktop runs in the **system
   tray** (closing the window keeps it watching) and can **start at sign-in**.
 - **Contexts** — manage redaction contexts for consistent replacement.
+- **View Diff** — right-click a completed document → **View Diff…** to compare the original and the
+  redacted output: a color-coded line diff for `.txt`, or a side-by-side page view for `.pdf`.
+- **Passphrase protection** — optionally require a passphrase to open the encrypted database
+  (**Settings → Security**); the key is re-wrapped, so toggling never re-encrypts the database.
 - **Command-line redaction** — redact files headlessly for scripting/automation:
   `PhilterDesktop.exe /p mypolicy /c mycontext file1.pdf file2.pdf` (policy/context optional,
   defaulting to the default policy/context). Works even while the app is running.

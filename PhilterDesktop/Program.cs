@@ -68,6 +68,23 @@ namespace PhilterDesktop
                 }
             }
 
+            // Unlock the database key. If it's passphrase-protected, prompt now (cancel = exit);
+            // otherwise it's unlocked via DPAPI. The unlocked key store is handed to MainForm's open.
+            string dbPath = EncryptedDatabase.DefaultPath();
+            DatabaseKeyStore keyStore = DatabaseKeyStore.ForDatabase(dbPath);
+            if (keyStore.IsPassphraseProtected)
+            {
+                if (!PassphraseForm.Unlock(keyStore, owner: null))
+                {
+                    return 0; // user cancelled the unlock prompt
+                }
+            }
+            else
+            {
+                keyStore.UnlockWithDpapi();
+            }
+            EncryptedDatabase.Prepare(keyStore);
+
             // Hold a session-scoped mutex for the GUI's lifetime so the Explorer context-menu flow can
             // tell the app is running (and let it process the queue instead of launching a new instance).
             using Mutex guiLifetime = AppInstance.CreateGuiLifetime();
