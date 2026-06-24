@@ -1,1 +1,0 @@
-Patient {{{REDACTED-ph-eye}}} was treated by Dr. {{{REDACTED-ph-eye}}}.

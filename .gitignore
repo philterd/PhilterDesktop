@@ -32,6 +32,9 @@ nupkg/
 PhilterDesktop/Models/ph-eye-pii-en-xsmall/
 !PhilterDesktop/Models/README.md
 
+# Redacted output files (e.g. *_redacted-draft.*) must never be committed — they may contain PII
+*_redacted*
+
 # Installer build artifacts
 Installer/Output/
 Installer/AppPackages/
