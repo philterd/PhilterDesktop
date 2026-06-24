@@ -125,6 +125,17 @@ namespace PhilterDesktop.Tests
         });
 
         [Fact]
+        public void RedactionDetailsForm_Constructs() => Sta(() =>
+        {
+            using var f = new RedactionDetailsForm("Details — note.txt", new List<(string, string)>
+            {
+                ("Source file", "note.txt"),
+                ("Redactions", "3"),
+            });
+            _ = f.Handle;
+        });
+
+        [Fact]
         public void AboutForm_Constructs() => Sta(() => { using var f = new AboutForm(); _ = f.Handle; });
 
         [Fact]
@@ -151,6 +162,21 @@ namespace PhilterDesktop.Tests
             using var f = new PdfCompareForm(Array.Empty<byte>(), Array.Empty<byte>(), "a.pdf", "a_redacted.pdf");
             _ = f.Handle;
         });
+
+        [Fact]
+        public void TextRedactionPreviewForm_Constructs() =>
+            ConstructWithDb(db => new TextRedactionPreviewForm(
+                @"C:\docs\note.txt", new PolicyRepository(db), new ContextRepository(db), new SettingsEntity()));
+
+        [Fact]
+        public void PdfRedactionPreviewForm_Constructs() =>
+            ConstructWithDb(db => new PdfRedactionPreviewForm(
+                @"C:\docs\note.pdf", new PolicyRepository(db), new ContextRepository(db), new SettingsEntity()));
+
+        [Fact]
+        public void WordRedactionPreviewForm_Constructs() =>
+            ConstructWithDb(db => new WordRedactionPreviewForm(
+                @"C:\docs\note.docx", new PolicyRepository(db), new ContextRepository(db), new SettingsEntity()));
 
         [Fact]
         public void CreateContextDialog_Constructs() => Sta(() => { using var f = new CreateContextDialog(); _ = f.Handle; });

@@ -58,6 +58,7 @@ namespace PhilterDesktop
             statusStrip1 = new StatusStrip();
             toolStrip1 = new ToolStrip();
             toolStripButtonRedactDocuments = new ToolStripButton();
+            toolStripButtonRedactPreview = new ToolStripButton();
             toolStripSeparator3 = new ToolStripSeparator();
             policiesToolStripButton = new ToolStripButton();
             contextsToolStripButton = new ToolStripButton();
@@ -72,6 +73,7 @@ namespace PhilterDesktop
             columnHeader3 = new ColumnHeader();
             contextMenuStrip1 = new ContextMenuStrip(components);
             addFilesToRedactToolStripMenuItem = new ToolStripMenuItem();
+            redactPreviewToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator2 = new ToolStripSeparator();
             removeToolStripMenuItem = new ToolStripMenuItem();
             removeAllToolStripMenuItem = new ToolStripMenuItem();
@@ -81,6 +83,7 @@ namespace PhilterDesktop
             openOriginalFileToolStripMenuItem = new ToolStripMenuItem();
             modifyRedactionToolStripMenuItem = new ToolStripMenuItem();
             viewDiffToolStripMenuItem = new ToolStripMenuItem();
+            viewDetailsToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator7 = new ToolStripSeparator();
             refreshToolStripMenuItem = new ToolStripMenuItem();
             imageList1 = new ImageList(components);
@@ -166,7 +169,7 @@ namespace PhilterDesktop
             // 
             toolStrip1.GripStyle = ToolStripGripStyle.Hidden;
             toolStrip1.ImageScalingSize = new Size(24, 24);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonRedactDocuments, toolStripSeparator3, policiesToolStripButton, contextsToolStripButton, toolStripSeparator4, settingsToolStripButton, toolStripSeparator6, HelpToolStripButton });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonRedactDocuments, toolStripButtonRedactPreview, toolStripSeparator3, policiesToolStripButton, contextsToolStripButton, toolStripSeparator4, settingsToolStripButton, toolStripSeparator6, HelpToolStripButton });
             toolStrip1.Location = new Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new Padding(0, 0, 2, 0);
@@ -184,6 +187,16 @@ namespace PhilterDesktop
             toolStripButtonRedactDocuments.TextImageRelation = TextImageRelation.ImageAboveText;
             toolStripButtonRedactDocuments.ToolTipText = "Select files to redact";
             toolStripButtonRedactDocuments.Click += toolStripButtonRedactDocuments_Click;
+            //
+            // toolStripButtonRedactPreview
+            //
+            toolStripButtonRedactPreview.ImageTransparentColor = Color.Magenta;
+            toolStripButtonRedactPreview.Name = "toolStripButtonRedactPreview";
+            toolStripButtonRedactPreview.Size = new Size(57, 43);
+            toolStripButtonRedactPreview.Text = "Preview";
+            toolStripButtonRedactPreview.TextImageRelation = TextImageRelation.ImageAboveText;
+            toolStripButtonRedactPreview.ToolTipText = "Preview a redaction before saving (.txt, .docx, .pdf)";
+            toolStripButtonRedactPreview.Click += redactPreviewToolStripMenuItem_Click;
             // 
             // toolStripSeparator3
             // 
@@ -282,7 +295,7 @@ namespace PhilterDesktop
             // contextMenuStrip1
             // 
             contextMenuStrip1.ImageScalingSize = new Size(24, 24);
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, modifyRedactionToolStripMenuItem, viewDiffToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, redactPreviewToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, modifyRedactionToolStripMenuItem, viewDiffToolStripMenuItem, viewDetailsToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(197, 262);
             // 
@@ -293,6 +306,13 @@ namespace PhilterDesktop
             addFilesToRedactToolStripMenuItem.Size = new Size(196, 30);
             addFilesToRedactToolStripMenuItem.Text = "Add Files to Redact...";
             addFilesToRedactToolStripMenuItem.Click += addFilesToRedactToolStripMenuItem_Click;
+            //
+            // redactPreviewToolStripMenuItem
+            //
+            redactPreviewToolStripMenuItem.Name = "redactPreviewToolStripMenuItem";
+            redactPreviewToolStripMenuItem.Size = new Size(196, 30);
+            redactPreviewToolStripMenuItem.Text = "Redact with Preview... (.txt, .docx, .pdf)";
+            redactPreviewToolStripMenuItem.Click += redactPreviewToolStripMenuItem_Click;
             // 
             // toolStripSeparator2
             // 
@@ -355,6 +375,13 @@ namespace PhilterDesktop
             viewDiffToolStripMenuItem.Size = new Size(196, 30);
             viewDiffToolStripMenuItem.Text = "View Diff...";
             viewDiffToolStripMenuItem.Click += viewDiffToolStripMenuItem_Click;
+            //
+            // viewDetailsToolStripMenuItem
+            //
+            viewDetailsToolStripMenuItem.Name = "viewDetailsToolStripMenuItem";
+            viewDetailsToolStripMenuItem.Size = new Size(196, 30);
+            viewDetailsToolStripMenuItem.Text = "View Details...";
+            viewDetailsToolStripMenuItem.Click += viewDetailsToolStripMenuItem_Click;
             // 
             // toolStripSeparator7
             // 
@@ -419,6 +446,7 @@ namespace PhilterDesktop
         private StatusStrip statusStrip1;
         private ToolStrip toolStrip1;
         private ToolStripButton toolStripButtonRedactDocuments;
+        private ToolStripButton toolStripButtonRedactPreview;
         private ListView listView1;
         private ColumnHeader columnHeader1;
         private ColumnHeader columnHeader2;
@@ -431,6 +459,7 @@ namespace PhilterDesktop
         private ToolStripButton settingsToolStripButton;
         private ContextMenuStrip contextMenuStrip1;
         private ToolStripMenuItem addFilesToRedactToolStripMenuItem;
+        private ToolStripMenuItem redactPreviewToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripMenuItem removeToolStripMenuItem;
         private ToolStripMenuItem removeAllToolStripMenuItem;
@@ -439,6 +468,7 @@ namespace PhilterDesktop
         private ToolStripMenuItem openOriginalFileToolStripMenuItem;
         private ToolStripMenuItem modifyRedactionToolStripMenuItem;
         private ToolStripMenuItem viewDiffToolStripMenuItem;
+        private ToolStripMenuItem viewDetailsToolStripMenuItem;
         private System.Windows.Forms.Timer redactionQueueTimer;
         private ToolStripSeparator toolStripSeparator7;
         private ToolStripMenuItem refreshToolStripMenuItem;

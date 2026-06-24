@@ -93,9 +93,3 @@ toggle at any time.
 To delete all saved redaction history, use **File → Clear Redaction History…** on the main window.
 (This removes the stored versions and spans, including the detected text; it does not delete any
 redacted output files already written to disk.)
-
-## Word redaction
-
-Redacting Microsoft Word (`.docx`) documents uses the open-source
-[Open XML SDK](https://github.com/dotnet/Open-XML-SDK). No license key or third-party component is
-required — all supported formats (`.txt`, `.docx`, `.pdf`) redact out of the box.

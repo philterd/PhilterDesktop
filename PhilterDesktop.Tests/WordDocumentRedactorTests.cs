@@ -19,6 +19,7 @@ using Phileas.Model;
 using Phileas.Policy;
 using Phileas.Policy.Filters;
 using Phileas.Services;
+using PhilterData;
 using Xunit;
 using PhileasPolicy = Phileas.Policy.Policy;
 
@@ -79,6 +80,22 @@ namespace PhilterDesktop.Tests
             Assert.Contains("keep four", result);
             Assert.Contains("email {{{REDACTED-email-address}}} here", result);
             Assert.DoesNotContain(result, p => p.Contains("@example.com"));
+        }
+
+        [Fact]
+        public void ReadParagraphs_And_Detect_GiveParagraphIndexedSpans()
+        {
+            string input = CreateDocx("keep one", "email aaa@example.com here", "keep three");
+
+            string[] paragraphs = WordDocumentRedactor.ReadParagraphs(input).ToArray();
+            Assert.Equal(new[] { "keep one", "email aaa@example.com here", "keep three" }, paragraphs);
+
+            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            RedactionSpanEntity span = Assert.Single(spans);
+            Assert.Equal(1, span.ParagraphIndex);        // second paragraph
+            Assert.Equal("aaa@example.com", span.Text);
+            // The input file is read-only/untouched by detection.
+            Assert.Contains(WordDocs.BodyParagraphs(input), p => p.Contains("@example.com"));
         }
 
         [Fact]

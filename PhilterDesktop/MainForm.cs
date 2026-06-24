@@ -218,6 +218,7 @@ namespace PhilterDesktop
             const int size = 24;
             // Segoe Fluent / MDL2 glyphs. Redact is accent-colored as the primary action.
             toolStripButtonRedactDocuments.Image = ModernTheme.CreateGlyphImage("\uE72E", size, ModernTheme.Accent); // Lock
+            toolStripButtonRedactPreview.Image = ModernTheme.CreateGlyphImage("\uE890", size, ModernTheme.Accent);  // View (preview)
             policiesToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE8FD", size, ModernTheme.Text);          // BulletedList
             contextsToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE8EC", size, ModernTheme.Text);         // Tag
             settingsToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE713", size, ModernTheme.Text);         // Settings
@@ -1135,6 +1136,8 @@ namespace PhilterDesktop
                 SelectedSourcePath() is { } src &&
                 (src.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) ||
                  src.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
+
+            viewDetailsToolStripMenuItem.Enabled = hasSelection;
         }
 
         /// <summary>The source file path of the selected queue item, or null.</summary>
@@ -1147,18 +1150,37 @@ namespace PhilterDesktop
             return _redactionQueueRepository.GetById(id)?.Name;
         }
 
+        /// <summary>
+        /// The actual redacted-output path for a document: the latest stored version's output that
+        /// exists on disk (so a custom Save-As location or a later Modify-Redaction output is honored),
+        /// falling back to the computed default location.
+        /// </summary>
+        private string ResolveRedactedOutputPath(ObjectId documentId, string sourceName)
+        {
+            string? stored = _redactionVersionRepository.GetForDocument(documentId)
+                .Where(v => !string.IsNullOrEmpty(v.OutputPath) && File.Exists(v.OutputPath))
+                .Select(v => v.OutputPath)
+                .LastOrDefault(); // GetForDocument is ordered by version ascending → latest existing
+            return stored ?? RedactionService.GetOutputPath(sourceName, _settingsRepository.GetSettings());
+        }
+
         private static bool IsCompleted(ListViewItem item) =>
             item.SubItems.Count > 1 && string.Equals(item.SubItems[1].Text, "Completed", StringComparison.OrdinalIgnoreCase);
 
         private void viewDiffToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string? source = SelectedSourcePath();
-            if (source is null)
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return;
+            }
+            RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
+            if (entity is null)
             {
                 return;
             }
 
-            string output = RedactionService.GetOutputPath(source, _settingsRepository.GetSettings());
+            string source = entity.Name;
+            string output = ResolveRedactedOutputPath(id, source);
 
             if (!File.Exists(source))
             {
@@ -1197,10 +1219,110 @@ namespace PhilterDesktop
             }
         }
 
+        private void viewDetailsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return;
+            }
+            RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
+            if (entity is null)
+            {
+                return;
+            }
+
+            string source = entity.Name;
+            RedactionVersionEntity? latest = _redactionVersionRepository.GetForDocument(id).LastOrDefault();
+
+            string redactedFile = "—";
+            string redactionCount = "—";
+            string timestamp = "—";
+            if (latest is not null)
+            {
+                redactedFile = ResolveRedactedOutputPath(id, source);
+                redactionCount = _redactionSpanRepository.GetForVersion(latest.Id).Count.ToString();
+                timestamp = latest.CreatedAt.ToLocalTime().ToString("f");
+            }
+
+            var rows = new List<(string, string)>
+            {
+                ("Source file", Path.GetFileName(source)),
+                ("Source path", source),
+                ("Redacted file", string.IsNullOrEmpty(redactedFile) || redactedFile == "—" ? "—" : Path.GetFileName(redactedFile)),
+                ("Redacted path", redactedFile),
+                ("Status", entity.Status),
+                ("Policy", string.IsNullOrEmpty(entity.Policy) ? "—" : entity.Policy),
+                ("Context", string.IsNullOrEmpty(entity.Context) ? "—" : entity.Context),
+                ("Redactions", redactionCount),
+                ("Redacted", timestamp)
+            };
+
+            using var details = new RedactionDetailsForm($"Details — {Path.GetFileName(source)}", rows);
+            details.ShowDialog(this);
+        }
+
         private void addFilesToRedactToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var redactDocumentsForm = new RedactDocuments(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled);
             redactDocumentsForm.ShowDialog();
+            LoadRedactionQueue();
+        }
+
+        // Prototype preview-first flow for a single .txt or .pdf file: pick the file, preview the
+        // redaction, and only write the output on Save. The result is recorded as a Completed queue
+        // item (with version history) so View Diff / Modify Redaction work on it afterward.
+        private void redactPreviewToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var picker = new OpenFileDialog
+            {
+                Title = "Select a file to redact",
+                Filter = "Supported (*.txt;*.docx;*.pdf)|*.txt;*.docx;*.pdf|Text (*.txt)|*.txt|Word (*.docx)|*.docx|PDF (*.pdf)|*.pdf"
+            };
+            if (picker.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            string source = picker.FileName;
+            SettingsEntity settings = _settingsRepository.GetSettings();
+
+            if (source.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                using var preview = new PdfRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
+                if (preview.ShowDialog(this) == DialogResult.OK)
+                {
+                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList());
+                }
+            }
+            else if (source.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
+            {
+                using var preview = new WordRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
+                if (preview.ShowDialog(this) == DialogResult.OK)
+                {
+                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList());
+                }
+            }
+            else
+            {
+                using var preview = new TextRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
+                if (preview.ShowDialog(this) == DialogResult.OK)
+                {
+                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList());
+                }
+            }
+        }
+
+        private void RecordCompletedRedaction(string source, string outputPath, string policy, string context, List<RedactionSpanEntity> spans)
+        {
+            var entity = new RedactionQueueEntity
+            {
+                Name = source,
+                Policy = policy,
+                Context = context,
+                Status = "Completed"
+            };
+            _redactionQueueRepository.Insert(entity);
+            SaveRedactionVersion(entity, outputPath, spans);
             LoadRedactionQueue();
         }
 
@@ -1388,7 +1510,7 @@ namespace PhilterDesktop
                 return;
             }
 
-            string outputPath = RedactionService.GetOutputPath(entity.Name, _settingsRepository.GetSettings());
+            string outputPath = ResolveRedactedOutputPath(id, entity.Name);
 
             if (!File.Exists(outputPath))
             {

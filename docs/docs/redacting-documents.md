@@ -6,7 +6,7 @@ redacted, with their status, policy, and context.
 ## Supported file types
 
 - **Plain text** — `.txt`
-- **Microsoft Word** — `.docx` (requires a [Word redaction license](settings.md#word-redaction-license))
+- **Microsoft Word** — `.docx`
 - **PDF** — `.pdf`
 
 > **PDF redaction is image-based.** Each page of a redacted PDF is rasterized to an image with the
@@ -36,6 +36,27 @@ Documents are redacted automatically in the background. Each row's **Status** sh
 Redaction never modifies your original file. A new copy is written with the configured suffix
 (default `_redacted-draft`, e.g. `report.docx` → `report_redacted-draft.docx`) to your configured
 [output location](settings.md).
+
+## Redact with preview
+
+For a more interactive flow on a single document, use **Redact with Preview** — the **Preview**
+button on the toolbar (next to Redact) or the **Redact with Preview…** right-click item. It supports
+`.txt`, `.docx`, and `.pdf`. Pick the file, choose a **policy** and **context**, and Philter Desktop
+shows **how the redacted file will look before anything is written**:
+
+- **Text (`.txt`)** — a live diff of the original vs. the redacted result, with an editable list of
+  redactions (Add / Edit / Remove by position).
+- **Word (`.docx`)** — a paragraph-by-paragraph text diff of what will be redacted, with editable
+  redactions (by paragraph + position) and an optional **highlight** toggle. This previews the
+  redacted *text*, not a full visual page render.
+- **PDF (`.pdf`)** — the redacted PDF rendered side by side with the original (with Fit / zoom and
+  synchronized scrolling).
+
+Changing the policy or context re-detects. Only when you click **Save Redacted File** (which lets you
+choose where to save) is the output written. The result is then added to the queue (as Completed) so
+you can re-open, diff, or further Modify Redaction it. This is an alternative to the queue's "redact
+first, review after" flow — the queue, watched folders, and the command line are still the way to
+redact in bulk.
 
 ## Managing the queue
 
@@ -111,7 +132,8 @@ Long lines **wrap**, and both panes scroll together.
 
 A **side-by-side page view**: each page of the original is rendered next to the same page of the
 redacted PDF, so you can visually confirm the redactions. Use **Previous/Next** to move through the
-pages. (Because redacted PDFs are image-based, this is a visual comparison rather than a text diff.)
+pages, **Fit** / **100%** / **+** / **−** to zoom, and the two panes **scroll together** when zoomed
+in. (Because redacted PDFs are image-based, this is a visual comparison rather than a text diff.)
 
 ## Command-line (headless) redaction
 

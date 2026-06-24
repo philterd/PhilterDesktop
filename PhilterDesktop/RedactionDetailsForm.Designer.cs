@@ -16,7 +16,7 @@
 
 namespace PhilterDesktop
 {
-    partial class PdfCompareForm
+    partial class RedactionDetailsForm
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -33,62 +33,71 @@ namespace PhilterDesktop
 
         private void InitializeComponent()
         {
-            _view = new PdfSideBySideView();
-            _bottom = new Panel();
+            _list = new ListView();
+            _propColumn = new ColumnHeader();
+            _valueColumn = new ColumnHeader();
             _close = new Button();
-            _bottom.SuspendLayout();
             SuspendLayout();
             //
-            // _view
+            // _list
             //
-            _view.Dock = DockStyle.Fill;
-            _view.Location = new Point(0, 0);
-            _view.Name = "_view";
-            _view.Size = new Size(1000, 600);
-            _view.TabIndex = 0;
+            _list.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            _list.Columns.AddRange(new ColumnHeader[] { _propColumn, _valueColumn });
+            _list.FullRowSelect = true;
+            _list.GridLines = true;
+            _list.HeaderStyle = ColumnHeaderStyle.Nonclickable;
+            _list.Location = new Point(12, 12);
+            _list.MultiSelect = false;
+            _list.Name = "_list";
+            _list.Size = new Size(576, 296);
+            _list.TabIndex = 0;
+            _list.UseCompatibleStateImageBehavior = false;
+            _list.View = View.Details;
             //
-            // _bottom
+            // _propColumn
             //
-            _bottom.Controls.Add(_close);
-            _bottom.Dock = DockStyle.Bottom;
-            _bottom.Location = new Point(0, 600);
-            _bottom.Name = "_bottom";
-            _bottom.Size = new Size(1000, 52);
-            _bottom.TabIndex = 1;
+            _propColumn.Text = "Property";
+            _propColumn.Width = 150;
+            //
+            // _valueColumn
+            //
+            _valueColumn.Text = "Value";
+            _valueColumn.Width = 420;
             //
             // _close
             //
             _close.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             _close.DialogResult = DialogResult.OK;
-            _close.Location = new Point(880, 9);
+            _close.Location = new Point(478, 318);
             _close.Name = "_close";
             _close.Size = new Size(110, 34);
-            _close.TabIndex = 0;
+            _close.TabIndex = 1;
             _close.Text = "Close";
             _close.UseVisualStyleBackColor = true;
             //
-            // PdfCompareForm
+            // RedactionDetailsForm
             //
             AcceptButton = _close;
             CancelButton = _close;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1000, 652);
-            Controls.Add(_view);
-            Controls.Add(_bottom);
+            ClientSize = new Size(600, 364);
+            Controls.Add(_list);
+            Controls.Add(_close);
             MinimizeBox = false;
-            MinimumSize = new Size(820, 460);
-            Name = "PdfCompareForm";
+            MinimumSize = new Size(420, 280);
+            Name = "RedactionDetailsForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
-            Text = "Compare PDF";
-            _bottom.ResumeLayout(false);
+            Text = "Details";
             ResumeLayout(false);
         }
 
         #endregion
 
-        private PdfSideBySideView _view;
-        private Panel _bottom;
+        private ListView _list;
+        private ColumnHeader _propColumn;
+        private ColumnHeader _valueColumn;
         private Button _close;
     }
 }

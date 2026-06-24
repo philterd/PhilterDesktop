@@ -40,6 +40,55 @@ namespace PhilterDesktop
         private const string DefaultReplacement = "{{{REDACTED-custom}}}";
 
         /// <summary>
+        /// Returns the text of each redactable paragraph (body, then headers/footers) in the canonical
+        /// order used for redaction — i.e. index <c>i</c> here is <see cref="RedactionSpanEntity.ParagraphIndex"/>
+        /// <c>i</c>. Read-only; does not modify the file. Used for the preview workspace.
+        /// </summary>
+        public static List<string> ReadParagraphs(string inputPath)
+        {
+            using WordprocessingDocument document = WordprocessingDocument.Open(inputPath, isEditable: false);
+            return EnumerateTargets(document).Select(p => p.InnerText).ToList();
+        }
+
+        /// <summary>
+        /// Detects redactions for <paramref name="inputPath"/> using <paramref name="filter"/> without
+        /// writing anything, returning the spans (paragraph-indexed) — the same set <see cref="Redact"/>
+        /// would apply. Used for the preview workspace.
+        /// </summary>
+        public static List<RedactionSpanEntity> Detect(string inputPath, Func<string, TextFilterResult> filter)
+        {
+            using WordprocessingDocument document = WordprocessingDocument.Open(inputPath, isEditable: false);
+
+            var captured = new List<RedactionSpanEntity>();
+            int order = 0;
+            int paragraphIndex = 0;
+            foreach (Paragraph paragraph in EnumerateTargets(document))
+            {
+                string original = paragraph.InnerText;
+                if (!string.IsNullOrEmpty(original))
+                {
+                    foreach (Span s in filter(original).Spans
+                        .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
+                        .OrderBy(s => s.CharacterStart))
+                    {
+                        captured.Add(new RedactionSpanEntity
+                        {
+                            Order = order++,
+                            ParagraphIndex = paragraphIndex,
+                            CharacterStart = s.CharacterStart,
+                            CharacterEnd = s.CharacterEnd,
+                            Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
+                            Replacement = s.Replacement ?? string.Empty,
+                            Classification = s.Classification ?? string.Empty
+                        });
+                    }
+                }
+                paragraphIndex++;
+            }
+            return captured;
+        }
+
+        /// <summary>
         /// Loads <paramref name="inputPath"/>, redacts its text with <paramref name="filter"/>, writes
         /// the result to <paramref name="outputPath"/>, and returns the applied spans (paragraph-indexed).
         /// The input file is left untouched.

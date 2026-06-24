@@ -17,6 +17,25 @@ It is powered by the [Phileas](https://github.com/philterd/phileas-net) redactio
 - Keeps replacements consistent across documents using [contexts](contexts.md).
 - Processes files in the background with a live status view.
 
+## Who it's for
+
+Philter Desktop puts powerful redaction in the hands of an **individual user**, on their own
+machine. It's for the analyst, paralegal, researcher, or knowledge worker who needs to remove PII
+from documents quickly and review the results before sharing them.
+
+## What it is *not*
+
+- **It is not a collaborative workflow or case-management tool.** There are no shared queues,
+  assignments, or hand-offs between users — each person runs Philter Desktop locally on their own
+  documents.
+- **It is not an approval system.** Philter Desktop has no built-in review-and-sign-off stages,
+  multi-party approvals, or audit trails for governance. You — the person running it — are
+  responsible for reviewing redacted output before it leaves your machine. (This is why the default
+  output suffix is `_redacted-draft`: a redacted file is a *draft* until you've verified it.)
+- **It is not a server or service.** It is a desktop application; it doesn't expose an API or run
+  as a shared backend. For programmatic or server-side redaction, use the underlying
+  [Phileas](https://github.com/philterd/phileas-net) engine directly.
+
 ## How it works
 
 1. **Add documents** to the redaction queue (button or drag-and-drop).
