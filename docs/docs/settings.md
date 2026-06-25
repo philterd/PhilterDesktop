@@ -38,6 +38,11 @@ This is mainly useful if something goes wrong and you (or technical support) nee
 **Open Log File** button shows you the log. Logging is **off** by default, and you can safely leave it
 off for normal use.
 
+Use **Clear Log File** to permanently delete that log. The log records application activity for
+troubleshooting (errors and the names of files that were processed) — it does **not** contain the
+detected or redacted text from your documents — but since the file names themselves can be sensitive,
+you can wipe it whenever you like. A new log starts the next time something is logged.
+
 ## Explorer right-click menu
 
 This option lets you redact files **straight from a Windows folder**, without opening Philter Desktop
@@ -128,5 +133,6 @@ off whenever you like.
 
 If you want to wipe the stored history of what's been redacted, use **File → Clear Redaction History…**
 from the main window. This erases the saved versions and redaction lists — including any sensitive
-text they captured. It does **not** delete the cleaned-up files you've already saved to disk; those
-remain wherever you saved them.
+text they captured — and **removes the completed documents from the queue list**. It does **not**
+delete the cleaned-up files you've already saved to disk; those remain wherever you saved them, and any
+documents still being processed are left in place.

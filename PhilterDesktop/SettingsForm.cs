@@ -476,6 +476,54 @@ namespace PhilterDesktop
             }
         }
 
+        private void BtnClearLog_Click(object sender, EventArgs e)
+        {
+            string logFilePath = GetLogFilePath();
+
+            if (!File.Exists(logFilePath))
+            {
+                MessageBox.Show(
+                    "There is no log file to clear.",
+                    "Clear Log File",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            DialogResult result = MessageBox.Show(
+                "Permanently delete the application log file?\n\n" +
+                "The log records application activity for troubleshooting (such as errors and the " +
+                "names of files that were processed). It does not contain the detected/redacted text " +
+                "from your documents. Clearing it cannot be undone, and a new log will start the next " +
+                "time something is logged.",
+                "Clear Log File",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                Logger.ClearLog();
+                MessageBox.Show(
+                    "The application log file has been cleared.",
+                    "Clear Log File",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Failed to clear the log file: {ex.Message}",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
         private void BtnSave_Click(object sender, EventArgs e)
         {
             // Validate custom folder if that option is selected

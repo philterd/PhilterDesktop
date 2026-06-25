@@ -53,6 +53,7 @@ namespace PhilterDesktop
             txtSuffix = new TextBox();
             groupBoxLogging = new GroupBox();
             btnOpenLog = new Button();
+            btnClearLog = new Button();
             chkEnableLogging = new CheckBox();
             btnSave = new Button();
             btnCancel = new Button();
@@ -160,6 +161,7 @@ namespace PhilterDesktop
             // groupBoxLogging
             // 
             groupBoxLogging.Controls.Add(btnOpenLog);
+            groupBoxLogging.Controls.Add(btnClearLog);
             groupBoxLogging.Controls.Add(chkEnableLogging);
             groupBoxLogging.Location = new Point(3, 164);
             groupBoxLogging.Name = "groupBoxLogging";
@@ -180,7 +182,20 @@ namespace PhilterDesktop
             btnOpenLog.Text = "Open Log File";
             btnOpenLog.UseVisualStyleBackColor = true;
             btnOpenLog.Click += BtnOpenLog_Click;
-            // 
+            //
+            // btnClearLog
+            //
+            btnClearLog.AutoSize = true;
+            btnClearLog.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnClearLog.Location = new Point(248, 24);
+            btnClearLog.Name = "btnClearLog";
+            btnClearLog.Padding = new Padding(8, 4, 8, 4);
+            btnClearLog.Size = new Size(106, 33);
+            btnClearLog.TabIndex = 2;
+            btnClearLog.Text = "Clear Log File";
+            btnClearLog.UseVisualStyleBackColor = true;
+            btnClearLog.Click += BtnClearLog_Click;
+            //
             // chkEnableLogging
             // 
             chkEnableLogging.AutoSize = true;
@@ -483,6 +498,7 @@ namespace PhilterDesktop
         private GroupBox groupBoxLogging;
         private CheckBox chkEnableLogging;
         private Button btnOpenLog;
+        private Button btnClearLog;
         private Button btnSave;
         private Button btnCancel;
         private TabControl tabControl;

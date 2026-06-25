@@ -1106,16 +1106,20 @@ namespace PhilterDesktop
         private void clearRedactionHistoryToolStripMenuItem_Click(object sender, EventArgs e)
         {
             int versionCount = _redactionVersionRepository.Count();
-            if (versionCount == 0)
+            int completed = listView1.Items.Cast<ListViewItem>()
+                .Count(i => i.SubItems.Count > 1 && i.SubItems[1].Text == "Completed");
+
+            if (versionCount == 0 && completed == 0)
             {
-                MessageBox.Show("There is no stored redaction history to clear.", "Clear Redaction History",
+                MessageBox.Show("There is no redaction history to clear.", "Clear Redaction History",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             DialogResult result = MessageBox.Show(
                 "Permanently delete all saved redaction history (every version and its stored spans, " +
-                "including the detected text)?\n\nThis does not delete any redacted output files already on disk.",
+                "including the detected text) and remove completed documents from the list?\n\n" +
+                "This does not delete any redacted output files already on disk.",
                 "Clear Redaction History",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning);
@@ -1127,10 +1131,12 @@ namespace PhilterDesktop
 
             _redactionSpanRepository.DeleteAll();
             _redactionVersionRepository.DeleteAll();
+            _redactionQueueRepository.DeleteWhere(x => x.Status == "Completed");
+            LoadRedactionQueue();
 
             if (_loggingEnabled)
             {
-                Logger.LogInfo("Cleared all stored redaction history.");
+                Logger.LogInfo("Cleared all stored redaction history and completed queue items.");
             }
 
             MessageBox.Show("Redaction history cleared.", "Clear Redaction History",

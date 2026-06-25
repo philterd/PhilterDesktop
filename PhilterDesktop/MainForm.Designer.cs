@@ -139,8 +139,7 @@ namespace PhilterDesktop
             helpToolStripMenuItem.Text = "Help";
             // 
             // helpToolStripMenuItem1
-            // 
-            helpToolStripMenuItem1.Image = (Image)resources.GetObject("helpToolStripMenuItem1.Image");
+            //
             helpToolStripMenuItem1.Name = "helpToolStripMenuItem1";
             helpToolStripMenuItem1.Size = new Size(122, 22);
             helpToolStripMenuItem1.Text = "Help";
