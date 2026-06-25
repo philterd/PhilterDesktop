@@ -5,7 +5,27 @@ plain text (`.txt`), Microsoft Word (`.docx`), and PDF (`.pdf`) documents.
 
 ![build-and-test](https://github.com/philterd/PhilterDesktop/actions/workflows/ci.yml/badge.svg)
 
-## Getting Started
+## Get Philter Desktop
+
+Philter Desktop is **free and open source**. The application — **including the official signed
+installer** — is free for everyone:
+
+- **Download the signed installer** from **[philterd.ai](https://www.philterd.ai)** — a one-click
+  setup that installs cleanly (no Windows SmartScreen warning). This is the easiest way for most
+  people.
+- Or **[build it yourself](#building-from-source)** from this repository. The source is fully
+  inspectable, so you (or your IT department) can verify it does all its work on your own machine and
+  never sends your documents anywhere.
+
+A paid **subscription** from Philterd adds **support** — direct help from the team that builds it. It
+does not unlock any features (there are none to unlock) or change your rights under the open-source
+license; it's there for people and organizations who want someone to call. See
+[philterd.ai](https://www.philterd.ai) for details.
+
+> Only official builds from Philterd may use the *Philter Desktop* name, which is a trademark of
+> Philterd, LLC.
+
+## Building from source
 
 ### Prerequisites
 
@@ -29,9 +49,7 @@ dotnet build PhilterDesktop.slnx
 - **PhilterDesktop** — the WinForms application (UI, data access, redaction, and the policy editor)
 - **PhilterDesktop.Tests** — the xUnit test suite
 
-To build the **MSIX installer** in Visual Studio, open **`PhilterDesktop.sln`** instead — it adds
-the `Installer/PhilterDesktop.Package.wapproj` packaging project (the `.slnx` format doesn't
-support `.wapproj`). See `Installer/README.md`.
+To build the distributable **setup installer**, see [`Installer/README.md`](Installer/README.md).
 
 ### Running
 
@@ -99,5 +117,15 @@ The same build-and-test flow runs in CI on every push and pull request
 (`.github/workflows/ci.yml`).
 
 ## License
+
+Philter Desktop is open source under the **Apache License, Version 2.0** — you are free to use,
+inspect, modify, and build it. See [`LICENSE`](LICENSE) for the full text.
+
+The application, including the official signed installer, is **free**. Philterd, LLC offers a paid
+**subscription** for **support** (see [Get Philter Desktop](#get-philter-desktop) and
+[philterd.ai](https://www.philterd.ai)). The subscription does not change your rights under the
+Apache license and unlocks no features; it pays for support. *Philter*, *Philter Desktop*,
+*Phileas*, and *Philterd* are trademarks of Philterd, LLC — the open-source license does not grant
+permission to use these names for redistributed builds.
 
 Copyright 2026 Philterd, LLC.

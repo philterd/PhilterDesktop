@@ -2,7 +2,7 @@
 
 This folder holds the on-device model(s) Philter Desktop ships with. The model files are
 **not committed to git** (they are large binaries); they are downloaded at build time and
-bundled into the app output and the MSIX installer.
+bundled into the app output and the setup installer.
 
 ## ph-eye-pii-en-xsmall (PhEye name detection)
 
@@ -16,7 +16,7 @@ in-process with no network call.
 
 ### How it gets here
 
-- **Release builds** (and the MSIX): the `DownloadPhEyeModel` MSBuild target in
+- **Release builds**: the `DownloadPhEyeModel` MSBuild target in
   `PhilterDesktop.csproj` downloads the files automatically if they are missing.
 - **Debug builds / CI**: the download is skipped so builds stay fast and offline. The app
   detects the absence and simply disables name detection.

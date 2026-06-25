@@ -136,6 +136,14 @@ namespace PhilterDesktop.Tests
         });
 
         [Fact]
+        public void DownloadProgressForm_Constructs() => Sta(() =>
+        {
+            // Construction doesn't start the download (that happens on OnShown), so this is safe.
+            using var f = new DownloadProgressForm("https://example.com/setup.exe", @"C:\Temp\setup.exe");
+            _ = f.Handle;
+        });
+
+        [Fact]
         public void AboutForm_Constructs() => Sta(() => { using var f = new AboutForm(); _ = f.Handle; });
 
         [Fact]

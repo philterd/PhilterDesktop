@@ -1,0 +1,7 @@
+{
+  "_comment": "Copy this file to 'signing.local.json' (same folder) and fill in your Azure Trusted Signing values. signing.local.json is gitignored, so your values are never committed. Values passed as -Signing* parameters or TRUSTED_SIGNING_* environment variables take precedence over this file. The signing dlib is auto-restored from NuGet, so it isn't listed here. Azure authentication uses DefaultAzureCredential (run 'az login' or set AZURE_* variables).",
+
+  "Endpoint": "https://eus.codesigning.azure.net/",
+  "CodeSigningAccountName": "my-trusted-signing-account",
+  "CertificateProfileName": "my-cert-profile"
+}

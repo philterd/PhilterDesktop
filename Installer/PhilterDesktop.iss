@@ -1,9 +1,9 @@
-; Inno Setup script for the UNPACKAGED build of Philter Desktop.
+; Inno Setup script for Philter Desktop.
 ;
-; This packages a `dotnet publish` (win-x64) output folder into a single setup .exe — an
-; alternative to the MSIX for direct download / non-Store distribution. It installs per-user by
-; default (no admin required), and its optional "start at sign-in" task writes the SAME HKCU\Run
-; entry the app's own Settings toggle uses (StartupManager), so the two stay consistent.
+; This packages a `dotnet publish` (win-x64) output folder into a single setup .exe for direct
+; download. It installs per-user by default (no admin required), and its optional "start at sign-in"
+; task writes the SAME HKCU\Run entry the app's own Settings toggle uses (StartupManager), so the
+; two stay consistent.
 ;
 ; Build:  see Installer\build-setup.ps1  (publishes, then compiles this script with ISCC).
 ; Requires Inno Setup 6.3+ (for the x64compatible architecture identifier).
@@ -39,6 +39,12 @@ OutputBaseFilename=PhilterDesktop-Setup-{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+; When the build passes /DSign, sign the installer AND the generated uninstaller. The "philtersign"
+; sign tool is registered on the ISCC command line by build-setup.ps1 (/Sphiltersign=...).
+#ifdef Sign
+SignTool=philtersign
+SignedUninstaller=yes
+#endif
 ; Per-user by default (no elevation); users may choose all-users in the dialog or via /ALLUSERS.
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog commandline

@@ -56,13 +56,6 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
-        public void IsPackaged_IsFalse_WhenRunningUnpackaged()
-        {
-            // The test host is not an MSIX package.
-            Assert.False(StartupManager.IsPackaged);
-        }
-
-        [Fact]
         public void MinimizedSwitch_IsStable()
         {
             Assert.Equal("--minimized", StartupManager.MinimizedSwitch);

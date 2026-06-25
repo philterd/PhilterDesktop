@@ -59,8 +59,6 @@ A few practical notes:
   Save button.
 - Uninstalling Philter Desktop always cleans up the right-click command for you.
 - The option is **off** by default.
-- It is **not available** in the Microsoft Store version of Philter Desktop, where Windows manages
-  this kind of integration through the installed package instead.
 - If you're a technical user who'd rather automate redaction without the pop-up window, you can use
   the [command line](redacting-documents.md#for-advanced-users-and-it-redacting-from-a-command-line)
   directly.

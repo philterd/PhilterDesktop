@@ -39,7 +39,11 @@ PhilterDesktop/Models/ph-eye-pii-en-xsmall/
 
 # Installer build artifacts
 Installer/Output/
-Installer/AppPackages/
+
+# Local code-signing settings (Azure Trusted Signing account/profile) — never commit
+Installer/signing.local.json
+# Auto-restored signing tools (Trusted Signing dlib from NuGet)
+Installer/tools/
 
 # Build results
 [Dd]ebug/

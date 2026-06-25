@@ -205,19 +205,8 @@ namespace PhilterDesktop
             _suppressContextMenuToggle = true;
             try
             {
-                if (StartupManager.IsPackaged)
-                {
-                    // Packaged (MSIX) builds virtualize HKCU\Software\Classes, so a runtime-written
-                    // context menu wouldn't surface in Explorer; it must be declared in the package.
-                    chkContextMenu.Checked = false;
-                    chkContextMenu.Enabled = false;
-                    lblContextMenuHint.Text = "Managed by the installed package for Store/MSIX builds.";
-                }
-                else
-                {
-                    chkContextMenu.Checked = _contextMenuManager.IsEnabled();
-                    lblContextMenuHint.Text = string.Empty;
-                }
+                chkContextMenu.Checked = _contextMenuManager.IsEnabled();
+                lblContextMenuHint.Text = string.Empty;
             }
             finally
             {
@@ -227,7 +216,7 @@ namespace PhilterDesktop
 
         private void ChkContextMenu_CheckedChanged(object sender, EventArgs e)
         {
-            if (_suppressContextMenuToggle || StartupManager.IsPackaged)
+            if (_suppressContextMenuToggle)
             {
                 return;
             }
@@ -258,19 +247,8 @@ namespace PhilterDesktop
             _suppressStartupToggle = true;
             try
             {
-                if (StartupManager.IsPackaged)
-                {
-                    // For installed (MSIX) builds, auto-start is the package's startup task and is
-                    // turned on/off by Windows, not by writing the registry.
-                    chkStartWithWindows.Checked = true;
-                    chkStartWithWindows.Enabled = false;
-                    lblStartupHint.Text = "Managed by Windows — change this in Task Manager → Startup apps.";
-                }
-                else
-                {
-                    chkStartWithWindows.Checked = _startupManager.IsEnabled();
-                    lblStartupHint.Text = string.Empty;
-                }
+                chkStartWithWindows.Checked = _startupManager.IsEnabled();
+                lblStartupHint.Text = string.Empty;
             }
             finally
             {
@@ -280,7 +258,7 @@ namespace PhilterDesktop
 
         private void ChkStartWithWindows_CheckedChanged(object sender, EventArgs e)
         {
-            if (_suppressStartupToggle || StartupManager.IsPackaged)
+            if (_suppressStartupToggle)
             {
                 return;
             }

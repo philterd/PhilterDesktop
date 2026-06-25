@@ -6,12 +6,16 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Single source of truth for the app version. Bump this for each release; it flows to the
+         About dialog, the in-app update check, and the installer filename (build-setup.ps1 reads it
+         from the built exe). -->
+    <Version>1.0.0</Version>
     <!-- Embed the Philter brand icon into the .exe so Windows (taskbar, Explorer, the file icon, and
          the right-click "Redact with Philter Desktop" menu, which points its Icon at the exe) shows
          it instead of a generic icon. -->
     <ApplicationIcon>..\images\PhilterDesktop.ico</ApplicationIcon>
-    <!-- MSIX targets x64; declaring the RID makes the packaging build lay out the native PDF
-         dependencies (PDFium, SkiaSharp, ONNX Runtime) deterministically. -->
+    <!-- Declaring the x64 RID makes the self-contained publish lay out the native PDF
+         dependencies (PDFium, SkiaSharp, ONNX Runtime) deterministically for the installer. -->
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <!-- Run the WinForms designer DPI-unaware (effectively 100%) so it always serializes layouts at
          the 96-DPI baseline, regardless of the developer's monitor scaling. This prevents the
@@ -38,7 +42,7 @@
 
   <!-- On-device PhEye name-detection model (GLiNER xsmall, ~90 MB). Kept out of git (see
        .gitignore) and bundled with the app instead. The model files live under
-       Models\ph-eye-pii-en-xsmall\ and are copied to the output (and into the MSIX). -->
+       Models\ph-eye-pii-en-xsmall\ and are copied to the output (and into the installer). -->
   <PropertyGroup>
     <PhEyeModelName>ph-eye-pii-en-xsmall</PhEyeModelName>
     <PhEyeModelDir>$(MSBuildProjectDirectory)\Models\$(PhEyeModelName)</PhEyeModelDir>

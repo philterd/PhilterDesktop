@@ -22,10 +22,7 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      # Build/test the app and tests directly (not the .slnx): the solution also
-      # contains the MSIX packaging project (Installer/*.wapproj), which the dotnet
-      # CLI cannot build — it requires MSBuild/Visual Studio. Building the test
-      # project compiles the app via its project reference.
+      # Build/test via the test project, which references the app project and so compiles it too.
       - name: Restore
         run: dotnet restore PhilterDesktop.Tests/PhilterDesktop.Tests.csproj
 

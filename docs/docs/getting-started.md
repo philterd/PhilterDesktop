@@ -1,38 +1,62 @@
 # Getting Started
 
-This page walks you through installing Philter Desktop and redacting your first document. You do not
-need any technical background to follow it — if you can install a normal Windows program and open a
-file, you can do everything here.
+This page walks you through installing Philter Desktop, redacting your first document, and (should you
+ever need to) removing the program again. You do not need any technical background to follow it — if
+you can install an ordinary Windows program and open a file, you can do everything here.
 
 ## What you need
 
 - A computer running **Windows 10 or Windows 11**.
 
-That's the whole list. There is no separate license to buy, no password or product key to type in,
-and no add-ons to install. All three document types — plain text, Microsoft Word, and PDF — work
-straight out of the box.
+That's the whole list on the technical side. Philter Desktop — including the official **signed
+installer** — is **free**: there's no product key to enter, nothing to activate, and all three
+document types (plain text, Microsoft Word, and PDF) work straight out of the box. (Philterd also
+offers an optional paid **support** subscription for those who want it — see
+[Licensing & Support](licensing.md).) You do **not** need administrator rights: Philter Desktop
+installs just for your own user account by default.
 
 ## Installing Philter Desktop
 
-Philter Desktop is delivered as a single installer file. (The file ends in `.msix`, which is simply
-Microsoft's modern format for installing Windows programs — you can treat it like any other installer
-you've double-clicked before.)
+Philter Desktop is delivered as a single **setup program** — one file you download and double-click,
+exactly like installing most Windows software. The file is named something like
+**`PhilterDesktop-Setup-1.0.0.exe`** (the numbers are the version, so they'll change over time).
 
 To install:
 
-1. Get the Philter Desktop installer file from whoever provides it to you (your IT department, your
-   firm's software library, or the official download).
-2. **Double-click** the file.
-3. Click **Install** when Windows asks.
+1. **Download** the `PhilterDesktop-Setup-…exe` file. The **official, signed installer** is free from
+   [philterd.ai](https://www.philterd.ai) (or get it from your IT department) — this is the
+   recommended way for most people, because it installs cleanly. (You can also build Philter Desktop
+   from source — see [Licensing & Support](licensing.md).)
+2. **Double-click** the downloaded file to start the setup wizard.
+3. Follow the wizard's prompts (the next section explains the choices it offers). The wizard does the
+   rest and lets you launch Philter Desktop as soon as it finishes.
 
-That's it. Philter Desktop will appear in your Start menu like any other program.
+Once it's done, Philter Desktop appears in your Start menu — and on your desktop, if you chose that
+option — like any other program.
 
-> **If Windows shows a warning about an "untrusted publisher":** this is a normal security check, not
-> a sign that anything is wrong. It just means Windows hasn't yet been told to trust the digital
-> signature on this particular copy of the installer. If you see this, your IT department needs to
-> mark the installer's certificate as trusted on your computer before the installation will proceed.
-> If you installed Philter Desktop from an official, properly signed source, you will not see this
-> message at all. When in doubt, check with whoever gave you the file.
+### The choices the setup wizard offers
+
+The setup wizard is short. Along the way it offers a couple of optional checkboxes; you can leave them
+at their defaults if you're not sure:
+
+- **Create a desktop icon** — adds a Philter Desktop shortcut to your desktop. (Off by default.)
+- **Start Philter Desktop automatically when I sign in** — has Philter Desktop launch quietly each
+  time you sign in to Windows, running in the background so it can watch folders for you. Turn this on
+  only if you plan to use the [watched folders](watched-folders.md) feature; otherwise leave it off.
+  (Off by default. You can also change this later, from inside the program's Settings.)
+
+By default the program installs **only for you** and does **not** require administrator permission. (If
+you're setting up a shared computer and want it available to everyone, the wizard has an option to
+install for all users, which does require an administrator.)
+
+> **A note on Windows security warnings.** The **official signed installer** from
+> [philterd.ai](https://www.philterd.ai) installs cleanly, with no warning. If you instead build
+> Philter Desktop yourself from source, the resulting installer is unsigned, so Windows may show a
+> blue **"Windows protected your PC"** message — this is a normal safety feature called SmartScreen
+> that appears for software Windows hasn't seen signed by a known publisher. It is not a sign that
+> anything is wrong: click **More info** and then **Run anyway** to continue. Either way, if you have
+> any doubt about where a file came from, stop and
+> check with whoever provided it before going further.
 
 ## Your first time opening the program
 
@@ -58,6 +82,43 @@ without setting anything up first.
 
 Remember: the cleaned-up copy is a **brand-new file**. Your original document is left exactly as it
 was. Always open the cleaned-up copy and read through it before you send it to anyone.
+
+## Installing a newer version later
+
+When a newer version of Philter Desktop comes out, you don't need to uninstall the old one first.
+Just download the new `PhilterDesktop-Setup-…exe` and run it the same way; it will install **over** your
+existing copy, keeping all of your policies, contexts, settings, and history intact.
+
+## Uninstalling Philter Desktop
+
+If you ever want to remove Philter Desktop, you do it the same way you'd remove any Windows program:
+
+1. Open the Windows **Settings** app and go to **Apps → Installed apps** (on Windows 10 this is
+   **Apps & features**).
+2. Find **Philter Desktop** in the list.
+3. Click it (or the **⋯** menu next to it) and choose **Uninstall**, then confirm.
+
+A quicker alternative: open the **Start menu**, find the Philter Desktop folder, and click
+**Uninstall Philter Desktop**.
+
+### What uninstalling removes — and what it leaves behind
+
+When you uninstall, Philter Desktop tidies up after itself. It automatically removes:
+
+- the program itself and its Start-menu (and desktop) shortcuts;
+- the **start-at-sign-in** entry, if you had it turned on; and
+- the **"Redact with Philter Desktop"** right-click command, if you had turned that on in Settings.
+
+Two things are **deliberately left in place**, so you don't lose anything by accident:
+
+- **Your saved data** — your policies, contexts, settings, and redaction history. This is kept in a
+  private folder under your user account so that if you reinstall later, everything is still there. If
+  you want to erase this data too, first use **File → Clear Redaction History…** inside the program
+  *before* uninstalling (this is the safest way to wipe the saved history, including any sensitive
+  text it captured), and you can then delete the program's data folder at
+  `%LocalAppData%\PhilterDesktop\` if you wish.
+- **The cleaned-up files you already saved** — every redacted copy you created stays right where you
+  saved it. Uninstalling the program never touches your documents.
 
 ## Where to go from here
 
