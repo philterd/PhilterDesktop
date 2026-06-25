@@ -16,7 +16,6 @@
 
 using System.Text;
 using LiteDB;
-using PhilterDesktop;
 using Xunit;
 
 namespace PhilterDesktop.Tests

@@ -8,12 +8,12 @@ you can install an ordinary Windows program and open a file, you can do everythi
 
 - A computer running **Windows 10 or Windows 11**.
 
-That's the whole list on the technical side. Philter Desktop — including the official **signed
-installer** — is **free**: there's no product key to enter, nothing to activate, and all three
-document types (plain text, Microsoft Word, and PDF) work straight out of the box. (Philterd also
-offers an optional paid **support** subscription for those who want it — see
-[Licensing & Support](licensing.md).) You do **not** need administrator rights: Philter Desktop
-installs just for your own user account by default.
+That's the whole list on the technical side. Philter Desktop is a **per-user subscription that
+includes support** (see [Licensing & Support](licensing.md)); with your subscription you get the
+official, signed installer from [philterd.ai](https://www.philterd.ai). There's no product key to type
+in — the build just works — and all three document types (plain text, Microsoft Word, and PDF) redact
+straight out of the box. You do **not** need administrator rights: Philter Desktop installs just for
+your own user account by default.
 
 ## Installing Philter Desktop
 
@@ -23,10 +23,10 @@ exactly like installing most Windows software. The file is named something like
 
 To install:
 
-1. **Download** the `PhilterDesktop-Setup-…exe` file. The **official, signed installer** is free from
-   [philterd.ai](https://www.philterd.ai) (or get it from your IT department) — this is the
-   recommended way for most people, because it installs cleanly. (You can also build Philter Desktop
-   from source — see [Licensing & Support](licensing.md).)
+1. **Download** the `PhilterDesktop-Setup-…exe` file — the **official, signed installer** that comes
+   with your subscription from [philterd.ai](https://www.philterd.ai) (or from your IT department). It
+   installs cleanly. (The source is open on GitHub, so a technical user can also build their own copy —
+   see [Licensing & Support](licensing.md).)
 2. **Double-click** the downloaded file to start the setup wizard.
 3. Follow the wizard's prompts (the next section explains the choices it offers). The wizard does the
    rest and lets you launch Philter Desktop as soon as it finishes.
@@ -97,9 +97,6 @@ If you ever want to remove Philter Desktop, you do it the same way you'd remove 
    **Apps & features**).
 2. Find **Philter Desktop** in the list.
 3. Click it (or the **⋯** menu next to it) and choose **Uninstall**, then confirm.
-
-A quicker alternative: open the **Start menu**, find the Philter Desktop folder, and click
-**Uninstall Philter Desktop**.
 
 ### What uninstalling removes — and what it leaves behind
 

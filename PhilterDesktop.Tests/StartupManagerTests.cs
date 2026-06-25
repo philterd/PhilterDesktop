@@ -15,7 +15,6 @@
  */
 
 using Microsoft.Win32;
-using PhilterDesktop;
 using Xunit;
 
 namespace PhilterDesktop.Tests

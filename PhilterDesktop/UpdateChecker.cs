@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -39,11 +38,10 @@ namespace PhilterDesktop
             [JsonPropertyName("releaseDate")]
             public string? ReleaseDate { get; set; }
 
+            // The manifest may carry a downloadUrl, but the app intentionally does not use it:
+            // subscribers download the official build from their account page (see UpdateAvailableForm).
             [JsonPropertyName("downloadUrl")]
             public string? DownloadUrl { get; set; }
-
-            [JsonPropertyName("sha256")]
-            public string? Sha256 { get; set; }
         }
 
         /// <summary>Downloads and parses the update manifest. Throws on network/parse failure.</summary>
@@ -84,87 +82,5 @@ namespace PhilterDesktop
         // a manifest "1.0.0" doesn't read as older than an assembly version of 1.0.0.0.
         private static Version Normalize(Version v) =>
             new(Math.Max(v.Major, 0), Math.Max(v.Minor, 0), Math.Max(v.Build, 0));
-
-        /// <summary>
-        /// A non-clobbering path on the user's Desktop for the installer named in <paramref name="url"/>
-        /// (e.g. <c>philter_desktop_setup.exe</c>), appending " (1)", " (2)", … if the file exists.
-        /// </summary>
-        public static string GetDesktopDownloadPath(string url)
-        {
-            string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-
-            string fileName;
-            try { fileName = Path.GetFileName(new Uri(url).LocalPath); }
-            catch { fileName = string.Empty; }
-            if (string.IsNullOrWhiteSpace(fileName))
-            {
-                fileName = "philter_desktop_setup.exe";
-            }
-
-            string path = Path.Combine(desktop, fileName);
-            string baseName = Path.GetFileNameWithoutExtension(fileName);
-            string ext = Path.GetExtension(fileName);
-            for (int n = 1; File.Exists(path); n++)
-            {
-                path = Path.Combine(desktop, $"{baseName} ({n}){ext}");
-            }
-            return path;
-        }
-
-        /// <summary>
-        /// Downloads <paramref name="url"/> to <paramref name="destinationPath"/>, streaming to disk and
-        /// reporting (bytesDownloaded, totalBytes-or-null) as it goes. Honors cancellation.
-        /// </summary>
-        public static async Task DownloadAsync(
-            string url,
-            string destinationPath,
-            IProgress<(long Downloaded, long? Total)>? progress = null,
-            CancellationToken cancellationToken = default)
-        {
-            // No overall timeout: a large installer over a slow link can take a while; cancellation
-            // (the Cancel button) is the way to stop it.
-            using var http = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("PhilterDesktop");
-
-            using HttpResponseMessage response =
-                await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            long? total = response.Content.Headers.ContentLength;
-            await using Stream source = await response.Content.ReadAsStreamAsync(cancellationToken);
-            await using var destination = new FileStream(
-                destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
-
-            var buffer = new byte[81920];
-            long downloaded = 0;
-            int read;
-            while ((read = await source.ReadAsync(buffer, cancellationToken)) > 0)
-            {
-                await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
-                downloaded += read;
-                progress?.Report((downloaded, total));
-            }
-        }
-
-        /// <summary>Lowercase hex SHA-256 of a file's contents.</summary>
-        public static string ComputeSha256(string filePath)
-        {
-            using var sha = System.Security.Cryptography.SHA256.Create();
-            using FileStream stream = File.OpenRead(filePath);
-            return Convert.ToHexString(sha.ComputeHash(stream)).ToLowerInvariant();
-        }
-
-        /// <summary>
-        /// True if the file's SHA-256 equals <paramref name="expectedSha256"/> (case-insensitive).
-        /// Returns false if no expected hash is supplied.
-        /// </summary>
-        public static bool HashMatches(string filePath, string? expectedSha256)
-        {
-            if (string.IsNullOrWhiteSpace(expectedSha256))
-            {
-                return false;
-            }
-            return string.Equals(ComputeSha256(filePath), expectedSha256.Trim(), StringComparison.OrdinalIgnoreCase);
-        }
     }
 }

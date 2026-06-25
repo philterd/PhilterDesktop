@@ -7,23 +7,19 @@ plain text (`.txt`), Microsoft Word (`.docx`), and PDF (`.pdf`) documents.
 
 ## Get Philter Desktop
 
-Philter Desktop is **free and open source**. The application — **including the official signed
-installer** — is free for everyone:
+Philter Desktop is a **commercial product** from Philterd. The **official, signed build — with
+support — is a per-user subscription** (currently **$100 per user, per year**), provided to
+subscribers from **[philterd.ai](https://www.philterd.ai)** (it installs cleanly, with no Windows
+SmartScreen warning).
 
-- **Download the signed installer** from **[philterd.ai](https://www.philterd.ai)** — a one-click
-  setup that installs cleanly (no Windows SmartScreen warning). This is the easiest way for most
-  people.
-- Or **[build it yourself](#building-from-source)** from this repository. The source is fully
-  inspectable, so you (or your IT department) can verify it does all its work on your own machine and
-  never sends your documents anywhere.
+Its **source code is free and open source** under the Apache License 2.0 — you (or your IT
+department) can inspect exactly what it does, confirm it works entirely on your own machine and never
+sends your documents anywhere, and [build and run your own copy](#building-from-source) under that
+license. **This repository hosts the source code, not ready-made installers** — the official build is
+provided to subscribers from Philterd.
 
-A paid **subscription** from Philterd adds **support** — direct help from the team that builds it. It
-does not unlock any features (there are none to unlock) or change your rights under the open-source
-license; it's there for people and organizations who want someone to call. See
-[philterd.ai](https://www.philterd.ai) for details.
-
-> Only official builds from Philterd may use the *Philter Desktop* name, which is a trademark of
-> Philterd, LLC.
+> *Philter* is a trademark of Philterd, LLC; Philterd's official builds are distributed under the
+> Philter brand.
 
 ## Building from source
 
@@ -118,14 +114,14 @@ The same build-and-test flow runs in CI on every push and pull request
 
 ## License
 
-Philter Desktop is open source under the **Apache License, Version 2.0** — you are free to use,
-inspect, modify, and build it. See [`LICENSE`](LICENSE) for the full text.
+The **source code** is open source under the **Apache License, Version 2.0** — you may inspect,
+modify, and build it under that license. See [`LICENSE`](LICENSE) for the full text.
 
-The application, including the official signed installer, is **free**. Philterd, LLC offers a paid
-**subscription** for **support** (see [Get Philter Desktop](#get-philter-desktop) and
-[philterd.ai](https://www.philterd.ai)). The subscription does not change your rights under the
-Apache license and unlocks no features; it pays for support. *Philter*, *Philter Desktop*,
-*Phileas*, and *Philterd* are trademarks of Philterd, LLC — the open-source license does not grant
-permission to use these names for redistributed builds.
+The **official Philter Desktop product** — the signed, maintained build and the support that comes
+with it — is a paid **per-user subscription** from Philterd, provided to subscribers under the
+Philterd Commercial License Agreement (see [Get Philter Desktop](#get-philter-desktop) and
+[philterd.ai](https://www.philterd.ai)). That agreement covers the official product and does not limit
+your rights in the open-source code under the Apache license. ***Philter*** is a trademark of
+Philterd, LLC; the Apache license does not grant permission to use that mark for redistributed builds.
 
 Copyright 2026 Philterd, LLC.

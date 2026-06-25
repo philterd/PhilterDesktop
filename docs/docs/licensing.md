@@ -2,54 +2,57 @@
 
 Philter Desktop is made by **Philterd**, the company behind the
 [Phileas](https://github.com/philterd/phileas-net) redaction engine that powers it. This page
-explains, in plain terms, how Philter Desktop is licensed, what a support subscription adds, and how
-the fact that the source code is openly available fits together with all of that.
+explains, in plain terms, how the **free and open-source software** and the **paid official product**
+fit together.
 
 ## The short version
 
-- **The app is free.** Philter Desktop — *including the official, signed installer* — is free for
-  everyone to download and use. There is nothing crippled or time-limited, and no product key to
-  enter.
-- **The source code is open** (published under the Apache License, version 2.0). You — or your IT
-  department — can inspect exactly what the program does.
-- **Support is the paid part.** Philterd offers an optional **support subscription** — **$100 per
-  user, per year** — for people and organizations that want direct help from the team that builds it.
+- **The software is free and open source.** Philter Desktop's source code is published under the
+  **Apache License, Version 2.0**. You — or your IT department — can inspect exactly what it does, and
+  anyone may use, modify, and build it under that license.
+- **The official product is what Philterd sells.** The **official, signed Philter Desktop build —
+  with support — is a per-user subscription** (**$100 per user, per year**). That's the supported,
+  ready-to-run product from the team that makes it, and it's provided to subscribers from
+  [philterd.ai](https://www.philterd.ai). (This project's source repository hosts the source code, not
+  ready-made installers.)
+- **"Philter" is a trademark of Philterd.** Anyone may build the open-source code, but the official
+  builds are distributed under the Philter brand by Philterd.
 - For the current, definitive pricing and terms, see **[philterd.ai](https://www.philterd.ai)**.
 
 The rest of this page explains what each of those points means.
 
-## What the support subscription includes
+## What the subscription gives you
 
-The software is free, so a subscription doesn't unlock anything — there's nothing to unlock. What it
-buys you is a **direct line to the people who build Philter Desktop**, which is what turns a free tool
-into something you can depend on for professional work:
+The subscription is for the official, supported product:
 
-- **Help when you need it.** If something doesn't work, if you have a question about setting up a
-  policy, or if you need help fitting Philter Desktop into your workflow, you can reach the Philterd
-  team directly by emailing **[support@philterd.ai](mailto:support@philterd.ai)**.
-- **Peace of mind.** For a solo practice or a small firm without an IT department, knowing there's
-  someone to call is often worth more than any feature.
-- **Supporting the project.** Subscriptions fund the ongoing development, testing, and maintenance
-  that keep Philter Desktop working and improving.
+- **The official, signed build** from Philterd — tested, code-signed, and maintained, so it installs
+  cleanly and you know it genuinely came from Philterd.
+- **Support** — a direct line to the people who build Philter Desktop. If something doesn't work, if
+  you have a question about setting up a policy, or if you need help fitting it into your workflow, you
+  can reach the Philterd team by emailing **[support@philterd.ai](mailto:support@philterd.ai)**.
+- **Maintained releases** — ongoing updates, fixes, and improvements.
 
-A subscription is entirely **optional** — the app works fully without one. To subscribe, renew, or
-ask about pricing for a team or firm, visit **[philterd.ai](https://www.philterd.ai)**.
+To subscribe, renew, or ask about pricing for a team or firm, visit
+**[philterd.ai](https://www.philterd.ai)**.
 
-## "Free and open source" *and* "a paid offering" — how both are true
+## "Open source" *and* "a paid product" — how both are true
 
-It's natural to wonder how something can be both **free** and have a **paid** side. Here's the plain
+It's natural to wonder how something can be both **open source** and **paid**. Here's the plain
 explanation.
 
-The Apache 2.0 license means the program's underlying source code is published openly, so anyone can
-read it and verify what it does. **For a tool that handles confidential and privileged material, this
-openness is a feature, not a giveaway:** your IT or security team can confirm, with their own eyes,
-that Philter Desktop does its work **entirely on your own computer** and does not quietly send your
-documents anywhere. You are not asked to simply trust a sealed black box.
+The Apache 2.0 license means the source code is published openly, so anyone can read it and verify
+what it does. **For a tool that handles confidential and privileged material, this openness is a
+feature:** your IT or security team can confirm, with their own eyes, that Philter Desktop does its
+work **entirely on your own computer** and does not quietly send your documents anywhere. You are not
+asked to simply trust a sealed black box.
 
-The subscription doesn't pay for *the software*, and it doesn't pay for *permission to run it* — both
-are free. It pays for the one thing open code alone can't give you: **a human to help.** This is a
-common and honest model for open-source software — the program is free, and the company behind it
-makes its living by supporting the people who rely on it.
+The Apache license, though, deliberately gives you the *code* — it does **not** give you support, a
+warranty, or the right to use Philterd's name. So that's what the subscription is for: the **official,
+signed, Philterd-branded build**, the **support** behind it, and **maintained releases** — the things
+the open-source license doesn't provide. This is a common model for commercial open-source software:
+the code is open for transparency, and the company sustains itself by providing the official, supported
+product. (A technical user is always free to build their own copy from the source under the Apache
+license; what Philterd offers is the official product and support.)
 
 ## A note for IT departments
 

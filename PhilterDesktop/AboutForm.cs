@@ -46,20 +46,34 @@ namespace PhilterDesktop
 
         private void linkLabelWebsite_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start(new ProcessStartInfo
+            Open("https://www.philterd.ai");
+        }
+
+        private void linkLicense_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Open("https://github.com/philterd/PhilterDesktop/blob/main/LICENSE");
+        }
+
+        private void linkGitHub_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Open("https://github.com/philterd/PhilterDesktop");
+        }
+
+        private static void Open(string url)
+        {
+            try
             {
-                FileName = "https://www.philterd.ai",
-                UseShellExecute = true
-            });
+                Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+            }
+            catch
+            {
+                // best effort — opening a browser shouldn't crash the dialog
+            }
         }
 
         private void icons8LinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "https://icons8.com",
-                UseShellExecute = true
-            });
+            Open("https://icons8.com");
         }
     }
 }

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-using PhilterDesktop;
 using Xunit;
 
 namespace PhilterDesktop.Tests

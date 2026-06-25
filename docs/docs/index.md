@@ -89,5 +89,5 @@ expectations:
 - **[Redacting Documents](redacting-documents.md)** — the day-to-day guide to adding files,
   reviewing the results, and adjusting what was removed.
 - **[Policies](policies.md)** — how to set up the rules that decide what gets removed.
-- **[Licensing & Support](licensing.md)** — the app is free and open source; what an optional support
-  subscription adds.
+- **[Licensing & Support](licensing.md)** — the per-user subscription (includes support), and how the
+  open-source code fits in.

@@ -17,7 +17,6 @@
 using System.Text;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
-using Phileas.Model;
 using Phileas.Policy;
 using Phileas.Services;
 using PhilterData;

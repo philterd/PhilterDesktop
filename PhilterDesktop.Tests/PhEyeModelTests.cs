@@ -17,7 +17,6 @@
 using Phileas.Policy;
 using Phileas.Policy.Filters;
 using Phileas.Services;
-using PhilterDesktop;
 using Xunit;
 using PhileasPolicy = Phileas.Policy.Policy;
 

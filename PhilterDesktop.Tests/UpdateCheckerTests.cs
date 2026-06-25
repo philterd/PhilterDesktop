@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-using PhilterDesktop;
 using Xunit;
 
 namespace PhilterDesktop.Tests
@@ -48,52 +47,6 @@ namespace PhilterDesktop.Tests
             Version v = UpdateChecker.CurrentVersion();
             Assert.True(v.Major >= 0 && v.Minor >= 0 && v.Build >= 0);
             Assert.Equal(-1, v.Revision); // normalized to Major.Minor.Build (no revision)
-        }
-
-        [Fact]
-        public void ComputeSha256_MatchesKnownVector()
-        {
-            // SHA-256("abc")
-            const string expected = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
-            string path = Path.Combine(Path.GetTempPath(), "uc-" + Guid.NewGuid().ToString("N") + ".bin");
-            try
-            {
-                File.WriteAllText(path, "abc");
-                Assert.Equal(expected, UpdateChecker.ComputeSha256(path));
-            }
-            finally
-            {
-                File.Delete(path);
-            }
-        }
-
-        [Fact]
-        public void HashMatches_IsCaseInsensitive_AndDetectsMismatch()
-        {
-            const string sha = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
-            string path = Path.Combine(Path.GetTempPath(), "uc-" + Guid.NewGuid().ToString("N") + ".bin");
-            try
-            {
-                File.WriteAllText(path, "abc");
-                Assert.True(UpdateChecker.HashMatches(path, sha.ToUpperInvariant()));
-                Assert.False(UpdateChecker.HashMatches(path, "deadbeef"));
-                Assert.False(UpdateChecker.HashMatches(path, null));
-                Assert.False(UpdateChecker.HashMatches(path, ""));
-            }
-            finally
-            {
-                File.Delete(path);
-            }
-        }
-
-        [Fact]
-        public void GetDesktopDownloadPath_UsesDesktopAndUrlFileName()
-        {
-            string path = UpdateChecker.GetDesktopDownloadPath("https://philterd.ai/philter_desktop_setup.exe");
-            string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-            Assert.Equal(desktop, Path.GetDirectoryName(path));
-            Assert.Equal(".exe", Path.GetExtension(path));
-            Assert.StartsWith("philter_desktop_setup", Path.GetFileName(path));
         }
     }
 }

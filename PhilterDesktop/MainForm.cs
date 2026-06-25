@@ -16,14 +16,11 @@
 
 using LiteDB;
 using Phileas.Policy;
-using Phileas.Policy.Filters;
 using Phileas.Services;
 using PhilterData;
 using PhilterDesktop.PolicyEditing;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
-using System.Text.Json;
-using PhileasPolicy = Phileas.Policy.Policy;
 
 namespace PhilterDesktop
 {
@@ -58,6 +55,7 @@ namespace PhilterDesktop
 
         private Label _emptyStateLabel = null!;
         private ToolStripStatusLabel _queueSummaryLabel = null!;
+        private ToolStripStatusLabel _reviewWarningLabel = null!;
         private Image? _documentImage;
         private System.Windows.Forms.Timer _statusAnimTimer = null!;
         private int _statusAnimPhase;
@@ -201,6 +199,17 @@ namespace PhilterDesktop
                 ForeColor = ModernTheme.SubtleText
             };
             statusStrip1.Items.Add(_queueSummaryLabel);
+
+            // Persistent safety reminder: automated redaction is imperfect and output must be reviewed.
+            // Sits after the spring summary label, so it stays pinned to the right of the status bar,
+            // shown in bold amber so it stays visible.
+            _reviewWarningLabel = new ToolStripStatusLabel
+            {
+                Text = "Redaction can include mistakes. Always carefully review redacted documents before sharing.",
+                Font = new Font(ModernTheme.UiFont, FontStyle.Bold),
+                ForeColor = Color.FromArgb(176, 92, 0)
+            };
+            statusStrip1.Items.Add(_reviewWarningLabel);
 
             // --- Wire the previously-dead Help buttons ---
             HelpToolStripButton.Click += OpenHelp;
@@ -916,7 +925,9 @@ namespace PhilterDesktop
 
             if (newer == true)
             {
-                DownloadUpdate(manifest, current);
+                using var dialog = new UpdateAvailableForm(
+                    current.ToString(3), manifest.Version!, manifest.ReleaseDate);
+                dialog.ShowDialog(this);
             }
             else if (newer == false)
             {
@@ -930,117 +941,6 @@ namespace PhilterDesktop
                 MessageBox.Show(this,
                     $"The latest published version is {manifest.Version}.\nYour installed version is {current.ToString(3)}.",
                     "Check for Updates", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-        }
-
-        // Confirms with the user, downloads the installer to the Desktop, and verifies its SHA-256
-        // against the manifest before telling the user it's ready.
-        private void DownloadUpdate(UpdateChecker.UpdateManifest manifest, Version current)
-        {
-            string released = string.IsNullOrWhiteSpace(manifest.ReleaseDate)
-                ? string.Empty
-                : $"  (released {manifest.ReleaseDate})";
-            string message =
-                "A new version of Philter Desktop is available.\n\n" +
-                $"Installed version: {current.ToString(3)}\n" +
-                $"Latest version: {manifest.Version}{released}\n\n" +
-                "Would you like to download the update now? It will be saved to your Desktop.";
-
-            if (MessageBox.Show(this, message, "Update Available",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Information) != DialogResult.Yes)
-            {
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(manifest.DownloadUrl))
-            {
-                MessageBox.Show(this, "No download is available for this update.", "Check for Updates",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string destination = UpdateChecker.GetDesktopDownloadPath(manifest.DownloadUrl);
-
-            using (var download = new DownloadProgressForm(manifest.DownloadUrl, destination))
-            {
-                download.ShowDialog(this);
-
-                if (download.Canceled)
-                {
-                    TryDelete(destination); // remove any partial file
-                    return;
-                }
-                if (download.Error is not null)
-                {
-                    TryDelete(destination);
-                    MessageBox.Show(this, $"The download failed:\n\n{download.Error.Message}",
-                        "Check for Updates", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-            }
-
-            // No checksum in the manifest: keep the file but tell the user it couldn't be verified.
-            if (string.IsNullOrWhiteSpace(manifest.Sha256))
-            {
-                MessageBox.Show(this,
-                    $"The update was downloaded to your Desktop, but it could not be verified (no checksum was provided).\n\nSaved to:\n{destination}",
-                    "Download Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            bool verified;
-            try
-            {
-                verified = UpdateChecker.HashMatches(destination, manifest.Sha256);
-            }
-            catch (Exception ex)
-            {
-                TryDelete(destination);
-                MessageBox.Show(this, $"The downloaded file could not be verified:\n\n{ex.Message}",
-                    "Check for Updates", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (verified)
-            {
-                if (MessageBox.Show(this,
-                        $"The update was downloaded and verified successfully.\n\nSaved to:\n{destination}\n\nOpen the Desktop folder now?",
-                        "Download Complete", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
-                {
-                    try
-                    {
-                        System.Diagnostics.Process.Start(
-                            new System.Diagnostics.ProcessStartInfo { FileName = "explorer.exe", Arguments = $"/select,\"{destination}\"" });
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(this, $"Could not open the Desktop folder:\n\n{ex.Message}",
-                            "Check for Updates", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
-                }
-            }
-            else
-            {
-                TryDelete(destination);
-                MessageBox.Show(this,
-                    "The downloaded file did not match the expected checksum and may be corrupted or " +
-                    "tampered with. It has been deleted.\n\nPlease try again, or download manually from philterd.ai.",
-                    "Verification Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private static void TryDelete(string path)
-        {
-            try
-            {
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
-            }
-            catch
-            {
-                // best effort
             }
         }
 

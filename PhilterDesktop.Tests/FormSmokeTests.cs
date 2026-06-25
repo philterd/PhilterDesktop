@@ -136,10 +136,9 @@ namespace PhilterDesktop.Tests
         });
 
         [Fact]
-        public void DownloadProgressForm_Constructs() => Sta(() =>
+        public void UpdateAvailableForm_Constructs() => Sta(() =>
         {
-            // Construction doesn't start the download (that happens on OnShown), so this is safe.
-            using var f = new DownloadProgressForm("https://example.com/setup.exe", @"C:\Temp\setup.exe");
+            using var f = new UpdateAvailableForm("1.0.0", "1.0.1", "2026-06-25");
             _ = f.Handle;
         });
 
