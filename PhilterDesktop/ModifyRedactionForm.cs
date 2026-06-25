@@ -31,7 +31,7 @@ namespace PhilterDesktop
     /// </summary>
     public partial class ModifyRedactionForm : Form
     {
-        private readonly ObjectId _documentId;
+        private readonly ObjectId _documentId = null!;
         private readonly RedactionVersionRepository _versions = null!;
         private readonly RedactionSpanRepository _spans = null!;
         private readonly PolicyRepository _policies = null!;
@@ -130,7 +130,7 @@ namespace PhilterDesktop
                 item.SubItems.Add(s.Replacement);
                 item.SubItems.Add(StartText(s));
                 item.SubItems.Add(StopText(s));
-                item.SubItems.Add(Location(s));
+                item.SubItems.Add(DescribeLocation(s));
                 _spanList.Items.Add(item);
             }
             _spanList.EndUpdate();
@@ -396,7 +396,7 @@ namespace PhilterDesktop
         private static string Display(string classification) =>
             string.IsNullOrEmpty(classification) ? "Detected" : classification;
 
-        private static string Location(RedactionSpanEntity s) =>
+        private static string DescribeLocation(RedactionSpanEntity s) =>
             s.PageNumber > 0 ? $"Page {s.PageNumber}"
             : s.ParagraphIndex >= 0 ? $"¶ {s.ParagraphIndex + 1}"
             : string.Empty;

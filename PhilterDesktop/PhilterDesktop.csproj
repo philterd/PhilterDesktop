@@ -32,8 +32,8 @@
     <PackageReference Include="DiffPlex" Version="1.9.0" />
     <PackageReference Include="PDFtoImage" Version="5.2.1" />
     <PackageReference Include="LiteDB" Version="5.0.21" />
-    <!-- DPAPI (ProtectedData) for encrypting the database key at rest (Windows, per-user). -->
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.9" />
+    <!-- DPAPI (ProtectedData) for encrypting the database key at rest (Windows, per-user) is
+         provided by the net10.0-windows framework, so no package reference is needed. -->
   </ItemGroup>
 
   <!-- On-device PhEye name-detection model (GLiNER xsmall, ~90 MB). Kept out of git (see

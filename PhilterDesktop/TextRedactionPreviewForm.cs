@@ -120,7 +120,7 @@ namespace PhilterDesktop
         // cursor until it (and the preview refresh) finishes.
         private void Detect()
         {
-            Cursor previousCursor = Cursor.Current;
+            Cursor? previousCursor = Cursor.Current;
             UseWaitCursor = true;
             Cursor.Current = Cursors.WaitCursor;
             try

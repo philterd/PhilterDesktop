@@ -69,7 +69,7 @@ namespace PhilterDesktop.Tests
         public static string[] BodyParagraphs(string path)
         {
             using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
-            return doc.MainDocumentPart!.Document.Body!
+            return doc.MainDocumentPart!.Document!.Body!
                 .Elements<Paragraph>()
                 .Select(p => p.InnerText)
                 .ToArray();
@@ -83,7 +83,7 @@ namespace PhilterDesktop.Tests
         {
             using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
             return string.Concat(doc.MainDocumentPart!.HeaderParts
-                .SelectMany(h => h.Header.Descendants<Paragraph>())
+                .SelectMany(h => h.Header!.Descendants<Paragraph>())
                 .Select(p => p.InnerText));
         }
 
@@ -92,7 +92,7 @@ namespace PhilterDesktop.Tests
         {
             using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
             return string.Concat(doc.MainDocumentPart!.FooterParts
-                .SelectMany(f => f.Footer.Descendants<Paragraph>())
+                .SelectMany(f => f.Footer!.Descendants<Paragraph>())
                 .Select(p => p.InnerText));
         }
 

@@ -1,95 +1,134 @@
 # Settings
 
-Open **Settings** from the main toolbar to control where redacted files go and how the
-application behaves. The dialog has three tabs: **General**, **Watched Folder**, and **Security**.
+Open **Settings** from the main toolbar to control where your cleaned-up files are saved and how the
+program behaves. The Settings window is divided into three tabs: **General**, **Watched Folder**, and
+**Security**. This page walks through each of them.
 
-## General
+## General tab
 
-The **General** tab holds the output-location, logging, and Explorer right-click-menu settings below.
+The **General** tab is where you set the output location (where cleaned-up files go), turn logging on
+or off, and switch on the Windows Explorer right-click menu. Each of these is explained below.
 
-## Output location
+## Where your cleaned-up files are saved (Output location)
 
-Choose where redacted copies are written:
+You choose where Philter Desktop puts the cleaned-up copies it creates:
 
-- **Original location** — write the redacted file next to the source document.
-- **Custom folder** — write all redacted files to a folder you specify.
+- **Original location** — the cleaned-up copy is saved in the **same folder** as the document it came
+  from.
+- **Custom folder** — every cleaned-up copy is saved into **one folder that you pick**, no matter
+  where the original came from. This is handy if you want all your redacted output collected in a
+  single, well-known place.
 
-Redacted files are always written as a **new copy**; your originals are never modified.
+Either way, the cleaned-up file is always a **new copy** — your original document is never changed.
 
-The **Redacted file name suffix** is added to the copy's name (before the extension). It defaults to
-**`_redacted-draft`** — for example `report.docx` → `report_redacted-draft.docx`. The default is
-deliberately *not* just `_redacted`: redaction is statistical and can miss things, so the name should
-not imply the file is verified safe. The "draft" wording is a reminder to **review the output before
-sharing it**. You can change the suffix to suit your own convention (an empty value resets it to the
-default).
+You can also set the **Redacted file name suffix** — the label that's added to the end of each
+cleaned-up file's name (just before the file extension). By default it is **`_redacted-draft`**, so
+`report.docx` becomes `report_redacted-draft.docx`.
+
+Why "draft," and not simply "redacted"? Because **automatic redaction can miss things.** No automated
+tool is perfect, and the law often treats these documents as high-stakes. Naming the file a "draft"
+is a built-in reminder that the file still needs **your review** before you share it — it should never
+be assumed safe just because the computer produced it. You're welcome to change the suffix to match
+your own naming habits. (If you ever clear the box and leave it empty, it resets to the default.)
 
 ## Logging
 
-Enable **logging** to record application activity to a log file (useful for troubleshooting). Use
-**Open Log File** to view it. Logging is off by default.
+Turning on **logging** tells Philter Desktop to keep a running record of what it does in a log file.
+This is mainly useful if something goes wrong and you (or technical support) need to look into it. The
+**Open Log File** button shows you the log. Logging is **off** by default, and you can safely leave it
+off for normal use.
 
 ## Explorer right-click menu
 
-Enable **Add "Redact with Philter Desktop" to the Explorer right-click menu** to put a redaction
-command on the context menu for `.pdf`, `.docx`, and `.txt` files in Windows Explorer.
+This option lets you redact files **straight from a Windows folder**, without opening Philter Desktop
+first.
 
-With it on, select one or more of those files, right-click, and choose **Redact with Philter
-Desktop**. A dialog lists the selected files and lets you pick the **policy** and **context** to use
-(and whether to highlight Word redactions). Clicking **Redact** adds the files to the Philter Desktop
-[redaction queue](redacting-documents.md), where they are processed like any other queued document —
-Philter Desktop starts automatically if it isn't already running. Selecting **several files at once**
-opens a single dialog for the whole selection.
+Turn on **Add "Redact with Philter Desktop" to the Explorer right-click menu**. Once it's on, you can
+go to any folder, select one or more `.pdf`, `.docx`, or `.txt` files, **right-click** them, and
+choose **Redact with Philter Desktop**. A small window appears listing the files you picked and
+letting you choose the **policy** and **context** to use (and whether to highlight redactions in Word
+documents). When you click **Redact**, the files are handed to Philter Desktop's
+[redaction queue](redacting-documents.md) and processed just like any other document — and Philter
+Desktop starts up on its own if it isn't already running. If you select several files at once, you get
+a single window for the whole group.
 
-Turning the option **on** writes the entries to your per-user registry; turning it **off** removes
-them. The setting takes effect immediately (no need to click Save), and uninstalling Philter Desktop
-always removes the entries.
+A few practical notes:
 
-The option is off by default, and it is unavailable in Microsoft Store (MSIX) builds, where Explorer
-integration is managed by the package instead. (For scripting or to redact without the dialog, use
-the [command line](redacting-documents.md#command-line-headless-redaction) directly.)
+- Switching this option **on** adds the right-click command for your user account; switching it
+  **off** removes it again. The change happens **immediately** — there's no need to click a separate
+  Save button.
+- Uninstalling Philter Desktop always cleans up the right-click command for you.
+- The option is **off** by default.
+- It is **not available** in the Microsoft Store version of Philter Desktop, where Windows manages
+  this kind of integration through the installed package instead.
+- If you're a technical user who'd rather automate redaction without the pop-up window, you can use
+  the [command line](redacting-documents.md#for-advanced-users-and-it-redacting-from-a-command-line)
+  directly.
 
-## Watched folders
+## Watched Folder tab
 
-The **Watched Folder** tab lets you set up folders that Philter Desktop continuously monitors and
-redacts automatically, and turn on starting at sign-in. Philter Desktop runs from the system tray
-so monitoring continues even when the window is closed. See the dedicated
-[Watched Folders](watched-folders.md) page for full details.
+The **Watched Folder** tab lets you set up folders that Philter Desktop **watches automatically** —
+any document dropped into a watched folder is redacted on its own, without you adding it to the queue
+by hand. This tab is also where you turn on having Philter Desktop start automatically when you sign
+in to Windows, and it lets the program keep working quietly from the system tray (the small icons near
+the clock) even when its window is closed. This feature has its own detailed page; see
+[Watched Folders](watched-folders.md).
 
-## Data storage and encryption
+## Security tab — protecting your stored information
 
-Philter Desktop keeps its policies, contexts, settings, the redaction queue, and the saved
-redaction history (including the detected text from [Modify Redaction](redacting-documents.md#modifying-a-redaction))
-in a local database under your user profile (`%LocalAppData%\PhilterDesktop\`).
+This tab is worth understanding if you handle confidential material, because it's about keeping the
+information Philter Desktop stores on your computer safe. The explanations below go into some detail on
+purpose.
 
-Because that history can contain personal data, the database is **encrypted at rest** (AES). The
-encryption key is generated on first run and protected with **Windows DPAPI** scoped to your user
-account, so the database can only be opened by **you, on that machine** — no password to enter, and
-the key file is useless if copied elsewhere. An existing database from an earlier version is
-encrypted automatically the first time the updated app runs.
+### What Philter Desktop stores, and why it's protected
 
-> This protects the data from being read off disk by another user or from a stolen copy of the file.
-> It does not protect against software running as your own Windows account.
+To do its job, Philter Desktop keeps some information on your computer: your policies, your contexts,
+your settings, the list of documents in your queue, and the **redaction history** (the record of what
+was redacted, which — through the [Modify Redaction](redacting-documents.md#adjusting-what-was-removed-modify-redaction)
+feature — can include the actual sensitive text that was found). All of this lives in a small private
+file in your personal Windows profile.
 
-### Passphrase protection (Security tab)
+Because that history can contain personal information, Philter Desktop **scrambles the file so it
+can't be read by anyone who simply opens it.** (The technical term is that the file is **encrypted at
+rest** — meaning it's stored in a locked, unreadable form whenever it's sitting on your disk.) The
+"key" that unlocks it is created automatically the first time you run the program and is then locked
+to **your Windows account on that specific computer**, using a protection feature built into Windows
+itself. In plain terms: by default you don't have to enter any password, but the file can only be
+opened by **you, signed in to your own account, on your own machine** — a copy of the file taken to
+another computer would be useless. If you're upgrading from an older version, your existing data is
+locked down automatically the first time the new version runs.
 
-By default the database is protected by your Windows account (DPAPI), which doesn't stop software
-running *as you* from reading it. For stronger protection, the **Security** tab lets you require a
-**passphrase** to open the database:
+> This protects your data from someone reading it off the disk directly, or from a stolen copy of the
+> file. It does **not** protect against other software that's already running under your own Windows
+> account — for that, use the passphrase option described next.
 
-- Tick **Require a passphrase to open the database** and choose a passphrase (at least 8 characters,
-  entered twice). From then on, Philter Desktop asks for it each time it starts.
-- Use **Change Passphrase…** to change it (you'll confirm the current one first).
-- Untick the box to remove passphrase protection and go back to Windows-account protection.
+### Adding a passphrase for stronger protection
 
-The passphrase unlocks the encryption key; it is **never stored anywhere** — only a salted,
-derived verifier is kept. Turning protection on or off (or changing the passphrase) is **instant**:
-the database is re-keyed at the wrapper level only and is **never re-encrypted**, so it's safe to
-toggle at any time.
+By default, your stored information is tied to your Windows account, as just described. For an extra
+layer of protection — one that even other software running as *you* can't get past — the **Security**
+tab lets you require a **passphrase** (a password) before the program will open:
 
-> **There is no recovery if you forget the passphrase** — the data cannot be decrypted without it, so
-> store it somewhere safe. Because the app must be unlocked to do anything, you'll be prompted for the
-> passphrase even when Philter Desktop starts at sign-in (so watched folders keep working).
+- Check **Require a passphrase to open the database** and choose a passphrase (at least 8 characters,
+  typed twice to confirm). From then on, Philter Desktop will ask you for it every time it starts.
+- Use **Change Passphrase…** to change it later (you'll confirm the current one first).
+- Uncheck the box to remove passphrase protection and go back to the standard Windows-account
+  protection.
 
-To delete all saved redaction history, use **File → Clear Redaction History…** on the main window.
-(This removes the stored versions and spans, including the detected text; it does not delete any
-redacted output files already written to disk.)
+How your passphrase is handled is important: **the passphrase itself is never saved anywhere.** The
+program only keeps enough scrambled information to *check* that what you type is correct — it never
+stores the passphrase in a form anyone could read. Turning the passphrase on or off, or changing it,
+takes effect **instantly** and never requires re-processing your data, so it's safe to switch on or
+off whenever you like.
+
+> **Please choose your passphrase carefully and store it somewhere safe.** If you forget it, **there
+> is no way to recover your stored information** — that's the whole point of strong protection, but it
+> means the responsibility is yours. Also note that, because the program must be unlocked before it
+> can do anything, you'll be asked for the passphrase even when Philter Desktop starts automatically
+> at sign-in (which keeps your watched folders working).
+
+### Clearing your saved redaction history
+
+If you want to wipe the stored history of what's been redacted, use **File → Clear Redaction History…**
+from the main window. This erases the saved versions and redaction lists — including any sensitive
+text they captured. It does **not** delete the cleaned-up files you've already saved to disk; those
+remain wherever you saved them.

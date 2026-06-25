@@ -99,7 +99,8 @@ namespace PhilterDesktop
             if (listViewContexts.SelectedItems.Count == 0)
                 return;
 
-            var selectedContext = (ContextEntity)listViewContexts.SelectedItems[0].Tag;
+            if (listViewContexts.SelectedItems[0].Tag is not ContextEntity selectedContext)
+                return;
 
             if (selectedContext.Name.Equals("default", StringComparison.OrdinalIgnoreCase))
             {
@@ -129,7 +130,8 @@ namespace PhilterDesktop
             if (listViewContexts.SelectedItems.Count == 0)
                 return;
 
-            var selectedContext = (ContextEntity)listViewContexts.SelectedItems[0].Tag;
+            if (listViewContexts.SelectedItems[0].Tag is not ContextEntity selectedContext)
+                return;
             var contextName = selectedContext.Name;
             var entryCount = _contextEntryRepository.CountByContext(contextName);
 

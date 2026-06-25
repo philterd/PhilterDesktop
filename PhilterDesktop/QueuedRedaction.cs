@@ -22,8 +22,8 @@ namespace PhilterDesktop
 {
     public class QueuedRedaction
     {
-        public string filename { get; set; }
-        public string context { get; set; }
-        public string policy { get; set; }
+        public string filename { get; set; } = string.Empty;
+        public string context { get; set; } = string.Empty;
+        public string policy { get; set; } = string.Empty;
     }
 }

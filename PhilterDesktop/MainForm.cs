@@ -587,6 +587,10 @@ namespace PhilterDesktop
 
         private void ListView1_DrawSubItem(object? sender, DrawListViewSubItemEventArgs e)
         {
+            if (e.Item is null)
+            {
+                return;
+            }
             bool selected = e.Item.Selected;
             Color back = selected ? ModernTheme.SelectionBack : ModernTheme.Surface;
             using (var b = new SolidBrush(back))
@@ -1131,10 +1135,11 @@ namespace PhilterDesktop
             openOriginalFileToolStripMenuItem.Enabled = hasSelection;
             modifyRedactionToolStripMenuItem.Enabled = selectedCompleted; // versions exist once redacted
 
-            // Enable for a completed .txt (text diff) or .pdf (side-by-side page comparison).
+            // Enable for a completed .txt / .docx (text diff) or .pdf (side-by-side page comparison).
             viewDiffToolStripMenuItem.Enabled = selectedCompleted &&
                 SelectedSourcePath() is { } src &&
                 (src.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) ||
+                 src.EndsWith(".docx", StringComparison.OrdinalIgnoreCase) ||
                  src.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
 
             viewDetailsToolStripMenuItem.Enabled = hasSelection;
@@ -1203,6 +1208,15 @@ namespace PhilterDesktop
                     byte[] after = File.ReadAllBytes(output);
                     using var compare = new PdfCompareForm(before, after, Path.GetFileName(source), Path.GetFileName(output));
                     compare.ShowDialog(this);
+                }
+                else if (source.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Word documents have no plain-text form: compare the extracted body paragraphs
+                    // (one per line), which is what the redactor operates on.
+                    string before = string.Join("\n", WordDocumentRedactor.ReadParagraphs(source));
+                    string after = string.Join("\n", WordDocumentRedactor.ReadParagraphs(output));
+                    using var diff = new DiffViewerForm(before, after, Path.GetFileName(source), Path.GetFileName(output));
+                    diff.ShowDialog(this);
                 }
                 else
                 {

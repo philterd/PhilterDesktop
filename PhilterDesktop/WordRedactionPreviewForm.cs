@@ -124,7 +124,7 @@ namespace PhilterDesktop
                 return;
             }
 
-            Cursor previousCursor = Cursor.Current;
+            Cursor? previousCursor = Cursor.Current;
             UseWaitCursor = true;
             Cursor.Current = Cursors.WaitCursor;
             try
@@ -304,7 +304,7 @@ namespace PhilterDesktop
             }
 
             string output = dialog.FileName;
-            Cursor previousCursor = Cursor.Current;
+            Cursor? previousCursor = Cursor.Current;
             UseWaitCursor = true;
             Cursor.Current = Cursors.WaitCursor;
             try

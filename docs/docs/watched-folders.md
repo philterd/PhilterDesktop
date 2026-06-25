@@ -1,97 +1,115 @@
-# Watched Folders
+# Watched Folders (Automatic, Hands-Off Redaction)
 
-A **watched folder** is a folder that Philter Desktop continuously monitors. When a new `.txt`,
-`.docx`, or `.pdf` file appears in it, Philter Desktop automatically redacts the file and writes the
-redacted copy to that folder's output directory — no need to add files to the queue by hand.
+A **watched folder** is a folder that Philter Desktop keeps an eye on for you. Whenever a new
+`.txt`, `.docx`, or `.pdf` file shows up in that folder, Philter Desktop notices it, redacts it
+automatically, and saves the cleaned-up copy to an output folder you've chosen — all without you
+having to add anything to the queue by hand.
 
-This is ideal for "drop box" workflows: point a watched folder at a scan location, a downloads
-folder, or a shared network folder, and every document that lands there is redacted automatically.
+This turns redaction into a "drop box" that runs itself. For example, you could point a watched folder
+at the place where your scanner saves documents, at your Downloads folder, or at a shared network
+folder where colleagues drop files — and from then on, **everything that lands there gets cleaned up
+automatically**. It's ideal for a steady stream of documents that all need the same treatment.
 
-## Adding a watched folder
+## Setting up a watched folder
 
-Open **Settings** from the main toolbar and select the **Watched Folder** tab, then click
-**Add…**. The dialog asks for:
+Open **Settings** from the main toolbar, go to the **Watched Folder** tab, and click **Add…**. You'll
+be asked to fill in a few things:
 
-- **Folder to watch** — the folder to monitor for new files.
-- **Policy** — the [policy](policies.md) that decides which PII to redact and how.
-- **Context** — the [redaction context](contexts.md) used for consistent replacements.
-- **File types** — which of **PDF (.pdf)**, **Word (.docx)**, and **Text (.txt)** to redact in this
-  folder. At least one must be selected; other file types in the folder are ignored.
-- **Highlight redactions in Word (.docx) documents** — when checked, replacement text in redacted
-  Word documents is highlighted for easier review.
-- **Show a notification when a file is redacted** — when checked, a system-tray notification appears
-  as files in this folder are redacted (bursts are combined into a single summary; failures are
-  reported too). Clicking it opens the output folder. Notifications are suppressed while the main
-  window is open and in front. This is set per folder, so you can keep noisy folders quiet.
-- **Include subfolders** — when checked, files in subfolders are watched too, and the redacted
-  output mirrors the source subfolder structure under the output folder (so files with the same name
-  in different subfolders don't collide). When this is on, the output folder must be **outside** the
-  watched folder. Hidden and system files/folders are skipped.
-- **Output folder** — where the redacted copies are written. This must be **different** from the
-  watched folder.
+- **Folder to watch** — the folder you want Philter Desktop to monitor for new files.
+- **Policy** — the [policy](policies.md) (set of rules) that decides what to remove and how, for
+  files in this folder.
+- **Context** — the [context](contexts.md) (consistency setting) to use for these files.
+- **File types** — which of **PDF (.pdf)**, **Word (.docx)**, and **Text (.txt)** you want redacted
+  in this folder. You must pick at least one; any other kinds of files in the folder are simply
+  ignored.
+- **Highlight redactions in Word (.docx) documents** — when checked, the replacements in cleaned-up
+  Word documents are highlighted, making them easy to spot when you review the file.
+- **Show a notification when a file is redacted** — when checked, a small pop-up appears near the
+  clock as files in this folder are cleaned up (several at once are combined into one summary, and
+  failures are reported too). Clicking the pop-up opens the output folder. These pop-ups are held back
+  while the main Philter Desktop window is open and in front of you, so they don't get in your way.
+  Because this is set per folder, you can keep a busy folder quiet while still being notified about
+  others.
+- **Include subfolders** — when checked, files inside folders *within* the watched folder are
+  monitored too, and the cleaned-up output mirrors that folder structure (so two files with the same
+  name in different subfolders don't overwrite each other). If you turn this on, the output folder
+  must be **outside** the watched folder. Hidden and system files and folders are skipped.
+- **Output folder** — where the cleaned-up copies are saved. This must be a **different** folder from
+  the one being watched (otherwise the cleaned-up files would themselves look like new files to
+  redact).
 
-Each watched folder has its own policy, context, highlight setting, and output folder, so you can
-monitor several folders with different rules at once.
+Each watched folder has its **own** policy, context, highlight setting, and output folder. That means
+you can watch several folders at once, each with completely different rules — for instance, one folder
+for medical records and another for financial documents, each handled its own way.
 
-To change a watched folder's settings later, select it and click **Edit…**. To stop monitoring a
-folder, select it and click **Remove**. Changes to the watched-folder list take effect immediately.
+To change a watched folder's settings later, select it and click **Edit…**. To stop watching a folder,
+select it and click **Remove**. Any changes you make to the watched-folder list take effect right
+away.
 
-## How redaction works
+## How the automatic redaction behaves
 
-- **File types:** only `.txt`, `.docx`, and `.pdf` files are redacted; other files are ignored.
-- **Output naming:** redacted copies are written to the output folder with the configured suffix
-  (default `_redacted-draft`, e.g. `invoice.pdf` becomes `invoice_redacted-draft.pdf`). Your
-  originals are never modified.
-- **Existing files:** files already present in a watched folder when Philter Desktop starts are
-  picked up too, not just files added afterward.
-- **No re-redaction:** the redacted output files are ignored, so they are never redacted again, and
-  a file that has already been redacted is skipped unless it changes.
-- **Large files:** Philter Desktop waits until a file has finished being written (copied or
-  downloaded) before redacting it.
+A few details worth knowing about how watching works:
 
-## Activity log
+- **Which files are handled:** only `.txt`, `.docx`, and `.pdf` files are redacted; everything else
+  in the folder is left alone.
+- **What the copies are named:** cleaned-up copies are saved to the output folder with the usual
+  label (by default `_redacted-draft`, so `invoice.pdf` becomes `invoice_redacted-draft.pdf`). Your
+  originals are never changed.
+- **Files already in the folder:** when Philter Desktop starts up, it also picks up files that were
+  *already* sitting in a watched folder — not just files added afterward.
+- **No redacting the same file twice:** the cleaned-up output files are themselves ignored, so they're
+  never redacted again, and a file that's already been redacted is skipped unless it changes.
+- **Large or still-arriving files:** if a file is still being copied or downloaded, Philter Desktop
+  waits until it has fully finished arriving before redacting it, so it never works on a half-written
+  file.
 
-Each watched folder keeps its own **activity log** so you can confirm what happened. Select a
-folder on the **Watched Folder** tab and click **View Log…** to see, with timestamps:
+## The activity log
+
+Every watched folder keeps its own **activity log** so you can see exactly what's been happening and
+confirm nothing was missed. On the **Watched Folder** tab, select a folder and click **View Log…**.
+With timestamps, the log shows:
 
 - when a file was **found**,
-- when it was **redacted** and **where** the redacted copy was written,
-- when a file was **skipped** (already redacted), and
+- when it was **redacted**, and **where** the cleaned-up copy was saved,
+- when a file was **skipped** (because it had already been redacted), and
 - any **errors** (shown in red).
 
-The dialog has **Refresh** to re-read the latest activity and **Clear Log** to empty it. Entries are
-timestamped and kept until you clear the log or remove the folder; entries older than **30 days** are
-removed automatically.
+The log window has a **Refresh** button to load the latest activity and a **Clear Log** button to
+empty it. Entries stay until you clear the log or remove the folder, and anything older than **30
+days** is removed automatically to keep the log tidy.
 
-## Running in the background (system tray)
+## Working quietly in the background (the system tray)
 
-So that monitoring can continue without keeping a window open, Philter Desktop runs from the
-**Windows system tray**:
+So that it can keep watching your folders without a window cluttering your screen, Philter Desktop can
+tuck itself away into the **Windows system tray** — the row of small icons near the clock:
 
-- **Closing the window** (the **X**) hides Philter Desktop to the tray instead of exiting —
-  watching keeps running. The first time this happens, a notification explains it.
-- **Double-click the tray icon** to reopen the main window.
-- **Right-click the tray icon** for:
+- **Closing the window** (clicking the **X**) does **not** quit the program; it just hides it to the
+  tray, and watching keeps running. The first time this happens, a pop-up explains it so you're not
+  caught off guard.
+- **Double-click the tray icon** to bring the main window back.
+- **Right-click the tray icon** for a short menu:
     - **Open Philter Desktop** — reopen the window.
-    - **Pause watching / Resume watching** — temporarily stop or restart monitoring.
-    - **Exit** — fully close the application and stop watching.
+    - **Pause watching / Resume watching** — temporarily stop or restart automatic monitoring.
+    - **Exit** — fully close the program and stop watching.
 
-While Philter Desktop is running (even hidden in the tray), all watched folders are monitored.
+As long as Philter Desktop is running — even when it's only sitting in the tray — all of your watched
+folders are being monitored.
 
-## Starting automatically at sign-in
+## Starting automatically when you sign in
 
-To have Philter Desktop watch your folders across reboots, enable **Start Philter Desktop at
-sign-in** on the **Watched Folder** tab. It then launches automatically when you sign in and
-resumes watching.
+To have Philter Desktop watch your folders even after a restart, turn on **Start Philter Desktop at
+sign-in** on the **Watched Folder** tab. After that, it launches on its own whenever you sign in to
+Windows and picks up watching right where it left off.
 
-- On a build you run yourself, this is a per-user setting you control with that checkbox.
-- On an **installed (MSIX) build**, auto-start is managed by Windows. The checkbox shows the current
-  state; turn it on or off under **Task Manager → Startup apps**.
+- In the version you run yourself, this is a simple on/off setting you control with that checkbox.
+- In the **Microsoft Store** version, automatic startup is managed by Windows. The checkbox shows you
+  the current state, but to turn it on or off you go to **Task Manager → Startup apps**.
 
-## Notes and limitations
+## Things to keep in mind
 
-- Watching runs only while you are **signed in** to Windows. For unattended, always-on redaction on
-  a server, a Windows service would be required (not currently provided).
-- The output folder must be different from the watched folder.
-- Redacted PDFs are image-based (the output has no recoverable text layer), the same as
-  [manual PDF redaction](redacting-documents.md).
+- Watching only happens while **you are signed in** to Windows. For unattended, always-on redaction on
+  a server (running even when nobody is logged in), you would need a Windows service, which Philter
+  Desktop does not currently provide.
+- The output folder must always be different from the folder being watched.
+- Just like [PDFs you redact by hand](redacting-documents.md), redacted PDFs from a watched folder are
+  flattened to images, so the removed text is truly gone and cannot be recovered.
