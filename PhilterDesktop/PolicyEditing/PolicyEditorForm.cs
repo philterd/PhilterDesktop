@@ -50,6 +50,7 @@ namespace PhilterDesktop.PolicyEditing
         private readonly ToolStripDropDownButton _new = new() { Text = "New" };
         private readonly ToolStripMenuItem _newBlank = new() { Text = "Blank Policy" };
         private readonly ToolStripMenuItem _newFromTemplate = new() { Text = "From Template…" };
+        private readonly ToolStripMenuItem _newWizard = new() { Text = "From Wizard…" };
         private readonly ToolStripButton _save = new() { Text = "Save", Enabled = false };
         private readonly ToolStripButton _saveAs = new() { Text = "Save As", Enabled = false };
         private readonly ToolStripButton _delete = new() { Text = "Delete", Enabled = false };
@@ -119,6 +120,7 @@ namespace PhilterDesktop.PolicyEditing
             _policyCombo.SelectedIndexChanged += (_, _) => OnPolicySelectionChanged();
             _newBlank.Click += OnNew;
             _newFromTemplate.Click += OnNewFromTemplate;
+            _newWizard.Click += OnNewFromWizard;
             _save.Click += OnSave;
             _saveAs.Click += OnSaveAs;
             _delete.Click += OnDelete;
@@ -138,10 +140,11 @@ namespace PhilterDesktop.PolicyEditing
             _saveAs.Image = ModernTheme.CreateGlyphImage("\uE792", 20, ModernTheme.Text);  // SaveAs
             _delete.Image = ModernTheme.CreateGlyphImage("\uE74D", 20, ModernTheme.Text);  // Delete
 
-            // "New" is a dropdown: Blank Policy or From Template. Menu items use small icons.
+            // "New" is a dropdown: Blank Policy, From Template, or From Wizard. Menu items use small icons.
             _newBlank.Image = ModernTheme.CreateGlyphImage("\uE7C3", 16, ModernTheme.Text);        // Page (blank)
             _newFromTemplate.Image = ModernTheme.CreateGlyphImage("\uE8A5", 16, ModernTheme.Text); // Document (template)
-            _new.DropDownItems.AddRange(new ToolStripItem[] { _newBlank, _newFromTemplate });
+            _newWizard.Image = ModernTheme.CreateGlyphImage("\uE945", 16, ModernTheme.Text);       // Lightbulb (wizard)
+            _new.DropDownItems.AddRange(new ToolStripItem[] { _newBlank, _newFromTemplate, _newWizard });
 
             // Toolbar buttons show their icon above the label.
             foreach (ToolStripItem button in new ToolStripItem[] { _new, _save, _saveAs, _delete })
@@ -153,7 +156,10 @@ namespace PhilterDesktop.PolicyEditing
             _toolStrip.Items.Add(new ToolStripLabel("Policy:"));
             _toolStrip.Items.Add(_policyCombo);
             _toolStrip.Items.Add(new ToolStripSeparator());
-            _toolStrip.Items.AddRange(new ToolStripItem[] { _new, _save, _saveAs, _delete });
+            _toolStrip.Items.AddRange(new ToolStripItem[]
+            {
+                _new, new ToolStripSeparator(), _save, _saveAs, new ToolStripSeparator(), _delete
+            });
 
             _actions.Controls.Add(_ignoreList);
             _actions.Controls.Add(_alwaysRedact);
@@ -170,22 +176,9 @@ namespace PhilterDesktop.PolicyEditing
 
         private void RegisterFilters()
         {
-            (string Category, string[] Props)[] categories =
-            {
-                ("Personal", new[] { "FirstName", "Surname", "Age" }),
-                ("Contact", new[] { "EmailAddress", "PhoneNumber", "PhoneNumberExtension" }),
-                ("Location", new[] { "City", "County", "State", "StateAbbreviation", "ZipCode", "StreetAddress" }),
-                ("Financial", new[] { "CreditCard", "BankRoutingNumber", "IbanCode", "BitcoinAddress", "Currency" }),
-                ("Identifiers", new[] { "Ssn", "DriversLicense", "PassportNumber", "Vin", "TrackingNumber" }),
-                ("Technical", new[] { "IpAddress", "MacAddress", "Url" }),
-                ("Medical", new[] { "Hospital" }),
-                ("Other", new[] { "Date" }),
-            };
+            IReadOnlyList<(string Category, string[] Props)> categories = FilterCatalog.Categories;
 
-            Dictionary<string, PropertyInfo> discovered = typeof(Identifiers)
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => typeof(AbstractPolicyFilter).IsAssignableFrom(p.PropertyType))
-                .ToDictionary(p => p.Name);
+            Dictionary<string, PropertyInfo> discovered = FilterCatalog.Discover();
 
             var placed = new HashSet<string>();
             foreach ((string category, string[] props) in categories)
@@ -718,6 +711,18 @@ namespace PhilterDesktop.PolicyEditing
             }
             _repo.Insert(new PolicyEntity { Name = name, Json = json });
             ReloadPolicyList(name);
+        }
+
+        private void OnNewFromWizard(object? sender, EventArgs e)
+        {
+            // The wizard collects the name, validates uniqueness and the schema, and builds the JSON.
+            using var wizard = new PolicyWizardForm(n => _repo.FindByName(n) is not null);
+            if (wizard.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+            _repo.Insert(new PolicyEntity { Name = wizard.ResultName, Json = wizard.ResultJson });
+            ReloadPolicyList(wizard.ResultName);
         }
 
         private void OnSaveAs(object? sender, EventArgs e)

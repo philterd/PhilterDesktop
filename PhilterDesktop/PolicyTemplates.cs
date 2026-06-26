@@ -62,6 +62,14 @@ namespace PhilterDesktop
                 "dates, and financial account numbers (credit card, bank routing, IBAN). A starting point " +
                 "for e-discovery and filing redaction.",
                 BuildLegalCourtFiling),
+
+            new PolicyTemplate(
+                "financial-records",
+                "Financial records (template)",
+                "Targets financial and account data: names, Social Security numbers, credit cards, bank " +
+                "routing numbers, IBAN codes, and crypto addresses. A starting point for statements, " +
+                "applications, and other financial documents.",
+                BuildFinancialRecords),
         };
 
         private static PhEye Names() => PhEyeModel.CreateDefaultFilter();
@@ -103,6 +111,24 @@ namespace PhilterDesktop
                     CreditCard = new CreditCard(),
                     BankRoutingNumber = new BankRoutingNumber(),
                     IbanCode = new IbanCode(),
+                    PhEyes = new List<PhEye> { Names() }
+                }
+            };
+            return PolicySerializer.SerializeToJson(policy);
+        }
+
+        private static string BuildFinancialRecords()
+        {
+            var policy = new PhileasPolicy
+            {
+                Name = "Financial records",
+                Identifiers = new Identifiers
+                {
+                    Ssn = new Ssn(),
+                    CreditCard = new CreditCard(),
+                    BankRoutingNumber = new BankRoutingNumber(),
+                    IbanCode = new IbanCode(),
+                    BitcoinAddress = new BitcoinAddress(),
                     PhEyes = new List<PhEye> { Names() }
                 }
             };

@@ -22,8 +22,8 @@ Desktop can detect, organized into **tabs** (one category per tab, so the window
 
 - **Policy selector** — a drop-down for choosing which policy you want to look at or change.
 - **New / Save / Save As / Delete** — the buttons for managing your policies (covered below).
-  **New** is a small menu: choose **Blank Policy** to start from scratch, or **From Template…** to
-  start from a ready-made policy.
+  **New** is a small menu: choose **Blank Policy** to start from scratch, **From Template…** to
+  start from a ready-made policy, or **From Wizard…** to be guided through a few questions.
 - **The detector tabs** — categories such as Personal, Contact, Location, Financial,
   Identifiers, Technical, and Medical. Click a tab to see the specific kinds of information in that
   category that you can choose to remove. (Your selections on every tab are saved together as one
@@ -62,6 +62,8 @@ Desktop offers a small set of ready-made starting points:
   expect to review some over-redaction.
 - **Legal court filing (template)** — the personal data commonly redacted in court filings (names,
   Social Security numbers, dates, and financial account numbers).
+- **Financial records (template)** — financial and account data (names, Social Security numbers,
+  credit cards, bank routing numbers, IBAN codes, and crypto addresses).
 
 Pick one, give your new policy a name, and it's created ready to fine-tune like any other policy.
 
@@ -70,6 +72,25 @@ Pick one, give your new policy a name, and it's created ready to fine-tune like 
     reference only. It is **not** a certification that the policy, or its output, meets that
     requirement. Always review and adapt the policy to your situation, and **carefully check every
     redacted document**, before relying on it.
+
+## Building a policy with the Wizard
+
+If you're not sure where to start, click **New** and choose **From Wizard…**. The wizard walks you
+through a few short questions and builds a policy for you:
+
+1. **What kind of documents are you redacting?** — pick a use case (general office, healthcare, legal,
+   financial, or start from scratch). This just sets a sensible starting point; you can change
+   everything next.
+2. **What should be removed?** — a checklist of the kinds of information, grouped into categories, with
+   the ones from your chosen starting point already ticked. Add or remove whatever you like, including
+   **people's names** (on-device AI).
+3. **How should the removed information be replaced?** — choose a label (like `{{{REDACTED-SSN}}}`), a
+   fixed word, or a consistent stand-in value.
+4. **Name your policy** — review a plain-language summary and give it a name.
+
+When you finish, the wizard creates the policy ready to fine-tune like any other. The same warning
+applies: a wizard-built policy is a **starting point, not a compliance guarantee** — review it and
+always check your redacted documents.
 
 ## Saving your work
 

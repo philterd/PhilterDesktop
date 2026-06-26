@@ -71,6 +71,14 @@ namespace PhilterDesktop.Tests
             ConstructWithDb(db => new PolicyEditorForm(new PolicyRepository(db)));
 
         [Fact]
+        public void PolicyWizardForm_Constructs() =>
+            Sta(() =>
+            {
+                using var form = new PolicyWizardForm(_ => false);
+                _ = form.Handle;
+            });
+
+        [Fact]
         public void RedactDocuments_Constructs() =>
             ConstructWithDb(db => new RedactDocuments(
                 new PolicyRepository(db), new ContextRepository(db), new RedactionQueueRepository(db), loggingEnabled: false));
