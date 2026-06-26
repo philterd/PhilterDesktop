@@ -68,6 +68,32 @@ A few practical notes:
   the [command line](redacting-documents.md#for-advanced-users-and-it-redacting-from-a-command-line)
   directly.
 
+## Notifications tab
+
+The **Notifications** tab controls the small pop-up messages (sometimes called "balloon" or "toast"
+notifications) that appear near the Windows clock when a document finishes redacting.
+
+- **Show a tray notification when a document finishes redacting** — turn this on or off. It is **on by
+  default**. Click **Save** to apply your choice.
+
+A few things worth knowing about these notifications:
+
+- They appear **only when you're not already looking at Philter Desktop** — that is, when its window
+  is hidden in the system tray or minimized. While the window is open in front of you, Philter Desktop
+  never interrupts you with a pop-up, because you can already see the results in the queue.
+- When several documents finish at once (for example, files dropped into a
+  [watched folder](watched-folders.md)), they're combined into a **single** notification rather than
+  one per file.
+- **Clicking the notification** opens the folder containing the finished files.
+- Turning this option **off** stops these pop-ups entirely. It does not affect anything else — your
+  documents are still redacted, and the [queue](redacting-documents.md) still shows each document's
+  status.
+
+This setting is the **master switch** for all completion notifications. [Watched
+folders](watched-folders.md) have their *own* per-folder notification checkbox, but that only has an
+effect while this master switch is on — if you turn notifications off here, no pop-ups appear for
+watched folders either, regardless of each folder's setting.
+
 ## Watched Folder tab
 
 The **Watched Folder** tab lets you set up folders that Philter Desktop **watches automatically** —

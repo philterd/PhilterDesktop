@@ -25,5 +25,12 @@ namespace PhilterDesktop
         /// </summary>
         public static bool ShouldNotify(bool windowVisible, FormWindowState windowState) =>
             !(windowVisible && windowState != FormWindowState.Minimized);
+
+        /// <summary>
+        /// As above, but also honoring the user's preference: when notifications are turned off in
+        /// Settings, none are shown regardless of window state.
+        /// </summary>
+        public static bool ShouldNotify(bool enabled, bool windowVisible, FormWindowState windowState) =>
+            enabled && ShouldNotify(windowVisible, windowState);
     }
 }

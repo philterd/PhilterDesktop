@@ -59,6 +59,9 @@ namespace PhilterData
         /// </summary>
         public bool TrayHintShown { get; set; } = false;
 
+        /// <summary>Whether a tray balloon is shown when a document finishes redacting (default on).</summary>
+        public bool NotificationsEnabled { get; set; } = true;
+
         /// <summary>The policy chosen most recently, pre-selected next time a redaction is started.</summary>
         public string LastPolicy { get; set; } = string.Empty;
 

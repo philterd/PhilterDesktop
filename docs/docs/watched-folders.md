@@ -29,7 +29,9 @@ be asked to fill in a few things:
   failures are reported too). Clicking the pop-up opens the output folder. These pop-ups are held back
   while the main Philter Desktop window is open and in front of you, so they don't get in your way.
   Because this is set per folder, you can keep a busy folder quiet while still being notified about
-  others.
+  others. (Note: notifications also have a master on/off switch on the
+  [Notifications tab](settings.md#notifications-tab) in Settings — if you turn notifications off
+  there, this per-folder checkbox has no effect.)
 - **Include subfolders** — when checked, files inside folders *within* the watched folder are
   monitored too, and the cleaned-up output mirrors that folder structure (so two files with the same
   name in different subfolders don't overwrite each other). If you turn this on, the output folder

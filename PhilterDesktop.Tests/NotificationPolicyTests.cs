@@ -42,5 +42,21 @@ namespace PhilterDesktop.Tests
             Assert.True(NotificationPolicy.ShouldNotify(windowVisible: false, FormWindowState.Normal));
             Assert.True(NotificationPolicy.ShouldNotify(windowVisible: false, FormWindowState.Minimized));
         }
+
+        [Fact]
+        public void Disabled_NeverNotifies_EvenWhenHidden()
+        {
+            // Preference off overrides everything.
+            Assert.False(NotificationPolicy.ShouldNotify(enabled: false, windowVisible: false, FormWindowState.Normal));
+            Assert.False(NotificationPolicy.ShouldNotify(enabled: false, windowVisible: false, FormWindowState.Minimized));
+        }
+
+        [Fact]
+        public void Enabled_BehavesLikeWindowStateRule()
+        {
+            // With the preference on, the window-state rule applies.
+            Assert.True(NotificationPolicy.ShouldNotify(enabled: true, windowVisible: false, FormWindowState.Normal));
+            Assert.False(NotificationPolicy.ShouldNotify(enabled: true, windowVisible: true, FormWindowState.Normal));
+        }
     }
 }

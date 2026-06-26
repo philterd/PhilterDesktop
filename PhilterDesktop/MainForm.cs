@@ -564,8 +564,13 @@ namespace PhilterDesktop
 
         private void QueueNotification(WatchedFileProcessedEventArgs e)
         {
-            // No point notifying about what the user is already looking at.
-            if (!NotificationPolicy.ShouldNotify(Visible, WindowState))
+            // Respect the user's Notifications preference, and don't notify about what they're already
+            // looking at. Reading settings here keeps it current after a change in the Settings dialog.
+            bool enabled = true;
+            try { enabled = _settingsRepository.GetSettings().NotificationsEnabled; }
+            catch { /* default to showing on a settings read failure */ }
+
+            if (!NotificationPolicy.ShouldNotify(enabled, Visible, WindowState))
             {
                 return;
             }

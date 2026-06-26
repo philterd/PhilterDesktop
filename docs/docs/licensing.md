@@ -13,8 +13,7 @@ fit together.
 - **The official product is what Philterd sells.** The **official, signed Philter Desktop build —
   with support — is a per-user subscription** (**$100 per user, per year**). That's the supported,
   ready-to-run product from the team that makes it, and it's provided to subscribers from
-  [philterd.ai](https://www.philterd.ai). (This project's source repository hosts the source code, not
-  ready-made installers.)
+  [philterd.ai](https://www.philterd.ai).
 - **"Philter" is a trademark of Philterd.** Anyone may build the open-source code, but the official
   builds are distributed under the Philter brand by Philterd.
 - For the current, definitive pricing and terms, see **[philterd.ai](https://www.philterd.ai)**.

@@ -62,6 +62,9 @@ namespace PhilterDesktop
             tabGeneral = new TabPage();
             chkContextMenu = new CheckBox();
             lblContextMenuHint = new Label();
+            tabNotifications = new TabPage();
+            chkShowNotifications = new CheckBox();
+            lblNotificationsHint = new Label();
             tabWatched = new TabPage();
             listWatched = new ListView();
             colFolder = new ColumnHeader();
@@ -84,6 +87,7 @@ namespace PhilterDesktop
             groupBoxLogging.SuspendLayout();
             tabControl.SuspendLayout();
             tabGeneral.SuspendLayout();
+            tabNotifications.SuspendLayout();
             tabWatched.SuspendLayout();
             tabSecurity.SuspendLayout();
             SuspendLayout();
@@ -234,6 +238,7 @@ namespace PhilterDesktop
             // 
             tabControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             tabControl.Controls.Add(tabGeneral);
+            tabControl.Controls.Add(tabNotifications);
             tabControl.Controls.Add(tabWatched);
             tabControl.Controls.Add(tabSecurity);
             tabControl.Location = new Point(6, 7);
@@ -277,9 +282,43 @@ namespace PhilterDesktop
             lblContextMenuHint.Name = "lblContextMenuHint";
             lblContextMenuHint.Size = new Size(0, 15);
             lblContextMenuHint.TabIndex = 3;
-            // 
+            //
+            // tabNotifications
+            //
+            tabNotifications.Controls.Add(chkShowNotifications);
+            tabNotifications.Controls.Add(lblNotificationsHint);
+            tabNotifications.Location = new Point(4, 24);
+            tabNotifications.Margin = new Padding(2);
+            tabNotifications.Name = "tabNotifications";
+            tabNotifications.Padding = new Padding(2);
+            tabNotifications.Size = new Size(565, 288);
+            tabNotifications.TabIndex = 3;
+            tabNotifications.Text = "Notifications";
+            tabNotifications.UseVisualStyleBackColor = true;
+            //
+            // chkShowNotifications
+            //
+            chkShowNotifications.AutoSize = true;
+            chkShowNotifications.Location = new Point(12, 18);
+            chkShowNotifications.Name = "chkShowNotifications";
+            chkShowNotifications.Size = new Size(360, 19);
+            chkShowNotifications.TabIndex = 0;
+            chkShowNotifications.Text = "Show a tray notification when a document finishes redacting";
+            chkShowNotifications.UseVisualStyleBackColor = true;
+            //
+            // lblNotificationsHint
+            //
+            lblNotificationsHint.AutoSize = true;
+            lblNotificationsHint.ForeColor = SystemColors.GrayText;
+            lblNotificationsHint.Location = new Point(30, 41);
+            lblNotificationsHint.MaximumSize = new Size(520, 0);
+            lblNotificationsHint.Name = "lblNotificationsHint";
+            lblNotificationsHint.Size = new Size(0, 15);
+            lblNotificationsHint.TabIndex = 1;
+            lblNotificationsHint.Text = "Notifications appear only when Philter Desktop's window is hidden in the tray or minimized — never while you're looking at it. Click a notification to open the folder with the finished files.";
+            //
             // tabWatched
-            // 
+            //
             tabWatched.Controls.Add(listWatched);
             tabWatched.Controls.Add(btnAddWatched);
             tabWatched.Controls.Add(btnEditWatched);
@@ -480,6 +519,8 @@ namespace PhilterDesktop
             tabControl.ResumeLayout(false);
             tabGeneral.ResumeLayout(false);
             tabGeneral.PerformLayout();
+            tabNotifications.ResumeLayout(false);
+            tabNotifications.PerformLayout();
             tabWatched.ResumeLayout(false);
             tabWatched.PerformLayout();
             tabSecurity.ResumeLayout(false);
@@ -504,6 +545,9 @@ namespace PhilterDesktop
         private Button btnCancel;
         private TabControl tabControl;
         private TabPage tabGeneral;
+        private TabPage tabNotifications;
+        private CheckBox chkShowNotifications;
+        private Label lblNotificationsHint;
         private TabPage tabWatched;
         private TabPage tabSecurity;
         private Label lblSecurityInfo;

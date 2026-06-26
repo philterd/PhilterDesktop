@@ -409,6 +409,7 @@ namespace PhilterDesktop
             btnBrowse.Enabled = !_settings.OutputToOriginalLocation;
             txtSuffix.Text = RedactionService.NormalizeSuffix(_settings.RedactedSuffix);
             chkEnableLogging.Checked = _settings.LoggingEnabled;
+            chkShowNotifications.Checked = _settings.NotificationsEnabled;
         }
 
         private void RadioOriginalLocation_CheckedChanged(object sender, EventArgs e)
@@ -575,7 +576,8 @@ namespace PhilterDesktop
             _settings.CustomOutputFolder = txtCustomFolder.Text.Trim();
             _settings.RedactedSuffix = RedactionService.NormalizeSuffix(txtSuffix.Text);
             _settings.LoggingEnabled = chkEnableLogging.Checked;
-            
+            _settings.NotificationsEnabled = chkShowNotifications.Checked;
+
             _settingsRepository.SaveSettings(_settings);
 
             DialogResult = DialogResult.OK;
