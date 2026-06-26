@@ -65,7 +65,7 @@ namespace PhilterDesktop.PolicyEditing
         };
         private readonly Button _ignoreList = new()
         {
-            Text = "Ignore List…",
+            Text = "Always Ignore…",
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             Enabled = false,
@@ -106,8 +106,8 @@ namespace PhilterDesktop.PolicyEditing
             // scrolls if its content doesn't fit — so the editor fits comfortably on a small screen.
             ClientSize = new Size(720, 430);
             MinimumSize = new Size(560, 380);
-            FormBorderStyle = FormBorderStyle.Sizable;
-            MaximizeBox = true;
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
 
             // Don't open larger than the screen on smaller displays (each tab still scrolls).
             Rectangle workingArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1024, 768);
@@ -250,34 +250,60 @@ namespace PhilterDesktop.PolicyEditing
             return inner;
         }
 
-        private static (Panel row, CheckBox checkBox, Button configure) NewRow(string name)
+        private static (Panel row, CheckBox checkBox, Button configure) NewRow(string name, string? example = null)
         {
-            // A horizontal flow row: the Configure button always sits just right of the checkbox,
-            // whatever the label's width or the DPI — so it can never be overlapped or clipped.
-            var checkBox = new CheckBox { Text = name, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(3, 8, 0, 4) };
+            // Filter name (checkbox) with a small grey example beneath it; the Configure button is
+            // right-aligned in a fixed-width row so buttons line up cleanly down the column.
+            var checkBox = new CheckBox { Text = name, AutoSize = true, Margin = new Padding(0, 0, 0, 0) };
+
+            var leftStack = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = Padding.Empty
+            };
+            leftStack.Controls.Add(checkBox);
+            if (!string.IsNullOrWhiteSpace(example))
+            {
+                leftStack.Controls.Add(new Label
+                {
+                    Text = example,
+                    AutoSize = true,
+                    ForeColor = ModernTheme.SubtleText,
+                    Font = new Font(ModernTheme.UiFont.FontFamily, 8f),
+                    Margin = new Padding(20, 0, 0, 0) // indent under the checkbox label
+                });
+            }
+
             var configure = new Button
             {
                 Text = "Configure…",
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Anchor = AnchorStyles.Left,
-                Margin = new Padding(10, 3, 3, 3),
+                Anchor = AnchorStyles.Right,
+                Margin = new Padding(10, 0, 0, 0),
                 Enabled = false,
                 Visible = false,
                 Font = new Font(ModernTheme.UiFont.FontFamily, 8.25f)
             };
-            // Fixed-width row: it already reserves room for the checkbox and the Configure button,
-            // so showing/hiding the button never changes the row's (or the group's) size.
-            var row = new FlowLayoutPanel
+
+            // Fixed-size two-column row: label/example fill the left, the button sits at the right edge,
+            // so showing/hiding the button never shifts anything.
+            var row = new TableLayoutPanel
             {
-                FlowDirection = FlowDirection.LeftToRight,
+                ColumnCount = 2,
+                RowCount = 1,
                 AutoSize = false,
-                WrapContents = false,
-                Size = new Size(350, 34),
-                Margin = Padding.Empty
+                Size = new Size(380, 46),
+                Margin = new Padding(0, 0, 0, 2)
             };
-            row.Controls.Add(checkBox);
-            row.Controls.Add(configure);
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            row.Controls.Add(leftStack, 0, 0);
+            row.Controls.Add(configure, 1, 0);
             return (row, checkBox, configure);
         }
 
@@ -285,7 +311,7 @@ namespace PhilterDesktop.PolicyEditing
         {
             string name = FilterLabel.Humanize(filterProp.Name);
             PropertyInfo? strategiesProp = filterProp.PropertyType.GetProperty("Strategies");
-            (Panel row, CheckBox checkBox, Button configure) = NewRow(name);
+            (Panel row, CheckBox checkBox, Button configure) = NewRow(name, FilterExamples.For(filterProp.Name));
             inner.Controls.Add(row);
             _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = inner.Parent! });
 
@@ -299,6 +325,8 @@ namespace PhilterDesktop.PolicyEditing
                         {
                             filterProp.SetValue(_policy.Identifiers, CreateFilter(filterProp.PropertyType));
                         }
+                        // Give the just-enabled filter its visible default strategy.
+                        FilterStrategyDefaults.MaterializeMissing(_policy);
                     }
                     else
                     {
@@ -306,8 +334,11 @@ namespace PhilterDesktop.PolicyEditing
                     }
                     _dirty = true;
                 }
-                configure.Visible = checkBox.Checked && strategiesProp is not null;
-                configure.Enabled = configure.Visible;
+                // Drive Enabled from the boolean, not configure.Visible — the Visible getter reports
+                // effective visibility, which is false while this row's tab is inactive.
+                bool showConfigure = checkBox.Checked && strategiesProp is not null;
+                configure.Visible = showConfigure;
+                configure.Enabled = showConfigure;
             };
 
             configure.Click += (_, _) =>
@@ -324,6 +355,9 @@ namespace PhilterDesktop.PolicyEditing
                     checkBox.Checked = true;
                 }
 
+                // Ensure the default REDACT strategy is present so the list is never empty.
+                FilterStrategyDefaults.MaterializeMissing(_policy);
+
                 Type strategyType = strategiesProp.PropertyType.GetGenericArguments()[0];
                 IEnumerable existing = (IEnumerable?)strategiesProp.GetValue(filter) ?? Array.Empty<object>();
                 using var dlg = new FilterStrategiesForm(name, existing, strategyType);
@@ -339,15 +373,16 @@ namespace PhilterDesktop.PolicyEditing
             {
                 bool enabled = _policy is not null && filterProp.GetValue(_policy.Identifiers) is not null;
                 checkBox.Checked = enabled;
-                configure.Visible = enabled && strategiesProp is not null;
-                configure.Enabled = configure.Visible;
+                bool showConfigure = enabled && strategiesProp is not null;
+                configure.Visible = showConfigure;
+                configure.Enabled = showConfigure;
             });
         }
 
         private void AddCustomIdentifiersRow(FlowLayoutPanel inner)
         {
             const string name = "Custom Identifiers";
-            (Panel row, CheckBox checkBox, Button configure) = NewRow(name);
+            (Panel row, CheckBox checkBox, Button configure) = NewRow(name, "your own patterns, e.g. CASE-2024-00123");
             inner.Controls.Add(row);
             _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = inner.Parent! });
 
@@ -361,7 +396,7 @@ namespace PhilterDesktop.PolicyEditing
                     _dirty = true;
                 }
                 configure.Visible = checkBox.Checked;
-                configure.Enabled = configure.Visible;
+                configure.Enabled = checkBox.Checked;
             };
 
             configure.Click += (_, _) =>
@@ -385,14 +420,14 @@ namespace PhilterDesktop.PolicyEditing
                 bool enabled = _policy?.Identifiers.CustomIdentifiers is { Count: > 0 };
                 checkBox.Checked = enabled;
                 configure.Visible = enabled;
-                configure.Enabled = configure.Visible;
+                configure.Enabled = enabled;
             });
         }
 
         private void AddPhEyeRow(FlowLayoutPanel inner)
         {
             const string name = "Names (on-device AI)";
-            (Panel row, CheckBox checkBox, Button configure) = NewRow(name);
+            (Panel row, CheckBox checkBox, Button configure) = NewRow(name, "person names, detected on your device");
             inner.Controls.Add(row);
             _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = inner.Parent! });
 
@@ -408,10 +443,14 @@ namespace PhilterDesktop.PolicyEditing
                     _policy.Identifiers.PhEyes = checkBox.Checked
                         ? new List<PhEye> { PhEyeModel.CreateDefaultFilter() }
                         : null;
+                    if (checkBox.Checked)
+                    {
+                        FilterStrategyDefaults.MaterializeMissing(_policy); // give Names its visible default
+                    }
                     _dirty = true;
                 }
                 configure.Visible = checkBox.Checked;
-                configure.Enabled = configure.Visible;
+                configure.Enabled = checkBox.Checked;
             };
 
             configure.Click += (_, _) =>
@@ -426,6 +465,9 @@ namespace PhilterDesktop.PolicyEditing
                     _policy.Identifiers.PhEyes.Add(PhEyeModel.CreateDefaultFilter());
                 }
                 checkBox.Checked = true;
+
+                // Ensure the default REDACT strategy is present so the list is never empty.
+                FilterStrategyDefaults.MaterializeMissing(_policy);
                 PhEye phEye = _policy.Identifiers.PhEyes[0];
 
                 IEnumerable existing = (IEnumerable?)phEye.Strategies ?? Array.Empty<object>();
@@ -541,6 +583,10 @@ namespace PhilterDesktop.PolicyEditing
             }
 
             _policy = PolicySerializer.DeserializeFromJson(string.IsNullOrWhiteSpace(entity.Json) ? "{}" : entity.Json);
+
+            // Surface the engine's implicit default: give every enabled filter that has no strategy an
+            // explicit REDACT ({{{REDACTED-%t}}}) entry, so it's visible in Configure instead of implied.
+            FilterStrategyDefaults.MaterializeMissing(_policy);
 
             _loading = true;
             foreach (Action loader in _loaders)

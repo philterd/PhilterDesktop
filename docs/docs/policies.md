@@ -40,10 +40,13 @@ Desktop can detect, organized into **tabs** (one category per tab, so the window
    *how* that information should be replaced — for example, blacked out entirely, or swapped for a
    stand-in label. Those choices are explained on the [Filter Strategies](filter-strategies.md) page.
 
-You do **not** have to configure every detector. A detector that's turned on but not configured simply
-uses a sensible default (it blacks the information out). So the quickest way to build a policy is to
-check the boxes for everything you want removed and save — you can always come back and fine-tune the
-replacements later.
+You do **not** have to configure every detector. A detector that's turned on but not configured uses a
+sensible default: the detected text is replaced with a **marker that names what was removed**, like
+`{{{REDACTED-SSN}}}` for a Social Security number. To make this clear, when you open **Configure…** for
+a detector you've just turned on, you'll see this **default redaction already listed** — so you can see
+exactly what will happen and change it if you like (for example, a blackout, a fixed label, or a
+shuffled stand-in). Those choices are explained on the [Filter Strategies](filter-strategies.md) page.
+So the quickest way to build a policy is to check the boxes for everything you want removed and save.
 
 For the complete list of what Philter Desktop can detect, see [Supported Filters](supported-filters.md).
 
@@ -78,13 +81,13 @@ Pick one, give your new policy a name, and it's created ready to fine-tune like 
 
 The **default** policy cannot be deleted, so you'll always have a working starting point.
 
-## The "never redact" list (Ignore List)
+## The "never redact" list (Always Ignore)
 
 Sometimes Philter Desktop will correctly detect something but you'd rather **keep it**. A common
 example: your own firm's name, a public office address, or a court's phone number might look like the
 kind of contact information that would normally be removed — but you want it left in place.
 
-Click the **Ignore List…** button below the tabs and type in those terms, **one per line**. Anything on this list
+Click the **Always Ignore…** button below the tabs and type in those terms, **one per line**. Anything on this list
 is left alone, even when a detector would otherwise have removed it.
 
 The matching works on the **whole detected value** (so a detected item that exactly equals one of
