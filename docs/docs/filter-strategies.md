@@ -46,15 +46,26 @@ the same input map to the same replacement across all the documents you process 
 ## Applying a strategy only in certain situations (Conditions)
 
 A strategy can be made **conditional**, meaning it only kicks in when a condition you describe is met.
-This is an advanced option for fine-tuning unusual cases. To use it, turn on the conditional option
-and enter your condition when you add or edit the strategy. For most everyday redaction you won't need
-this.
+This is an advanced option for fine-tuning unusual cases; for most everyday redaction you won't need it.
+
+To use it, turn on **Only apply when** and fill in the simple builder — you pick:
+
+- **When** — what to test: the *Matched text*, the *Context*, the *Detected type*, the *Confidence*
+  (how sure the detector is, from 0 to 1), or the *Population*.
+- **Is** — how to compare it: *equals*, *does not equal*, *starts with*, and (for numbers like
+  confidence) *is greater than*, *is less than*, and so on.
+- **Value** — what to compare against.
+
+As you choose, Philter Desktop shows the exact condition it will use (for example,
+`confidence is greater than 0.8`). Building it this way means the condition is always valid — you can't
+accidentally mistype one.
 
 ## A few helpful tips
 
-- A detector that's turned **on** but has **no** strategy set still works — it just uses the standard
-  black-it-out behavior. So you never have to configure a strategy unless you specifically want
-  something other than the default.
+- A detector that's turned **on** but has **no** strategy set still works — it uses the default
+  redaction (replacing the text with a marker like `{{{REDACTED-SSN}}}`). When you open **Configure…**,
+  you'll see that default already listed, so you can see exactly what will happen and change it if you
+  like.
 - You can attach **more than one** strategy to a single detector to handle different cases
   differently.
 - If you're unsure which approach to pick, **Redact** (black it out) is the safest and most common

@@ -37,7 +37,16 @@ namespace PhilterDesktop.PolicyEditing
         private readonly TextBox _staticValue = new() { Width = 440 };
         private readonly CheckBox _scopeContext = new() { Text = "Replace consistently across document contexts", AutoSize = true };
         private readonly CheckBox _enableCondition = new() { Text = "Only apply when:", AutoSize = true };
-        private readonly TextBox _conditionValue = new() { Width = 440 };
+        private readonly ComboBox _conditionField = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220, DisplayMember = "Display" };
+        private readonly ComboBox _conditionOp = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220, DisplayMember = "Display" };
+        private readonly TextBox _conditionVal = new() { Width = 220 };
+        private readonly Label _conditionPreview = new() { AutoSize = true, ForeColor = ModernTheme.SubtleText };
+
+        // Preserves an existing condition we couldn't show in the builder (e.g. a chained "and"),
+        // unless the user actually edits the builder.
+        private string? _unparsedCondition;
+        private bool _loadingCondition;
+        private bool _builderTouched;
         private readonly Button _ok = new() { Text = "OK", DialogResult = DialogResult.OK, Size = ModernTheme.StandardButtonSize };
         private readonly Button _cancel = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, Size = ModernTheme.StandardButtonSize };
 
@@ -63,7 +72,10 @@ namespace PhilterDesktop.PolicyEditing
             _redactRadio.CheckedChanged += (_, _) => SyncEnabled();
             _staticRadio.CheckedChanged += (_, _) => SyncEnabled();
             _randomRadio.CheckedChanged += (_, _) => SyncEnabled();
-            _enableCondition.CheckedChanged += (_, _) => _conditionValue.Enabled = _enableCondition.Checked;
+            _enableCondition.CheckedChanged += (_, _) => { SyncConditionEnabled(); UpdateConditionPreview(); };
+            _conditionField.SelectedIndexChanged += (_, _) => { PopulateOperators(); MarkConditionTouched(); UpdateConditionPreview(); };
+            _conditionOp.SelectedIndexChanged += (_, _) => { MarkConditionTouched(); UpdateConditionPreview(); };
+            _conditionVal.TextChanged += (_, _) => { MarkConditionTouched(); UpdateConditionPreview(); };
             _ok.Click += OnOk;
 
             LoadFromStrategy();
@@ -86,9 +98,25 @@ namespace PhilterDesktop.PolicyEditing
             strategy.Controls.Add(Indented(_randomRadio, 0, 12));
             strategy.Controls.Add(Indented(_scopeContext, 24, 8, bottom: 8));
 
+            _conditionField.Items.AddRange(ConditionBuilder.Fields.Cast<object>().ToArray());
+
+            var conditionGrid = new TableLayoutPanel
+            {
+                ColumnCount = 2,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = new Padding(24, 6, 3, 2)
+            };
+            conditionGrid.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            conditionGrid.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            AddGridRow(conditionGrid, "When:", _conditionField);
+            AddGridRow(conditionGrid, "Is:", _conditionOp);
+            AddGridRow(conditionGrid, "Value:", _conditionVal);
+
             var condition = StackPanel();
             condition.Controls.Add(Indented(_enableCondition, 0, 10));
-            condition.Controls.Add(Indented(_conditionValue, 24, 6, bottom: 8));
+            condition.Controls.Add(conditionGrid);
+            condition.Controls.Add(Indented(_conditionPreview, 24, 2, bottom: 8));
 
             var buttons = new FlowLayoutPanel
             {
@@ -171,6 +199,67 @@ namespace PhilterDesktop.PolicyEditing
             _scopeContext.Enabled = _randomRadio.Checked;
         }
 
+        private static void AddGridRow(TableLayoutPanel grid, string label, Control control)
+        {
+            int row = grid.RowCount;
+            grid.RowCount = row + 1;
+            var lbl = new Label { Text = label, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 7, 8, 6) };
+            control.Margin = new Padding(0, 3, 0, 3);
+            control.Anchor = AnchorStyles.Left;
+            grid.Controls.Add(lbl, 0, row);
+            grid.Controls.Add(control, 1, row);
+        }
+
+        // Repopulates the operator list to match the selected field (text vs. numeric operators).
+        private void PopulateOperators()
+        {
+            if (_conditionField.SelectedItem is not ConditionBuilder.ConditionField field)
+            {
+                return;
+            }
+            _conditionOp.Items.Clear();
+            _conditionOp.Items.AddRange(ConditionBuilder.OperatorsFor(field).Cast<object>().ToArray());
+            if (_conditionOp.Items.Count > 0)
+            {
+                _conditionOp.SelectedIndex = 0;
+            }
+        }
+
+        private void SyncConditionEnabled()
+        {
+            bool on = _enableCondition.Checked;
+            _conditionField.Enabled = on;
+            _conditionOp.Enabled = on;
+            _conditionVal.Enabled = on;
+        }
+
+        private void MarkConditionTouched()
+        {
+            if (!_loadingCondition)
+            {
+                _builderTouched = true;
+            }
+        }
+
+        private void UpdateConditionPreview()
+        {
+            if (!string.IsNullOrEmpty(_unparsedCondition) && !_builderTouched)
+            {
+                _conditionPreview.Text = "Current (advanced) condition will be kept: " + _unparsedCondition;
+                return;
+            }
+            if (_enableCondition.Checked &&
+                _conditionField.SelectedItem is ConditionBuilder.ConditionField field &&
+                _conditionOp.SelectedItem is ConditionBuilder.ConditionOperator op)
+            {
+                _conditionPreview.Text = "Condition: " + ConditionBuilder.Build(field, op, _conditionVal.Text);
+            }
+            else
+            {
+                _conditionPreview.Text = string.Empty;
+            }
+        }
+
         private void LoadFromStrategy()
         {
             switch (_strategy.Strategy)
@@ -191,12 +280,31 @@ namespace PhilterDesktop.PolicyEditing
                     break;
             }
 
+            _loadingCondition = true;
             if (!string.IsNullOrWhiteSpace(_strategy.Condition))
             {
                 _enableCondition.Checked = true;
-                _conditionValue.Text = _strategy.Condition;
+                if (ConditionBuilder.TryParse(_strategy.Condition, out var f, out var o, out var v))
+                {
+                    _conditionField.SelectedItem = f; // triggers PopulateOperators
+                    _conditionOp.SelectedItem = o;
+                    _conditionVal.Text = v;
+                }
+                else
+                {
+                    // An advanced condition we can't represent in the builder — preserve it.
+                    _unparsedCondition = _strategy.Condition;
+                    _conditionField.SelectedIndex = 0;
+                }
             }
-            _conditionValue.Enabled = _enableCondition.Checked;
+            else
+            {
+                _conditionField.SelectedIndex = 0;
+            }
+            _loadingCondition = false;
+
+            SyncConditionEnabled();
+            UpdateConditionPreview();
         }
 
         private void OnOk(object? sender, EventArgs e)
@@ -219,7 +327,38 @@ namespace PhilterDesktop.PolicyEditing
                 _strategy.RedactionFormat = _redactionFormat.Text;
             }
 
-            _strategy.Condition = _enableCondition.Checked ? _conditionValue.Text : string.Empty;
+            if (!_enableCondition.Checked)
+            {
+                _strategy.Condition = string.Empty;
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(_unparsedCondition) && !_builderTouched)
+            {
+                _strategy.Condition = _unparsedCondition; // keep the advanced condition as-is
+                return;
+            }
+
+            var field = (ConditionBuilder.ConditionField)_conditionField.SelectedItem!;
+            var op = (ConditionBuilder.ConditionOperator)_conditionOp.SelectedItem!;
+            string value = _conditionVal.Text;
+
+            if (field.Numeric && !double.TryParse(value.Trim(), out _))
+            {
+                MessageBox.Show(this, $"Enter a number for \"{field.Display}\".",
+                    "Condition", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                DialogResult = DialogResult.None; // keep the dialog open
+                return;
+            }
+            if (!field.Numeric && value.Contains('"'))
+            {
+                MessageBox.Show(this, "The value can't contain a double-quote (\") character.",
+                    "Condition", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                DialogResult = DialogResult.None;
+                return;
+            }
+
+            _strategy.Condition = ConditionBuilder.Build(field, op, value);
         }
     }
 }
