@@ -46,20 +46,20 @@ namespace PhilterDesktop.PolicyEditing
             cancelButton = new Button();
             bottomPanel.SuspendLayout();
             SuspendLayout();
-            //
+            // 
             // instructionsLabel
-            //
+            // 
             instructionsLabel.AutoSize = true;
             instructionsLabel.Dock = DockStyle.Top;
             instructionsLabel.Location = new Point(12, 12);
             instructionsLabel.Name = "instructionsLabel";
             instructionsLabel.Padding = new Padding(0, 0, 0, 8);
-            instructionsLabel.Size = new Size(554, 23);
+            instructionsLabel.Size = new Size(585, 23);
             instructionsLabel.TabIndex = 2;
             instructionsLabel.Text = "Terms entered here are always redacted, even if no filter would otherwise detect them. Enter one term per line.";
-            //
+            // 
             // termsTextBox
-            //
+            // 
             termsTextBox.AcceptsReturn = true;
             termsTextBox.Dock = DockStyle.Fill;
             termsTextBox.Location = new Point(12, 35);
@@ -69,9 +69,9 @@ namespace PhilterDesktop.PolicyEditing
             termsTextBox.Size = new Size(601, 195);
             termsTextBox.TabIndex = 0;
             termsTextBox.WordWrap = false;
-            //
+            // 
             // bottomPanel
-            //
+            // 
             bottomPanel.Controls.Add(okButton);
             bottomPanel.Controls.Add(cancelButton);
             bottomPanel.Dock = DockStyle.Bottom;
@@ -79,9 +79,9 @@ namespace PhilterDesktop.PolicyEditing
             bottomPanel.Name = "bottomPanel";
             bottomPanel.Size = new Size(601, 52);
             bottomPanel.TabIndex = 1;
-            //
+            // 
             // okButton
-            //
+            // 
             okButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             okButton.DialogResult = DialogResult.OK;
             okButton.Location = new Point(375, 13);
@@ -91,9 +91,9 @@ namespace PhilterDesktop.PolicyEditing
             okButton.Text = "OK";
             okButton.UseVisualStyleBackColor = true;
             okButton.Click += OkButton_Click;
-            //
+            // 
             // cancelButton
-            //
+            // 
             cancelButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             cancelButton.DialogResult = DialogResult.Cancel;
             cancelButton.Location = new Point(491, 13);
@@ -102,9 +102,9 @@ namespace PhilterDesktop.PolicyEditing
             cancelButton.TabIndex = 1;
             cancelButton.Text = "Cancel";
             cancelButton.UseVisualStyleBackColor = true;
-            //
+            // 
             // AlwaysRedactTermsForm
-            //
+            // 
             AcceptButton = okButton;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -122,7 +122,6 @@ namespace PhilterDesktop.PolicyEditing
             StartPosition = FormStartPosition.CenterParent;
             Text = "Always Redact Terms";
             bottomPanel.ResumeLayout(false);
-            bottomPanel.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }

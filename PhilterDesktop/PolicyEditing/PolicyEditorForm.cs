@@ -16,7 +16,6 @@
 
 using System.Collections;
 using System.Reflection;
-using System.Text.Json;
 using Phileas.Policy;
 using Phileas.Policy.Filters;
 using PhilterData;
@@ -36,7 +35,7 @@ namespace PhilterDesktop.PolicyEditing
             public required string Name;
             public required Control Panel;
             public required CheckBox CheckBox;
-            public required GroupBox Group;
+            public required Control Group; // the containing tab page
         }
 
         private readonly PolicyRepository _repo;
@@ -48,14 +47,39 @@ namespace PhilterDesktop.PolicyEditing
 
         private readonly ToolStrip _toolStrip = new() { GripStyle = ToolStripGripStyle.Hidden };
         private readonly ToolStripComboBox _policyCombo = new() { DropDownStyle = ComboBoxStyle.DropDownList, AutoSize = false, Size = new Size(190, 23) };
-        private readonly ToolStripButton _new = new() { Text = "New" };
-        private readonly ToolStripButton _newFromTemplate = new() { Text = "New from Template…" };
+        private readonly ToolStripDropDownButton _new = new() { Text = "New" };
+        private readonly ToolStripMenuItem _newBlank = new() { Text = "Blank Policy" };
+        private readonly ToolStripMenuItem _newFromTemplate = new() { Text = "From Template…" };
         private readonly ToolStripButton _save = new() { Text = "Save", Enabled = false };
         private readonly ToolStripButton _saveAs = new() { Text = "Save As", Enabled = false };
         private readonly ToolStripButton _delete = new() { Text = "Delete", Enabled = false };
-        private readonly ToolStripButton _viewJson = new() { Text = "View JSON", Enabled = false };
-        private readonly ToolStripButton _ignoreList = new() { Text = "Ignore List", Enabled = false };
-        private readonly ToolStripButton _alwaysRedact = new() { Text = "Always Redact", Enabled = false };
+
+        // Ignore List / Always Redact edit policy-wide term lists. They live as regular buttons in a
+        // panel directly below the tabs, not as toolbar actions.
+        private readonly FlowLayoutPanel _actions = new()
+        {
+            Dock = DockStyle.Bottom,
+            FlowDirection = FlowDirection.LeftToRight,
+            Height = 48,
+            Padding = new Padding(10, 8, 10, 8)
+        };
+        private readonly Button _ignoreList = new()
+        {
+            Text = "Ignore List…",
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Enabled = false,
+            Margin = new Padding(0, 0, 8, 0),
+            Padding = new Padding(10, 4, 10, 4)
+        };
+        private readonly Button _alwaysRedact = new()
+        {
+            Text = "Always Redact…",
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Enabled = false,
+            Padding = new Padding(10, 4, 10, 4)
+        };
 
         // Identifies the editor-managed ignored-terms set, so other ignored sets in a policy are left alone.
         private const string IgnoredTermsName = "ignored-terms";
@@ -63,18 +87,14 @@ namespace PhilterDesktop.PolicyEditing
         // Identifies the editor-managed always-redact dictionary, leaving any other dictionaries alone.
         private const string AlwaysRedactName = "always-redact";
 
-        private readonly FlowLayoutPanel _filters = new()
+        // Each filter category is a tab, so only one group shows at a time and the window stays small.
+        private readonly TabControl _tabs = new()
         {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = true,
-            AutoScroll = true,
-            Padding = new Padding(10)
+            Dock = DockStyle.Fill
         };
 
         private readonly List<Action> _loaders = new();
         private readonly List<FilterRow> _rows = new();
-        private readonly List<GroupBox> _groups = new();
 
         public PolicyEditorForm(PolicyRepository repo)
         {
@@ -82,14 +102,14 @@ namespace PhilterDesktop.PolicyEditing
 
             Text = "Policy Editor";
             StartPosition = FormStartPosition.CenterScreen;
-            // Fixed (non-resizable) window sized to show all filter groups; the filter panel still
-            // scrolls if the content doesn't fit (e.g. on a smaller display).
-            ClientSize = new Size(1210, 860);
-            MinimumSize = new Size(760, 600);
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            MaximizeBox = false;
+            // Compact window: filters are split across tabs (one category at a time), and each tab
+            // scrolls if its content doesn't fit — so the editor fits comfortably on a small screen.
+            ClientSize = new Size(720, 430);
+            MinimumSize = new Size(560, 380);
+            FormBorderStyle = FormBorderStyle.Sizable;
+            MaximizeBox = true;
 
-            // Don't open larger than the screen on smaller displays (the panel still scrolls).
+            // Don't open larger than the screen on smaller displays (each tab still scrolls).
             Rectangle workingArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1024, 768);
             Size = new Size(Math.Min(Width, workingArea.Width), Math.Min(Height, workingArea.Height));
 
@@ -97,12 +117,11 @@ namespace PhilterDesktop.PolicyEditing
             RegisterFilters();
 
             _policyCombo.SelectedIndexChanged += (_, _) => OnPolicySelectionChanged();
-            _new.Click += OnNew;
+            _newBlank.Click += OnNew;
             _newFromTemplate.Click += OnNewFromTemplate;
             _save.Click += OnSave;
             _saveAs.Click += OnSaveAs;
             _delete.Click += OnDelete;
-            _viewJson.Click += OnViewJson;
             _ignoreList.Click += OnIgnoredTerms;
             _alwaysRedact.Click += OnAlwaysRedact;
 
@@ -113,20 +132,36 @@ namespace PhilterDesktop.PolicyEditing
 
         private void BuildLayout()
         {
-            _new.Image = ModernTheme.CreateGlyphImage("\uE710", 16, ModernTheme.Text);     // Add
-            _save.Image = ModernTheme.CreateGlyphImage("\uE74E", 16, ModernTheme.Accent);  // Save
-            _saveAs.Image = ModernTheme.CreateGlyphImage("\uE792", 16, ModernTheme.Text);  // SaveAs
-            _delete.Image = ModernTheme.CreateGlyphImage("\uE74D", 16, ModernTheme.Text);  // Delete
-            _viewJson.Image = ModernTheme.CreateGlyphImage("\uE943", 16, ModernTheme.Text); // Code
-            _ignoreList.Image = ModernTheme.CreateGlyphImage("\uE71C", 16, ModernTheme.Text);     // Filter
-            _alwaysRedact.Image = ModernTheme.CreateGlyphImage("\uE72E", 16, ModernTheme.Accent); // Lock
+            _toolStrip.ImageScalingSize = new Size(20, 20);
+            _new.Image = ModernTheme.CreateGlyphImage("\uE710", 20, ModernTheme.Text);     // Add
+            _save.Image = ModernTheme.CreateGlyphImage("\uE74E", 20, ModernTheme.Accent);  // Save
+            _saveAs.Image = ModernTheme.CreateGlyphImage("\uE792", 20, ModernTheme.Text);  // SaveAs
+            _delete.Image = ModernTheme.CreateGlyphImage("\uE74D", 20, ModernTheme.Text);  // Delete
+
+            // "New" is a dropdown: Blank Policy or From Template. Menu items use small icons.
+            _newBlank.Image = ModernTheme.CreateGlyphImage("\uE7C3", 16, ModernTheme.Text);        // Page (blank)
+            _newFromTemplate.Image = ModernTheme.CreateGlyphImage("\uE8A5", 16, ModernTheme.Text); // Document (template)
+            _new.DropDownItems.AddRange(new ToolStripItem[] { _newBlank, _newFromTemplate });
+
+            // Toolbar buttons show their icon above the label.
+            foreach (ToolStripItem button in new ToolStripItem[] { _new, _save, _saveAs, _delete })
+            {
+                button.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+                button.TextImageRelation = TextImageRelation.ImageAboveText;
+            }
 
             _toolStrip.Items.Add(new ToolStripLabel("Policy:"));
             _toolStrip.Items.Add(_policyCombo);
             _toolStrip.Items.Add(new ToolStripSeparator());
-            _toolStrip.Items.AddRange(new ToolStripItem[] { _new, _newFromTemplate, _save, _saveAs, _delete, new ToolStripSeparator(), _viewJson, new ToolStripSeparator(), _ignoreList, _alwaysRedact });
+            _toolStrip.Items.AddRange(new ToolStripItem[] { _new, _save, _saveAs, _delete });
 
-            Controls.Add(_filters);
+            _actions.Controls.Add(_ignoreList);
+            _actions.Controls.Add(_alwaysRedact);
+
+            // z-order: tabs fill the middle, the actions panel docks at the bottom (immediately below
+            // the tabs), and the toolbar docks at the top.
+            Controls.Add(_tabs);
+            Controls.Add(_actions);
             Controls.Add(_toolStrip);
             SetEditingEnabled(false);
         }
@@ -196,27 +231,22 @@ namespace PhilterDesktop.PolicyEditing
 
         private FlowLayoutPanel NewGroup(string title)
         {
+            // The inner panel fills the tab and scrolls vertically if a category has many filters.
             var inner = new FlowLayoutPanel
             {
+                Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.TopDown,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 WrapContents = false,
-                Location = new Point(10, 24),
-                Margin = Padding.Empty
+                AutoScroll = true,
+                Padding = new Padding(10)
             };
-            var group = new GroupBox
+            var page = new TabPage(title)
             {
-                Text = title,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                MinimumSize = new Size(370, 0),
-                Margin = new Padding(8),
-                Padding = new Padding(0, 0, 10, 10)
+                UseVisualStyleBackColor = true,
+                Padding = new Padding(3)
             };
-            group.Controls.Add(inner);
-            _groups.Add(group);
-            _filters.Controls.Add(group);
+            page.Controls.Add(inner);
+            _tabs.TabPages.Add(page);
             return inner;
         }
 
@@ -257,7 +287,7 @@ namespace PhilterDesktop.PolicyEditing
             PropertyInfo? strategiesProp = filterProp.PropertyType.GetProperty("Strategies");
             (Panel row, CheckBox checkBox, Button configure) = NewRow(name);
             inner.Controls.Add(row);
-            _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = (GroupBox)inner.Parent! });
+            _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = inner.Parent! });
 
             checkBox.CheckedChanged += (_, _) =>
             {
@@ -319,7 +349,7 @@ namespace PhilterDesktop.PolicyEditing
             const string name = "Custom Identifiers";
             (Panel row, CheckBox checkBox, Button configure) = NewRow(name);
             inner.Controls.Add(row);
-            _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = (GroupBox)inner.Parent! });
+            _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = inner.Parent! });
 
             checkBox.CheckedChanged += (_, _) =>
             {
@@ -364,7 +394,7 @@ namespace PhilterDesktop.PolicyEditing
             const string name = "Names (on-device AI)";
             (Panel row, CheckBox checkBox, Button configure) = NewRow(name);
             inner.Controls.Add(row);
-            _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = (GroupBox)inner.Parent! });
+            _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = inner.Parent! });
 
             var tip = new ToolTip();
             tip.SetToolTip(checkBox,
@@ -693,49 +723,6 @@ namespace PhilterDesktop.PolicyEditing
             ReloadPolicyList("default");
         }
 
-        private void OnViewJson(object? sender, EventArgs e)
-        {
-            if (_policy is null)
-            {
-                return;
-            }
-            using var dlg = new Form
-            {
-                Text = $"\"{_policyCombo.SelectedItem}\" Policy JSON",
-                StartPosition = FormStartPosition.CenterParent,
-                ClientSize = new Size(560, 520)
-            };
-            var box = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Both, WordWrap = false, Dock = DockStyle.Fill, Text = PrettyJson(PolicySerializer.SerializeToJson(_policy)) };
-
-            var copy = new Button
-            {
-                Text = "Copy to Clipboard",
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                MinimumSize = new Size(160, 34),
-                Padding = new Padding(12, 0, 12, 0)
-            };
-            var close = new Button { Text = "Close", DialogResult = DialogResult.OK, Size = ModernTheme.StandardButtonSize };
-            copy.Click += (_, _) =>
-            {
-                if (!string.IsNullOrEmpty(box.Text))
-                {
-                    Clipboard.SetText(box.Text);
-                    copy.Text = "Copied!";
-                }
-            };
-
-            var bottom = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = 52, Padding = new Padding(8) };
-            bottom.Controls.AddRange(new Control[] { close, copy });
-
-            dlg.Controls.Add(box);
-            dlg.Controls.Add(bottom);
-            dlg.AcceptButton = close;
-            ModernTheme.Apply(dlg);
-            ModernTheme.MakePrimary(copy);
-            dlg.ShowDialog(this);
-        }
-
         private void OnIgnoredTerms(object? sender, EventArgs e)
         {
             if (_policy is null)
@@ -803,27 +790,12 @@ namespace PhilterDesktop.PolicyEditing
 
         private void SetEditingEnabled(bool enabled)
         {
-            _filters.Enabled = enabled;
+            _tabs.Enabled = enabled;
             _save.Enabled = enabled;
             _saveAs.Enabled = enabled;
             _delete.Enabled = enabled;
-            _viewJson.Enabled = enabled;
             _ignoreList.Enabled = enabled;
             _alwaysRedact.Enabled = enabled;
-        }
-
-        private static string PrettyJson(string json)
-        {
-            try
-            {
-                using JsonDocument doc = JsonDocument.Parse(json);
-                string pretty = JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions { WriteIndented = true });
-                return pretty.Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
-            }
-            catch
-            {
-                return json;
-            }
         }
 
         private static string? Prompt(string message, string title)

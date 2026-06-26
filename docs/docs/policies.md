@@ -17,24 +17,20 @@ Editor**.
 
 ## A tour of the Policy Editor
 
-The editor has a toolbar across the top and, below it, a long list of the kinds of information Philter
-Desktop can detect, organized into groups:
+The editor has a toolbar across the top and, below it, the kinds of information Philter
+Desktop can detect, organized into **tabs** (one category per tab, so the window stays compact):
 
 - **Policy selector** — a drop-down for choosing which policy you want to look at or change.
-- **New / New from Template… / Save / Save As / Delete** — the buttons for managing your policies
-  (covered below).
-- **View JSON** — shows the policy's underlying definition in its raw, technical form, with a button
-  to copy it. (JSON is just a plain-text format that software uses to store settings. You will almost
-  never need this; it's there for troubleshooting or for sharing a policy's exact definition with
-  technical support.)
-- **Search** — a box for quickly finding a particular type of information by name.
-- **The groups of detectors** — categories such as Personal, Contact, Location, Financial,
-  Identifiers, Technical, and Medical, each holding the specific kinds of information you can choose
-  to remove.
+- **New / Save / Save As / Delete** — the buttons for managing your policies (covered below).
+  **New** is a small menu: choose **Blank Policy** to start from scratch, or **From Template…** to
+  start from a ready-made policy.
+- **The detector tabs** — categories such as Personal, Contact, Location, Financial,
+  Identifiers, Technical, and Medical. Click a tab to see the specific kinds of information in that
+  category that you can choose to remove. (Your selections on every tab are saved together as one
+  policy — switching tabs doesn't lose anything.)
 
-At the bottom, a status line tells you how many detectors are currently turned on — for example,
-*"6 of 27 filters enabled."* (The word **filter** is just another word for one of these detectors:
-"the email-address filter," "the Social Security number filter," and so on.)
+(The word **filter** is just another word for one of these detectors: "the email-address filter,"
+"the Social Security number filter," and so on.)
 
 ## Turning on what you want removed
 
@@ -53,8 +49,8 @@ For the complete list of what Philter Desktop can detect, see [Supported Filters
 
 ## Starting from a template
 
-If you'd rather not build a policy from scratch, click **New from Template…**. Philter Desktop offers
-a small set of ready-made starting points:
+If you'd rather not build a policy from scratch, click **New** and choose **From Template…**. Philter
+Desktop offers a small set of ready-made starting points:
 
 - **Common PII (recommended)** — the high-confidence everyday identifiers (Social Security numbers,
   email, phone, credit cards, and so on) plus on-device name detection. A safe general-purpose start.
@@ -88,7 +84,7 @@ Sometimes Philter Desktop will correctly detect something but you'd rather **kee
 example: your own firm's name, a public office address, or a court's phone number might look like the
 kind of contact information that would normally be removed — but you want it left in place.
 
-Click **Ignore List** on the toolbar and type in those terms, **one per line**. Anything on this list
+Click the **Ignore List…** button below the tabs and type in those terms, **one per line**. Anything on this list
 is left alone, even when a detector would otherwise have removed it.
 
 The matching works on the **whole detected value** (so a detected item that exactly equals one of
@@ -103,7 +99,7 @@ removed**, even though it isn't a standard type of personal information that Phi
 recognize on its own — for example, a confidential project codename, an internal matter number, or a
 particular name that's sensitive in your case.
 
-Click **Always Redact** on the toolbar and type in those terms, **one per line**. Anything on this
+Click the **Always Redact…** button below the tabs and type in those terms, **one per line**. Anything on this
 list is removed wherever it appears.
 
 Matching ignores capitalization. These terms are saved as part of the policy and apply to every
@@ -111,7 +107,7 @@ document you redact with it.
 
 ## Detecting names with on-device AI
 
-In the **Personal** group you'll find an entry called **Names (on-device AI)**. Checking it turns on
+On the **Personal** tab you'll find an entry called **Names (on-device AI)**. Checking it turns on
 a smart, names-specific detector.
 
 Why is this separate from the other detectors? Most sensitive information has a recognizable shape —

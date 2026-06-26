@@ -180,7 +180,7 @@ namespace PhilterDesktop
             // 
             toolStrip1.GripStyle = ToolStripGripStyle.Hidden;
             toolStrip1.ImageScalingSize = new Size(24, 24);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonRedactDocuments, toolStripButtonRedactPreview, toolStripSeparator3, refreshToolStripButton, toolStripSeparator4, policiesToolStripButton, contextsToolStripButton, toolStripSeparator9, settingsToolStripButton, toolStripSeparator6, HelpToolStripButton });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonRedactDocuments, toolStripButtonRedactPreview, toolStripSeparator3, policiesToolStripButton, contextsToolStripButton, toolStripSeparator9, settingsToolStripButton, toolStripSeparator6, refreshToolStripButton, toolStripSeparator4, HelpToolStripButton });
             toolStrip1.Location = new Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new Padding(0, 0, 2, 0);
