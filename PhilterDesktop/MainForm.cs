@@ -366,6 +366,7 @@ namespace PhilterDesktop
             toolStripButtonRedactPreview.Image = ModernTheme.CreateGlyphImage("\uE890", size, ModernTheme.Accent);  // View (preview)
             policiesToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE8FD", size, ModernTheme.Text);          // BulletedList
             contextsToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE8EC", size, ModernTheme.Text);         // Tag
+            listsToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE71C", size, ModernTheme.Text);            // Filter (global lists)
             settingsToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE713", size, ModernTheme.Text);         // Settings
             HelpToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE897", size, ModernTheme.Text);             // Help
         }
@@ -1287,6 +1288,19 @@ namespace PhilterDesktop
 
             var redactionContextsForm = new Contexts(_contextRepository, _contextEntryRepository);
             redactionContextsForm.ShowDialog();
+        }
+
+        private void listsToolStripButton_Click(object sender, EventArgs e)
+        {
+            SettingsEntity settings = _settingsRepository.GetSettings();
+            using var form = new GlobalListsForm(settings.GlobalAlwaysRedact, settings.GlobalAlwaysIgnore);
+            if (form.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+            settings.GlobalAlwaysRedact = form.AlwaysRedactText;
+            settings.GlobalAlwaysIgnore = form.AlwaysIgnoreText;
+            _settingsRepository.SaveSettings(settings);
         }
 
         private void settingsToolStripButton_Click(object sender, EventArgs e) => OpenSettings();

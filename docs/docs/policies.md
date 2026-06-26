@@ -113,8 +113,9 @@ is left alone, even when a detector would otherwise have removed it.
 
 The matching works on the **whole detected value** (so a detected item that exactly equals one of
 your terms is left untouched), and it ignores capitalization unless you check **Match case**. Your
-ignore list is saved as part of the policy, so it applies to every document you redact with that
-policy.
+ignore list is saved as part of **this policy**, so it applies only when you redact with this policy.
+If you want a term ignored **no matter which policy you use**, use the global **Lists** button on the
+main toolbar instead — see [Lists that apply to every policy](#lists-that-apply-to-every-policy-the-lists-button).
 
 ## The "always redact" list (Always Redact)
 
@@ -126,8 +127,35 @@ particular name that's sensitive in your case.
 Click the **Always Redact…** button below the tabs and type in those terms, **one per line**. Anything on this
 list is removed wherever it appears.
 
-Matching ignores capitalization. These terms are saved as part of the policy and apply to every
-document you redact with it.
+Matching ignores capitalization. These terms are saved as part of **this policy** and apply only when
+you redact with it. For a term you want removed in **every** policy, use the global **Lists** button on
+the main toolbar instead — see below.
+
+## Lists that apply to every policy (the Lists button)
+
+The two lists above live **inside a single policy** — they only take effect when you redact with that
+particular policy. Sometimes you want a rule that applies **no matter which policy is used**. For that,
+use the **Lists** button on the **main toolbar** (not in the Policy Editor).
+
+It opens a window with two tabs, each a simple box where you type terms **one per line**:
+
+- **Always Redact** — terms removed from **every** document you redact, with any policy.
+- **Always Ignore** — terms **never** removed, with any policy.
+
+Click **OK** to save both lists (or **Cancel** to discard your changes). These global lists are applied
+on top of whatever policy is in use — the default policy, policies you create, watched folders, and the
+command line all honor them.
+
+### Policy lists vs. global lists — which should I use?
+
+| | Where it lives | When it applies |
+|---|---|---|
+| **Policy Editor → Always Ignore / Always Redact** | Inside one policy | Only when you redact with **that** policy |
+| **Lists button (main toolbar) → Always Ignore / Always Redact** | App-wide | **Every** redaction, with **any** policy |
+
+A good rule of thumb: put case- or matter-specific terms in a **policy**; put terms that should always
+apply — like your own firm's name (ignore) or a standing confidential codename (always redact) — in the
+global **Lists**.
 
 ## Detecting names with on-device AI
 

@@ -330,6 +330,7 @@ namespace PhilterDesktop
 
                 var policy = PolicySerializer.DeserializeFromJson(
                     string.IsNullOrWhiteSpace(policyEntity.Json) ? "{}" : policyEntity.Json);
+                GlobalLists.Apply(policy, _settingsRepository?.GetSettings()); // global lists on top of every policy
 
                 string outputDir = ResolveOutputDirectory(fullPath, folder);
                 Directory.CreateDirectory(outputDir);

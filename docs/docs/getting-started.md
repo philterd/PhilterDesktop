@@ -65,6 +65,20 @@ When you open Philter Desktop, you'll see its main window. The top of the window
 documents you've asked it to clean up. The first time you open the program, this list is empty,
 because you haven't given it anything to do yet.
 
+The toolbar buttons are:
+
+- **Redact** — add one or more documents to be redacted.
+- **Preview** — redact with a live before-and-after preview before saving.
+- **Policies** — create and edit [policies](policies.md) (the rules for what gets removed).
+- **Contexts** — manage [contexts](contexts.md) (consistent replacements).
+- **Lists** — edit the global **Always Redact** and **Always Ignore** term lists that apply to
+  **every** redaction, no matter which policy is used. (This is different from the per-policy lists
+  inside the Policy Editor — see
+  [Lists that apply to every policy](policies.md#lists-that-apply-to-every-policy-the-lists-button).)
+- **Settings** — output location, logging, watched folders, security, and notifications.
+- **Refresh** — reload the queue (you can also press **F5**).
+- **Help** — open this documentation.
+
 To make things easy, Philter Desktop already creates a starter **policy** named **default** (the set
 of rules for what to remove) and a starter **context** named **default** (the setting that keeps
 replacements consistent). Because these are ready to go, **you can redact a document immediately**,

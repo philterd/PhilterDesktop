@@ -63,6 +63,7 @@ namespace PhilterDesktop
             try
             {
                 var policy = PolicySerializer.DeserializeFromJson(policyEntity.Json);
+                GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
                 string outputPath = RedactionService.GetOutputPath(entity.Name, settings);
                 List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(
                     entity.Name, outputPath, policy, entity.Context, filterService, entity.Highlight);

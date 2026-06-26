@@ -75,5 +75,15 @@ namespace PhilterDesktop
         {
             Open("https://icons8.com");
         }
+
+        private void linkPhilter_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Open(Upsell.PhilterUrl("about"));
+        }
+
+        private void linkConsulting_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Open(Upsell.ConsultingUrl("about"));
+        }
     }
 }

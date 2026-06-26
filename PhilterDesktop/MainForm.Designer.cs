@@ -65,6 +65,7 @@ namespace PhilterDesktop
             toolStripSeparator4 = new ToolStripSeparator();
             policiesToolStripButton = new ToolStripButton();
             contextsToolStripButton = new ToolStripButton();
+            listsToolStripButton = new ToolStripButton();
             toolStripSeparator9 = new ToolStripSeparator();
             settingsToolStripButton = new ToolStripButton();
             toolStripSeparator6 = new ToolStripSeparator();
@@ -180,7 +181,7 @@ namespace PhilterDesktop
             // 
             toolStrip1.GripStyle = ToolStripGripStyle.Hidden;
             toolStrip1.ImageScalingSize = new Size(24, 24);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonRedactDocuments, toolStripButtonRedactPreview, toolStripSeparator3, policiesToolStripButton, contextsToolStripButton, toolStripSeparator9, settingsToolStripButton, toolStripSeparator6, refreshToolStripButton, toolStripSeparator4, HelpToolStripButton });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonRedactDocuments, toolStripButtonRedactPreview, toolStripSeparator3, policiesToolStripButton, contextsToolStripButton, listsToolStripButton, toolStripSeparator9, settingsToolStripButton, toolStripSeparator6, refreshToolStripButton, toolStripSeparator4, HelpToolStripButton });
             toolStrip1.Location = new Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new Padding(0, 0, 2, 0);
@@ -256,7 +257,18 @@ namespace PhilterDesktop
             contextsToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
             contextsToolStripButton.ToolTipText = "Manage contexts for consistent replacements";
             contextsToolStripButton.Click += contextsToolStripButton_Click;
-            // 
+            //
+            // listsToolStripButton
+            //
+            listsToolStripButton.AutoToolTip = false;
+            listsToolStripButton.ImageTransparentColor = Color.Magenta;
+            listsToolStripButton.Name = "listsToolStripButton";
+            listsToolStripButton.Size = new Size(50, 43);
+            listsToolStripButton.Text = "Lists";
+            listsToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
+            listsToolStripButton.ToolTipText = "Edit global Always Redact / Always Ignore lists (apply to every policy)";
+            listsToolStripButton.Click += listsToolStripButton_Click;
+            //
             // toolStripSeparator9
             // 
             toolStripSeparator9.Name = "toolStripSeparator9";
@@ -509,6 +521,7 @@ namespace PhilterDesktop
         private ToolStripSeparator toolStripSeparator3;
         private ToolStripButton policiesToolStripButton;
         private ToolStripButton contextsToolStripButton;
+        private ToolStripButton listsToolStripButton;
         private ToolStripSeparator toolStripSeparator4;
         private ToolStripButton settingsToolStripButton;
         private ContextMenuStrip contextMenuStrip1;

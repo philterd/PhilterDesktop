@@ -97,6 +97,7 @@ namespace PhilterDesktop
                 {
                     // Deserialize per file: redaction mutates the policy (PhEye model path, PDF scale).
                     PhileasPolicy policy = DeserializePolicy(policyJson);
+                    GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
                     string outputPath = RedactionService.GetOutputPath(path, settings);
                     RedactionService.RedactFileAsync(path, outputPath, policy, contextName, filterService)
                         .GetAwaiter().GetResult();
@@ -179,6 +180,9 @@ namespace PhilterDesktop
             Console.WriteLine();
             Console.WriteLine("Each file is redacted to a copy with the configured suffix (default \"_redacted-draft\"); the original is not changed.");
             Console.WriteLine("Supported file types: .txt, .docx, .pdf.");
+            Console.WriteLine();
+            Console.WriteLine("Redacting in a data pipeline or at scale? Philter (server/API) is built for it:");
+            Console.WriteLine("  " + Upsell.PhilterUrl("cli"));
         }
 
         private const int AttachParentProcess = -1;

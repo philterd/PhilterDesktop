@@ -102,6 +102,45 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public async Task ProcessAsync_AppliesGlobalAlwaysRedact_EvenWhenPolicyRedactsNothing()
+        {
+            // An empty policy redacts nothing on its own — proving the global list is what removed it.
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{}" });
+
+            string input = Path.Combine(_tempDir, "global-redact.txt");
+            await File.WriteAllTextAsync(input, "Codename Bluebird is confidential.");
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = true, GlobalAlwaysRedact = "Bluebird" };
+            var entity = new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.True(result.Success);
+            string redacted = await File.ReadAllTextAsync(result.OutputPath!);
+            Assert.DoesNotContain("Bluebird", redacted);
+        }
+
+        [Fact]
+        public async Task ProcessAsync_AppliesGlobalAlwaysIgnore_OverThePolicy()
+        {
+            // Policy redacts email; the global ignore list must keep one specific address.
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{\"identifiers\":{\"emailAddress\":{}}}" });
+
+            string input = Path.Combine(_tempDir, "global-ignore.txt");
+            await File.WriteAllTextAsync(input, "Contact a@b.com or keep@example.com today.");
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = true, GlobalAlwaysIgnore = "keep@example.com" };
+            var entity = new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.True(result.Success);
+            string redacted = await File.ReadAllTextAsync(result.OutputPath!);
+            Assert.DoesNotContain("a@b.com", redacted);          // normal email redacted
+            Assert.Contains("keep@example.com", redacted);        // global-ignore address preserved
+        }
+
+        [Fact]
         public void DescribeFailure_NonExceptionResult_UsesItsMessage()
         {
             var result = QueueRedactionResult.Failed("Policy 'nope' was not found");

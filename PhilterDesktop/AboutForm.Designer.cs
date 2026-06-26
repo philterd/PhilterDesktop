@@ -44,6 +44,9 @@ namespace PhilterDesktop
             lblReview = new Label();
             lblCopyright = new Label();
             icons8LinkLabel = new LinkLabel();
+            lblAlsoFrom = new Label();
+            linkPhilter = new LinkLabel();
+            linkConsulting = new LinkLabel();
             btnOK = new Button();
             pictureBox1 = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
@@ -133,11 +136,43 @@ namespace PhilterDesktop
             lblReview.Size = new Size(315, 36);
             lblReview.TabIndex = 7;
             lblReview.Text = "Automated redaction can miss things — always review each redacted document before sharing it.";
-            // 
+            //
+            // lblAlsoFrom
+            //
+            lblAlsoFrom.AutoSize = true;
+            lblAlsoFrom.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblAlsoFrom.Location = new Point(105, 286);
+            lblAlsoFrom.Name = "lblAlsoFrom";
+            lblAlsoFrom.Size = new Size(110, 15);
+            lblAlsoFrom.TabIndex = 11;
+            lblAlsoFrom.Text = "Also from Philterd:";
+            //
+            // linkPhilter
+            //
+            linkPhilter.AutoSize = true;
+            linkPhilter.Location = new Point(105, 305);
+            linkPhilter.Name = "linkPhilter";
+            linkPhilter.Size = new Size(300, 15);
+            linkPhilter.TabIndex = 12;
+            linkPhilter.TabStop = true;
+            linkPhilter.Text = "Philter — PII redaction for servers, APIs & data pipelines";
+            linkPhilter.LinkClicked += linkPhilter_LinkClicked;
+            //
+            // linkConsulting
+            //
+            linkConsulting.AutoSize = true;
+            linkConsulting.Location = new Point(105, 324);
+            linkConsulting.Name = "linkConsulting";
+            linkConsulting.Size = new Size(300, 15);
+            linkConsulting.TabIndex = 13;
+            linkConsulting.TabStop = true;
+            linkConsulting.Text = "Policy consulting — help building & validating policies";
+            linkConsulting.LinkClicked += linkConsulting_LinkClicked;
+            //
             // lblCopyright
-            // 
+            //
             lblCopyright.AutoSize = true;
-            lblCopyright.Location = new Point(105, 297);
+            lblCopyright.Location = new Point(105, 352);
             lblCopyright.Margin = new Padding(2, 0, 2, 0);
             lblCopyright.Name = "lblCopyright";
             lblCopyright.Size = new Size(186, 15);
@@ -147,7 +182,7 @@ namespace PhilterDesktop
             // icons8LinkLabel
             // 
             icons8LinkLabel.AutoSize = true;
-            icons8LinkLabel.Location = new Point(105, 320);
+            icons8LinkLabel.Location = new Point(105, 375);
             icons8LinkLabel.Margin = new Padding(2, 0, 2, 0);
             icons8LinkLabel.Name = "icons8LinkLabel";
             icons8LinkLabel.Size = new Size(88, 15);
@@ -158,7 +193,7 @@ namespace PhilterDesktop
             // 
             // btnOK
             // 
-            btnOK.Location = new Point(343, 315);
+            btnOK.Location = new Point(343, 370);
             btnOK.Name = "btnOK";
             btnOK.Size = new Size(77, 20);
             btnOK.TabIndex = 9;
@@ -183,8 +218,11 @@ namespace PhilterDesktop
             AcceptButton = btnOK;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(434, 349);
+            ClientSize = new Size(434, 405);
             Controls.Add(icons8LinkLabel);
+            Controls.Add(lblAlsoFrom);
+            Controls.Add(linkPhilter);
+            Controls.Add(linkConsulting);
             Controls.Add(pictureBox1);
             Controls.Add(btnOK);
             Controls.Add(lblCopyright);
@@ -220,6 +258,9 @@ namespace PhilterDesktop
         private Label lblReview;
         private Label lblCopyright;
         private LinkLabel icons8LinkLabel;
+        private Label lblAlsoFrom;
+        private LinkLabel linkPhilter;
+        private LinkLabel linkConsulting;
         private Button btnOK;
         private PictureBox pictureBox1;
     }

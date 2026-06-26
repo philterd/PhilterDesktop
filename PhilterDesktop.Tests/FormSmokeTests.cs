@@ -79,6 +79,14 @@ namespace PhilterDesktop.Tests
             });
 
         [Fact]
+        public void GlobalListsForm_Constructs() =>
+            Sta(() =>
+            {
+                using var form = new GlobalListsForm("Acme\nBeta", "keep@example.com");
+                _ = form.Handle;
+            });
+
+        [Fact]
         public void RedactDocuments_Constructs() =>
             ConstructWithDb(db => new RedactDocuments(
                 new PolicyRepository(db), new ContextRepository(db), new RedactionQueueRepository(db), loggingEnabled: false));

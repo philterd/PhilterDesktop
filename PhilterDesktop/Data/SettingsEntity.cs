@@ -62,6 +62,12 @@ namespace PhilterData
         /// <summary>Whether a tray balloon is shown when a document finishes redacting (default on).</summary>
         public bool NotificationsEnabled { get; set; } = true;
 
+        /// <summary>Global "always redact" terms (one per line), applied on top of every policy.</summary>
+        public string GlobalAlwaysRedact { get; set; } = string.Empty;
+
+        /// <summary>Global "always ignore" terms (one per line), applied on top of every policy.</summary>
+        public string GlobalAlwaysIgnore { get; set; } = string.Empty;
+
         /// <summary>The policy chosen most recently, pre-selected next time a redaction is started.</summary>
         public string LastPolicy { get; set; } = string.Empty;
 

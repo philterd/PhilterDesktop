@@ -121,6 +121,18 @@ if ($Sign -and (Test-Path $signingConfigPath)) {
     if (-not $SigntoolPath -and $cfg.SigntoolPath) { $SigntoolPath = $cfg.SigntoolPath }
 }
 
+# Best-effort check for a credential DefaultAzureCredential can use. Without one, the Trusted Signing
+# dlib can't fetch the certificate and signtool falls back to the local store - which usually fails
+# with a confusing "Multiple certificates were found" error rather than naming the real problem.
+function Test-AzureCredentialAvailable {
+    if ($env:AZURE_CLIENT_ID -and $env:AZURE_TENANT_ID -and $env:AZURE_CLIENT_SECRET) { return $true } # service principal
+    if ($env:IDENTITY_ENDPOINT -or $env:MSI_ENDPOINT) { return $true }                                  # managed identity
+    if (Get-Command az -ErrorAction SilentlyContinue) {
+        try { & az account show 1>$null 2>$null; if ($LASTEXITCODE -eq 0) { return $true } } catch { }   # az login
+    }
+    return $false
+}
+
 # Set up signing once (validate config, locate signtool, write the Trusted Signing metadata file).
 $script:Signtool = $null
 $script:SigningMetadata = $null
@@ -135,6 +147,12 @@ if ($Sign) {
     # The dlib is auto-restored from NuGet unless an explicit path was provided.
     if (-not $SigningDlib) { $SigningDlib = Resolve-SigningDlib }
     if (-not (Test-Path $SigningDlib)) { throw "Trusted Signing dlib not found: $SigningDlib" }
+
+    if (-not (Test-AzureCredentialAvailable)) {
+        Write-Warning ("No Azure sign-in detected. Azure Trusted Signing needs a credential: run 'az login', " +
+            "or set AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET. Without one, signing fails with a " +
+            "misleading 'Multiple certificates were found' error. (Use -NoSign for an unsigned dev build.)")
+    }
 
     $script:Signtool = Resolve-Signtool
     $script:SigningMetadata = Join-Path ([System.IO.Path]::GetTempPath()) "philter-trusted-signing.json"
@@ -156,7 +174,12 @@ function Invoke-Sign {
     # Add /debug here for detailed Trusted Signing diagnostics (auth, role, endpoint) when troubleshooting.
     & $script:Signtool sign /v /fd SHA256 /tr $TimestampUrl /td SHA256 `
         /dlib $SigningDlib /dmdf $script:SigningMetadata $Path
-    if ($LASTEXITCODE -ne 0) { throw "signtool failed for $Path" }
+    if ($LASTEXITCODE -ne 0) {
+        throw ("signtool failed for $Path. If the output mentions 'Multiple certificates were found' or " +
+            "certificate selection, Azure Trusted Signing probably could not authenticate - run 'az login' " +
+            "(or set AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET) and retry, or use -NoSign for an " +
+            "unsigned build.")
+    }
 }
 
 # ----- Publish ----------------------------------------------------------------------------------

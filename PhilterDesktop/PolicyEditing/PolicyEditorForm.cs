@@ -54,6 +54,12 @@ namespace PhilterDesktop.PolicyEditing
         private readonly ToolStripButton _save = new() { Text = "Save", Enabled = false };
         private readonly ToolStripButton _saveAs = new() { Text = "Save As", Enabled = false };
         private readonly ToolStripButton _delete = new() { Text = "Delete", Enabled = false };
+        private readonly ToolStripLabel _consultingLink = new("Need help with policies?")
+        {
+            IsLink = true,
+            Alignment = ToolStripItemAlignment.Right,
+            ToolTipText = "Philterd offers policy consulting"
+        };
 
         // Ignore List / Always Redact edit policy-wide term lists. They live as regular buttons in a
         // panel directly below the tabs, not as toolbar actions.
@@ -124,6 +130,7 @@ namespace PhilterDesktop.PolicyEditing
             _save.Click += OnSave;
             _saveAs.Click += OnSaveAs;
             _delete.Click += OnDelete;
+            _consultingLink.Click += (_, _) => Upsell.Open(Upsell.ConsultingUrl("policy-editor"));
             _ignoreList.Click += OnIgnoredTerms;
             _alwaysRedact.Click += OnAlwaysRedact;
 
@@ -160,6 +167,7 @@ namespace PhilterDesktop.PolicyEditing
             {
                 _new, new ToolStripSeparator(), _save, _saveAs, new ToolStripSeparator(), _delete
             });
+            _toolStrip.Items.Add(_consultingLink); // right-aligned (Alignment = Right)
 
             _actions.Controls.Add(_ignoreList);
             _actions.Controls.Add(_alwaysRedact);

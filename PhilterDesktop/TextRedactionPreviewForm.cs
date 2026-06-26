@@ -133,6 +133,7 @@ namespace PhilterDesktop
                     PolicyEntity? entity = _policies.FindByName(_policyCombo.Text);
                     PhileasPolicy policy = PolicySerializer.DeserializeFromJson(
                         string.IsNullOrWhiteSpace(entity?.Json) ? "{}" : entity!.Json);
+                    GlobalLists.Apply(policy, _settings); // global always-redact/ignore on top of every policy
                     PhEyeModel.Prepare(policy);
 
                     TextFilterResult result = _filterService.Filter(policy, _contextCombo.Text, 0, _originalText);

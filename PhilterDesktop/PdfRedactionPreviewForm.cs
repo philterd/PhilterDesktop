@@ -129,6 +129,7 @@ namespace PhilterDesktop
                 PolicyEntity? entity = _policies.FindByName(_policyCombo.Text);
                 PhileasPolicy policy = PolicySerializer.DeserializeFromJson(
                     string.IsNullOrWhiteSpace(entity?.Json) ? "{}" : entity!.Json);
+                GlobalLists.Apply(policy, _settings); // global always-redact/ignore on top of every policy
 
                 _tempOutputPath ??= Path.Combine(Path.GetTempPath(), "philter-preview-" + Guid.NewGuid().ToString("N") + ".pdf");
                 _spans = await RedactionService.RedactFileAsync(_sourcePath, _tempOutputPath, policy, _contextCombo.Text, _filterService);
