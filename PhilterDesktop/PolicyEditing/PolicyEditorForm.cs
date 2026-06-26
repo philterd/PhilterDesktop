@@ -541,10 +541,38 @@ namespace PhilterDesktop.PolicyEditing
             {
                 return false;
             }
-            entity.Json = PolicySerializer.SerializeToJson(_policy);
+            string json = PolicySerializer.SerializeToJson(_policy);
+            if (!EnsureValid(json))
+            {
+                return false;
+            }
+            entity.Json = json;
             _repo.Update(entity);
             _dirty = false;
             return true;
+        }
+
+        // A policy must validate against the engine's PhiSQL policy schema before it can be saved,
+        // so we never persist something the redaction engine would reject or silently misread.
+        private bool EnsureValid(string policyJson)
+        {
+            PolicyValidationResult result = PolicyValidator.Validate(policyJson);
+            if (result.IsValid)
+            {
+                return true;
+            }
+
+            string details = string.Join(
+                Environment.NewLine + "  • ", result.Errors.Take(15));
+            MessageBox.Show(
+                this,
+                "This policy does not match the redaction engine's policy schema (PhiSQL " +
+                PolicyValidator.SchemaVersion + "), so it was not saved:" +
+                Environment.NewLine + Environment.NewLine + "  • " + details,
+                "Invalid policy",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return false;
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
@@ -601,7 +629,12 @@ namespace PhilterDesktop.PolicyEditing
                 return;
             }
             _policy.Name = name;
-            _repo.Insert(new PolicyEntity { Name = name, Json = PolicySerializer.SerializeToJson(_policy) });
+            string json = PolicySerializer.SerializeToJson(_policy);
+            if (!EnsureValid(json))
+            {
+                return;
+            }
+            _repo.Insert(new PolicyEntity { Name = name, Json = json });
             ReloadPolicyList(name);
         }
 

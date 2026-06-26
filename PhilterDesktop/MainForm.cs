@@ -120,13 +120,12 @@ namespace PhilterDesktop
             }
 
             // Insert default policy.
-            if (_policyRepository.FindByName("default") == null)
+            if (_policyRepository.FindByName(DefaultPolicy.Name) == null)
             {
                 PolicyEntity policyEntity = new PolicyEntity
                 {
-                    Name = "default",
-                    Json = "{}"
-
+                    Name = DefaultPolicy.Name,
+                    Json = DefaultPolicy.Json()
                 };
                 _policyRepository.Insert(policyEntity);
 

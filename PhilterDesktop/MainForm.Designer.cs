@@ -61,14 +61,15 @@ namespace PhilterDesktop
             toolStripButtonRedactDocuments = new ToolStripButton();
             toolStripButtonRedactPreview = new ToolStripButton();
             toolStripSeparator3 = new ToolStripSeparator();
+            refreshToolStripButton = new ToolStripButton();
+            toolStripSeparator4 = new ToolStripSeparator();
             policiesToolStripButton = new ToolStripButton();
             contextsToolStripButton = new ToolStripButton();
-            toolStripSeparator4 = new ToolStripSeparator();
+            toolStripSeparator9 = new ToolStripSeparator();
             settingsToolStripButton = new ToolStripButton();
             toolStripSeparator6 = new ToolStripSeparator();
-            refreshToolStripButton = new ToolStripButton();
-            toolStripSeparator8 = new ToolStripSeparator();
             HelpToolStripButton = new ToolStripButton();
+            toolStripSeparator8 = new ToolStripSeparator();
             listView1 = new ListView();
             columnHeader1 = new ColumnHeader();
             columnHeader2 = new ColumnHeader();
@@ -92,7 +93,6 @@ namespace PhilterDesktop
             refreshToolStripMenuItem = new ToolStripMenuItem();
             imageList1 = new ImageList(components);
             redactionQueueTimer = new System.Windows.Forms.Timer(components);
-            toolStripSeparator9 = new ToolStripSeparator();
             menuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
             contextMenuStrip1.SuspendLayout();
@@ -216,6 +216,23 @@ namespace PhilterDesktop
             toolStripSeparator3.Name = "toolStripSeparator3";
             toolStripSeparator3.Size = new Size(6, 46);
             // 
+            // refreshToolStripButton
+            // 
+            refreshToolStripButton.AutoToolTip = false;
+            refreshToolStripButton.Image = (Image)resources.GetObject("refreshToolStripButton.Image");
+            refreshToolStripButton.ImageTransparentColor = Color.Magenta;
+            refreshToolStripButton.Name = "refreshToolStripButton";
+            refreshToolStripButton.Size = new Size(50, 43);
+            refreshToolStripButton.Text = "Refresh";
+            refreshToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
+            refreshToolStripButton.ToolTipText = "Refresh the queue (F5)";
+            refreshToolStripButton.Click += refreshToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator4
+            // 
+            toolStripSeparator4.Name = "toolStripSeparator4";
+            toolStripSeparator4.Size = new Size(6, 46);
+            // 
             // policiesToolStripButton
             // 
             policiesToolStripButton.AutoToolTip = false;
@@ -240,10 +257,10 @@ namespace PhilterDesktop
             contextsToolStripButton.ToolTipText = "Manage contexts for consistent replacements";
             contextsToolStripButton.Click += contextsToolStripButton_Click;
             // 
-            // toolStripSeparator4
+            // toolStripSeparator9
             // 
-            toolStripSeparator4.Name = "toolStripSeparator4";
-            toolStripSeparator4.Size = new Size(6, 46);
+            toolStripSeparator9.Name = "toolStripSeparator9";
+            toolStripSeparator9.Size = new Size(6, 46);
             // 
             // settingsToolStripButton
             // 
@@ -262,23 +279,6 @@ namespace PhilterDesktop
             toolStripSeparator6.Name = "toolStripSeparator6";
             toolStripSeparator6.Size = new Size(6, 46);
             // 
-            // refreshToolStripButton
-            // 
-            refreshToolStripButton.AutoToolTip = false;
-            refreshToolStripButton.Image = (Image)resources.GetObject("refreshToolStripButton.Image");
-            refreshToolStripButton.ImageTransparentColor = Color.Magenta;
-            refreshToolStripButton.Name = "refreshToolStripButton";
-            refreshToolStripButton.Size = new Size(50, 43);
-            refreshToolStripButton.Text = "Refresh";
-            refreshToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
-            refreshToolStripButton.ToolTipText = "Refresh the queue (F5)";
-            refreshToolStripButton.Click += refreshToolStripMenuItem_Click;
-            // 
-            // toolStripSeparator8
-            // 
-            toolStripSeparator8.Name = "toolStripSeparator8";
-            toolStripSeparator8.Size = new Size(282, 6);
-            // 
             // HelpToolStripButton
             // 
             HelpToolStripButton.AutoToolTip = false;
@@ -289,6 +289,11 @@ namespace PhilterDesktop
             HelpToolStripButton.Text = "Help";
             HelpToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
             HelpToolStripButton.ToolTipText = "Open the help documentation";
+            // 
+            // toolStripSeparator8
+            // 
+            toolStripSeparator8.Name = "toolStripSeparator8";
+            toolStripSeparator8.Size = new Size(282, 6);
             // 
             // listView1
             // 
@@ -455,11 +460,6 @@ namespace PhilterDesktop
             // 
             redactionQueueTimer.Interval = 15000;
             redactionQueueTimer.Tick += RedactionQueueTimer_Tick;
-            // 
-            // toolStripSeparator9
-            // 
-            toolStripSeparator9.Name = "toolStripSeparator9";
-            toolStripSeparator9.Size = new Size(6, 46);
             // 
             // MainForm
             // 

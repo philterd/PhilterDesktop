@@ -117,7 +117,7 @@ namespace PhilterDesktop
         // GUI has it open) — but only for the default policy; a named policy then fails clearly.
         private static bool TryResolvePolicy(string policyName, out string policyJson, out SettingsEntity settings, out string? error)
         {
-            policyJson = "{}";
+            policyJson = DefaultPolicy.Json();
             settings = new SettingsEntity { OutputToOriginalLocation = true };
             error = null;
 
@@ -142,7 +142,7 @@ namespace PhilterDesktop
                     error = $"Policy '{policyName}' not found.";
                     return false;
                 }
-                policyJson = string.IsNullOrWhiteSpace(entity?.Json) ? "{}" : entity!.Json;
+                policyJson = string.IsNullOrWhiteSpace(entity?.Json) ? DefaultPolicy.Json() : entity!.Json;
                 settings = new SettingsRepository(database).GetSettings();
                 return true;
             }

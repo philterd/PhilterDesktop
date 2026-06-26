@@ -113,9 +113,9 @@ namespace PhilterDesktop
 
         private static void EnsureDefaults(PolicyRepository policies, ContextRepository contexts)
         {
-            if (policies.FindByName("default") is null)
+            if (policies.FindByName(DefaultPolicy.Name) is null)
             {
-                policies.Insert(new PolicyEntity { Name = "default", Json = "{}" });
+                policies.Insert(new PolicyEntity { Name = DefaultPolicy.Name, Json = DefaultPolicy.Json() });
             }
             if (contexts.FindByName("default") is null)
             {
