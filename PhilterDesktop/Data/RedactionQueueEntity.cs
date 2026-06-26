@@ -26,6 +26,12 @@ namespace PhilterData
         public string Policy { get; set; } = string.Empty;
         public string Context { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Plain-language reason the most recent redaction attempt failed; empty when not failed.
+        /// Persisted so the user can see why a "Failed" row failed after any toast has gone.
+        /// </summary>
+        public string ErrorMessage { get; set; } = string.Empty;
+
         /// <summary>When true, redacted replacements in .docx output are highlighted.</summary>
         public bool Highlight { get; set; }
 

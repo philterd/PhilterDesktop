@@ -92,6 +92,11 @@ tuck itself away into the **Windows system tray** — the row of small icons nea
     - **Pause watching / Resume watching** — temporarily stop or restart automatic monitoring.
     - **Exit** — fully close the program and stop watching.
 
+If you choose **Exit** while documents are still being redacted or waiting in the queue, Philter
+Desktop warns you first and lets you stay open so that work can finish — that way you don't
+accidentally stop a redaction partway through. (Closing the window with the **X** is always safe: it
+only hides to the tray, and any in-progress redactions keep running.)
+
 As long as Philter Desktop is running — even when it's only sitting in the tray — all of your watched
 folders are being monitored.
 

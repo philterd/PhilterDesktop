@@ -117,4 +117,7 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="lblSecurityInfo.Text" xml:space="preserve">
+    <value>The database (which can contain detected personal data) is always encrypted at rest. By default the key is protected by your Windows account. You can also require a passphrase to open Philter Desktop. If you forget the passphrase, the data cannot be recovered.</value>
+  </data>
 </root>

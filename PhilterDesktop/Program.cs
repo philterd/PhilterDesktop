@@ -44,6 +44,13 @@ namespace PhilterDesktop
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
 
+            // Catch unhandled exceptions: log them and show a friendly dialog instead of the raw .NET
+            // crash window. UI-thread errors route through ThreadException; background-thread/terminal
+            // ones through the AppDomain handler.
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Application.ThreadException += (_, e) => HandleUnhandledException(e.Exception);
+            AppDomain.CurrentDomain.UnhandledException += (_, e) => HandleUnhandledException(e.ExceptionObject as Exception);
+
             // Use the modern Windows 11 UI font everywhere, including dialogs that
             // are not individually themed.
             Application.SetDefaultFont(ModernTheme.UiFont);
@@ -91,6 +98,35 @@ namespace PhilterDesktop
 
             Application.Run(new MainForm(startMinimized));
             return 0;
+        }
+
+        // Logs an unhandled exception and shows a friendly message rather than a raw crash dialog.
+        private static void HandleUnhandledException(Exception? ex)
+        {
+            try
+            {
+                Logger.LogError("Unhandled exception", ex ?? new Exception("Unknown error"));
+            }
+            catch
+            {
+                // Never let logging failures mask the original error.
+            }
+
+            try
+            {
+                MessageBox.Show(
+                    "Philter Desktop ran into an unexpected problem." + Environment.NewLine + Environment.NewLine +
+                    "The details were written to the log file (Settings → Open Log File). If this keeps " +
+                    "happening, please contact support@philterd.ai." + Environment.NewLine + Environment.NewLine +
+                    (ex?.Message ?? "Unknown error"),
+                    "Philter Desktop",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            catch
+            {
+                // If we can't even show the dialog (e.g. during shutdown), there's nothing more to do.
+            }
         }
     }
 }

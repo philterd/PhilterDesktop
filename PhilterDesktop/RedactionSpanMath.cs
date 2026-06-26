@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+using System.Text;
+using PhilterData;
+
 namespace PhilterDesktop
 {
     /// <summary>A text replacement range used when re-applying redaction spans.</summary>
     internal readonly record struct ReplacementRange(int Start, int End, string Replacement);
 
-    /// <summary>Helper for resolving overlapping replacement ranges.</summary>
+    /// <summary>Resolves and applies redaction spans/ranges to text (the heart of producing redacted output).</summary>
     internal static class RedactionSpanMath
     {
         /// <summary>
@@ -40,5 +43,43 @@ namespace PhilterDesktop
             }
             return result;
         }
+
+        /// <summary>
+        /// Builds replacement ranges from spans that are valid for text of <paramref name="textLength"/>
+        /// (in-bounds and non-empty), substituting <paramref name="defaultReplacement"/> when a span
+        /// carries no replacement.
+        /// </summary>
+        public static List<ReplacementRange> BuildRanges(IEnumerable<RedactionSpanEntity> spans, int textLength, string defaultReplacement)
+        {
+            var ranges = new List<ReplacementRange>();
+            foreach (RedactionSpanEntity s in spans)
+            {
+                if (s.CharacterStart >= 0 && s.CharacterEnd <= textLength && s.CharacterEnd > s.CharacterStart)
+                {
+                    string replacement = string.IsNullOrEmpty(s.Replacement) ? defaultReplacement : s.Replacement;
+                    ranges.Add(new ReplacementRange(s.CharacterStart, s.CharacterEnd, replacement));
+                }
+            }
+            return ranges;
+        }
+
+        /// <summary>
+        /// Applies the ranges to <paramref name="text"/>, resolving overlaps first and applying
+        /// right-to-left so earlier offsets stay valid as the string changes length.
+        /// </summary>
+        public static string Apply(string text, IEnumerable<ReplacementRange> ranges)
+        {
+            var sb = new StringBuilder(text);
+            foreach (ReplacementRange r in ResolveNonOverlapping(ranges).OrderByDescending(r => r.Start))
+            {
+                sb.Remove(r.Start, r.End - r.Start);
+                sb.Insert(r.Start, r.Replacement ?? string.Empty);
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>Builds ranges from <paramref name="spans"/> and applies them to <paramref name="text"/>.</summary>
+        public static string ApplySpans(string text, IEnumerable<RedactionSpanEntity> spans, string defaultReplacement)
+            => Apply(text, BuildRanges(spans, text.Length, defaultReplacement));
     }
 }

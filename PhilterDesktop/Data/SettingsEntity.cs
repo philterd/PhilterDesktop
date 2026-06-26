@@ -59,6 +59,33 @@ namespace PhilterData
         /// </summary>
         public bool TrayHintShown { get; set; } = false;
 
+        /// <summary>The policy chosen most recently, pre-selected next time a redaction is started.</summary>
+        public string LastPolicy { get; set; } = string.Empty;
+
+        /// <summary>The context chosen most recently, pre-selected next time a redaction is started.</summary>
+        public string LastContext { get; set; } = string.Empty;
+
+        /// <summary>The folder a preview redaction was last saved to (used to seed the Save dialog).</summary>
+        public string LastSaveFolder { get; set; } = string.Empty;
+
+        // --- Remembered main-window layout (restored on next launch) -------------------------------
+
+        /// <summary>Last normal (non-maximized) window position/size. Width 0 means "never saved".</summary>
+        public int WindowX { get; set; }
+        public int WindowY { get; set; }
+        public int WindowWidth { get; set; }
+        public int WindowHeight { get; set; }
+
+        /// <summary>Whether the window was maximized when last closed.</summary>
+        public bool WindowMaximized { get; set; }
+
+        /// <summary>Queue sort column index and direction.</summary>
+        public int SortColumn { get; set; }
+        public bool SortAscending { get; set; } = true;
+
+        /// <summary>Comma-separated queue column widths, e.g. "350,180,120,120". Empty means default.</summary>
+        public string ColumnWidths { get; set; } = string.Empty;
+
         /// <summary>
         /// Gets or sets the date and time when the settings were last modified.
         /// </summary>

@@ -82,6 +82,36 @@ namespace PhilterDesktop
         }
 
         /// <summary>
+        /// The actual redacted-output path for a document: the latest version whose stored output
+        /// still exists on disk (honoring a custom Save-As location or a later Modify-Redaction
+        /// output), falling back to <paramref name="defaultPath"/>.
+        /// </summary>
+        /// <param name="versionsOldestFirst">The document's versions, ordered oldest-to-newest.</param>
+        public static string ResolveOutputPath(IEnumerable<RedactionVersionEntity> versionsOldestFirst, string defaultPath)
+        {
+            string? stored = versionsOldestFirst
+                .Where(v => !string.IsNullOrEmpty(v.OutputPath) && File.Exists(v.OutputPath))
+                .Select(v => v.OutputPath)
+                .LastOrDefault();
+            return stored ?? defaultPath;
+        }
+
+        /// <summary>
+        /// The folder to open a "Save redacted file" dialog in: the folder the user last saved a
+        /// preview to (if it still exists), otherwise the suggested output folder, otherwise the
+        /// source file's folder.
+        /// </summary>
+        public static string InitialSaveDirectory(SettingsEntity settings, string suggestedPath, string sourcePath)
+        {
+            if (!string.IsNullOrEmpty(settings.LastSaveFolder) && Directory.Exists(settings.LastSaveFolder))
+            {
+                return settings.LastSaveFolder;
+            }
+            string? dir = Path.GetDirectoryName(suggestedPath);
+            return !string.IsNullOrEmpty(dir) ? dir : (Path.GetDirectoryName(sourcePath) ?? string.Empty);
+        }
+
+        /// <summary>
         /// Redacts <paramref name="inputPath"/> to <paramref name="outputPath"/> using
         /// <paramref name="policy"/>, dispatching by file type, and returns the spans it applied
         /// (so they can be stored and later edited / re-applied).

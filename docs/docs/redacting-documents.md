@@ -48,7 +48,14 @@ press a "go" button. Each row's **Status** column tells you where that document 
 | **Pending** | The document is in line, waiting its turn. |
 | **Processing** | The document is being cleaned up right now. |
 | **Completed** | The document was cleaned up successfully and the copy is ready. |
-| **Failed** | Something prevented the cleanup — for example, the original file was moved or deleted, or the chosen policy no longer exists. |
+| **Failed** | Something prevented the cleanup — for example, the original file was moved or deleted, the file was open in another program, or the chosen policy no longer exists. |
+
+If a document shows **Failed**, Philter Desktop remembers *why*. **Hover your mouse over the failed
+row** to see the reason in a small pop-up, or right-click the row and choose **View Details…**, where
+the reason appears as a **"Why it failed"** line. The reasons are written in plain language — for
+example, *"…could not save 'report.docx' because it is open in another program (such as Microsoft
+Word or a PDF viewer). Please close it and try again."* Once you've fixed the cause, you can add the
+document again to retry it.
 
 Whatever happens, **your original document is never changed.** Philter Desktop always writes the
 result to a **new, separate copy**. That copy is given a name based on the original plus a label —
@@ -90,18 +97,41 @@ the better choices when you need to clean up **many documents at once**.
 Once a document shows **Completed**, you have several options:
 
 - **Double-click** the row to open the cleaned-up file immediately.
-- **Right-click** the row (or use the toolbar) to:
+- **Right-click** the row to:
     - **Open redacted file** — open the cleaned-up copy.
     - **Open original file** — open the untouched original.
+    - **Open containing folder** — show the cleaned-up file selected in File Explorer.
     - **View Details…** — see a summary of that document: the original file name, the cleaned-up file
       name, the policy and context used, how many redactions were made, and when it was done.
     - **View Diff…** — see a precise before-and-after comparison (explained below).
     - **Modify Redaction…** — review and adjust exactly what was removed (explained below).
     - **Remove**, **Remove completed**, or **Remove all** — take items off the list.
-    - **Refresh** — update the list.
+    - **Refresh** — reload the list.
+
+The list updates itself as documents are processed, so you rarely need to refresh by hand. A
+**Refresh** button is also on the toolbar (and **F5** refreshes too) — handy when documents were added
+from the [command line](#for-advanced-users-and-it-redacting-from-a-command-line) or the
+[Explorer right-click menu](settings.md#explorer-right-click-menu) while Philter Desktop was open.
 
 When you remove several items at once, Philter Desktop asks you to confirm first, so you can't clear
 your list by accident.
+
+**Keyboard shortcuts:** **F5** refreshes the list, **Delete** removes the selected document, **Enter**
+opens a completed document's redacted file, and **Ctrl+O** adds files.
+
+### Finding a document in a long list
+
+When you have many documents in the queue, two tools help you find the one you want:
+
+- **Filter box.** Just above the list is a box labelled *Filter by file name, status, policy, or
+  context*. Start typing and the list immediately narrows to only the documents that match what you
+  typed — for example, type part of a file name, or type `failed` to see only the documents that
+  didn't finish. The status bar shows how many documents are being shown (for example, *Showing 3 of
+  40 documents*). Clear the box (or press **Esc** while typing in it) to see the whole queue again.
+- **Sorting.** Click any column heading — **File Name**, **Status**, **Policy**, or **Context** — to
+  sort the list by that column. Click the same heading again to reverse the order. A small arrow on
+  the heading shows which column is sorted and in which direction. (Sorting by **Status** groups the
+  documents in the natural order of work: pending, then processing, then completed, then failed.)
 
 ## Adjusting what was removed (Modify Redaction)
 

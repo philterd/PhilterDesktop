@@ -104,6 +104,7 @@ namespace PhilterDesktop
             _policyCombo.DropDownStyle = ComboBoxStyle.DropDownList;
             _policyCombo.Location = new Point(72, 38);
             _policyCombo.Name = "_policyCombo";
+            _policyCombo.AccessibleName = "Policy";
             _policyCombo.Size = new Size(200, 23);
             _policyCombo.TabIndex = 2;
             _policyCombo.SelectedIndexChanged += Selection_Changed;
@@ -122,6 +123,7 @@ namespace PhilterDesktop
             _contextCombo.DropDownStyle = ComboBoxStyle.DropDownList;
             _contextCombo.Location = new Point(349, 38);
             _contextCombo.Name = "_contextCombo";
+            _contextCombo.AccessibleName = "Context";
             _contextCombo.Size = new Size(200, 23);
             _contextCombo.TabIndex = 4;
             _contextCombo.SelectedIndexChanged += Selection_Changed;

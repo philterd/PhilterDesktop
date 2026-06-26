@@ -28,9 +28,10 @@ namespace PhilterDesktop
         private readonly PolicyRepository _policyRepository;
         private readonly ContextRepository _contextRepository;
         private readonly RedactionQueueRepository _redactionQueueRepository;
+        private readonly SettingsRepository? _settingsRepository;
         private readonly bool _loggingEnabled;
 
-        public RedactDocuments(PolicyRepository policyRepository, ContextRepository contextRepository, RedactionQueueRepository redactionQueueRepository, bool loggingEnabled)
+        public RedactDocuments(PolicyRepository policyRepository, ContextRepository contextRepository, RedactionQueueRepository redactionQueueRepository, bool loggingEnabled, SettingsRepository? settingsRepository = null)
         {
             InitializeComponent();
             ModernTheme.Apply(this);
@@ -38,6 +39,7 @@ namespace PhilterDesktop
             _policyRepository = policyRepository;
             _contextRepository = contextRepository;
             _redactionQueueRepository = redactionQueueRepository;
+            _settingsRepository = settingsRepository;
             _loggingEnabled = loggingEnabled;
         }
 
@@ -50,22 +52,24 @@ namespace PhilterDesktop
 
         private void LoadPolicies()
         {
+            string current = comboBoxPolicy.Text; // preserve the selection across dropdown reloads
             comboBoxPolicy.Items.Clear();
             foreach (PolicyEntity p in _policyRepository.GetAll())
             {
                 comboBoxPolicy.Items.Add(p.Name);
             }
-            comboBoxPolicy.SelectedIndex = 0;
+            ComboSelection.Select(comboBoxPolicy, !string.IsNullOrEmpty(current) ? current : _settingsRepository?.GetSettings().LastPolicy);
         }
 
         private void LoadContexts()
         {
+            string current = comboBoxContext.Text;
             comboBoxContext.Items.Clear();
             foreach (ContextEntity c in _contextRepository.GetAll())
             {
                 comboBoxContext.Items.Add(c.Name);
             }
-            comboBoxContext.SelectedIndex = 0;
+            ComboSelection.Select(comboBoxContext, !string.IsNullOrEmpty(current) ? current : _settingsRepository?.GetSettings().LastContext);
         }
 
         private void ComboBoxPolicy_DropDown(object sender, EventArgs e)
@@ -236,6 +240,22 @@ namespace PhilterDesktop
 
             string policy = comboBoxPolicy.Text;
             string context = comboBoxContext.Text;
+
+            // Remember the choice so it's pre-selected next time.
+            if (_settingsRepository is not null)
+            {
+                try
+                {
+                    SettingsEntity settings = _settingsRepository.GetSettings();
+                    settings.LastPolicy = policy;
+                    settings.LastContext = context;
+                    _settingsRepository.SaveSettings(settings);
+                }
+                catch
+                {
+                    // best effort — don't block redaction on a settings write
+                }
+            }
 
             if (_loggingEnabled)
             {

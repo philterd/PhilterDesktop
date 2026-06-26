@@ -22,12 +22,65 @@ namespace PhilterDesktop
     /// </summary>
     public partial class RedactionDetailsForm : Form
     {
+        private readonly ToolStripMenuItem _copyItem;
+
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public RedactionDetailsForm()
         {
             InitializeComponent();
             ModernTheme.Apply(this);
             _list.Resize += (_, _) => SizeValueColumn();
+
+            // Right-click a row to copy its value (e.g. the redacted file path) to the clipboard.
+            var menu = new ContextMenuStrip();
+            _copyItem = new ToolStripMenuItem("Copy", null, (_, _) => CopySelectedValue())
+            {
+                ShortcutKeyDisplayString = "Ctrl+C"
+            };
+            menu.Items.Add(_copyItem);
+            menu.Opening += (_, e) =>
+            {
+                if (_list.SelectedItems.Count == 0)
+                {
+                    e.Cancel = true;
+                }
+            };
+            _list.ContextMenuStrip = menu;
+            _list.KeyDown += (_, e) =>
+            {
+                if (e.Control && e.KeyCode == Keys.C)
+                {
+                    CopySelectedValue();
+                    e.Handled = true;
+                }
+            };
+        }
+
+        // Copy the Value column of the selected row to the clipboard.
+        private void CopySelectedValue()
+        {
+            if (_list.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
+            ListViewItem item = _list.SelectedItems[0];
+            string value = item.SubItems.Count > 1 ? item.SubItems[1].Text : string.Empty;
+            try
+            {
+                if (string.IsNullOrEmpty(value))
+                {
+                    Clipboard.Clear();
+                }
+                else
+                {
+                    Clipboard.SetText(value);
+                }
+            }
+            catch
+            {
+                // The clipboard can be transiently locked by another process; ignore.
+            }
         }
 
         public RedactionDetailsForm(string title, IReadOnlyList<(string Label, string Value)> rows)

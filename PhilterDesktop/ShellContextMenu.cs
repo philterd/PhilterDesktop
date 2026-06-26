@@ -79,9 +79,10 @@ namespace PhilterDesktop
                 var policies = new PolicyRepository(database);
                 var contexts = new ContextRepository(database);
                 var queue = new RedactionQueueRepository(database);
+                var settings = new SettingsRepository(database);
                 EnsureDefaults(policies, contexts);
 
-                using var form = new ContextMenuRedactForm(files, policies, contexts, queue);
+                using var form = new ContextMenuRedactForm(files, policies, contexts, queue, settings);
                 if (form.ShowDialog() == DialogResult.OK && form.EnqueuedCount > 0)
                 {
                     EnsureMainAppRunning();

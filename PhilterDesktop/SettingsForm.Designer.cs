@@ -44,6 +44,7 @@ namespace PhilterDesktop
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SettingsForm));
             groupBoxOutput = new GroupBox();
             btnBrowse = new Button();
             txtCustomFolder = new TextBox();
@@ -182,20 +183,20 @@ namespace PhilterDesktop
             btnOpenLog.Text = "Open Log File";
             btnOpenLog.UseVisualStyleBackColor = true;
             btnOpenLog.Click += BtnOpenLog_Click;
-            //
+            // 
             // btnClearLog
-            //
+            // 
             btnClearLog.AutoSize = true;
             btnClearLog.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            btnClearLog.Location = new Point(248, 24);
+            btnClearLog.Location = new Point(257, 24);
             btnClearLog.Name = "btnClearLog";
             btnClearLog.Padding = new Padding(8, 4, 8, 4);
-            btnClearLog.Size = new Size(106, 33);
+            btnClearLog.Size = new Size(104, 33);
             btnClearLog.TabIndex = 2;
             btnClearLog.Text = "Clear Log File";
             btnClearLog.UseVisualStyleBackColor = true;
             btnClearLog.Click += BtnClearLog_Click;
-            //
+            // 
             // chkEnableLogging
             // 
             chkEnableLogging.AutoSize = true;
@@ -404,9 +405,9 @@ namespace PhilterDesktop
             lblStartupHint.Name = "lblStartupHint";
             lblStartupHint.Size = new Size(0, 15);
             lblStartupHint.TabIndex = 6;
-            //
+            // 
             // tabSecurity
-            //
+            // 
             tabSecurity.Controls.Add(lblSecurityInfo);
             tabSecurity.Controls.Add(chkPassphrase);
             tabSecurity.Controls.Add(btnChangePassphrase);
@@ -418,28 +419,28 @@ namespace PhilterDesktop
             tabSecurity.TabIndex = 2;
             tabSecurity.Text = "Security";
             tabSecurity.UseVisualStyleBackColor = true;
-            //
+            // 
             // lblSecurityInfo
-            //
+            // 
             lblSecurityInfo.Location = new Point(12, 15);
             lblSecurityInfo.Name = "lblSecurityInfo";
             lblSecurityInfo.Size = new Size(540, 70);
             lblSecurityInfo.TabIndex = 0;
-            lblSecurityInfo.Text = "The database (which can contain detected personal data) is always encrypted at rest. By default the key is protected by your Windows account. You can also require a passphrase to open Philter Desktop. If you forget the passphrase, the data cannot be recovered.";
-            //
+            lblSecurityInfo.Text = resources.GetString("lblSecurityInfo.Text");
+            // 
             // chkPassphrase
-            //
+            // 
             chkPassphrase.AutoSize = true;
             chkPassphrase.Location = new Point(12, 95);
             chkPassphrase.Name = "chkPassphrase";
-            chkPassphrase.Size = new Size(266, 19);
+            chkPassphrase.Size = new Size(250, 19);
             chkPassphrase.TabIndex = 1;
             chkPassphrase.Text = "Require a passphrase to open the database";
             chkPassphrase.UseVisualStyleBackColor = true;
             chkPassphrase.CheckedChanged += ChkPassphrase_CheckedChanged;
-            //
+            // 
             // btnChangePassphrase
-            //
+            // 
             btnChangePassphrase.Location = new Point(32, 124);
             btnChangePassphrase.Name = "btnChangePassphrase";
             btnChangePassphrase.Size = new Size(170, 34);
@@ -447,18 +448,18 @@ namespace PhilterDesktop
             btnChangePassphrase.Text = "Change Passphrase…";
             btnChangePassphrase.UseVisualStyleBackColor = true;
             btnChangePassphrase.Click += BtnChangePassphrase_Click;
-            //
+            // 
             // lblSecurityStatus
-            //
+            // 
             lblSecurityStatus.AutoSize = true;
             lblSecurityStatus.ForeColor = SystemColors.GrayText;
             lblSecurityStatus.Location = new Point(12, 175);
             lblSecurityStatus.Name = "lblSecurityStatus";
             lblSecurityStatus.Size = new Size(0, 15);
             lblSecurityStatus.TabIndex = 3;
-            //
+            // 
             // SettingsForm
-            //
+            // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(584, 366);

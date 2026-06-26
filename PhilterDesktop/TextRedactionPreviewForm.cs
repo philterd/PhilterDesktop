@@ -77,12 +77,12 @@ namespace PhilterDesktop
             try
             {
                 _originalText = File.ReadAllText(_sourcePath);
-                LoadNames(_policyCombo, _policies.GetAll().Select(p => p.Name));
-                LoadNames(_contextCombo, _contexts.GetAll().Select(c => c.Name));
+                LoadNames(_policyCombo, _policies.GetAll().Select(p => p.Name), _settings.LastPolicy);
+                LoadNames(_contextCombo, _contexts.GetAll().Select(c => c.Name), _settings.LastContext);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, $"Could not open the file: {ex.Message}", "Redact (Preview)",
+                MessageBox.Show(this, UserError.Describe(ex, _sourcePath, writing: false), "Redact (Preview)",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
@@ -93,18 +93,14 @@ namespace PhilterDesktop
             Detect();
         }
 
-        private static void LoadNames(ComboBox combo, IEnumerable<string> names)
+        private static void LoadNames(ComboBox combo, IEnumerable<string> names, string? preferred)
         {
             combo.Items.Clear();
             foreach (string name in names.OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
             {
                 combo.Items.Add(name);
             }
-            int def = combo.Items.IndexOf("default");
-            if (combo.Items.Count > 0)
-            {
-                combo.SelectedIndex = def >= 0 ? def : 0;
-            }
+            ComboSelection.Select(combo, preferred);
         }
 
         private void Selection_Changed(object? sender, EventArgs e)
@@ -177,25 +173,8 @@ namespace PhilterDesktop
             _save.Enabled = !string.IsNullOrEmpty(_originalText) || _spans.Count > 0;
         }
 
-        private string CurrentRedactedText()
-        {
-            var ranges = new List<ReplacementRange>();
-            foreach (RedactionSpanEntity s in _spans)
-            {
-                if (s.CharacterStart >= 0 && s.CharacterEnd <= _originalText.Length && s.CharacterEnd > s.CharacterStart)
-                {
-                    string repl = string.IsNullOrEmpty(s.Replacement) ? RedactionService.DefaultReplacement : s.Replacement;
-                    ranges.Add(new ReplacementRange(s.CharacterStart, s.CharacterEnd, repl));
-                }
-            }
-            var sb = new StringBuilder(_originalText);
-            foreach (ReplacementRange r in RedactionSpanMath.ResolveNonOverlapping(ranges).OrderByDescending(r => r.Start))
-            {
-                sb.Remove(r.Start, r.End - r.Start);
-                sb.Insert(r.Start, r.Replacement ?? string.Empty);
-            }
-            return sb.ToString();
-        }
+        private string CurrentRedactedText() =>
+            RedactionSpanMath.ApplySpans(_originalText, _spans, RedactionService.DefaultReplacement);
 
         private void RefreshPreview()
         {
@@ -301,7 +280,7 @@ namespace PhilterDesktop
                 AddExtension = true,
                 OverwritePrompt = true,
                 FileName = Path.GetFileName(suggested),
-                InitialDirectory = Path.GetDirectoryName(suggested) is { Length: > 0 } d ? d : Path.GetDirectoryName(_sourcePath)
+                InitialDirectory = RedactionService.InitialSaveDirectory(_settings, suggested, _sourcePath)
             };
             if (dialog.ShowDialog(this) != DialogResult.OK)
             {
@@ -315,7 +294,7 @@ namespace PhilterDesktop
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, $"Could not write the redacted file: {ex.Message}", "Redact (Preview)",
+                MessageBox.Show(this, UserError.Describe(ex, output, writing: true), "Redact (Preview)",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }

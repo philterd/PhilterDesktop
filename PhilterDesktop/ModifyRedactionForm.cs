@@ -348,7 +348,7 @@ namespace PhilterDesktop
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Redaction failed: {ex.Message}", "Modify Redaction", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(UserError.Describe(ex, output, writing: true), "Modify Redaction", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             finally

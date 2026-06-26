@@ -123,6 +123,7 @@ namespace PhilterDesktop
             filesListBox.Location = new Point(13, 53);
             filesListBox.Margin = new Padding(3, 2, 3, 2);
             filesListBox.Name = "filesListBox";
+            filesListBox.AccessibleName = "Files to redact";
             filesListBox.Size = new Size(627, 139);
             filesListBox.TabIndex = 2;
             filesListBox.SelectedIndexChanged += FilesListBox_SelectedIndexChanged;
@@ -170,6 +171,7 @@ namespace PhilterDesktop
             comboBoxContext.Location = new Point(438, 26);
             comboBoxContext.Margin = new Padding(3, 2, 3, 2);
             comboBoxContext.Name = "comboBoxContext";
+            comboBoxContext.AccessibleName = "Context";
             comboBoxContext.Size = new Size(210, 23);
             comboBoxContext.TabIndex = 3;
             comboBoxContext.DropDown += ComboBoxContext_DropDown;
@@ -190,6 +192,7 @@ namespace PhilterDesktop
             comboBoxPolicy.Location = new Point(78, 26);
             comboBoxPolicy.Margin = new Padding(3, 2, 3, 2);
             comboBoxPolicy.Name = "comboBoxPolicy";
+            comboBoxPolicy.AccessibleName = "Policy";
             comboBoxPolicy.Size = new Size(263, 23);
             comboBoxPolicy.TabIndex = 1;
             comboBoxPolicy.DropDown += ComboBoxPolicy_DropDown;

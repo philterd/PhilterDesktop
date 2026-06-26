@@ -28,6 +28,7 @@ namespace PhilterDesktop
         private readonly PolicyRepository _policies = null!;
         private readonly ContextRepository _contexts = null!;
         private readonly RedactionQueueRepository _queue = null!;
+        private readonly SettingsRepository? _settings;
         private readonly IReadOnlyList<string> _files = Array.Empty<string>();
 
         /// <summary>Number of files added to the queue when the user clicked Redact (0 if cancelled).</summary>
@@ -45,13 +46,15 @@ namespace PhilterDesktop
             IReadOnlyList<string> files,
             PolicyRepository policies,
             ContextRepository contexts,
-            RedactionQueueRepository queue)
+            RedactionQueueRepository queue,
+            SettingsRepository? settings = null)
             : this()
         {
             _files = files;
             _policies = policies;
             _contexts = contexts;
             _queue = queue;
+            _settings = settings;
         }
 
         private void ContextMenuRedactForm_Load(object? sender, EventArgs e)
@@ -64,24 +67,21 @@ namespace PhilterDesktop
             }
             _fileList.EndUpdate();
 
-            LoadNames(_policyCombo, _policies?.GetAll().Select(p => p.Name));
-            LoadNames(_contextCombo, _contexts?.GetAll().Select(c => c.Name));
+            SettingsEntity? settings = _settings?.GetSettings();
+            LoadNames(_policyCombo, _policies?.GetAll().Select(p => p.Name), settings?.LastPolicy);
+            LoadNames(_contextCombo, _contexts?.GetAll().Select(c => c.Name), settings?.LastContext);
 
             _redact.Enabled = _files.Count > 0 && _policyCombo.Items.Count > 0 && _contextCombo.Items.Count > 0;
         }
 
-        private static void LoadNames(ComboBox combo, IEnumerable<string>? names)
+        private static void LoadNames(ComboBox combo, IEnumerable<string>? names, string? preferred)
         {
             combo.Items.Clear();
             foreach (string name in (names ?? Enumerable.Empty<string>()).OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
             {
                 combo.Items.Add(name);
             }
-            int defaultIndex = combo.Items.IndexOf("default");
-            if (combo.Items.Count > 0)
-            {
-                combo.SelectedIndex = defaultIndex >= 0 ? defaultIndex : 0;
-            }
+            ComboSelection.Select(combo, preferred);
         }
 
         private void OnRedact(object? sender, EventArgs e)
@@ -95,6 +95,22 @@ namespace PhilterDesktop
 
             string policy = _policyCombo.Text;
             string context = _contextCombo.Text;
+
+            // Remember the choice so it's pre-selected next time (shared with the main app's settings).
+            if (_settings is not null)
+            {
+                try
+                {
+                    SettingsEntity s = _settings.GetSettings();
+                    s.LastPolicy = policy;
+                    s.LastContext = context;
+                    _settings.SaveSettings(s);
+                }
+                catch
+                {
+                    // best effort
+                }
+            }
 
             foreach (string path in _files)
             {

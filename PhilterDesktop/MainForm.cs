@@ -21,6 +21,7 @@ using PhilterData;
 using PhilterDesktop.PolicyEditing;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
+using System.Runtime.InteropServices;
 
 namespace PhilterDesktop
 {
@@ -54,9 +55,16 @@ namespace PhilterDesktop
         private const string HelpUrl = "https://philterd.github.io/PhilterDesktop/";
 
         private Label _emptyStateLabel = null!;
+        private TextBox _filterBox = null!;
         private ToolStripStatusLabel _queueSummaryLabel = null!;
         private ToolStripStatusLabel _reviewWarningLabel = null!;
         private Image? _documentImage;
+        private readonly QueueColumnSorter _sorter = new();
+
+        private const string DefaultEmptyText =
+            "No documents queued\r\n\r\nClick \"Redact\" or drag .txt, .docx, or .pdf files here";
+        private const string FilterEmptyText =
+            "No documents match your filter.\r\n\r\nClear the filter box to see the whole queue.";
         private System.Windows.Forms.Timer _statusAnimTimer = null!;
         private int _statusAnimPhase;
 
@@ -142,6 +150,85 @@ namespace PhilterDesktop
                     Logger.LogInfo("Created default redaction context");
                 }
             }
+
+            RestoreUiState();
+        }
+
+        // Restore the remembered window size/position, sort, and column widths. Best-effort: a bad or
+        // stale value must never stop the app from starting.
+        private void RestoreUiState()
+        {
+            try
+            {
+                SettingsEntity s = _settingsRepository.GetSettings();
+
+                // Sort column/direction (first LoadRedactionQueue will apply it via _sorter).
+                if (s.SortColumn >= 0 && s.SortColumn < listView1.Columns.Count)
+                {
+                    _sorter.Column = s.SortColumn;
+                    _sorter.Ascending = s.SortAscending;
+                }
+
+                // Column widths. File Name (index 0) is re-derived by AdjustColumns, so restoring it
+                // is harmless; the other three are what the user actually controls.
+                int[]? widths = UiState.ParseWidths(s.ColumnWidths, listView1.Columns.Count);
+                if (widths is not null)
+                {
+                    for (int i = 0; i < widths.Length; i++)
+                    {
+                        listView1.Columns[i].Width = widths[i];
+                    }
+                }
+
+                // Window size/position, guarded against an unplugged/changed monitor.
+                if (s.WindowWidth > 0 && s.WindowHeight > 0)
+                {
+                    var bounds = new Rectangle(s.WindowX, s.WindowY, s.WindowWidth, s.WindowHeight);
+                    if (UiState.IsBoundsVisible(bounds, Screen.AllScreens.Select(sc => sc.WorkingArea)))
+                    {
+                        StartPosition = FormStartPosition.Manual;
+                        Bounds = bounds;
+                    }
+
+                    if (s.WindowMaximized && !_startMinimized)
+                    {
+                        WindowState = FormWindowState.Maximized;
+                    }
+                }
+            }
+            catch
+            {
+                // best effort — keep the designer defaults on any failure
+            }
+        }
+
+        // Persist the current window size/position, sort, and column widths. Called when hiding to the
+        // tray and when exiting, so the last-seen layout is remembered.
+        private void SaveUiState()
+        {
+            try
+            {
+                SettingsEntity s = _settingsRepository.GetSettings();
+
+                // Use RestoreBounds (not Bounds) when maximized/minimized so we store the *normal* size.
+                Rectangle bounds = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
+                s.WindowX = bounds.X;
+                s.WindowY = bounds.Y;
+                s.WindowWidth = bounds.Width;
+                s.WindowHeight = bounds.Height;
+                s.WindowMaximized = WindowState == FormWindowState.Maximized;
+
+                s.SortColumn = _sorter.Column;
+                s.SortAscending = _sorter.Ascending;
+                s.ColumnWidths = UiState.FormatWidths(
+                    listView1.Columns.Cast<ColumnHeader>().Select(c => c.Width));
+
+                _settingsRepository.SaveSettings(s);
+            }
+            catch
+            {
+                // best effort — never let a settings write disrupt close/hide
+            }
         }
 
         /// <summary>
@@ -165,10 +252,17 @@ namespace PhilterDesktop
 
             // --- Owner-drawn status badges + full-row selection ---
             listView1.OwnerDraw = true;
+            listView1.ShowItemToolTips = true; // failed rows carry a hover tooltip with the reason
             listView1.DrawColumnHeader += ListView1_DrawColumnHeader;
             listView1.DrawItem += ListView1_DrawItem;
             listView1.DrawSubItem += ListView1_DrawSubItem;
             listView1.Resize += (_, _) => { AdjustColumns(); PositionEmptyState(); };
+
+            // Click a column header to sort by it; click again to reverse the direction.
+            // (ModernTheme.Apply set the header Nonclickable; the queue list needs it clickable.)
+            listView1.HeaderStyle = ColumnHeaderStyle.Clickable;
+            listView1.ListViewItemSorter = _sorter;
+            listView1.ColumnClick += ListView1_ColumnClick;
 
             // --- Drag-and-drop files onto the queue ---
             listView1.AllowDrop = true;
@@ -179,10 +273,13 @@ namespace PhilterDesktop
             // Enable/disable context-menu items based on selection and queue state.
             contextMenuStrip1.Opening += ContextMenuStrip1_Opening;
 
+            // --- Filter box (docked just below the toolbar, above the list) ---
+            BuildFilterBar();
+
             // --- Empty state overlay ---
             _emptyStateLabel = new Label
             {
-                Text = "No documents queued\r\n\r\nClick \"Redact\" or drag .txt, .docx, or .pdf files here",
+                Text = DefaultEmptyText,
                 TextAlign = ContentAlignment.MiddleCenter,
                 ForeColor = ModernTheme.SubtleText,
                 BackColor = ModernTheme.Surface,
@@ -196,7 +293,8 @@ namespace PhilterDesktop
             {
                 Spring = true,
                 TextAlign = ContentAlignment.MiddleLeft,
-                ForeColor = ModernTheme.SubtleText
+                ForeColor = ModernTheme.SubtleText,
+                AccessibleName = "Queue summary"
             };
             statusStrip1.Items.Add(_queueSummaryLabel);
 
@@ -207,7 +305,8 @@ namespace PhilterDesktop
             {
                 Text = "Redaction can include mistakes. Always carefully review redacted documents before sharing.",
                 Font = new Font(ModernTheme.UiFont, FontStyle.Bold),
-                ForeColor = Color.FromArgb(176, 92, 0)
+                ForeColor = Color.FromArgb(176, 92, 0),
+                AccessibleName = "Important: redaction can include mistakes. Always carefully review redacted documents before sharing."
             };
             statusStrip1.Items.Add(_reviewWarningLabel);
 
@@ -220,6 +319,44 @@ namespace PhilterDesktop
 
             _statusAnimTimer = new System.Windows.Forms.Timer { Interval = 400 };
             _statusAnimTimer.Tick += StatusAnimTimer_Tick;
+        }
+
+        // A slim filter bar docked between the toolbar and the list. Built in code (rather than the
+        // VS-regenerated designer) and slotted into the z-order so it docks below the toolbar and
+        // above the Fill list.
+        private void BuildFilterBar()
+        {
+            _filterBox = new TextBox
+            {
+                Dock = DockStyle.Fill,
+                BorderStyle = BorderStyle.FixedSingle,
+                PlaceholderText = "Filter by file name, status, policy, or context…",
+                AccessibleName = "Filter the redaction queue"
+            };
+            _filterBox.TextChanged += (_, _) => LoadRedactionQueue();
+            _filterBox.KeyDown += (_, e) =>
+            {
+                if (e.KeyCode == Keys.Escape && _filterBox.Text.Length > 0)
+                {
+                    _filterBox.Clear();
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                }
+            };
+
+            var panel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 34,
+                Padding = new Padding(8, 6, 8, 4),
+                BackColor = ModernTheme.Surface
+            };
+            panel.Controls.Add(_filterBox);
+            Controls.Add(panel);
+
+            // Docking is applied back-to-front in the z-order. Put the panel at index 1 so it docks
+            // just inside the toolbar/menu (higher indexes) and just outside the Fill list (index 0).
+            Controls.SetChildIndex(panel, 1);
         }
 
         private void ApplyToolbarIcons()
@@ -278,12 +415,53 @@ namespace PhilterDesktop
             EnsureStarted();
         }
 
+        // Keyboard shortcuts for the queue: F5 refresh, Ctrl+O add files (both global); Delete remove
+        // and Enter open the redacted file when a queue item is selected.
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.F5:
+                    LoadRedactionQueue();
+                    return true;
+                case Keys.Control | Keys.O:
+                    addFilesToRedactToolStripMenuItem_Click(this, EventArgs.Empty);
+                    return true;
+            }
+
+            if (listView1.Focused && listView1.SelectedItems.Count > 0)
+            {
+                if (keyData == Keys.Delete)
+                {
+                    removeToolStripMenuItem_Click(this, EventArgs.Empty);
+                    return true;
+                }
+                if (keyData == Keys.Enter && IsCompleted(listView1.SelectedItems[0]))
+                {
+                    openRedactedFileToolStripMenuItem_Click(this, EventArgs.Empty);
+                    return true;
+                }
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
         // Startup work runs once, whether the window is shown normally or the app launched
         // straight to the tray (in which case the handle is created but the form stays hidden).
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
             EnsureStarted();
+        }
+
+        // EnsureStarted() loads the queue during handle creation, before the form has done its
+        // initial layout — so the empty-state overlay's size/z-order don't reliably stick on a
+        // fresh launch (it would only appear after the next refresh). Re-evaluate it here, once the
+        // window is laid out and shown, so an empty queue shows the placeholder immediately.
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            UpdateEmptyState(listView1.Items.Count);
         }
 
         private void EnsureStarted()
@@ -387,7 +565,7 @@ namespace PhilterDesktop
         private void QueueNotification(WatchedFileProcessedEventArgs e)
         {
             // No point notifying about what the user is already looking at.
-            if (Visible && WindowState != FormWindowState.Minimized)
+            if (!NotificationPolicy.ShouldNotify(Visible, WindowState))
             {
                 return;
             }
@@ -482,6 +660,7 @@ namespace PhilterDesktop
 
         private void HideToTray()
         {
+            SaveUiState(); // remember the layout the user last had open
             Hide();
             ShowInTaskbar = false;
             ShowTrayHintIfFirstTime();
@@ -544,7 +723,48 @@ namespace PhilterDesktop
                 HideToTray();
                 return;
             }
+
+            // A real exit chosen from the tray menu: if redaction is still queued or running, give
+            // the user a chance to stay so they don't unknowingly abandon in-progress work. (Skipped
+            // for OS shutdown/logoff, where blocking with a prompt would be inappropriate.)
+            if (_exiting && !ConfirmExitWithActiveWork())
+            {
+                e.Cancel = true;
+                _exiting = false; // back out of the exit; keep running in the tray
+                return;
+            }
+
+            SaveUiState(); // committed to closing — remember the layout
             base.OnFormClosing(e);
+        }
+
+        // Returns true if it's OK to exit: either no active work, or the user confirmed.
+        private bool ConfirmExitWithActiveWork()
+        {
+            int active;
+            try
+            {
+                active = ExitGuard.CountActive(_redactionQueueRepository.GetAll().Select(x => x.Status));
+            }
+            catch
+            {
+                return true; // never block exit on a counting failure
+            }
+
+            if (active == 0)
+            {
+                return true;
+            }
+
+            DialogResult choice = MessageBox.Show(
+                this,
+                ExitGuard.Message(active),
+                "Redaction still in progress",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2);
+
+            return choice == DialogResult.Yes;
         }
 
         // Start hidden in the tray when launched with --minimized (e.g., at sign-in).
@@ -574,6 +794,49 @@ namespace PhilterDesktop
 
         // --- Owner-draw handlers ---------------------------------------------
 
+        private void ListView1_ColumnClick(object? sender, ColumnClickEventArgs e)
+        {
+            // Toggle direction when re-clicking the active column; otherwise sort the new one ascending.
+            if (e.Column == _sorter.Column)
+            {
+                _sorter.Ascending = !_sorter.Ascending;
+            }
+            else
+            {
+                _sorter.Column = e.Column;
+                _sorter.Ascending = true;
+            }
+
+            listView1.Sort();
+            InvalidateListViewHeader(); // repaint the header window so the sort arrow moves columns
+        }
+
+        // The ListView's column header is a separate native child window, so listView1.Invalidate()
+        // doesn't repaint it — the old column would keep its sort arrow. Invalidate the header window
+        // directly to force every column's DrawColumnHeader to run again.
+        private const int LVM_FIRST = 0x1000;
+        private const int LVM_GETHEADER = LVM_FIRST + 31;
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool InvalidateRect(IntPtr hWnd, IntPtr lpRect, bool bErase);
+
+        private void InvalidateListViewHeader()
+        {
+            if (!listView1.IsHandleCreated)
+            {
+                return;
+            }
+            IntPtr header = SendMessage(listView1.Handle, LVM_GETHEADER, IntPtr.Zero, IntPtr.Zero);
+            if (header != IntPtr.Zero)
+            {
+                InvalidateRect(header, IntPtr.Zero, true);
+            }
+        }
+
         private void ListView1_DrawColumnHeader(object? sender, DrawListViewColumnHeaderEventArgs e)
         {
             using (var bg = new SolidBrush(ModernTheme.Surface))
@@ -585,9 +848,24 @@ namespace PhilterDesktop
                 e.Graphics.DrawLine(pen, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
             }
 
+            Rectangle textBounds = Rectangle.Inflate(e.Bounds, -8, 0);
+
+            // Show a sort-direction arrow on the active column, drawn at the right edge of the header.
+            if (e.ColumnIndex == _sorter.Column)
+            {
+                string arrow = _sorter.Ascending ? "▲" : "▼"; // ▲ / ▼
+                Size arrowSize = TextRenderer.MeasureText(e.Graphics, arrow, ModernTheme.UiFont);
+                var arrowBounds = new Rectangle(
+                    textBounds.Right - arrowSize.Width, textBounds.Top, arrowSize.Width, textBounds.Height);
+                TextRenderer.DrawText(
+                    e.Graphics, arrow, ModernTheme.UiFont, arrowBounds, ModernTheme.SubtleText,
+                    TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
+                textBounds.Width -= arrowSize.Width + 4;
+            }
+
             TextRenderer.DrawText(
                 e.Graphics, e.Header?.Text, ModernTheme.UiFont,
-                Rectangle.Inflate(e.Bounds, -8, 0), ModernTheme.SubtleText,
+                textBounds, ModernTheme.SubtleText,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
         }
 
@@ -895,17 +1173,20 @@ namespace PhilterDesktop
                 Logger.LogInfo("Checking for updates");
             }
 
+            const string checkFailedMessage =
+                "Philter Desktop was unable to check for updates.\n\n" +
+                "Please visit https://www.philterd.ai/philter-desktop/ to check for updates.";
+
             UpdateChecker.UpdateManifest? manifest;
             try
             {
                 UseWaitCursor = true;
                 manifest = await UpdateChecker.FetchAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                MessageBox.Show(this,
-                    $"Could not check for updates. Please check your internet connection and try again.\n\n{ex.Message}",
-                    "Check for Updates", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, checkFailedMessage, "Check for Updates",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             finally
@@ -915,7 +1196,7 @@ namespace PhilterDesktop
 
             if (manifest is null || string.IsNullOrWhiteSpace(manifest.Version))
             {
-                MessageBox.Show(this, "Could not read the update information.", "Check for Updates",
+                MessageBox.Show(this, checkFailedMessage, "Check for Updates",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -982,7 +1263,7 @@ namespace PhilterDesktop
 
         private void toolStripButtonRedactDocuments_Click(object sender, EventArgs e)
         {
-            var redactDocumentsForm = new RedactDocuments(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled);
+            var redactDocumentsForm = new RedactDocuments(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled, _settingsRepository);
             redactDocumentsForm.ShowDialog();
             LoadRedactionQueue();
         }
@@ -1129,9 +1410,7 @@ namespace PhilterDesktop
                 return;
             }
 
-            _redactionSpanRepository.DeleteAll();
-            _redactionVersionRepository.DeleteAll();
-            _redactionQueueRepository.DeleteWhere(x => x.Status == "Completed");
+            RedactionHistory.ClearAll(_redactionSpanRepository, _redactionVersionRepository, _redactionQueueRepository);
             LoadRedactionQueue();
 
             if (_loggingEnabled)
@@ -1204,6 +1483,7 @@ namespace PhilterDesktop
             removeCompletedToolStripMenuItem.Enabled = anyCompleted;
             openRedactedFileToolStripMenuItem.Enabled = selectedCompleted; // exists only once redacted
             openOriginalFileToolStripMenuItem.Enabled = hasSelection;
+            openContainingFolderToolStripMenuItem.Enabled = selectedCompleted; // redacted file exists once completed
             modifyRedactionToolStripMenuItem.Enabled = selectedCompleted; // versions exist once redacted
 
             // Enable for a completed .txt / .docx (text diff) or .pdf (side-by-side page comparison).
@@ -1231,14 +1511,10 @@ namespace PhilterDesktop
         /// exists on disk (so a custom Save-As location or a later Modify-Redaction output is honored),
         /// falling back to the computed default location.
         /// </summary>
-        private string ResolveRedactedOutputPath(ObjectId documentId, string sourceName)
-        {
-            string? stored = _redactionVersionRepository.GetForDocument(documentId)
-                .Where(v => !string.IsNullOrEmpty(v.OutputPath) && File.Exists(v.OutputPath))
-                .Select(v => v.OutputPath)
-                .LastOrDefault(); // GetForDocument is ordered by version ascending → latest existing
-            return stored ?? RedactionService.GetOutputPath(sourceName, _settingsRepository.GetSettings());
-        }
+        private string ResolveRedactedOutputPath(ObjectId documentId, string sourceName) =>
+            RedactionService.ResolveOutputPath(
+                _redactionVersionRepository.GetForDocument(documentId), // ordered by version ascending
+                RedactionService.GetOutputPath(sourceName, _settingsRepository.GetSettings()));
 
         private static bool IsCompleted(ListViewItem item) =>
             item.SubItems.Count > 1 && string.Equals(item.SubItems[1].Text, "Completed", StringComparison.OrdinalIgnoreCase);
@@ -1342,13 +1618,19 @@ namespace PhilterDesktop
                 ("Redacted", timestamp)
             };
 
+            // For a failed document, show why so the user isn't left guessing.
+            if (!string.IsNullOrEmpty(entity.ErrorMessage))
+            {
+                rows.Add(("Why it failed", entity.ErrorMessage));
+            }
+
             using var details = new RedactionDetailsForm($"Details — {Path.GetFileName(source)}", rows);
             details.ShowDialog(this);
         }
 
         private void addFilesToRedactToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var redactDocumentsForm = new RedactDocuments(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled);
+            var redactDocumentsForm = new RedactDocuments(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled, _settingsRepository);
             redactDocumentsForm.ShowDialog();
             LoadRedactionQueue();
         }
@@ -1408,7 +1690,26 @@ namespace PhilterDesktop
             };
             _redactionQueueRepository.Insert(entity);
             SaveRedactionVersion(entity, outputPath, spans);
+            RememberLastUsed(policy, context, Path.GetDirectoryName(outputPath));
             LoadRedactionQueue();
+        }
+
+        // Persists the most recently used policy/context and save folder so they're pre-selected next
+        // time. Best-effort: a settings write failure must not disrupt the redaction that just succeeded.
+        private void RememberLastUsed(string? policy, string? context, string? saveFolder)
+        {
+            try
+            {
+                SettingsEntity settings = _settingsRepository.GetSettings();
+                if (!string.IsNullOrEmpty(policy)) settings.LastPolicy = policy;
+                if (!string.IsNullOrEmpty(context)) settings.LastContext = context;
+                if (!string.IsNullOrEmpty(saveFolder)) settings.LastSaveFolder = saveFolder;
+                _settingsRepository.SaveSettings(settings);
+            }
+            catch
+            {
+                // best effort
+            }
         }
 
         private async void RedactionQueueTimer_Tick(object sender, EventArgs e)
@@ -1438,54 +1739,48 @@ namespace PhilterDesktop
                 {
                     UpdateEntityStatus(entity, "Processing");
 
-                    try
+                    QueueRedactionResult result = await QueueProcessor.ProcessAsync(
+                        entity, _policyRepository, settings, filterService);
+
+                    if (result.Success)
                     {
-                        var policyEntity = _policyRepository.FindByName(entity.Policy);
-                        if (policyEntity == null)
-                        {
-                            UpdateEntityStatus(entity, "Failed");
-
-                            if (_loggingEnabled)
-                            {
-                                Logger.LogError($"Policy '{entity.Policy}' not found for file: {entity.Name}");
-                            }
-
-                            continue;
-                        }
-
-                        if (!File.Exists(entity.Name))
-                        {
-                            UpdateEntityStatus(entity, "Failed");
-
-                            if (_loggingEnabled)
-                            {
-                                Logger.LogError($"File not found: {entity.Name}");
-                            }
-
-                            continue;
-                        }
-
-                        var policy = PolicySerializer.DeserializeFromJson(policyEntity.Json);
-                        string outputPath = RedactionService.GetOutputPath(entity.Name, settings);
-                        List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(
-                            entity.Name, outputPath, policy, entity.Context, filterService, entity.Highlight);
-
-                        SaveRedactionVersion(entity, outputPath, spans);
-
+                        SaveRedactionVersion(entity, result.OutputPath!, result.Spans.ToList());
+                        entity.ErrorMessage = string.Empty; // clear any prior failure reason
                         UpdateEntityStatus(entity, "Completed");
+                        QueueNotification(new WatchedFileProcessedEventArgs
+                        {
+                            InputPath = entity.Name,
+                            OutputPath = result.OutputPath,
+                            Success = true
+                        });
 
                         if (_loggingEnabled)
                         {
-                            Logger.LogInfo($"Redaction completed: {entity.Name} -> {outputPath}");
+                            Logger.LogInfo($"Redaction completed: {entity.Name} -> {result.OutputPath}");
                         }
                     }
-                    catch (Exception ex)
+                    else
                     {
+                        string reason = QueueProcessor.DescribeFailure(result, entity.Name);
+                        entity.ErrorMessage = reason; // persisted so it survives past the toast
                         UpdateEntityStatus(entity, "Failed");
+                        QueueNotification(new WatchedFileProcessedEventArgs
+                        {
+                            InputPath = entity.Name,
+                            Success = false,
+                            ErrorMessage = reason
+                        });
 
                         if (_loggingEnabled)
                         {
-                            Logger.LogError($"Redaction failed for {entity.Name}", ex);
+                            if (result.Exception is not null)
+                            {
+                                Logger.LogError($"Redaction failed for {entity.Name}", result.Exception);
+                            }
+                            else
+                            {
+                                Logger.LogError($"Redaction failed for {entity.Name}: {result.ErrorMessage}");
+                            }
                         }
                     }
                 }
@@ -1522,46 +1817,49 @@ namespace PhilterDesktop
 
             var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             int total = 0;
+            int shown = 0;
+            string query = _filterBox?.Text ?? string.Empty;
 
             foreach (RedactionQueueEntity entity in _redactionQueueRepository.GetAll())
             {
+                // Counts reflect the whole queue; the list shows only rows matching the filter.
+                counts[entity.Status] = counts.GetValueOrDefault(entity.Status) + 1;
+                total++;
+
+                if (!QueueFilter.Matches(query, entity.Name, entity.Status, entity.Policy, entity.Context))
+                {
+                    continue;
+                }
+
                 var item = new ListViewItem(entity.Name);
                 item.SubItems.Add(entity.Status);
                 item.SubItems.Add(entity.Policy);
                 item.SubItems.Add(entity.Context);
                 item.Tag = entity.Id;
                 item.ImageIndex = 0;
+                if (!string.IsNullOrEmpty(entity.ErrorMessage))
+                {
+                    item.ToolTipText = entity.ErrorMessage; // hover a failed row to see why
+                }
                 listView1.Items.Add(item);
-
-                counts[entity.Status] = counts.GetValueOrDefault(entity.Status) + 1;
-                total++;
+                shown++;
             }
 
+            listView1.Sort(); // keep the user's chosen column/direction across reloads
             listView1.EndUpdate();
 
-            UpdateEmptyState(total);
-            UpdateQueueSummary(total, counts);
+            bool filtering = !string.IsNullOrWhiteSpace(query);
+            _emptyStateLabel.Text = filtering ? FilterEmptyText : DefaultEmptyText;
+            UpdateEmptyState(shown);
+            UpdateQueueSummary(total, shown, counts, filtering);
             EnsureStatusAnimation();
         }
 
-        private void UpdateQueueSummary(int total, IReadOnlyDictionary<string, int> counts)
+        private void UpdateQueueSummary(int total, int shown, IReadOnlyDictionary<string, int> counts, bool filtering)
         {
-            if (total == 0)
-            {
-                _queueSummaryLabel.Text = "No documents in queue";
-                return;
-            }
-
-            var parts = new List<string> { $"{total} file{(total == 1 ? "" : "s")}" };
-            foreach (string status in new[] { "Pending", "Processing", "Completed", "Failed" })
-            {
-                if (counts.TryGetValue(status, out int n) && n > 0)
-                {
-                    parts.Add($"{n} {status.ToLowerInvariant()}");
-                }
-            }
-
-            _queueSummaryLabel.Text = string.Join("  ·  ", parts);
+            _queueSummaryLabel.Text = filtering
+                ? QueueSummary.DescribeFilter(shown, total)
+                : QueueSummary.Describe(total, counts);
         }
 
         private void ListView1_DoubleClick(object? sender, EventArgs e)
@@ -1649,6 +1947,45 @@ namespace PhilterDesktop
                 FileName = entity.Name,
                 UseShellExecute = true
             });
+        }
+
+        // Opens the redacted file's folder in Explorer with the file selected.
+        private void openContainingFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return;
+            }
+            RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
+            if (entity is null)
+            {
+                return;
+            }
+
+            string outputPath = ResolveRedactedOutputPath(id, entity.Name);
+            if (!File.Exists(outputPath))
+            {
+                MessageBox.Show(
+                    $"The redacted file could not be found:\n\n{outputPath}",
+                    "Open Containing Folder",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "explorer.exe",
+                    Arguments = $"/select,\"{outputPath}\""
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"Could not open the folder:\n\n{ex.Message}", "Open Containing Folder",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void removeAllToolStripMenuItem_Click(object sender, EventArgs e)

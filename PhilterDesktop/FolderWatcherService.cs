@@ -491,10 +491,11 @@ namespace PhilterDesktop
         }
     }
 
-    /// <summary>Describes a watched file that was processed (for notifications).</summary>
+    /// <summary>Describes a processed file (for notifications). Also reused for main-queue
+    /// completions, where <see cref="Folder"/> is null (the file didn't come from a watched folder).</summary>
     internal sealed class WatchedFileProcessedEventArgs : EventArgs
     {
-        public required WatchedFolderEntity Folder { get; init; }
+        public WatchedFolderEntity? Folder { get; init; }
         public required string InputPath { get; init; }
         public string? OutputPath { get; init; }
         public bool Success { get; init; }

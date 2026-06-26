@@ -37,6 +37,9 @@ PhilterDesktop/Models/ph-eye-pii-en-xsmall/
 # Redacted output files (e.g. *_redacted-draft.*) must never be committed — they may contain PII
 *_redacted*
 
+# Visual Studio regenerates a companion .sln; the canonical solution is PhilterDesktop.slnx.
+/PhilterDesktop.sln
+
 # Installer build artifacts
 Installer/Output/
 

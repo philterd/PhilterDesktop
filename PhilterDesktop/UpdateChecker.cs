@@ -50,7 +50,13 @@ namespace PhilterDesktop
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
             http.DefaultRequestHeaders.UserAgent.ParseAdd("PhilterDesktop");
 
-            await using Stream stream = await http.GetStreamAsync(url, cancellationToken);
+            using HttpResponseMessage response = await http.GetAsync(url, cancellationToken);
+            if ((int)response.StatusCode != 200)
+            {
+                throw new HttpRequestException($"The update server returned HTTP status {(int)response.StatusCode}.");
+            }
+
+            await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             return await JsonSerializer.DeserializeAsync<UpdateManifest>(
                 stream,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true },

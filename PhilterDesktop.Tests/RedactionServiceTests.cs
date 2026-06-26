@@ -100,6 +100,100 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void ResolveOutputPath_NoVersions_ReturnsDefault()
+        {
+            string fallback = Path.Combine(_tempDir, "default.txt");
+            string result = RedactionService.ResolveOutputPath(Array.Empty<RedactionVersionEntity>(), fallback);
+            Assert.Equal(fallback, result);
+        }
+
+        [Fact]
+        public void ResolveOutputPath_ReturnsLatestVersionWhoseOutputExists()
+        {
+            string out1 = CreateFile("v1.txt");
+            string out2 = CreateFile("v2.txt");
+            var versions = new[]
+            {
+                new RedactionVersionEntity { Version = 1, OutputPath = out1 },
+                new RedactionVersionEntity { Version = 2, OutputPath = out2 }, // latest, exists
+            };
+
+            string result = RedactionService.ResolveOutputPath(versions, Path.Combine(_tempDir, "default.txt"));
+
+            Assert.Equal(out2, result);
+        }
+
+        [Fact]
+        public void ResolveOutputPath_SkipsLatest_WhenItsOutputIsMissing()
+        {
+            string out1 = CreateFile("v1.txt");
+            var versions = new[]
+            {
+                new RedactionVersionEntity { Version = 1, OutputPath = out1 },                       // exists
+                new RedactionVersionEntity { Version = 2, OutputPath = Path.Combine(_tempDir, "gone.txt") }, // missing
+            };
+
+            string result = RedactionService.ResolveOutputPath(versions, Path.Combine(_tempDir, "default.txt"));
+
+            Assert.Equal(out1, result); // latest *existing*
+        }
+
+        [Fact]
+        public void ResolveOutputPath_ReturnsDefault_WhenNoStoredOutputExists()
+        {
+            string fallback = Path.Combine(_tempDir, "default.txt");
+            var versions = new[]
+            {
+                new RedactionVersionEntity { Version = 1, OutputPath = string.Empty },
+                new RedactionVersionEntity { Version = 2, OutputPath = Path.Combine(_tempDir, "gone.txt") },
+            };
+
+            string result = RedactionService.ResolveOutputPath(versions, fallback);
+
+            Assert.Equal(fallback, result);
+        }
+
+        private string CreateFile(string name)
+        {
+            string path = Path.Combine(_tempDir, name);
+            File.WriteAllText(path, "x");
+            return path;
+        }
+
+        [Fact]
+        public void InitialSaveDirectory_PrefersExistingLastSaveFolder()
+        {
+            var settings = new SettingsEntity { LastSaveFolder = _tempDir };
+            string suggested = Path.Combine(@"C:\some\other", "x_redacted-draft.txt");
+
+            string dir = RedactionService.InitialSaveDirectory(settings, suggested, @"C:\src\x.txt");
+
+            Assert.Equal(_tempDir, dir);
+        }
+
+        [Fact]
+        public void InitialSaveDirectory_FallsBackToSuggestedFolder_WhenNoLastSaveFolder()
+        {
+            var settings = new SettingsEntity { LastSaveFolder = string.Empty };
+            string suggested = Path.Combine(_tempDir, "x_redacted-draft.txt");
+
+            string dir = RedactionService.InitialSaveDirectory(settings, suggested, @"C:\src\x.txt");
+
+            Assert.Equal(_tempDir, dir);
+        }
+
+        [Fact]
+        public void InitialSaveDirectory_IgnoresLastSaveFolder_WhenItNoLongerExists()
+        {
+            var settings = new SettingsEntity { LastSaveFolder = Path.Combine(_tempDir, "gone") };
+            string suggested = Path.Combine(_tempDir, "x_redacted-draft.txt");
+
+            string dir = RedactionService.InitialSaveDirectory(settings, suggested, @"C:\src\x.txt");
+
+            Assert.Equal(_tempDir, dir); // falls through to the suggested folder
+        }
+
+        [Fact]
         public async Task RedactFileAsync_TextFile_RedactsEnabledTypes()
         {
             string input = Path.Combine(_tempDir, "in.txt");
