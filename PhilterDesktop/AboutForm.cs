@@ -71,6 +71,11 @@ namespace PhilterDesktop
             }
         }
 
+        private void linkEula_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Open("https://www.philterd.ai/philterd-eula");
+        }
+
         private void linkPhilter_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             Open(Upsell.PhilterUrl("about"));

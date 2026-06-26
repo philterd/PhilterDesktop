@@ -16,6 +16,7 @@
 
 using System.Collections;
 using System.Reflection;
+using System.Text.Json;
 using Phileas.Policy;
 using Phileas.Policy.Filters;
 using PhilterData;
@@ -54,6 +55,8 @@ namespace PhilterDesktop.PolicyEditing
         private readonly ToolStripButton _save = new() { Text = "Save", Enabled = false };
         private readonly ToolStripButton _saveAs = new() { Text = "Save As", Enabled = false };
         private readonly ToolStripButton _delete = new() { Text = "Delete", Enabled = false };
+        private readonly ToolStripButton _import = new() { Text = "Import" };
+        private readonly ToolStripButton _export = new() { Text = "Export", Enabled = false };
         private readonly ToolStripLabel _consultingLink = new("Need help with policies?")
         {
             IsLink = true,
@@ -100,6 +103,11 @@ namespace PhilterDesktop.PolicyEditing
             Dock = DockStyle.Fill
         };
 
+        // Free-text, editor-only description (stored on the policy record, not in the engine JSON).
+        private readonly Panel _descPanel = new() { Dock = DockStyle.Top, Height = 30, Padding = new Padding(8, 4, 8, 2) };
+        private readonly Label _descLabel = new() { Text = "Description:", AutoSize = true, Dock = DockStyle.Left, Padding = new Padding(0, 4, 6, 0) };
+        private readonly TextBox _description = new() { Dock = DockStyle.Fill };
+
         private readonly List<Action> _loaders = new();
         private readonly List<FilterRow> _rows = new();
 
@@ -130,6 +138,9 @@ namespace PhilterDesktop.PolicyEditing
             _save.Click += OnSave;
             _saveAs.Click += OnSaveAs;
             _delete.Click += OnDelete;
+            _import.Click += OnImport;
+            _export.Click += OnExport;
+            _description.TextChanged += (_, _) => { if (!_loading) { _dirty = true; } };
             _consultingLink.Click += (_, _) => Upsell.Open(Upsell.ConsultingUrl("policy-editor"));
             _ignoreList.Click += OnIgnoredTerms;
             _alwaysRedact.Click += OnAlwaysRedact;
@@ -146,6 +157,8 @@ namespace PhilterDesktop.PolicyEditing
             _save.Image = ModernTheme.CreateGlyphImage("\uE74E", 20, ModernTheme.Accent);  // Save
             _saveAs.Image = ModernTheme.CreateGlyphImage("\uE792", 20, ModernTheme.Text);  // SaveAs
             _delete.Image = ModernTheme.CreateGlyphImage("\uE74D", 20, ModernTheme.Text);  // Delete
+            _import.Image = ModernTheme.CreateGlyphImage("", 20, ModernTheme.Text);  // Download (import from file)
+            _export.Image = ModernTheme.CreateGlyphImage("", 20, ModernTheme.Text);  // Upload (export to file)
 
             // "New" is a dropdown: Blank Policy, From Template, or From Wizard. Menu items use small icons.
             _newBlank.Image = ModernTheme.CreateGlyphImage("\uE7C3", 16, ModernTheme.Text);        // Page (blank)
@@ -154,7 +167,7 @@ namespace PhilterDesktop.PolicyEditing
             _new.DropDownItems.AddRange(new ToolStripItem[] { _newBlank, _newFromTemplate, _newWizard });
 
             // Toolbar buttons show their icon above the label.
-            foreach (ToolStripItem button in new ToolStripItem[] { _new, _save, _saveAs, _delete })
+            foreach (ToolStripItem button in new ToolStripItem[] { _new, _save, _saveAs, _delete, _import, _export })
             {
                 button.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
                 button.TextImageRelation = TextImageRelation.ImageAboveText;
@@ -165,17 +178,22 @@ namespace PhilterDesktop.PolicyEditing
             _toolStrip.Items.Add(new ToolStripSeparator());
             _toolStrip.Items.AddRange(new ToolStripItem[]
             {
-                _new, new ToolStripSeparator(), _save, _saveAs, new ToolStripSeparator(), _delete
+                _new, new ToolStripSeparator(), _save, _saveAs, new ToolStripSeparator(), _delete,
+                new ToolStripSeparator(), _import, _export
             });
             _toolStrip.Items.Add(_consultingLink); // right-aligned (Alignment = Right)
 
             _actions.Controls.Add(_ignoreList);
             _actions.Controls.Add(_alwaysRedact);
 
-            // z-order: tabs fill the middle, the actions panel docks at the bottom (immediately below
-            // the tabs), and the toolbar docks at the top.
+            _descPanel.Controls.Add(_description); // fill
+            _descPanel.Controls.Add(_descLabel);   // left
+
+            // z-order: tabs fill the middle, the actions panel docks at the bottom, the description bar
+            // sits just under the toolbar, which is on top.
             Controls.Add(_tabs);
             Controls.Add(_actions);
+            Controls.Add(_descPanel);
             Controls.Add(_toolStrip);
             SetEditingEnabled(false);
         }
@@ -590,6 +608,7 @@ namespace PhilterDesktop.PolicyEditing
             FilterStrategyDefaults.MaterializeMissing(_policy);
 
             _loading = true;
+            _description.Text = entity.Description ?? string.Empty;
             foreach (Action loader in _loaders)
             {
                 loader();
@@ -626,6 +645,7 @@ namespace PhilterDesktop.PolicyEditing
                 return false;
             }
             entity.Json = json;
+            entity.Description = _description.Text;
             _repo.Update(entity);
             _dirty = false;
             return true;
@@ -717,7 +737,7 @@ namespace PhilterDesktop.PolicyEditing
             {
                 return;
             }
-            _repo.Insert(new PolicyEntity { Name = name, Json = json });
+            _repo.Insert(new PolicyEntity { Name = name, Json = json, Description = picker.SelectedTemplate.Description });
             ReloadPolicyList(name);
         }
 
@@ -731,6 +751,111 @@ namespace PhilterDesktop.PolicyEditing
             }
             _repo.Insert(new PolicyEntity { Name = wizard.ResultName, Json = wizard.ResultJson });
             ReloadPolicyList(wizard.ResultName);
+        }
+
+        private void OnExport(object? sender, EventArgs e)
+        {
+            if (_policy is null)
+            {
+                return;
+            }
+            using var dlg = new SaveFileDialog
+            {
+                Title = "Export Policy",
+                Filter = "Policy JSON (*.json)|*.json|All files (*.*)|*.*",
+                FileName = (_currentPolicyName ?? "policy") + ".json",
+                DefaultExt = "json"
+            };
+            if (dlg.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+            try
+            {
+                File.WriteAllText(dlg.FileName, PrettyJson(PolicySerializer.SerializeToJson(_policy)));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"Could not export the policy: {ex.Message}",
+                    "Export Policy", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void OnImport(object? sender, EventArgs e)
+        {
+            using var dlg = new OpenFileDialog
+            {
+                Title = "Import Policy",
+                Filter = "Policy JSON (*.json)|*.json|All files (*.*)|*.*",
+                CheckFileExists = true
+            };
+            if (dlg.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            string text;
+            try
+            {
+                text = File.ReadAllText(dlg.FileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"Could not read the file: {ex.Message}",
+                    "Import Policy", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Only import a file that's a valid policy for this engine's schema.
+            PolicyValidationResult validation = PolicyValidator.Validate(text);
+            if (!validation.IsValid)
+            {
+                string details = string.Join(Environment.NewLine + "  • ", validation.Errors.Take(15));
+                MessageBox.Show(
+                    this,
+                    "This file is not a valid policy for the redaction engine's schema (PhiSQL " +
+                    PolicyValidator.SchemaVersion + "), so it was not imported:" +
+                    Environment.NewLine + Environment.NewLine + "  • " + details,
+                    "Import Policy", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            PhileasPolicy imported = PolicySerializer.DeserializeFromJson(text);
+            string name = string.IsNullOrWhiteSpace(imported.Name)
+                ? Path.GetFileNameWithoutExtension(dlg.FileName)
+                : imported.Name;
+
+            if (_repo.FindByName(name) is not null)
+            {
+                string? newName = Prompt($"A policy named '{name}' already exists. Enter a name for the imported policy:", "Import Policy");
+                if (string.IsNullOrWhiteSpace(newName))
+                {
+                    return;
+                }
+                name = newName.Trim();
+                if (_repo.FindByName(name) is not null)
+                {
+                    MessageBox.Show($"A policy named '{name}' already exists.", "Import Policy", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
+            imported.Name = name;
+            _repo.Insert(new PolicyEntity { Name = name, Json = PolicySerializer.SerializeToJson(imported) });
+            ReloadPolicyList(name);
+        }
+
+        private static string PrettyJson(string json)
+        {
+            try
+            {
+                using JsonDocument doc = JsonDocument.Parse(json);
+                return JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions { WriteIndented = true });
+            }
+            catch
+            {
+                return json; // fall back to the raw text if it can't be reformatted
+            }
         }
 
         private void OnSaveAs(object? sender, EventArgs e)
@@ -755,7 +880,7 @@ namespace PhilterDesktop.PolicyEditing
             {
                 return;
             }
-            _repo.Insert(new PolicyEntity { Name = name, Json = json });
+            _repo.Insert(new PolicyEntity { Name = name, Json = json, Description = _description.Text });
             ReloadPolicyList(name);
         }
 
@@ -853,6 +978,8 @@ namespace PhilterDesktop.PolicyEditing
             _save.Enabled = enabled;
             _saveAs.Enabled = enabled;
             _delete.Enabled = enabled;
+            _export.Enabled = enabled; // Import is always available; Export needs a loaded policy
+            _description.Enabled = enabled;
             _ignoreList.Enabled = enabled;
             _alwaysRedact.Enabled = enabled;
         }

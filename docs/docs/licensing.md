@@ -20,6 +20,12 @@ fit together.
 
 The rest of this page explains what each of those points means.
 
+!!! info "Reading the license agreement in the app"
+    You can open the full **End-User License Agreement (EULA)** at any time from inside Philter Desktop:
+    go to **Help → About** and click **View the EULA**. (It opens the
+    [Philterd Commercial License Agreement](https://www.philterd.ai/philterd-eula) on the website.) The
+    same About box also has a **View the Apache License 2.0** link for the open-source code license.
+
 ## What the subscription gives you
 
 The subscription is for the official, supported product:

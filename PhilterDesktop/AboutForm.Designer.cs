@@ -41,6 +41,7 @@ namespace PhilterDesktop
             linkLicense = new LinkLabel();
             linkGitHub = new LinkLabel();
             linkLabelWebsite = new LinkLabel();
+            linkEula = new LinkLabel();
             lblReview = new Label();
             lblCopyright = new Label();
             lblAlsoFrom = new Label();
@@ -125,7 +126,19 @@ namespace PhilterDesktop
             linkLabelWebsite.TabStop = true;
             linkLabelWebsite.Text = "https://www.philterd.ai";
             linkLabelWebsite.LinkClicked += linkLabelWebsite_LinkClicked;
-            // 
+            //
+            // linkEula
+            //
+            linkEula.AutoSize = true;
+            linkEula.Location = new Point(264, 210);
+            linkEula.Margin = new Padding(2, 0, 2, 0);
+            linkEula.Name = "linkEula";
+            linkEula.Size = new Size(82, 15);
+            linkEula.TabIndex = 7;
+            linkEula.TabStop = true;
+            linkEula.Text = "View the EULA";
+            linkEula.LinkClicked += linkEula_LinkClicked;
+            //
             // lblReview
             // 
             lblReview.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
@@ -214,6 +227,7 @@ namespace PhilterDesktop
             Controls.Add(lblCopyright);
             Controls.Add(lblReview);
             Controls.Add(linkLabelWebsite);
+            Controls.Add(linkEula);
             Controls.Add(linkGitHub);
             Controls.Add(linkLicense);
             Controls.Add(lblLicense);
@@ -241,6 +255,7 @@ namespace PhilterDesktop
         private LinkLabel linkLicense;
         private LinkLabel linkGitHub;
         private LinkLabel linkLabelWebsite;
+        private LinkLabel linkEula;
         private Label lblReview;
         private Label lblCopyright;
         private Label lblAlsoFrom;

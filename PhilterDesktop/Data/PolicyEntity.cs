@@ -23,6 +23,13 @@ namespace PhilterData
         public ObjectId Id { get; set; } = ObjectId.NewObjectId();
         public string Name { get; set; } = string.Empty;
         public string Json { get; set; } = "{\"Identifiers\": {}}";
+
+        /// <summary>
+        /// A free-text description to help the user understand what the policy is for. Editor-only
+        /// metadata — not part of the engine policy JSON and not used during redaction.
+        /// </summary>
+        public string Description { get; set; } = string.Empty;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

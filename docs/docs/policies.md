@@ -24,6 +24,9 @@ Desktop can detect, organized into **tabs** (one category per tab, so the window
 - **New / Save / Save As / Delete** — the buttons for managing your policies (covered below).
   **New** is a small menu: choose **Blank Policy** to start from scratch, **From Template…** to
   start from a ready-made policy, or **From Wizard…** to be guided through a few questions.
+- **Import / Export** — **Export** saves the policy you're editing to a `.json` file (handy for backups
+  or sharing with a colleague); **Import** loads a policy `.json` file back in as a new policy. Imported
+  files are checked against the engine's policy schema first, so an invalid file can't be brought in.
 - **The detector tabs** — categories such as Personal, Contact, Location, Financial,
   Identifiers, Technical, and Medical. Click a tab to see the specific kinds of information in that
   category that you can choose to remove. (Your selections on every tab are saved together as one
@@ -91,6 +94,14 @@ through a few short questions and builds a policy for you:
 When you finish, the wizard creates the policy ready to fine-tune like any other. The same warning
 applies: a wizard-built policy is a **starting point, not a compliance guarantee** — review it and
 always check your redacted documents.
+
+## Describing a policy
+
+Just below the toolbar there's a **Description** box. Use it to jot a short note about what the policy
+is for — for example, *"Client intake forms — removes SSNs, dates of birth, and contact details."* The
+description is purely to help you (and your colleagues) recognize the policy later; it has **no effect
+on redaction**. It's saved with the policy inside Philter Desktop, but note it is **not** included when
+you **Export** a policy to a file (the exported file contains only the engine's policy definition).
 
 ## Saving your work
 
