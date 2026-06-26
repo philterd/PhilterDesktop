@@ -71,11 +71,6 @@ namespace PhilterDesktop
             }
         }
 
-        private void icons8LinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Open("https://icons8.com");
-        }
-
         private void linkPhilter_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             Open(Upsell.PhilterUrl("about"));

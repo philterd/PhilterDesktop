@@ -192,7 +192,6 @@ namespace PhilterDesktop
             // toolStripButtonRedactDocuments
             // 
             toolStripButtonRedactDocuments.AutoToolTip = false;
-            toolStripButtonRedactDocuments.Image = (Image)resources.GetObject("toolStripButtonRedactDocuments.Image");
             toolStripButtonRedactDocuments.ImageTransparentColor = Color.Magenta;
             toolStripButtonRedactDocuments.Name = "toolStripButtonRedactDocuments";
             toolStripButtonRedactDocuments.Size = new Size(47, 43);
@@ -220,7 +219,6 @@ namespace PhilterDesktop
             // refreshToolStripButton
             // 
             refreshToolStripButton.AutoToolTip = false;
-            refreshToolStripButton.Image = (Image)resources.GetObject("refreshToolStripButton.Image");
             refreshToolStripButton.ImageTransparentColor = Color.Magenta;
             refreshToolStripButton.Name = "refreshToolStripButton";
             refreshToolStripButton.Size = new Size(50, 43);
@@ -237,7 +235,6 @@ namespace PhilterDesktop
             // policiesToolStripButton
             // 
             policiesToolStripButton.AutoToolTip = false;
-            policiesToolStripButton.Image = (Image)resources.GetObject("policiesToolStripButton.Image");
             policiesToolStripButton.ImageTransparentColor = Color.Magenta;
             policiesToolStripButton.Name = "policiesToolStripButton";
             policiesToolStripButton.Size = new Size(51, 43);
@@ -249,7 +246,6 @@ namespace PhilterDesktop
             // contextsToolStripButton
             // 
             contextsToolStripButton.AutoToolTip = false;
-            contextsToolStripButton.Image = (Image)resources.GetObject("contextsToolStripButton.Image");
             contextsToolStripButton.ImageTransparentColor = Color.Magenta;
             contextsToolStripButton.Name = "contextsToolStripButton";
             contextsToolStripButton.Size = new Size(57, 43);
@@ -277,7 +273,6 @@ namespace PhilterDesktop
             // settingsToolStripButton
             // 
             settingsToolStripButton.AutoToolTip = false;
-            settingsToolStripButton.Image = (Image)resources.GetObject("settingsToolStripButton.Image");
             settingsToolStripButton.ImageTransparentColor = Color.Magenta;
             settingsToolStripButton.Name = "settingsToolStripButton";
             settingsToolStripButton.Size = new Size(53, 43);
@@ -294,7 +289,6 @@ namespace PhilterDesktop
             // HelpToolStripButton
             // 
             HelpToolStripButton.AutoToolTip = false;
-            HelpToolStripButton.Image = (Image)resources.GetObject("HelpToolStripButton.Image");
             HelpToolStripButton.ImageTransparentColor = Color.Magenta;
             HelpToolStripButton.Name = "HelpToolStripButton";
             HelpToolStripButton.Size = new Size(36, 43);
@@ -355,7 +349,6 @@ namespace PhilterDesktop
             // 
             // addFilesToRedactToolStripMenuItem
             // 
-            addFilesToRedactToolStripMenuItem.Image = (Image)resources.GetObject("addFilesToRedactToolStripMenuItem.Image");
             addFilesToRedactToolStripMenuItem.Name = "addFilesToRedactToolStripMenuItem";
             addFilesToRedactToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+O";
             addFilesToRedactToolStripMenuItem.Size = new Size(285, 30);
@@ -376,7 +369,6 @@ namespace PhilterDesktop
             // 
             // removeToolStripMenuItem
             // 
-            removeToolStripMenuItem.Image = (Image)resources.GetObject("removeToolStripMenuItem.Image");
             removeToolStripMenuItem.Name = "removeToolStripMenuItem";
             removeToolStripMenuItem.ShortcutKeyDisplayString = "Del";
             removeToolStripMenuItem.Size = new Size(285, 30);
@@ -404,7 +396,6 @@ namespace PhilterDesktop
             // 
             // openRedactedFileToolStripMenuItem
             // 
-            openRedactedFileToolStripMenuItem.Image = (Image)resources.GetObject("openRedactedFileToolStripMenuItem.Image");
             openRedactedFileToolStripMenuItem.Name = "openRedactedFileToolStripMenuItem";
             openRedactedFileToolStripMenuItem.ShortcutKeyDisplayString = "Enter";
             openRedactedFileToolStripMenuItem.Size = new Size(285, 30);
@@ -413,7 +404,6 @@ namespace PhilterDesktop
             // 
             // openOriginalFileToolStripMenuItem
             // 
-            openOriginalFileToolStripMenuItem.Image = (Image)resources.GetObject("openOriginalFileToolStripMenuItem.Image");
             openOriginalFileToolStripMenuItem.Name = "openOriginalFileToolStripMenuItem";
             openOriginalFileToolStripMenuItem.Size = new Size(285, 30);
             openOriginalFileToolStripMenuItem.Text = "Open Original File...";
@@ -454,7 +444,6 @@ namespace PhilterDesktop
             // 
             // refreshToolStripMenuItem
             // 
-            refreshToolStripMenuItem.Image = (Image)resources.GetObject("refreshToolStripMenuItem.Image");
             refreshToolStripMenuItem.Name = "refreshToolStripMenuItem";
             refreshToolStripMenuItem.ShortcutKeyDisplayString = "F5";
             refreshToolStripMenuItem.Size = new Size(285, 30);
@@ -464,9 +453,7 @@ namespace PhilterDesktop
             // imageList1
             // 
             imageList1.ColorDepth = ColorDepth.Depth32Bit;
-            imageList1.ImageStream = (ImageListStreamer)resources.GetObject("imageList1.ImageStream");
             imageList1.TransparentColor = Color.Transparent;
-            imageList1.Images.SetKeyName(0, "document.ico");
             // 
             // redactionQueueTimer
             // 

@@ -236,13 +236,10 @@ namespace PhilterDesktop
         /// </summary>
         private void InitializeQueueUi()
         {
-            // Keep a copy of the document icon for owner-drawing the first column,
-            // then replace the SmallImageList with a transparent spacer purely to
-            // force a taller row height (Details-view rows size to ImageSize.Height).
-            if (imageList1.Images.Count > 0)
-            {
-                _documentImage = imageList1.Images[0];
-            }
+            // Document icon for owner-drawing the first column (a system glyph, drawn at 16px).
+            // The SmallImageList is then replaced with a transparent spacer purely to force a taller
+            // row height (Details-view rows size to ImageSize.Height).
+            _documentImage = ModernTheme.CreateGlyphImage("", 16, ModernTheme.Text); // Document
             listView1.SmallImageList = new ImageList
             {
                 ImageSize = new Size(1, RowHeight),
@@ -368,7 +365,17 @@ namespace PhilterDesktop
             contextsToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE8EC", size, ModernTheme.Text);         // Tag
             listsToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE71C", size, ModernTheme.Text);            // Filter (global lists)
             settingsToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE713", size, ModernTheme.Text);         // Settings
+            refreshToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE72C", size, ModernTheme.Text);          // Refresh
             HelpToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE897", size, ModernTheme.Text);             // Help
+
+            // Context-menu item icons (16px glyphs) \u2014 standardized to match the toolbar, no bitmaps.
+            const int menuSize = 16;
+            addFilesToRedactToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE710", menuSize, ModernTheme.Text);       // Add
+            openRedactedFileToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE8E5", menuSize, ModernTheme.Text);       // OpenFile
+            openOriginalFileToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE8E5", menuSize, ModernTheme.Text);       // OpenFile
+            openContainingFolderToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE838", menuSize, ModernTheme.Text);   // FolderOpen
+            refreshToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE72C", menuSize, ModernTheme.Text);                // Refresh
+            removeToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE74D", menuSize, ModernTheme.Text);                 // Delete
         }
 
         private void StatusAnimTimer_Tick(object? sender, EventArgs e)

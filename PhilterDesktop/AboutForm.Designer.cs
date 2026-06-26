@@ -43,7 +43,6 @@ namespace PhilterDesktop
             linkLabelWebsite = new LinkLabel();
             lblReview = new Label();
             lblCopyright = new Label();
-            icons8LinkLabel = new LinkLabel();
             lblAlsoFrom = new Label();
             linkPhilter = new LinkLabel();
             linkConsulting = new LinkLabel();
@@ -178,19 +177,7 @@ namespace PhilterDesktop
             lblCopyright.Size = new Size(186, 15);
             lblCopyright.TabIndex = 8;
             lblCopyright.Text = "Copyright 2024-2026 Philterd, LLC";
-            // 
-            // icons8LinkLabel
-            // 
-            icons8LinkLabel.AutoSize = true;
-            icons8LinkLabel.Location = new Point(105, 375);
-            icons8LinkLabel.Margin = new Padding(2, 0, 2, 0);
-            icons8LinkLabel.Name = "icons8LinkLabel";
-            icons8LinkLabel.Size = new Size(88, 15);
-            icons8LinkLabel.TabIndex = 10;
-            icons8LinkLabel.TabStop = true;
-            icons8LinkLabel.Text = "Icons by Icons8";
-            icons8LinkLabel.LinkClicked += icons8LinkLabel_LinkClicked;
-            // 
+            //
             // btnOK
             // 
             btnOK.Location = new Point(343, 370);
@@ -219,7 +206,6 @@ namespace PhilterDesktop
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(434, 405);
-            Controls.Add(icons8LinkLabel);
             Controls.Add(lblAlsoFrom);
             Controls.Add(linkPhilter);
             Controls.Add(linkConsulting);
@@ -257,7 +243,6 @@ namespace PhilterDesktop
         private LinkLabel linkLabelWebsite;
         private Label lblReview;
         private Label lblCopyright;
-        private LinkLabel icons8LinkLabel;
         private Label lblAlsoFrom;
         private LinkLabel linkPhilter;
         private LinkLabel linkConsulting;
