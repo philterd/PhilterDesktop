@@ -21,7 +21,8 @@ The editor has a toolbar across the top and, below it, a long list of the kinds 
 Desktop can detect, organized into groups:
 
 - **Policy selector** — a drop-down for choosing which policy you want to look at or change.
-- **New / Save / Save As / Delete** — the buttons for managing your policies (covered below).
+- **New / New from Template… / Save / Save As / Delete** — the buttons for managing your policies
+  (covered below).
 - **View JSON** — shows the policy's underlying definition in its raw, technical form, with a button
   to copy it. (JSON is just a plain-text format that software uses to store settings. You will almost
   never need this; it's there for troubleshooting or for sharing a policy's exact definition with
@@ -49,6 +50,27 @@ check the boxes for everything you want removed and save — you can always come
 replacements later.
 
 For the complete list of what Philter Desktop can detect, see [Supported Filters](supported-filters.md).
+
+## Starting from a template
+
+If you'd rather not build a policy from scratch, click **New from Template…**. Philter Desktop offers
+a small set of ready-made starting points:
+
+- **Common PII (recommended)** — the high-confidence everyday identifiers (Social Security numbers,
+  email, phone, credit cards, and so on) plus on-device name detection. A safe general-purpose start.
+- **HIPAA Safe Harbor (template)** — broad coverage aimed at the kinds of information called out by the
+  HIPAA Safe Harbor standard (names, dates, locations, ages, and more). Deliberately thorough, so
+  expect to review some over-redaction.
+- **Legal court filing (template)** — the personal data commonly redacted in court filings (names,
+  Social Security numbers, dates, and financial account numbers).
+
+Pick one, give your new policy a name, and it's created ready to fine-tune like any other policy.
+
+!!! warning "Templates are starting points, not compliance guarantees"
+    A template's name — even one that mentions a law or standard such as "HIPAA Safe Harbor" — is for
+    reference only. It is **not** a certification that the policy, or its output, meets that
+    requirement. Always review and adapt the policy to your situation, and **carefully check every
+    redacted document**, before relying on it.
 
 ## Saving your work
 

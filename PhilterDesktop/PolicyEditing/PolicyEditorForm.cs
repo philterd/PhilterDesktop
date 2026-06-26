@@ -49,6 +49,7 @@ namespace PhilterDesktop.PolicyEditing
         private readonly ToolStrip _toolStrip = new() { GripStyle = ToolStripGripStyle.Hidden };
         private readonly ToolStripComboBox _policyCombo = new() { DropDownStyle = ComboBoxStyle.DropDownList, AutoSize = false, Size = new Size(190, 23) };
         private readonly ToolStripButton _new = new() { Text = "New" };
+        private readonly ToolStripButton _newFromTemplate = new() { Text = "New from Template…" };
         private readonly ToolStripButton _save = new() { Text = "Save", Enabled = false };
         private readonly ToolStripButton _saveAs = new() { Text = "Save As", Enabled = false };
         private readonly ToolStripButton _delete = new() { Text = "Delete", Enabled = false };
@@ -97,6 +98,7 @@ namespace PhilterDesktop.PolicyEditing
 
             _policyCombo.SelectedIndexChanged += (_, _) => OnPolicySelectionChanged();
             _new.Click += OnNew;
+            _newFromTemplate.Click += OnNewFromTemplate;
             _save.Click += OnSave;
             _saveAs.Click += OnSaveAs;
             _delete.Click += OnDelete;
@@ -122,7 +124,7 @@ namespace PhilterDesktop.PolicyEditing
             _toolStrip.Items.Add(new ToolStripLabel("Policy:"));
             _toolStrip.Items.Add(_policyCombo);
             _toolStrip.Items.Add(new ToolStripSeparator());
-            _toolStrip.Items.AddRange(new ToolStripItem[] { _new, _save, _saveAs, _delete, new ToolStripSeparator(), _viewJson, new ToolStripSeparator(), _ignoreList, _alwaysRedact });
+            _toolStrip.Items.AddRange(new ToolStripItem[] { _new, _newFromTemplate, _save, _saveAs, _delete, new ToolStripSeparator(), _viewJson, new ToolStripSeparator(), _ignoreList, _alwaysRedact });
 
             Controls.Add(_filters);
             Controls.Add(_toolStrip);
@@ -609,6 +611,36 @@ namespace PhilterDesktop.PolicyEditing
                 return;
             }
             _repo.Insert(new PolicyEntity { Name = name, Json = PolicySerializer.SerializeToJson(new PhileasPolicy { Name = name }) });
+            ReloadPolicyList(name);
+        }
+
+        private void OnNewFromTemplate(object? sender, EventArgs e)
+        {
+            using var picker = new TemplatePickerForm();
+            if (picker.ShowDialog(this) != DialogResult.OK || picker.SelectedTemplate is null)
+            {
+                return;
+            }
+
+            string? name = Prompt("Enter a name for the new policy:", "New Policy from Template");
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return;
+            }
+            if (_repo.FindByName(name) is not null)
+            {
+                MessageBox.Show($"A policy named '{name}' already exists.", "Duplicate Policy", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Templates are built to be schema-valid, but validate anyway so we never persist a policy
+            // the engine would reject.
+            string json = picker.SelectedTemplate.BuildJson();
+            if (!EnsureValid(json))
+            {
+                return;
+            }
+            _repo.Insert(new PolicyEntity { Name = name, Json = json });
             ReloadPolicyList(name);
         }
 
