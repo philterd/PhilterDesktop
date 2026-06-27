@@ -113,17 +113,41 @@ Write-Host "Rendering the PDF with $browser ..."
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutputPath) | Out-Null
 if (Test-Path $OutputPath) { Remove-Item $OutputPath -Force }
 
-# A throwaway profile avoids clashing with any running Edge/Chrome instance.
-$profileDir = Join-Path ([System.IO.Path]::GetTempPath()) 'philterdesktop-pdf-profile'
+# A unique throwaway profile avoids clashing with (or handing off to) a running Edge/Chrome instance.
+$profileDir = Join-Path ([System.IO.Path]::GetTempPath()) ("philterdesktop-pdf-" + [guid]::NewGuid().ToString('N'))
 $fileUrl = 'file:///' + ($printPage -replace '\\', '/')
 
-& $browser --headless=new --disable-gpu --no-pdf-header-footer ("--user-data-dir=" + $profileDir) `
-    ("--print-to-pdf=" + $OutputPath) $fileUrl
+$browserArgs = @(
+    '--headless=new', '--disable-gpu', '--no-pdf-header-footer',
+    '--no-first-run', '--no-default-browser-check',
+    '--disable-sync', '--disable-extensions', '--disable-background-networking',
+    ('--user-data-dir=' + $profileDir),
+    ('--print-to-pdf=' + $OutputPath),
+    $fileUrl
+)
 
-if (-not (Test-Path $OutputPath) -or (Get-Item $OutputPath).Length -eq 0) {
-    throw ("The browser did not produce a PDF at $OutputPath. Ensure Edge or Chrome is installed and " +
-           "supports headless --print-to-pdf, or pass -BrowserPath.")
+# On Windows, Edge/Chrome usually returns from the launched command BEFORE the headless render has
+# finished, writing the PDF from a detached process a moment later. So launch it and then wait for
+# the PDF to appear and stop growing, rather than trusting the call to block.
+& $browser @browserArgs 2>$null
+
+$deadline = (Get-Date).AddSeconds(120)
+$lastSize = -1
+$ready = $false
+while ((Get-Date) -lt $deadline) {
+    Start-Sleep -Milliseconds 750
+    if (Test-Path $OutputPath) {
+        $size = (Get-Item $OutputPath).Length
+        if ($size -gt 0 -and $size -eq $lastSize) { $ready = $true; break }  # stable, write finished
+        $lastSize = $size
+    }
+}
+
+Remove-Item $profileDir -Recurse -Force -ErrorAction SilentlyContinue
+if (-not $ready) {
+    throw ("The browser did not produce a PDF at $OutputPath within the timeout. Ensure Edge or Chrome " +
+           "is installed and supports headless --print-to-pdf, or pass -BrowserPath.")
 }
 
 Remove-Item $siteDir -Recurse -Force -ErrorAction SilentlyContinue
-Write-Host "User-guide PDF written to $OutputPath"
+Write-Host "User-guide PDF written to $OutputPath ($([math]::Round((Get-Item $OutputPath).Length/1KB)) KB)"
