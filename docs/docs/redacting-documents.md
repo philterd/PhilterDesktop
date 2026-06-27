@@ -408,7 +408,31 @@ marked as user-added.)
     document**. Philter Desktop reminds you of this before it saves. Store it somewhere secure, treat
     it with the same care as the original, and **never** hand it out in place of the redacted copy.
 
-## For advanced users and IT: redacting from a command line
+## Generating a redaction report (a shareable certificate)
+
+When you need to **prove what was done** — for a case file, a client, or a compliance record — you can
+generate a **redaction report**. Right-click a **Completed** document and choose **Generate Report…**
+(you're also offered one right after saving from **Redact with Preview**).
+
+Philter Desktop first asks whether to include a **detailed per-redaction table**, then saves the
+report as a **PDF** and opens it. The report summarizes the redaction:
+
+- The **source and redacted file names**, and a **SHA-256 fingerprint** of each file (so the report is
+  tied to exactly those documents and any later change is detectable).
+- The **policy** and **context** used, the **Philter Desktop version**, and the **date and time**.
+- A **count of what was removed, by type** — for example, *7 Email Address, 3 Ssn* — and the total.
+- If you chose the detailed table: a row per redaction with its **type, location, and replacement**.
+
+The report is saved as a new file next to your other output; your original and redacted files are not
+touched.
+
+!!! tip "The report is safe to share — it contains no original text"
+    Unlike the explanation file below, a redaction report **never includes the original, un-redacted
+    text** (not even in the detailed table — that shows only the type, location, and replacement). That
+    makes the report safe to file alongside, or hand out with, the redacted copy. When you need the
+    actual detected text for your own secure records, use **Export Explanation (JSON)** instead.
+
+## Exporting an explanation of a redaction (JSON)
 
 > **This section is optional and aimed at technical users.** If phrases like "command prompt" or
 > "script" aren't part of your day, you can skip it entirely — everything Philter Desktop does is

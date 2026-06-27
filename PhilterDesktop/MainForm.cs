@@ -384,6 +384,7 @@ namespace PhilterDesktop
             viewDiffToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE7C4", menuSize, ModernTheme.Text);               // TwoPage (compare)
             viewDetailsToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE946", menuSize, ModernTheme.Text);            // Info (details)
             exportExplanationToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE898", menuSize, ModernTheme.Text);      // Save/Export (explanation)
+            generateReportToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE7C3", menuSize, ModernTheme.Text);        // Page (report)
 
             // Redact split-button dropdown items.
             redactDropDownItem.Image = ModernTheme.CreateGlyphImage("\uE72E", menuSize, ModernTheme.Accent);                    // Lock (redact)
@@ -1544,6 +1545,7 @@ namespace PhilterDesktop
 
             viewDetailsToolStripMenuItem.Enabled = hasSelection;
             exportExplanationToolStripMenuItem.Enabled = selectedCompleted; // needs captured spans
+            generateReportToolStripMenuItem.Enabled = selectedCompleted;    // summarizes a finished redaction
         }
 
         /// <summary>The source file path of the selected queue item, or null.</summary>
@@ -1788,6 +1790,96 @@ namespace PhilterDesktop
             }
         }
 
+        private void generateReportToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return;
+            }
+            GenerateReportFor(this, id);
+        }
+
+        // Writes a shareable redaction report (PDF or HTML) for the document's latest version. Unlike
+        // the explanation JSON, the report contains NO original text, so it's safe to file alongside the
+        // redacted copy. Shared by the queue context menu and the post-preview offer.
+        private void GenerateReportFor(IWin32Window owner, ObjectId id)
+        {
+            RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
+            if (entity is null)
+            {
+                return;
+            }
+
+            RedactionVersionEntity? latest = _redactionVersionRepository.GetForDocument(id).LastOrDefault();
+            if (latest is null)
+            {
+                MessageBox.Show(owner, "There is no redaction to report on for this document yet.",
+                    "Generate Report", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            IReadOnlyList<RedactionSpanEntity> spans = _redactionSpanRepository.GetForVersion(latest.Id);
+
+            // Offer the optional per-redaction detail table (still contains no original text).
+            DialogResult detail = MessageBox.Show(owner,
+                "Include a detailed per-redaction table?\n\n" +
+                "It lists each redaction's type, location, and replacement. It does not include the " +
+                "original text, so the report stays safe to share.",
+                "Generate Report", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            if (detail == DialogResult.Cancel)
+            {
+                return;
+            }
+
+            string source = entity.Name;
+            string outputPath = ResolveRedactedOutputPath(id, source);
+            using var save = new SaveFileDialog
+            {
+                Title = "Save redaction report",
+                Filter = "PDF report (*.pdf)|*.pdf",
+                DefaultExt = "pdf",
+                AddExtension = true,
+                FileName = $"{Path.GetFileNameWithoutExtension(source)}_redaction-report.pdf",
+                InitialDirectory = RedactionService.InitialSaveDirectory(_settingsRepository.GetSettings(), outputPath, source)
+            };
+            if (save.ShowDialog(owner) != DialogResult.OK)
+            {
+                return;
+            }
+
+            try
+            {
+                Version? v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                string toolVersion = v is null ? string.Empty : $"{v.Major}.{v.Minor}.{v.Build}";
+
+                var options = new RedactionReportOptions
+                {
+                    IncludeDetailTable = detail == DialogResult.Yes,
+                    IncludeMachineInfo = _loggingEnabled
+                };
+                RedactionReportModel model = RedactionReport.Build(
+                    latest, spans, toolVersion, DateTimeOffset.UtcNow,
+                    FileHash.Sha256OrUnavailable(source),
+                    FileHash.Sha256OrUnavailable(outputPath),
+                    options);
+
+                RedactionReportPdf.Write(model, save.FileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(owner, UserError.Describe(ex, save.FileName, writing: true),
+                    "Generate Report", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Open the saved report directly in the default PDF viewer.
+            try { System.Diagnostics.Process.Start(new ProcessStartInfo(save.FileName) { UseShellExecute = true }); }
+            catch (Exception ex)
+            {
+                MessageBox.Show(owner, $"The report was saved to:\n{save.FileName}\n\nBut it could not be opened: {ex.Message}",
+                    "Generate Report", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
         private void addFilesToRedactToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var redactDocumentsForm = new RedactDocuments(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled, _settingsRepository);
@@ -1903,6 +1995,15 @@ namespace PhilterDesktop
             SaveRedactionVersion(entity, outputPath, spans);
             RememberLastUsed(policy, context, Path.GetDirectoryName(outputPath));
             LoadRedactionQueue();
+
+            // The preview Save flow is the careful, single-document workflow, so offer a report inline
+            // (it's also always available later by right-clicking the completed item).
+            if (MessageBox.Show(this,
+                    "Redaction saved. Generate a shareable report (PDF/HTML summary) for it now?",
+                    "Generate Report", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                GenerateReportFor(this, entity.Id);
+            }
         }
 
         // Persists the most recently used policy/context and save folder so they're pre-selected next

@@ -97,6 +97,7 @@ namespace PhilterDesktop
             viewDiffToolStripMenuItem = new ToolStripMenuItem();
             viewDetailsToolStripMenuItem = new ToolStripMenuItem();
             exportExplanationToolStripMenuItem = new ToolStripMenuItem();
+            generateReportToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator7 = new ToolStripSeparator();
             refreshToolStripMenuItem = new ToolStripMenuItem();
             imageList1 = new ImageList(components);
@@ -377,7 +378,7 @@ namespace PhilterDesktop
             // contextMenuStrip1
             // 
             contextMenuStrip1.ImageScalingSize = new Size(24, 24);
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, redactPreviewToolStripMenuItem, findAndRedactToolStripMenuItem, redactSpreadsheetToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, openContainingFolderToolStripMenuItem, toolStripSeparator8, modifyRedactionToolStripMenuItem, viewDiffToolStripMenuItem, viewDetailsToolStripMenuItem, exportExplanationToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, redactPreviewToolStripMenuItem, findAndRedactToolStripMenuItem, redactSpreadsheetToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, openContainingFolderToolStripMenuItem, toolStripSeparator8, modifyRedactionToolStripMenuItem, viewDiffToolStripMenuItem, viewDetailsToolStripMenuItem, exportExplanationToolStripMenuItem, generateReportToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(278, 314);
             // 
@@ -491,6 +492,14 @@ namespace PhilterDesktop
             exportExplanationToolStripMenuItem.Size = new Size(277, 22);
             exportExplanationToolStripMenuItem.Text = "Export Explanation (JSON)...";
             exportExplanationToolStripMenuItem.Click += exportExplanationToolStripMenuItem_Click;
+            //
+            // generateReportToolStripMenuItem
+            //
+            generateReportToolStripMenuItem.Name = "generateReportToolStripMenuItem";
+            generateReportToolStripMenuItem.Size = new Size(277, 22);
+            generateReportToolStripMenuItem.Text = "Generate Report...";
+            generateReportToolStripMenuItem.ToolTipText = "Create a shareable PDF/HTML summary of this redaction (no original text)";
+            generateReportToolStripMenuItem.Click += generateReportToolStripMenuItem_Click;
             // 
             // toolStripSeparator7
             // 
@@ -587,6 +596,7 @@ namespace PhilterDesktop
         private ToolStripMenuItem viewDiffToolStripMenuItem;
         private ToolStripMenuItem viewDetailsToolStripMenuItem;
         private ToolStripMenuItem exportExplanationToolStripMenuItem;
+        private ToolStripMenuItem generateReportToolStripMenuItem;
         private System.Windows.Forms.Timer redactionQueueTimer;
         private ToolStripSeparator toolStripSeparator7;
         private ToolStripMenuItem refreshToolStripMenuItem;
