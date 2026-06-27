@@ -1,0 +1,17 @@
+# PDF build overlay for the offline Philter Desktop user guide (see philterd-website issue #469).
+#
+# Inherits the online site config (mkdocs.yml) and only adds the to-pdf plugin, so the published
+# online docs built from mkdocs.yml are unchanged. The PDF is built from the same markdown by
+# Installer\build-user-guide.ps1 and bundled in the installer.
+#
+# Requires the mkdocs-to-pdf plugin (docs/requirements-pdf.txt), which uses WeasyPrint. WeasyPrint needs
+# native libraries (Pango, cairo, GTK). On Windows install them per the WeasyPrint docs:
+# https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#windows
+INHERIT: mkdocs.yml
+plugins:
+  - search
+  - to-pdf:
+      output_path: PhilterDesktop-User-Guide.pdf
+      author: "Philterd, LLC"
+      cover_title: "Philter Desktop"
+      cover_subtitle: "User Guide"

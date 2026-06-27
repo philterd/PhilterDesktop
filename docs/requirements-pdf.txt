@@ -1,0 +1,4 @@
+# Requirements for building the offline user-guide PDF (Installer\build-user-guide.ps1).
+# Kept separate from requirements.txt so the online docs build does not pull WeasyPrint.
+-r requirements.txt
+mkdocs-to-pdf
