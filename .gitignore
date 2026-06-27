@@ -79,3 +79,7 @@ package.json
 
 # App screenshots (published in the philterd-website repo; generated locally on demand)
 screenshots/
+
+# Real public-domain test documents (kept local, not committed). Integration tests that use them
+# skip automatically when the directory is empty/absent.
+real-documents/
