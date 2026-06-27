@@ -50,8 +50,6 @@ PhilterDesktop/Models/ph-eye-pii-en-xsmall/
 
 # Installer build artifacts
 Installer/Output/
-# Generated offline user-guide PDF (built from docs/ markdown by build-user-guide.ps1)
-Installer/dist/
 
 # Local code-signing settings (Azure Trusted Signing account/profile) — never commit
 Installer/signing.local.json

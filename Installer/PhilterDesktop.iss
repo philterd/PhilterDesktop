@@ -64,18 +64,10 @@ Name: "autostart"; Description: "Start {#AppName} automatically when I sign in (
 ; The entire publish output (app, dependencies, native PDF libs under runtimes\..\native that
 ; publish flattens to the app root, and the bundled Models\ folder).
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-; Offline user guide PDF, built from docs\ markdown by build-user-guide.ps1 and passed in via
-; /DUserGuidePdf by build-setup.ps1. Installed alongside the app for fully offline reference.
-#ifdef UserGuidePdf
-Source: "{#UserGuidePdf}"; DestDir: "{app}"; Flags: ignoreversion
-#endif
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
-#ifdef UserGuidePdf
-Name: "{group}\{#AppName} User Guide"; Filename: "{app}\PhilterDesktop-User-Guide.pdf"
-#endif
 
 [Registry]
 ; Optional auto-start. Same value name + "--minimized" switch as StartupManager, so the in-app
