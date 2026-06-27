@@ -37,6 +37,10 @@ PhilterDesktop/Models/ph-eye-pii-en-xsmall/
 # Redacted output files (e.g. *_redacted-draft.*) must never be committed — they may contain PII
 *_redacted*
 
+# Redaction explanation exports (e.g. *_redaction-explanation.json) list the original, un-redacted
+# text, so they are as sensitive as the source and must never be committed.
+*-explanation.json
+
 # Visual Studio regenerates a companion .sln; the canonical solution is PhilterDesktop.slnx.
 /PhilterDesktop.sln
 
