@@ -34,12 +34,14 @@
 #   pwsh Installer\build-setup.ps1 -Version 1.2.3        # override the version
 #   pwsh Installer\build-setup.ps1 -FrameworkDependent
 #   pwsh Installer\build-setup.ps1 -NoTest               # skip the test run (tests run by default)
+#   pwsh Installer\build-setup.ps1 -NoDocs               # skip building/bundling the user-guide PDF
 #   pwsh Installer\build-setup.ps1 -NoSign               # unsigned dev build
 
 param(
     [string]$Version,
     [switch]$FrameworkDependent,
     [switch]$NoTest,
+    [switch]$NoDocs,
     [switch]$NoSign,
     [string]$SigningEndpoint = $env:TRUSTED_SIGNING_ENDPOINT,
     [string]$SigningAccount  = $env:TRUSTED_SIGNING_ACCOUNT,
@@ -230,6 +232,20 @@ Write-Host "Installer version: $Version"
 # Sign the app exe BEFORE packaging, so the installer ships the signed binary.
 Invoke-Sign -Path $exe
 
+# ----- Offline user guide PDF (bundled in the installer) ----------------------------------------
+
+# Build the offline user-guide PDF from the docs\ markdown (see build-user-guide.ps1). Skipped with
+# -NoDocs, e.g. on a machine without Python / WeasyPrint; the installer then omits the guide.
+$userGuidePdf = $null
+if ($NoDocs) {
+    Write-Warning "Skipping the offline user-guide PDF (-NoDocs); the installer will not include it."
+} else {
+    Write-Host "Building the offline user-guide PDF ..."
+    & (Join-Path $PSScriptRoot 'build-user-guide.ps1')
+    $userGuidePdf = Join-Path $PSScriptRoot 'dist\PhilterDesktop-User-Guide.pdf'
+    if (-not (Test-Path $userGuidePdf)) { throw "User-guide PDF was not produced at $userGuidePdf." }
+}
+
 # ----- Compile the installer --------------------------------------------------------------------
 
 # Locate the Inno Setup compiler (ISCC.exe).
@@ -253,6 +269,7 @@ if (Test-Path $outputDir) {
 }
 
 $isccArgs = @("/DAppVersion=$Version")
+if ($userGuidePdf) { $isccArgs += "/DUserGuidePdf=$userGuidePdf" }
 if ($Sign) {
     # Register the "philtersign" sign tool with ISCC and enable the SignTool directive in the .iss
     # (/DSign). Inno then signs the installer AND the embedded uninstaller. $q (a literal quote) and
