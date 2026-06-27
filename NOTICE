@@ -1,0 +1,205 @@
+Philter Desktop
+Copyright 2026 Philterd, LLC
+
+This product is licensed under the Apache License, Version 2.0 (see the LICENSE
+file). It includes third-party software distributed via NuGet under the licenses
+and copyrights listed below. Each component remains the property of its
+respective copyright holders and is governed by its own license.
+
+Native runtime assets (PDFium, SkiaSharp, ONNX Runtime) bundled for redistribution
+are covered by the entries for their respective NuGet packages.
+
+Mozilla Public License (MPL) components: OpenMcdf (MPL-2.0) and UTF.Unknown
+(MPL-1.1) are file-scoped copyleft. They are redistributed unmodified, and their
+source is available at the project locations listed for each below:
+  OpenMcdf:     https://github.com/ironfede/openmcdf
+  UTF.Unknown:  https://github.com/CharsetDetector/UTF-unknown
+
+================================================================================
+Third-party NuGet dependencies
+================================================================================
+
+Antlr4.Runtime.Standard 4.13.1
+  License:   BSD-3-Clause
+  Copyright: Copyright (c) 2012-2020 The ANTLR Project. All rights reserved.
+  Project:   https://github.com/antlr/antlr4
+
+bblanchon.PDFium.Linux 147.0.7690
+  License:   Apache-2.0
+  Copyright: Copyright (c) Benoit Blanchon 2017-2025
+  Project:   https://github.com/bblanchon/pdfium-binaries
+
+bblanchon.PDFium.macOS 147.0.7690
+  License:   Apache-2.0
+  Copyright: Copyright (c) Benoit Blanchon 2017-2025
+  Project:   https://github.com/bblanchon/pdfium-binaries
+
+bblanchon.PDFium.Win32 147.0.7690
+  License:   Apache-2.0
+  Copyright: Copyright (c) Benoit Blanchon 2017-2025
+  Project:   https://github.com/bblanchon/pdfium-binaries
+
+BouncyCastle.Cryptography 2.6.2
+  License:   MIT
+  Copyright: Copyright (c) Legion of the Bouncy Castle Inc. 2000-2025
+  Project:   https://www.bouncycastle.org/
+
+CsvHelper 33.1.0
+  License:   MS-PL OR Apache-2.0
+  Copyright: Copyright (c) 2009-2024 Josh Close
+  Project:   https://joshclose.github.io/CsvHelper/
+
+DiffPlex 1.9.0
+  License:   Apache-2.0
+  Copyright: Matthew Manela
+  Project:   https://github.com/mmanela/diffplex/
+
+DocumentFormat.OpenXml 3.5.1
+  License:   MIT
+  Copyright: (c) Microsoft Corporation. All rights reserved.
+  Project:   https://github.com/dotnet/Open-XML-SDK
+
+DocumentFormat.OpenXml.Framework 3.5.1
+  License:   MIT
+  Copyright: (c) Microsoft Corporation. All rights reserved.
+  Project:   https://github.com/dotnet/Open-XML-SDK
+
+Google.Protobuf 3.30.2
+  License:   BSD-3-Clause
+  Copyright: Copyright 2015, Google Inc.
+  Project:   https://github.com/protocolbuffers/protobuf
+
+Humanizer.Core 2.14.1
+  License:   MIT
+  Copyright: Copyright (c) .NET Foundation and Contributors
+  Project:   https://github.com/Humanizr/Humanizer
+
+Json.More.Net 2.0.1.2
+  License:   MIT
+  Copyright: Greg Dennis
+  Project:   https://github.com/gregsdennis/json-everything
+
+JsonPointer.Net 5.0.0
+  License:   MIT
+  Copyright: Greg Dennis
+  Project:   https://github.com/gregsdennis/json-everything
+
+JsonSchema.Net 7.0.4
+  License:   MIT
+  Copyright: Greg Dennis
+  Project:   https://github.com/gregsdennis/json-everything
+
+LiteDB 5.0.21
+  License:   MIT
+  Copyright: Copyright (c) Mauricio David
+  Project:   https://www.litedb.org/
+
+Microsoft.IO.RecyclableMemoryStream 3.0.1
+  License:   MIT
+  Copyright: (c) Microsoft Corporation. All rights reserved.
+  Project:   https://github.com/Microsoft/Microsoft.IO.RecyclableMemoryStream
+
+Microsoft.Maui.Graphics 10.0.70
+  License:   MIT
+  Copyright: (c) Microsoft Corporation. All rights reserved.
+  Project:   https://github.com/dotnet/maui
+
+Microsoft.ML.OnnxRuntime 1.26.0
+  License:   MIT
+  Copyright: Copyright (c) Microsoft Corporation
+  Project:   https://github.com/Microsoft/onnxruntime
+
+Microsoft.ML.OnnxRuntime.Managed 1.26.0
+  License:   MIT
+  Copyright: Copyright (c) Microsoft Corporation
+  Project:   https://github.com/Microsoft/onnxruntime
+
+Microsoft.ML.Tokenizers 2.0.0
+  License:   MIT
+  Copyright: (c) Microsoft Corporation. All rights reserved.
+  Project:   https://dot.net/ml
+
+MimeKit 4.17.0
+  License:   MIT
+  Copyright: .NET Foundation and Contributors
+  Project:   https://www.mimekit.net/
+
+MsgReader 6.0.12
+  License:   MIT
+  Copyright: (c) 2013-2026 Kees van Spelde
+  Project:   https://github.com/Sicos1977/MSGReader
+
+OpenMcdf 3.1.4
+  License:   MPL-2.0
+  Copyright: Copyright (c) 2010-2026, Federico Blaseotto, Jeremy Powell
+  Project:   https://openmcdf.github.io/openmcdf/
+
+PdfPig 0.1.14
+  License:   Apache-2.0
+  Copyright: UglyToad
+  Project:   https://github.com/UglyToad/PdfPig
+
+PDFtoImage 5.2.1
+  License:   MIT
+  Copyright: David Sungaila
+  Project:   https://github.com/sungaila/PDFtoImage
+
+Philterd.Phileas 1.2.0
+  License:   Apache-2.0
+  Copyright: Copyright 2026 Philterd, LLC
+  Project:   https://github.com/philterd/phileas-dotnet
+
+Philterd.PhiSql 1.1.1
+  License:   Apache-2.0
+  Copyright: Copyright Philterd, LLC
+  Project:   https://github.com/philterd/phisql
+
+RtfPipe 2.0.7677.4303
+  License:   MIT
+  Copyright: Eric Domke
+  Project:   https://github.com/erdomke/RtfPipe
+
+SkiaSharp 3.119.4
+  License:   MIT
+  Copyright: (c) Microsoft Corporation. All rights reserved.
+  Project:   https://github.com/mono/SkiaSharp
+
+SkiaSharp.NativeAssets.Linux.NoDependencies 3.119.2
+  License:   MIT
+  Copyright: (c) Microsoft Corporation. All rights reserved.
+  Project:   https://github.com/mono/SkiaSharp
+
+SkiaSharp.NativeAssets.macOS 3.119.4
+  License:   MIT
+  Copyright: (c) Microsoft Corporation. All rights reserved.
+  Project:   https://github.com/mono/SkiaSharp
+
+SkiaSharp.NativeAssets.Win32 3.119.4
+  License:   MIT
+  Copyright: (c) Microsoft Corporation. All rights reserved.
+  Project:   https://github.com/mono/SkiaSharp
+
+System.IO.Packaging 10.0.2
+  License:   MIT
+  Copyright: (c) Microsoft Corporation. All rights reserved.
+  Project:   https://dot.net/
+
+System.Numerics.Tensors 9.0.0
+  License:   MIT
+  Copyright: (c) Microsoft Corporation. All rights reserved.
+  Project:   https://dot.net/
+
+System.Security.Cryptography.Pkcs 10.0.8
+  License:   MIT
+  Copyright: (c) Microsoft Corporation. All rights reserved.
+  Project:   https://dot.net/
+
+UTF.Unknown 2.6.0
+  License:   MPL-1.1
+  Copyright: Julian Verdurmen, Rustam Sayfutdinov, Rudi Pettazzi, Shy Shalom
+  Project:   https://github.com/CharsetDetector/UTF-unknown
+
+YamlDotNet 15.1.2
+  License:   MIT
+  Copyright: Copyright (c) Antoine Aubry and contributors
+  Project:   https://github.com/aaubry/YamlDotNet
