@@ -429,6 +429,10 @@ namespace PhilterDesktop
             txtSuffix.Text = RedactionService.NormalizeSuffix(_settings.RedactedSuffix);
             chkEnableLogging.Checked = _settings.LoggingEnabled;
             chkShowNotifications.Checked = _settings.NotificationsEnabled;
+            chkScrubMetadata.Checked = _settings.ScrubDocumentMetadata;
+            chkScrubComments.Checked = _settings.ScrubWordComments;
+            chkScrubTrackedChanges.Checked = _settings.ScrubWordTrackedChanges;
+            chkScrubHiddenText.Checked = _settings.ScrubWordHiddenText;
             chkVerifyAfterRedaction.Checked = _settings.VerifyAfterRedaction;
             rdoVerifyBroadPolicy.Checked = _settings.VerificationUseBroadPolicy;
             rdoVerifySamePolicy.Checked = !_settings.VerificationUseBroadPolicy;
@@ -601,6 +605,10 @@ namespace PhilterDesktop
             _settings.RedactedSuffix = RedactionService.NormalizeSuffix(txtSuffix.Text);
             _settings.LoggingEnabled = chkEnableLogging.Checked;
             _settings.NotificationsEnabled = chkShowNotifications.Checked;
+            _settings.ScrubDocumentMetadata = chkScrubMetadata.Checked;
+            _settings.ScrubWordComments = chkScrubComments.Checked;
+            _settings.ScrubWordTrackedChanges = chkScrubTrackedChanges.Checked;
+            _settings.ScrubWordHiddenText = chkScrubHiddenText.Checked;
             _settings.VerifyAfterRedaction = chkVerifyAfterRedaction.Checked;
             _settings.VerificationUseBroadPolicy = rdoVerifyBroadPolicy.Checked;
             _settings.WatchedFolderMaxConcurrency = int.TryParse(cmbConcurrency.Text, out int n) ? Math.Clamp(n, 1, 4) : 1;

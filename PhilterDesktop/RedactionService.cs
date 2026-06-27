@@ -149,7 +149,8 @@ namespace PhilterDesktop
             string context,
             FilterService? filterService = null,
             bool highlight = false,
-            IReadOnlyCollection<int>? fullyRedactedColumns = null)
+            IReadOnlyCollection<int>? fullyRedactedColumns = null,
+            WordScrubOptions wordScrub = WordScrubOptions.None)
         {
             filterService ??= new FilterService();
 
@@ -180,11 +181,16 @@ namespace PhilterDesktop
             {
                 // Word redaction is synchronous; run it off the calling thread. highlight applies
                 // only to Word documents. Returns the paragraph-indexed spans it applied.
-                return await Task.Run(() => WordDocumentRedactor.Redact(
+                List<RedactionSpanEntity> docxSpans = await Task.Run(() => WordDocumentRedactor.Redact(
                     inputPath,
                     outputPath,
                     text => filterService.Filter(policy, context, 0, text),
                     highlight));
+                if (wordScrub != WordScrubOptions.None)
+                {
+                    await Task.Run(() => DocumentMetadata.ScrubDocx(outputPath, wordScrub));
+                }
+                return docxSpans;
             }
 
             if (extension == ".eml" || extension == ".msg")
@@ -256,13 +262,18 @@ namespace PhilterDesktop
             bool highlight,
             IReadOnlyList<RedactionSpanEntity> spans,
             PhileasPolicy? policy = null,
-            FilterService? filterService = null)
+            FilterService? filterService = null,
+            WordScrubOptions wordScrub = WordScrubOptions.None)
         {
             filterService ??= new FilterService();
             switch (fileType.ToLowerInvariant())
             {
                 case ".docx":
                     await Task.Run(() => WordDocumentRedactor.ApplySpans(sourcePath, outputPath, spans, highlight));
+                    if (wordScrub != WordScrubOptions.None)
+                    {
+                        await Task.Run(() => DocumentMetadata.ScrubDocx(outputPath, wordScrub));
+                    }
                     break;
                 case ".pdf":
                     await ApplyPdfSpansAsync(sourcePath, outputPath, spans, policy, filterService);

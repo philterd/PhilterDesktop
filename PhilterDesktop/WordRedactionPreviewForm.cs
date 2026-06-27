@@ -290,6 +290,11 @@ namespace PhilterDesktop
             try
             {
                 WordDocumentRedactor.ApplySpans(_sourcePath, output, _spans, _highlight.Checked);
+                WordScrubOptions scrub = DocumentMetadata.OptionsFor(_settings);
+                if (scrub != WordScrubOptions.None)
+                {
+                    DocumentMetadata.ScrubDocx(output, scrub);
+                }
             }
             catch (Exception ex)
             {

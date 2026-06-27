@@ -120,4 +120,7 @@
   <data name="lblSecurityInfo.Text" xml:space="preserve">
     <value>The database (which can contain detected personal data) is always encrypted at rest. By default the key is protected by your Windows account. You can also require a passphrase to open Philter Desktop. If you forget the passphrase, the data cannot be recovered.</value>
   </data>
+  <data name="lblVerifyHint.Text" xml:space="preserve">
+    <value>A broad scan can flag PII types the redaction policy didn't cover, including items you chose not to redact. Runs entirely on this device; you can also verify any completed document by right-clicking it.</value>
+  </data>
 </root>

@@ -355,8 +355,10 @@ namespace PhilterDesktop
                     return;
                 }
 
+                SettingsEntity watcherSettings = _settingsRepository?.GetSettings() ?? new SettingsEntity();
                 await RedactionService.RedactFileAsync(
-                    fullPath, outputPath, policy, folder.Context, _filterService, folder.Highlight).ConfigureAwait(false);
+                    fullPath, outputPath, policy, folder.Context, _filterService, folder.Highlight,
+                    wordScrub: DocumentMetadata.OptionsFor(watcherSettings)).ConfigureAwait(false);
 
                 Log($"Redacted watched file '{fullPath}' -> '{outputPath}'.");
                 Activity(folder, "Info", $"Redacted: {fullPath} → {outputPath}");

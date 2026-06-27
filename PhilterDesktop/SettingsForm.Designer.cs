@@ -52,6 +52,12 @@ namespace PhilterDesktop
             radioOriginalLocation = new RadioButton();
             lblSuffix = new Label();
             txtSuffix = new TextBox();
+            chkScrubMetadata = new CheckBox();
+            chkScrubComments = new CheckBox();
+            chkScrubTrackedChanges = new CheckBox();
+            chkScrubHiddenText = new CheckBox();
+            lblWordInfo = new Label();
+            tabWord = new TabPage();
             groupBoxLogging = new GroupBox();
             btnOpenLog = new Button();
             btnClearLog = new Button();
@@ -90,6 +96,7 @@ namespace PhilterDesktop
             rdoVerifyBroadPolicy = new RadioButton();
             lblVerifyHint = new Label();
             groupBoxOutput.SuspendLayout();
+            tabWord.SuspendLayout();
             groupBoxLogging.SuspendLayout();
             tabControl.SuspendLayout();
             tabGeneral.SuspendLayout();
@@ -108,7 +115,7 @@ namespace PhilterDesktop
             groupBoxOutput.Controls.Add(txtSuffix);
             groupBoxOutput.Location = new Point(3, 5);
             groupBoxOutput.Name = "groupBoxOutput";
-            groupBoxOutput.Size = new Size(560, 154);
+            groupBoxOutput.Size = new Size(560, 163);
             groupBoxOutput.TabIndex = 0;
             groupBoxOutput.TabStop = false;
             groupBoxOutput.Text = "Output Location";
@@ -169,12 +176,78 @@ namespace PhilterDesktop
             txtSuffix.Size = new Size(200, 23);
             txtSuffix.TabIndex = 5;
             // 
+            // chkScrubMetadata
+            // 
+            chkScrubMetadata.AutoSize = true;
+            chkScrubMetadata.Location = new Point(13, 65);
+            chkScrubMetadata.Name = "chkScrubMetadata";
+            chkScrubMetadata.Size = new Size(441, 19);
+            chkScrubMetadata.TabIndex = 1;
+            chkScrubMetadata.Text = "Remove document metadata (author, company, title, keywords, custom fields)";
+            chkScrubMetadata.UseVisualStyleBackColor = true;
+            // 
+            // chkScrubComments
+            // 
+            chkScrubComments.AutoSize = true;
+            chkScrubComments.Location = new Point(13, 93);
+            chkScrubComments.Name = "chkScrubComments";
+            chkScrubComments.Size = new Size(176, 19);
+            chkScrubComments.TabIndex = 2;
+            chkScrubComments.Text = "Remove reviewer comments";
+            chkScrubComments.UseVisualStyleBackColor = true;
+            // 
+            // chkScrubTrackedChanges
+            // 
+            chkScrubTrackedChanges.AutoSize = true;
+            chkScrubTrackedChanges.Location = new Point(13, 121);
+            chkScrubTrackedChanges.Name = "chkScrubTrackedChanges";
+            chkScrubTrackedChanges.Size = new Size(275, 19);
+            chkScrubTrackedChanges.TabIndex = 3;
+            chkScrubTrackedChanges.Text = "Accept and remove tracked changes (revisions)";
+            chkScrubTrackedChanges.UseVisualStyleBackColor = true;
+            // 
+            // chkScrubHiddenText
+            // 
+            chkScrubHiddenText.AutoSize = true;
+            chkScrubHiddenText.Location = new Point(13, 149);
+            chkScrubHiddenText.Name = "chkScrubHiddenText";
+            chkScrubHiddenText.Size = new Size(131, 19);
+            chkScrubHiddenText.TabIndex = 4;
+            chkScrubHiddenText.Text = "Remove hidden text";
+            chkScrubHiddenText.UseVisualStyleBackColor = true;
+            // 
+            // lblWordInfo
+            // 
+            lblWordInfo.AutoSize = true;
+            lblWordInfo.ForeColor = SystemColors.GrayText;
+            lblWordInfo.Location = new Point(13, 18);
+            lblWordInfo.MaximumSize = new Size(530, 0);
+            lblWordInfo.Name = "lblWordInfo";
+            lblWordInfo.Size = new Size(528, 30);
+            lblWordInfo.TabIndex = 0;
+            lblWordInfo.Text = "When redacting Word (.docx) files, also strip these hidden information channels so a redacted copy doesn't leak through them. Applied to every redacted Word document.";
+            // 
+            // tabWord
+            // 
+            tabWord.Controls.Add(lblWordInfo);
+            tabWord.Controls.Add(chkScrubMetadata);
+            tabWord.Controls.Add(chkScrubComments);
+            tabWord.Controls.Add(chkScrubTrackedChanges);
+            tabWord.Controls.Add(chkScrubHiddenText);
+            tabWord.Location = new Point(4, 24);
+            tabWord.Name = "tabWord";
+            tabWord.Padding = new Padding(3);
+            tabWord.Size = new Size(565, 318);
+            tabWord.TabIndex = 4;
+            tabWord.Text = "Microsoft Word";
+            tabWord.UseVisualStyleBackColor = true;
+            // 
             // groupBoxLogging
             // 
             groupBoxLogging.Controls.Add(btnOpenLog);
             groupBoxLogging.Controls.Add(btnClearLog);
             groupBoxLogging.Controls.Add(chkEnableLogging);
-            groupBoxLogging.Location = new Point(3, 164);
+            groupBoxLogging.Location = new Point(5, 174);
             groupBoxLogging.Name = "groupBoxLogging";
             groupBoxLogging.Size = new Size(560, 65);
             groupBoxLogging.TabIndex = 1;
@@ -244,6 +317,7 @@ namespace PhilterDesktop
             // 
             tabControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             tabControl.Controls.Add(tabGeneral);
+            tabControl.Controls.Add(tabWord);
             tabControl.Controls.Add(tabNotifications);
             tabControl.Controls.Add(tabWatched);
             tabControl.Controls.Add(tabSecurity);
@@ -264,7 +338,7 @@ namespace PhilterDesktop
             tabGeneral.Margin = new Padding(2);
             tabGeneral.Name = "tabGeneral";
             tabGeneral.Padding = new Padding(2);
-            tabGeneral.Size = new Size(565, 288);
+            tabGeneral.Size = new Size(565, 318);
             tabGeneral.TabIndex = 0;
             tabGeneral.Text = "General";
             tabGeneral.UseVisualStyleBackColor = true;
@@ -272,9 +346,9 @@ namespace PhilterDesktop
             // chkContextMenu
             // 
             chkContextMenu.AutoSize = true;
-            chkContextMenu.Location = new Point(12, 239);
+            chkContextMenu.Location = new Point(12, 256);
             chkContextMenu.Name = "chkContextMenu";
-            chkContextMenu.Size = new Size(464, 19);
+            chkContextMenu.Size = new Size(506, 19);
             chkContextMenu.TabIndex = 2;
             chkContextMenu.Text = "Add \"Redact with Philter Desktop\" to the Explorer right-click menu (all supported file types)";
             chkContextMenu.UseVisualStyleBackColor = true;
@@ -284,47 +358,47 @@ namespace PhilterDesktop
             // 
             lblContextMenuHint.AutoSize = true;
             lblContextMenuHint.ForeColor = SystemColors.GrayText;
-            lblContextMenuHint.Location = new Point(30, 262);
+            lblContextMenuHint.Location = new Point(30, 288);
             lblContextMenuHint.Name = "lblContextMenuHint";
             lblContextMenuHint.Size = new Size(0, 15);
             lblContextMenuHint.TabIndex = 3;
-            //
+            // 
             // tabNotifications
-            //
+            // 
             tabNotifications.Controls.Add(chkShowNotifications);
             tabNotifications.Controls.Add(lblNotificationsHint);
             tabNotifications.Location = new Point(4, 24);
             tabNotifications.Margin = new Padding(2);
             tabNotifications.Name = "tabNotifications";
             tabNotifications.Padding = new Padding(2);
-            tabNotifications.Size = new Size(565, 288);
+            tabNotifications.Size = new Size(565, 318);
             tabNotifications.TabIndex = 3;
             tabNotifications.Text = "Notifications";
             tabNotifications.UseVisualStyleBackColor = true;
-            //
+            // 
             // chkShowNotifications
-            //
+            // 
             chkShowNotifications.AutoSize = true;
             chkShowNotifications.Location = new Point(12, 18);
             chkShowNotifications.Name = "chkShowNotifications";
-            chkShowNotifications.Size = new Size(360, 19);
+            chkShowNotifications.Size = new Size(346, 19);
             chkShowNotifications.TabIndex = 0;
             chkShowNotifications.Text = "Show a tray notification when a document finishes redacting";
             chkShowNotifications.UseVisualStyleBackColor = true;
-            //
+            // 
             // lblNotificationsHint
-            //
+            // 
             lblNotificationsHint.AutoSize = true;
             lblNotificationsHint.ForeColor = SystemColors.GrayText;
             lblNotificationsHint.Location = new Point(30, 41);
             lblNotificationsHint.MaximumSize = new Size(520, 0);
             lblNotificationsHint.Name = "lblNotificationsHint";
-            lblNotificationsHint.Size = new Size(0, 15);
+            lblNotificationsHint.Size = new Size(506, 30);
             lblNotificationsHint.TabIndex = 1;
             lblNotificationsHint.Text = "Notifications appear only when Philter Desktop's window is hidden in the tray or minimized — never while you're looking at it. Click a notification to open the folder with the finished files.";
-            //
+            // 
             // tabWatched
-            //
+            // 
             tabWatched.Controls.Add(listWatched);
             tabWatched.Controls.Add(btnAddWatched);
             tabWatched.Controls.Add(btnEditWatched);
@@ -338,7 +412,7 @@ namespace PhilterDesktop
             tabWatched.Margin = new Padding(2);
             tabWatched.Name = "tabWatched";
             tabWatched.Padding = new Padding(2);
-            tabWatched.Size = new Size(565, 288);
+            tabWatched.Size = new Size(565, 318);
             tabWatched.TabIndex = 1;
             tabWatched.Text = "Watched Folders";
             tabWatched.UseVisualStyleBackColor = true;
@@ -452,25 +526,26 @@ namespace PhilterDesktop
             lblStartupHint.Name = "lblStartupHint";
             lblStartupHint.Size = new Size(0, 15);
             lblStartupHint.TabIndex = 6;
-            //
+            // 
             // lblConcurrency
-            //
+            // 
             lblConcurrency.AutoSize = true;
             lblConcurrency.Location = new Point(6, 266);
             lblConcurrency.Margin = new Padding(2, 0, 2, 0);
             lblConcurrency.Name = "lblConcurrency";
+            lblConcurrency.Size = new Size(309, 15);
             lblConcurrency.TabIndex = 7;
             lblConcurrency.Text = "Watched-folder files to redact at once (usually leave at 1):";
-            //
+            // 
             // cmbConcurrency
-            //
+            // 
             cmbConcurrency.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbConcurrency.Items.AddRange(new object[] { "1", "2", "3", "4" });
             cmbConcurrency.Location = new Point(372, 262);
             cmbConcurrency.Name = "cmbConcurrency";
             cmbConcurrency.Size = new Size(55, 23);
             cmbConcurrency.TabIndex = 8;
-            //
+            // 
             // tabSecurity
             // 
             tabSecurity.Controls.Add(lblSecurityInfo);
@@ -484,7 +559,7 @@ namespace PhilterDesktop
             tabSecurity.Location = new Point(4, 24);
             tabSecurity.Name = "tabSecurity";
             tabSecurity.Padding = new Padding(3);
-            tabSecurity.Size = new Size(565, 288);
+            tabSecurity.Size = new Size(565, 318);
             tabSecurity.TabIndex = 2;
             tabSecurity.Text = "Security";
             tabSecurity.UseVisualStyleBackColor = true;
@@ -526,49 +601,49 @@ namespace PhilterDesktop
             lblSecurityStatus.Name = "lblSecurityStatus";
             lblSecurityStatus.Size = new Size(0, 15);
             lblSecurityStatus.TabIndex = 3;
-            //
+            // 
             // chkVerifyAfterRedaction
-            //
+            // 
             chkVerifyAfterRedaction.AutoSize = true;
             chkVerifyAfterRedaction.Location = new Point(12, 200);
             chkVerifyAfterRedaction.Name = "chkVerifyAfterRedaction";
-            chkVerifyAfterRedaction.Size = new Size(420, 19);
+            chkVerifyAfterRedaction.Size = new Size(401, 19);
             chkVerifyAfterRedaction.TabIndex = 4;
             chkVerifyAfterRedaction.Text = "Verify each redaction by re-scanning the output for PII that may remain";
             chkVerifyAfterRedaction.UseVisualStyleBackColor = true;
             chkVerifyAfterRedaction.CheckedChanged += ChkVerifyAfterRedaction_CheckedChanged;
-            //
+            // 
             // rdoVerifySamePolicy
-            //
+            // 
             rdoVerifySamePolicy.AutoSize = true;
             rdoVerifySamePolicy.Location = new Point(32, 225);
             rdoVerifySamePolicy.Name = "rdoVerifySamePolicy";
-            rdoVerifySamePolicy.Size = new Size(300, 19);
+            rdoVerifySamePolicy.Size = new Size(240, 19);
             rdoVerifySamePolicy.TabIndex = 5;
             rdoVerifySamePolicy.TabStop = true;
             rdoVerifySamePolicy.Text = "Scan with the same policy used to redact";
             rdoVerifySamePolicy.UseVisualStyleBackColor = true;
-            //
+            // 
             // rdoVerifyBroadPolicy
-            //
+            // 
             rdoVerifyBroadPolicy.AutoSize = true;
             rdoVerifyBroadPolicy.Location = new Point(32, 248);
             rdoVerifyBroadPolicy.Name = "rdoVerifyBroadPolicy";
-            rdoVerifyBroadPolicy.Size = new Size(320, 19);
+            rdoVerifyBroadPolicy.Size = new Size(257, 19);
             rdoVerifyBroadPolicy.TabIndex = 6;
             rdoVerifyBroadPolicy.Text = "Scan with a broad policy (every detector on)";
             rdoVerifyBroadPolicy.UseVisualStyleBackColor = true;
-            //
+            // 
             // lblVerifyHint
-            //
+            // 
             lblVerifyHint.AutoSize = true;
             lblVerifyHint.ForeColor = SystemColors.GrayText;
             lblVerifyHint.Location = new Point(30, 273);
             lblVerifyHint.MaximumSize = new Size(520, 0);
             lblVerifyHint.Name = "lblVerifyHint";
-            lblVerifyHint.Size = new Size(0, 15);
+            lblVerifyHint.Size = new Size(511, 45);
             lblVerifyHint.TabIndex = 7;
-            lblVerifyHint.Text = "A broad scan can flag PII types the redaction policy didn't cover, including items you chose not to redact. Runs entirely on this device; you can also verify any completed document by right-clicking it.";
+            lblVerifyHint.Text = resources.GetString("lblVerifyHint.Text");
             // 
             // SettingsForm
             // 
@@ -587,6 +662,8 @@ namespace PhilterDesktop
             Load += SettingsForm_Load;
             groupBoxOutput.ResumeLayout(false);
             groupBoxOutput.PerformLayout();
+            tabWord.ResumeLayout(false);
+            tabWord.PerformLayout();
             groupBoxLogging.ResumeLayout(false);
             groupBoxLogging.PerformLayout();
             tabControl.ResumeLayout(false);
@@ -620,6 +697,12 @@ namespace PhilterDesktop
         private TabPage tabGeneral;
         private TabPage tabNotifications;
         private CheckBox chkShowNotifications;
+        private TabPage tabWord;
+        private Label lblWordInfo;
+        private CheckBox chkScrubMetadata;
+        private CheckBox chkScrubComments;
+        private CheckBox chkScrubTrackedChanges;
+        private CheckBox chkScrubHiddenText;
         private CheckBox chkVerifyAfterRedaction;
         private RadioButton rdoVerifySamePolicy;
         private RadioButton rdoVerifyBroadPolicy;

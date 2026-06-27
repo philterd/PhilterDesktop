@@ -148,6 +148,12 @@ by default the label is `_redacted-draft`, so `report.docx` becomes `report_reda
 and it's saved to the location you've chosen in [Settings](settings.md). The word "draft" in that
 name is a gentle reminder that you should still review the file before relying on it.
 
+For Word (`.docx`) files, Philter Desktop also cleans up hidden information in the redacted copy by
+default — the document's **metadata** (author, company, title, keywords, custom properties), reviewer
+**comments**, **tracked changes**, and **hidden text** — so a "redacted" file doesn't quietly leak
+through any of those channels. You can control each of these on the
+[Settings → Microsoft Word](settings.md#microsoft-word-tab) tab.
+
 ## Redact a whole folder at once
 
 When you have a folder full of documents — a discovery dump, a case folder, a batch of exports — you

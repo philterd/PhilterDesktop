@@ -71,7 +71,8 @@ namespace PhilterDesktop
                 string outputPath = RedactionService.GetOutputPath(entity.Name, settings);
                 List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(
                     entity.Name, outputPath, policy, entity.Context, filterService, entity.Highlight,
-                    fullyRedactedColumns: entity.FullyRedactedColumns);
+                    fullyRedactedColumns: entity.FullyRedactedColumns,
+                    wordScrub: DocumentMetadata.OptionsFor(settings));
 
                 // Self-check: re-scan the written output for residual PII (the false-negative case).
                 // Optionally with a broad "all detectors on" policy to catch types the redaction policy

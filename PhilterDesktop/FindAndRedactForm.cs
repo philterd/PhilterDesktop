@@ -94,7 +94,8 @@ namespace PhilterDesktop
             try
             {
                 List<RedactionSpanEntity> spans =
-                    await RedactionService.RedactFileAsync(source, output, policy, string.Empty, _filterService);
+                    await RedactionService.RedactFileAsync(source, output, policy, string.Empty, _filterService,
+                        wordScrub: DocumentMetadata.OptionsFor(_settings));
 
                 Cursor = Cursors.Default;
                 string summary = $"Redacted {spans.Count} item{(spans.Count == 1 ? "" : "s")}." +

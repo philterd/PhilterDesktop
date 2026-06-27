@@ -1410,9 +1410,10 @@ namespace PhilterDesktop
                 return;
             }
 
+            SettingsEntity modifySettings = _settingsRepository.GetSettings();
             using var form = new ModifyRedactionForm(
                 id, _redactionVersionRepository, _redactionSpanRepository, _policyRepository,
-                _settingsRepository.GetSettings().RedactedSuffix);
+                modifySettings.RedactedSuffix, DocumentMetadata.OptionsFor(modifySettings));
             form.ShowDialog(this);
         }
 

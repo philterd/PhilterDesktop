@@ -68,6 +68,25 @@ A few practical notes:
   the [command line](redacting-documents.md#for-advanced-users-and-it-redacting-from-a-command-line)
   directly.
 
+## Microsoft Word tab
+
+Word documents quietly carry information that has nothing to do with the visible text — and a
+"redacted" `.docx` that still includes it defeats the purpose. The **Microsoft Word** tab lets you
+strip these hidden channels from every redacted Word file. All four options are **on by default**, and
+each applies whenever Philter Desktop produces a redacted `.docx`:
+
+- **Remove document metadata (author, company, title, keywords, custom fields).** Clears the document's
+  properties so the redacted copy doesn't name who wrote it or where it came from.
+- **Remove reviewer comments.** Deletes all comments (and the reviewer names attached to them).
+- **Accept and remove tracked changes (revisions).** Accepts every insertion and deletion and removes
+  the revision history, so no record of who changed what — or what the earlier text was — remains.
+- **Remove hidden text.** Deletes text that was marked hidden, which wouldn't show on screen but is
+  still present in the file.
+
+Leave these on unless you have a specific reason to keep that information. They affect only what's
+stored in the redacted copy — your original document is never changed, and you should still review the
+finished file.
+
 ## Notifications tab
 
 The **Notifications** tab controls the small pop-up messages (sometimes called "balloon" or "toast"
