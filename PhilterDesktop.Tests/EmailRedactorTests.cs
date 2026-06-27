@@ -252,10 +252,10 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
-        public void ReadFields_ReturnsLabeledFields()
+        public void ReadFields_ReturnsLabeledFields_WithBodyFlag()
         {
             string input = WriteEml();
-            List<(string Label, string Text)> fields = EmailRedactor.ReadFields(input);
+            List<(string Label, string Text, bool IsBody)> fields = EmailRedactor.ReadFields(input);
 
             List<string> labels = fields.Select(f => f.Label).ToList();
             Assert.Contains("Subject", labels);
@@ -263,6 +263,39 @@ namespace PhilterDesktop.Tests
             Assert.Contains("To", labels);
             Assert.Contains("Body (text)", labels);
             Assert.Contains(fields, f => f.Text.Contains("Thanks", StringComparison.Ordinal));
+
+            // Body parts are flagged as bodies (position-meaningful); headers are not.
+            Assert.True(fields.Single(f => f.Label == "Body (text)").IsBody);
+            Assert.False(fields.Single(f => f.Label == "Subject").IsBody);
+            Assert.False(fields.Single(f => f.Label == "To").IsBody);
+        }
+
+        [Fact]
+        public void ManualBodySelection_AppliesOnSave_RedactsBodyOnly()
+        {
+            string input = WriteEml();
+            string output = Path.Combine(_tempDir, "manual.eml");
+
+            List<(string Label, string Text, bool IsBody)> fields = EmailRedactor.ReadFields(input);
+            int[] bodyIndices = fields.Select((f, i) => (f, i)).Where(x => x.f.IsBody).Select(x => x.i).ToArray();
+            Assert.NotEmpty(bodyIndices);
+
+            List<string> bodyTexts = bodyIndices.Select(i => fields[i].Text).ToList();
+            // Select "Thanks" — a word the detector would not flag — to prove a manual redaction.
+            int idx = bodyTexts[0].IndexOf("Thanks", StringComparison.Ordinal);
+            Assert.True(idx >= 0);
+
+            List<RedactionSpanEntity> spans = ManualRedaction.FromParagraphSelection(bodyTexts, idx, "Thanks".Length, 2);
+            foreach (RedactionSpanEntity s in spans)
+            {
+                s.ParagraphIndex = bodyIndices[s.ParagraphIndex]; // body-part index -> field index
+            }
+
+            EmailRedactor.ApplySpans(input, output, spans);
+
+            List<(string Label, string Text, bool IsBody)> outFields = EmailRedactor.ReadFields(output);
+            Assert.DoesNotContain("Thanks", outFields.Single(f => f.IsBody).Text);                 // body redacted
+            Assert.Contains("secret@example.com", outFields.Single(f => f.Label == "Subject").Text); // header untouched
         }
 
         [Fact]

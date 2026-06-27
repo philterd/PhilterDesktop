@@ -155,6 +155,10 @@ namespace PhilterDesktop
             }
 
             RestoreUiState();
+
+            // Load the on-device name model in the background now, so the first redaction/preview that
+            // uses it doesn't stall for tens of seconds loading it on demand.
+            SharedFilterService.WarmUp();
         }
 
         // Restore the remembered window size/position, sort, and column widths. Best-effort: a bad or
@@ -1418,7 +1422,7 @@ namespace PhilterDesktop
         }
 
         // Stores the initial redaction as version 1 (with its spans) so it can be reviewed/modified.
-        private void SaveRedactionVersion(RedactionQueueEntity entity, string outputPath, List<RedactionSpanEntity> spans)
+        private void SaveRedactionVersion(RedactionQueueEntity entity, string outputPath, List<RedactionSpanEntity> spans, long durationMs = 0)
         {
             try
             {
@@ -1431,7 +1435,8 @@ namespace PhilterDesktop
                     FileType = Path.GetExtension(entity.Name).ToLowerInvariant(),
                     Policy = entity.Policy,
                     Context = entity.Context,
-                    Highlight = entity.Highlight
+                    Highlight = entity.Highlight,
+                    DurationMs = durationMs
                 };
                 _redactionVersionRepository.Insert(version);
 
@@ -1701,11 +1706,13 @@ namespace PhilterDesktop
             string redactedFile = "—";
             string redactionCount = "—";
             string timestamp = "—";
+            string duration = "—";
             if (latest is not null)
             {
                 redactedFile = ResolveRedactedOutputPath(id, source);
                 redactionCount = _redactionSpanRepository.GetForVersion(latest.Id).Count.ToString();
                 timestamp = latest.CreatedAt.ToLocalTime().ToString("f");
+                duration = DurationFormat.Humanize(latest.DurationMs);
             }
 
             var rows = new List<(string, string)>
@@ -1719,6 +1726,7 @@ namespace PhilterDesktop
                 ("Context", string.IsNullOrEmpty(entity.Context) ? "—" : entity.Context),
                 ("Redactions", redactionCount),
                 ("Redacted", timestamp),
+                ("Time to redact", duration),
                 ("Verification", entity.VerificationCheckedAt is { } vc
                     ? $"{VerificationDisplay(entity)} ({vc.ToLocalTime():f})"
                     : VerificationDisplay(entity))
@@ -1894,7 +1902,7 @@ namespace PhilterDesktop
             Cursor.Current = Cursors.WaitCursor;
             try
             {
-                outcome = RedactionVerifier.Verify(output, policy, latest.Context, new FilterService());
+                outcome = RedactionVerifier.Verify(output, policy, latest.Context, SharedFilterService.Instance);
             }
             finally
             {
@@ -2077,7 +2085,7 @@ namespace PhilterDesktop
                 using var preview = new PdfRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
                 if (preview.ShowDialog(this) == DialogResult.OK)
                 {
-                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList());
+                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList(), preview.RedactionDurationMs);
                 }
             }
             else if (source.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
@@ -2085,7 +2093,7 @@ namespace PhilterDesktop
                 using var preview = new WordRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
                 if (preview.ShowDialog(this) == DialogResult.OK)
                 {
-                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList());
+                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList(), preview.RedactionDurationMs);
                 }
             }
             else if (source.EndsWith(".eml", StringComparison.OrdinalIgnoreCase) ||
@@ -2094,7 +2102,7 @@ namespace PhilterDesktop
                 using var preview = new EmailRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
                 if (preview.ShowDialog(this) == DialogResult.OK)
                 {
-                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList());
+                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList(), preview.RedactionDurationMs);
                 }
             }
             else
@@ -2102,12 +2110,12 @@ namespace PhilterDesktop
                 using var preview = new TextRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
                 if (preview.ShowDialog(this) == DialogResult.OK)
                 {
-                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList());
+                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList(), preview.RedactionDurationMs);
                 }
             }
         }
 
-        private void RecordCompletedRedaction(string source, string outputPath, string policy, string context, List<RedactionSpanEntity> spans)
+        private void RecordCompletedRedaction(string source, string outputPath, string policy, string context, List<RedactionSpanEntity> spans, long durationMs = 0)
         {
             var entity = new RedactionQueueEntity
             {
@@ -2117,7 +2125,7 @@ namespace PhilterDesktop
                 Status = "Completed"
             };
             _redactionQueueRepository.Insert(entity);
-            SaveRedactionVersion(entity, outputPath, spans);
+            SaveRedactionVersion(entity, outputPath, spans, durationMs);
             RememberLastUsed(policy, context, Path.GetDirectoryName(outputPath));
             LoadRedactionQueue();
 
@@ -2129,14 +2137,7 @@ namespace PhilterDesktop
                 RunAndShowVerification(this, entity.Id, quietWhenClean: true, broadPolicy: verifySettings.VerificationUseBroadPolicy);
             }
 
-            // The preview Save flow is the careful, single-document workflow, so offer a report inline
-            // (it's also always available later by right-clicking the completed item).
-            if (MessageBox.Show(this,
-                    "Redaction saved. Generate a shareable report (PDF/HTML summary) for it now?",
-                    "Generate Report", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-            {
-                GenerateReportFor(this, entity.Id);
-            }
+            // A report is available on demand by right-clicking the completed item; don't prompt here.
         }
 
         // Persists the most recently used policy/context and save folder so they're pre-selected next
@@ -2178,7 +2179,7 @@ namespace PhilterDesktop
                 }
 
                 var settings = _settingsRepository.GetSettings();
-                var filterService = new FilterService();
+                FilterService filterService = SharedFilterService.Instance; // shared so the name model loads once
 
                 foreach (var entity in pendingEntities)
                 {
@@ -2189,7 +2190,7 @@ namespace PhilterDesktop
 
                     if (result.Success)
                     {
-                        SaveRedactionVersion(entity, result.OutputPath!, result.Spans.ToList());
+                        SaveRedactionVersion(entity, result.OutputPath!, result.Spans.ToList(), result.DurationMs);
                         entity.ErrorMessage = string.Empty; // clear any prior failure reason
                         ApplyVerificationFields(entity, result.Verification);
                         UpdateEntityStatus(entity, "Completed");

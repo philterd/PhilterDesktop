@@ -97,10 +97,10 @@ namespace PhilterDesktop
         /// Returns each redactable field's label and current text, in the canonical field order (so the
         /// index matches <see cref="RedactionSpanEntity.ParagraphIndex"/>). Read-only; for the preview.
         /// </summary>
-        public static List<(string Label, string Text)> ReadFields(string inputPath)
+        public static List<(string Label, string Text, bool IsBody)> ReadFields(string inputPath)
         {
             MimeMessage message = Load(inputPath);
-            return EnumerateFields(message).Select(f => (f.Label, f.Get())).ToList();
+            return EnumerateFields(message).Select(f => (f.Label, f.Get(), f.IsBody)).ToList();
         }
 
         /// <summary>
@@ -207,6 +207,8 @@ namespace PhilterDesktop
         private interface IEmailField
         {
             string Label { get; }
+            /// <summary>True for a body part (free text where a character position is meaningful), false for a header.</summary>
+            bool IsBody { get; }
             string Get();
             void Set(string value);
         }
@@ -216,6 +218,7 @@ namespace PhilterDesktop
             private readonly Header _header;
             public HeaderField(Header header, string label) { _header = header; Label = label; }
             public string Label { get; }
+            public bool IsBody => false;
             public string Get() => _header.Value ?? string.Empty;
             public void Set(string value) => _header.Value = value;
         }
@@ -225,6 +228,7 @@ namespace PhilterDesktop
             private readonly TextPart _part;
             public TextPartField(TextPart part) => _part = part;
             public string Label => _part.IsHtml ? "Body (HTML)" : "Body (text)";
+            public bool IsBody => true;
             public string Get() => _part.Text ?? string.Empty;
             public void Set(string value) => _part.Text = value;
         }

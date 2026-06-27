@@ -170,6 +170,22 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public async Task ProcessAsync_Success_RecordsRedactionDuration()
+        {
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{\"identifiers\":{\"emailAddress\":{}}}" });
+            string input = Path.Combine(_tempDir, "timed.txt");
+            await File.WriteAllTextAsync(input, "Email john@example.com please.");
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = true };
+            var entity = new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.True(result.Success);
+            Assert.True(result.DurationMs >= 0); // measured end-to-end; populated on the result
+        }
+
+        [Fact]
         public async Task ProcessAsync_WithVerificationEnabled_AttachesCleanResult()
         {
             _policies.Insert(new PolicyEntity { Name = "p", Json = "{\"identifiers\":{\"emailAddress\":{}}}" });

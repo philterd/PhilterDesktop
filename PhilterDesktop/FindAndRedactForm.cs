@@ -28,7 +28,7 @@ namespace PhilterDesktop
     internal sealed partial class FindAndRedactForm : Form
     {
         private readonly SettingsEntity _settings;
-        private readonly FilterService _filterService = new();
+        private readonly FilterService _filterService = SharedFilterService.Instance;
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public FindAndRedactForm() : this(new SettingsEntity())

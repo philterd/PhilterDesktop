@@ -45,7 +45,7 @@ namespace PhilterDesktop
         private readonly PolicyRepository _policies = null!;
         private readonly ContextRepository _contexts = null!;
         private readonly SettingsEntity _settings = new();
-        private readonly FilterService _filterService = new();
+        private readonly FilterService _filterService = SharedFilterService.Instance;
 
         private string _originalText = string.Empty;
         private List<RedactionSpanEntity> _spans = new();
@@ -56,6 +56,8 @@ namespace PhilterDesktop
         public string SelectedPolicy { get; private set; } = string.Empty;
         public string SelectedContext { get; private set; } = string.Empty;
         public IReadOnlyList<RedactionSpanEntity> CapturedSpans => _spans;
+        /// <summary>Time taken to write the redacted output on save, in milliseconds.</summary>
+        public long RedactionDurationMs { get; private set; }
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public TextRedactionPreviewForm()
@@ -81,6 +83,7 @@ namespace PhilterDesktop
             try
             {
                 _originalText = IsRtf ? RtfRedactor.ReadText(_sourcePath) : File.ReadAllText(_sourcePath);
+                _originalBox.Text = _originalText; // selectable copy for manual "redact selection"
                 LoadNames(_policyCombo, _policies.GetAll().Select(p => p.Name), _settings.LastPolicy);
                 LoadNames(_contextCombo, _contexts.GetAll().Select(c => c.Name), _settings.LastContext);
             }
@@ -225,6 +228,27 @@ namespace PhilterDesktop
             _remove.Enabled = hasSel;
         }
 
+        // Manual redaction: turn the reviewer's text selection (in the "Select text to redact" tab) into
+        // a user-added span over that character range. Offsets index directly into the original text.
+        private void OnRedactSelection(object? sender, EventArgs e)
+        {
+            RedactionSpanEntity? span = ManualRedaction.FromSelection(
+                _originalText, _originalBox.SelectionStart, _originalBox.SelectionLength);
+            if (span is null)
+            {
+                _leftTabs.SelectedTab = _selectTab;
+                _originalBox.Focus();
+                MessageBox.Show(this,
+                    "Select the text you want to redact in the \"Select text to redact\" tab, then click \"Redact selection\".",
+                    "Redact (Preview)", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            _spans.Add(span);
+            _spans = _spans.OrderBy(s => s.CharacterStart).ToList();
+            RefreshAll();
+        }
+
         private void OnAdd(object? sender, EventArgs e)
         {
             using var dlg = new SpanEditForm("Add Redaction", SpanPositionKind.TextOffset,
@@ -295,6 +319,7 @@ namespace PhilterDesktop
             string output = dialog.FileName;
             try
             {
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 if (IsRtf)
                 {
                     // Re-apply the (possibly edited) spans to the source so the .rtf keeps its formatting.
@@ -304,6 +329,8 @@ namespace PhilterDesktop
                 {
                     File.WriteAllText(output, CurrentRedactedText());
                 }
+                stopwatch.Stop();
+                RedactionDurationMs = stopwatch.ElapsedMilliseconds;
             }
             catch (Exception ex)
             {

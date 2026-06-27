@@ -27,11 +27,16 @@ namespace PhilterDesktop
     /// "Preview-first" redaction workspace for a single email (<c>.eml</c> or <c>.msg</c>). Shows a
     /// field-by-field text diff (subject, addresses, body) of how the redacted email will read, with an
     /// editable redaction list, and writes the real redacted email (always <c>.eml</c>) only on Save.
-    /// Email redactions are anchored to a specific field, so they can be reviewed, have their
-    /// replacement changed, or be removed — but not added by hand (there's no position to point at).
+    /// Email redactions are anchored to a specific field. Detected ones can be reviewed, have their
+    /// replacement changed, or be removed; a reviewer can also add a redaction by selecting text in a
+    /// message <b>body</b> (where a character position is meaningful). Header fields aren't hand-editable.
     /// </summary>
     public partial class EmailRedactionPreviewForm : Form
     {
+        // How body parts are joined in the selectable "Select text to redact" box (length matters for
+        // mapping a selection back to a field offset).
+        private static readonly string BodySeparator = Environment.NewLine + Environment.NewLine;
+
         private static readonly Color DeletedColor = Color.FromArgb(255, 224, 224);
         private static readonly Color InsertedColor = Color.FromArgb(224, 255, 224);
         private static readonly Color ModifiedColor = Color.FromArgb(255, 246, 213);
@@ -41,9 +46,10 @@ namespace PhilterDesktop
         private readonly PolicyRepository _policies = null!;
         private readonly ContextRepository _contexts = null!;
         private readonly SettingsEntity _settings = new();
-        private readonly FilterService _filterService = new();
+        private readonly FilterService _filterService = SharedFilterService.Instance;
 
-        private (string Label, string Text)[] _fields = Array.Empty<(string, string)>();
+        private (string Label, string Text, bool IsBody)[] _fields = Array.Empty<(string, string, bool)>();
+        private int[] _bodyFieldIndices = Array.Empty<int>(); // field indices that are message bodies
         private List<RedactionSpanEntity> _spans = new();
         private bool _loading;
 
@@ -51,6 +57,8 @@ namespace PhilterDesktop
         public string SelectedPolicy { get; private set; } = string.Empty;
         public string SelectedContext { get; private set; } = string.Empty;
         public IReadOnlyList<RedactionSpanEntity> CapturedSpans => _spans;
+        /// <summary>Time taken to write the redacted output on save, in milliseconds.</summary>
+        public long RedactionDurationMs { get; private set; }
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public EmailRedactionPreviewForm()
@@ -76,6 +84,8 @@ namespace PhilterDesktop
             try
             {
                 _fields = EmailRedactor.ReadFields(_sourcePath).ToArray();
+                _bodyFieldIndices = _fields.Select((f, i) => (f, i)).Where(x => x.f.IsBody).Select(x => x.i).ToArray();
+                _originalBox.Text = string.Join(BodySeparator, _bodyFieldIndices.Select(i => _fields[i].Text));
                 LoadNames(_policyCombo, _policies.GetAll().Select(p => p.Name), _settings.LastPolicy);
                 LoadNames(_contextCombo, _contexts.GetAll().Select(c => c.Name), _settings.LastContext);
             }
@@ -172,7 +182,7 @@ namespace PhilterDesktop
 
         // Builds a labeled, line-based view of the fields so the diff reads "[Subject] …" etc. The
         // "[Label]" header lines are identical on both sides, so only the field contents diff.
-        private static string Compose((string Label, string Text)[] fields, string[] texts)
+        private static string Compose((string Label, string Text, bool IsBody)[] fields, string[] texts)
         {
             var lines = new List<string>();
             for (int i = 0; i < fields.Length; i++)
@@ -211,7 +221,7 @@ namespace PhilterDesktop
             _spanList.Items.Clear();
             foreach (RedactionSpanEntity s in _spans.OrderBy(s => s.ParagraphIndex).ThenBy(s => s.CharacterStart))
             {
-                var item = new ListViewItem(Display(s.Classification)) { Tag = s };
+                var item = new ListViewItem(s.UserAdded ? "Added" : Display(s.Classification)) { Tag = s };
                 item.SubItems.Add(s.Text);
                 item.SubItems.Add(s.Replacement);
                 item.SubItems.Add(FieldLabel(s.ParagraphIndex));
@@ -231,6 +241,35 @@ namespace PhilterDesktop
             bool hasSel = _spanList.SelectedItems.Count > 0;
             _edit.Enabled = hasSel;
             _remove.Enabled = hasSel;
+        }
+
+        // Manual redaction: turn the reviewer's selection in the "Select text to redact" tab (which shows
+        // only the message body parts) into user-added spans. The select box joins the body parts with
+        // BodySeparator; map the selection per body part, then translate the body-part index back to the
+        // real field index so the span applies to the right field on save.
+        private void OnRedactSelection(object? sender, EventArgs e)
+        {
+            List<string> bodyTexts = _bodyFieldIndices.Select(i => _fields[i].Text).ToList();
+            List<RedactionSpanEntity> added = ManualRedaction.FromParagraphSelection(
+                bodyTexts, _originalBox.SelectionStart, _originalBox.SelectionLength, BodySeparator.Length);
+
+            if (added.Count == 0)
+            {
+                _leftTabs.SelectedTab = _selectTab;
+                _originalBox.Focus();
+                string message = _bodyFieldIndices.Length == 0
+                    ? "This email has no redactable body text to select."
+                    : "Select the text you want to redact in the \"Select text to redact\" tab, then click \"Redact selection\".";
+                MessageBox.Show(this, message, "Redact Email (Preview)", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            foreach (RedactionSpanEntity span in added)
+            {
+                span.ParagraphIndex = _bodyFieldIndices[span.ParagraphIndex]; // body-part index -> field index
+            }
+            _spans.AddRange(added);
+            RefreshAll();
         }
 
         // Email redactions are field-anchored, so only the replacement text is editable (no position).
@@ -280,7 +319,10 @@ namespace PhilterDesktop
             string output = dialog.FileName;
             try
             {
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 EmailRedactor.ApplySpans(_sourcePath, output, _spans);
+                stopwatch.Stop();
+                RedactionDurationMs = stopwatch.ElapsedMilliseconds;
             }
             catch (Exception ex)
             {

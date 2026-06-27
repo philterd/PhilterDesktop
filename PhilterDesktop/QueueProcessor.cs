@@ -32,9 +32,12 @@ namespace PhilterDesktop
         /// <summary>The verification pass result, when verification ran for this redaction; null otherwise.</summary>
         public VerificationOutcome? Verification { get; init; }
 
+        /// <summary>End-to-end time, in milliseconds, taken to redact (and verify) this document.</summary>
+        public long DurationMs { get; init; }
+
         public static QueueRedactionResult Succeeded(
-            string outputPath, IReadOnlyList<RedactionSpanEntity> spans, VerificationOutcome? verification = null) =>
-            new() { Success = true, OutputPath = outputPath, Spans = spans, Verification = verification };
+            string outputPath, IReadOnlyList<RedactionSpanEntity> spans, VerificationOutcome? verification = null, long durationMs = 0) =>
+            new() { Success = true, OutputPath = outputPath, Spans = spans, Verification = verification, DurationMs = durationMs };
 
         public static QueueRedactionResult Failed(string message, Exception? exception = null) =>
             new() { Success = false, ErrorMessage = message, Exception = exception };
@@ -66,6 +69,9 @@ namespace PhilterDesktop
 
             try
             {
+                // Time the whole operation end-to-end (redact + verify) for this file.
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
                 var policy = PolicySerializer.DeserializeFromJson(policyEntity.Json);
                 GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
                 string outputPath = RedactionService.GetOutputPath(entity.Name, settings);
@@ -90,7 +96,8 @@ namespace PhilterDesktop
                         RedactionVerifier.Verify(outputPath, verifyPolicy, entity.Context, filterService));
                 }
 
-                return QueueRedactionResult.Succeeded(outputPath, spans, verification);
+                stopwatch.Stop();
+                return QueueRedactionResult.Succeeded(outputPath, spans, verification, stopwatch.ElapsedMilliseconds);
             }
             catch (Exception ex)
             {

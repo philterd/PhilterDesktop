@@ -203,16 +203,33 @@ cleaned-up file will look like before a single thing is written to disk**:
   and the cleaned-up result, plus an editable list of every redaction. You can add, change, or remove
   individual redactions right there before saving. (Rich-text formatting is preserved in the saved
   file; the preview compares the visible text.)
+    - **Redact something the detector missed by selecting it.** Switch to the **Select text to redact**
+      tab, highlight the words you want removed, and click **Redact selection**. The redaction is added
+      to the list (marked **Added**), shows up in the before/after comparison, and is applied when you
+      save — and it appears in the [redaction report](#generating-a-redaction-report-a-shareable-certificate)
+      as a user-added redaction. You can remove it again from the list like any other. (Prefer typing
+      exact positions? **Add…** still lets you enter a start and end offset by hand.)
 - **Microsoft Word (`.docx`)** — a paragraph-by-paragraph comparison showing what will be removed,
   with an editable list of redactions and an optional **highlight** setting (which marks the
   replacements so they're easy to spot during review). This preview shows you the redacted **text**;
   it is not a full picture-perfect rendering of the finished Word page.
+    - **Redact something the detector missed by selecting it.** Switch to the **Select text to redact**
+      tab, highlight the words you want removed, and click **Redact selection**. The redaction joins the
+      list (marked **Added**), appears in the comparison and the [report](#generating-a-redaction-report-a-shareable-certificate)
+      as a user-added redaction, and can be removed again like any other. A selection that crosses
+      paragraphs is split into one redaction per paragraph. (**Add…** still lets you type an exact
+      paragraph and offset by hand.)
 - **PDF (`.pdf`)** — the cleaned-up PDF shown side by side with the original, with zoom controls and
   scrolling that keeps both sides lined up.
 - **Email (`.eml` and `.msg`)** — a field-by-field comparison (subject, addresses, and body) showing
   what will be removed, with an editable list of redactions. Each redaction is anchored to a specific
-  field, so you can change its replacement or remove it, but not add one by hand. Outlook `.msg`
-  files are saved as standard `.eml`.
+  field; you can change its replacement or remove it. Outlook `.msg` files are saved as standard `.eml`.
+    - **Redact something the detector missed in the body by selecting it.** Switch to the **Select text
+      to redact** tab (which shows the message body), highlight the words you want removed, and click
+      **Redact selection**. It joins the list (marked **Added**) and the
+      [report](#generating-a-redaction-report-a-shareable-certificate) as a user-added redaction, and
+      can be removed again. Manual selection applies to **body** text; the subject and address headers
+      aren't hand-edited (their detected matches are still removed automatically).
 
 If you change the policy or the context while previewing, Philter Desktop re-checks the document and
 updates the preview. **Nothing is saved until you click "Save Redacted File"**, at which point you
@@ -258,7 +275,8 @@ Once a document shows **Completed**, you have several options:
     - **Open original file** — open the untouched original.
     - **Open containing folder** — show the cleaned-up file selected in File Explorer.
     - **View Details…** — see a summary of that document: the original file name, the cleaned-up file
-      name, the policy and context used, how many redactions were made, and when it was done.
+      name, the policy and context used, how many redactions were made, when it was done, and how long
+      the redaction took ("Time to redact").
     - **View Diff…** — see a precise before-and-after comparison (explained below).
     - **Modify Redaction…** — review and adjust exactly what was removed (explained below).
     - **Export Explanation (JSON)…** — save a detailed report of *why* each item was removed
@@ -465,8 +483,7 @@ redaction report below.
 ## Generating a redaction report (a shareable certificate)
 
 When you need to **prove what was done** — for a case file, a client, or a compliance record — you can
-generate a **redaction report**. Right-click a **Completed** document and choose **Generate Report…**
-(you're also offered one right after saving from **Redact with Preview**).
+generate a **redaction report**. Right-click a **Completed** document and choose **Generate Report…**.
 
 Philter Desktop first asks whether to include a **detailed per-redaction table**, then saves the
 report as a **PDF** and opens it. The report summarizes the redaction:
