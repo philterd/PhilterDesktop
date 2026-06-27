@@ -29,8 +29,12 @@ namespace PhilterDesktop
         public string? ErrorMessage { get; private init; }
         public Exception? Exception { get; private init; }
 
-        public static QueueRedactionResult Succeeded(string outputPath, IReadOnlyList<RedactionSpanEntity> spans) =>
-            new() { Success = true, OutputPath = outputPath, Spans = spans };
+        /// <summary>The verification pass result, when verification ran for this redaction; null otherwise.</summary>
+        public VerificationOutcome? Verification { get; init; }
+
+        public static QueueRedactionResult Succeeded(
+            string outputPath, IReadOnlyList<RedactionSpanEntity> spans, VerificationOutcome? verification = null) =>
+            new() { Success = true, OutputPath = outputPath, Spans = spans, Verification = verification };
 
         public static QueueRedactionResult Failed(string message, Exception? exception = null) =>
             new() { Success = false, ErrorMessage = message, Exception = exception };
@@ -68,7 +72,24 @@ namespace PhilterDesktop
                 List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(
                     entity.Name, outputPath, policy, entity.Context, filterService, entity.Highlight,
                     fullyRedactedColumns: entity.FullyRedactedColumns);
-                return QueueRedactionResult.Succeeded(outputPath, spans);
+
+                // Self-check: re-scan the written output for residual PII (the false-negative case).
+                // Optionally with a broad "all detectors on" policy to catch types the redaction policy
+                // didn't cover; otherwise the same policy that performed the redaction.
+                VerificationOutcome? verification = null;
+                if (settings.VerifyAfterRedaction)
+                {
+                    Phileas.Policy.Policy verifyPolicy = policy;
+                    if (settings.VerificationUseBroadPolicy)
+                    {
+                        verifyPolicy = VerificationPolicy.Broad();
+                        GlobalLists.Apply(verifyPolicy, settings);
+                    }
+                    verification = await Task.Run(() =>
+                        RedactionVerifier.Verify(outputPath, verifyPolicy, entity.Context, filterService));
+                }
+
+                return QueueRedactionResult.Succeeded(outputPath, spans, verification);
             }
             catch (Exception ex)
             {

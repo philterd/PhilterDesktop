@@ -172,6 +172,13 @@ namespace PhilterDesktop.Tests
         });
 
         [Fact]
+        public void VerificationResultForm_Constructs() => Sta(() =>
+        {
+            using var f = new VerificationResultForm();
+            _ = f.Handle;
+        });
+
+        [Fact]
         public void RedactionDetailsForm_Constructs() => Sta(() =>
         {
             using var f = new RedactionDetailsForm("Details — note.txt", new List<(string, string)>

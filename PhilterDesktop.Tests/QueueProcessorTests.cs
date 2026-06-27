@@ -170,6 +170,42 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public async Task ProcessAsync_WithVerificationEnabled_AttachesCleanResult()
+        {
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{\"identifiers\":{\"emailAddress\":{}}}" });
+
+            string input = Path.Combine(_tempDir, "verify.txt");
+            await File.WriteAllTextAsync(input, "Email john@example.com please.");
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = true, VerifyAfterRedaction = true };
+            var entity = new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.Verification);
+            // The redactor removed the email it detected, so re-scanning the output is clean.
+            Assert.Equal(VerificationStatus.Clean, result.Verification!.Status);
+        }
+
+        [Fact]
+        public async Task ProcessAsync_WithVerificationDisabled_DoesNotVerify()
+        {
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{}" });
+
+            string input = Path.Combine(_tempDir, "noverify.txt");
+            await File.WriteAllTextAsync(input, "Plain content.");
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = true, VerifyAfterRedaction = false };
+            var entity = new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.True(result.Success);
+            Assert.Null(result.Verification);
+        }
+
+        [Fact]
         public void DescribeFailure_NonExceptionResult_UsesItsMessage()
         {
             var result = QueueRedactionResult.Failed("Policy 'nope' was not found");

@@ -507,5 +507,8 @@ namespace PhilterDesktop
         public string? OutputPath { get; init; }
         public bool Success { get; init; }
         public string? ErrorMessage { get; init; }
+
+        /// <summary>Set when post-redaction verification found residual PII (e.g. "2 items may remain").</summary>
+        public string? VerificationWarning { get; init; }
     }
 }

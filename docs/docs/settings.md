@@ -160,6 +160,26 @@ off whenever you like.
 > can do anything, you'll be asked for the passphrase even when Philter Desktop starts automatically
 > at sign-in (which keeps your watched folders working).
 
+### Verifying redactions automatically
+
+The **Verify each redaction by re-scanning the output for PII that may remain** option (on by default)
+makes Philter Desktop double-check its own work: after each document is redacted, it re-opens the
+finished file and runs the detector again, looking for anything the policy might have missed. If
+something is found, you're warned and shown what and where. It runs entirely on your device.
+
+Two scan choices sit underneath it (they apply to the automatic check):
+
+- **Scan with the same policy used to redact** (default) — confirms that everything the policy was
+  meant to remove is genuinely gone from the saved file.
+- **Scan with a broad policy (every detector on)** — also looks for kinds of information your policy
+  didn't cover. This catches more, but may flag things you deliberately left unredacted.
+
+You can leave verification on for peace of mind, or turn it off if you prefer to verify manually — you
+can always right-click a finished document and choose **Verify Redaction**, which lets you pick **With
+same policy** or **With broad policy** for that one document. See
+[Checking the result for anything missed](redacting-documents.md#checking-the-result-for-anything-missed-verification)
+for details.
+
 ### Clearing your saved redaction history
 
 If you want to wipe the stored history of what's been redacted, use **File → Clear Redaction History…**

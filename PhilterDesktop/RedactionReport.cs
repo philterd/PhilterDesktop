@@ -60,7 +60,10 @@ namespace PhilterDesktop
             DateTimeOffset generatedAt,
             string sourceSha256,
             string outputSha256,
-            RedactionReportOptions options)
+            RedactionReportOptions options,
+            string verificationStatus = "NotRun",
+            int verificationCount = 0,
+            DateTime? verificationCheckedAt = null)
         {
             List<RedactionSpanEntity> ordered = spans.OrderBy(s => s.Order).ToList();
 
@@ -92,7 +95,21 @@ namespace PhilterDesktop
                 CountsByType = counts,
                 Details = details,
                 MachineName = options.IncludeMachineInfo ? SafeEnv(() => Environment.MachineName) : null,
-                UserName = options.IncludeMachineInfo ? SafeEnv(() => Environment.UserName) : null
+                UserName = options.IncludeMachineInfo ? SafeEnv(() => Environment.UserName) : null,
+                VerificationSummary = VerificationSummaryLine(verificationStatus, verificationCount, verificationCheckedAt)
+            };
+        }
+
+        // A one-line verification summary for the report, or null when verification hasn't run.
+        private static string? VerificationSummaryLine(string status, int count, DateTime? checkedAt)
+        {
+            string when = checkedAt is { } c ? $" ({FormatUtc(DateTime.SpecifyKind(c, DateTimeKind.Utc))})" : string.Empty;
+            return status switch
+            {
+                "Clean" => $"Verified: no detectable PII remained in the output{when}.",
+                "ResidualsFound" => $"Verification warning: {count} possible item{(count == 1 ? "" : "s")} may remain in the output{when}. Review before sharing.",
+                "Error" => $"Verification could not be completed{when}.",
+                _ => null
             };
         }
 
@@ -129,6 +146,12 @@ namespace PhilterDesktop
             Row(sb, "Source", $"<span class=\"mono\">{E(m.SourceSha256)}</span>");
             Row(sb, "Redacted output", $"<span class=\"mono\">{E(m.OutputSha256)}</span>");
             sb.Append("</table>");
+
+            if (m.VerificationSummary is not null)
+            {
+                sb.Append("<h2>Verification</h2>");
+                sb.Append($"<p>{E(m.VerificationSummary)}</p>");
+            }
 
             sb.Append("<h2>What was removed</h2>");
             sb.Append($"<p class=\"total\">{m.TotalRedactions} redaction{(m.TotalRedactions == 1 ? "" : "s")}</p>");
@@ -238,5 +261,8 @@ namespace PhilterDesktop
         public IReadOnlyList<RedactionReportRow> Details { get; init; } = Array.Empty<RedactionReportRow>();
         public string? MachineName { get; init; }
         public string? UserName { get; init; }
+
+        /// <summary>One-line verification summary, or null when verification has not run.</summary>
+        public string? VerificationSummary { get; init; }
     }
 }

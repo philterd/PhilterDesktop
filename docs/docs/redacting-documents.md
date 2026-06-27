@@ -280,8 +280,8 @@ When you have many documents in the queue, two tools help you find the one you w
   typed — for example, type part of a file name, or type `failed` to see only the documents that
   didn't finish. The status bar shows how many documents are being shown (for example, *Showing 3 of
   40 documents*). Clear the box (or press **Esc** while typing in it) to see the whole queue again.
-- **Sorting.** Click any column heading — **File Name**, **Status**, **Policy**, or **Context** — to
-  sort the list by that column. Click the same heading again to reverse the order. A small arrow on
+- **Sorting.** Click any column heading — **File Name**, **Status**, **Policy**, **Context**, or
+  **Verification** — to sort the list by that column. Click the same heading again to reverse the order. A small arrow on
   the heading shows which column is sorted and in which direction. (Sorting by **Status** groups the
   documents in the natural order of work: pending, then processing, then completed, then failed.)
 
@@ -408,6 +408,54 @@ marked as user-added.)
     document**. Philter Desktop reminds you of this before it saves. Store it somewhere secure, treat
     it with the same care as the original, and **never** hand it out in place of the redacted copy.
 
+## Checking the result for anything missed (Verification)
+
+The worst outcome for a redaction tool is a **false negative** — sensitive text the policy missed that
+ends up in the "clean" copy. To guard against that, Philter Desktop can **verify its own work**: after
+redacting, it re-opens the **finished output file** and runs the detector over it again, looking for
+anything that still matches.
+
+This runs **automatically** after each redaction (you can turn it off in
+[Settings → Security](settings.md)), and you can run it any time by right-clicking a **Completed**
+document and choosing **Verify Redaction**.
+
+- If nothing is found, Philter Desktop tells you the output **passed verification**.
+- If something is found, it's surfaced **loudly**: a count of how many items may remain, plus a list
+  showing each item's **type, the text that's still present, and where it is**. Fix it by adjusting the
+  policy and redacting again, or by using **Modify Redaction**, before you share the file.
+
+### Two ways to scan: same policy vs. broad policy
+
+When you right-click a finished document, **Verify Redaction** offers two choices:
+
+- **With same policy** — re-scans using the **same policy that redacted the document**. This is the
+  best check that the redaction *actually took effect*: it confirms that everything the policy was
+  meant to remove is genuinely gone from the saved file. (It can't find a *kind* of information the
+  policy never looked for.)
+- **With broad policy** — re-scans with **every built-in detector turned on**. This can surface kinds
+  of information your redaction policy didn't cover (for example, a phone number when your policy only
+  removed email addresses). Because it looks for everything, it may also flag things you **chose not to
+  redact** — so treat its findings as prompts to review, not as mistakes.
+
+The automatic check after each redaction uses whichever of these you select in
+[Settings → Security](settings.md) (it uses the same policy by default).
+
+### Seeing a document's verification result later
+
+Each document's most recent result is remembered and shown in the **Verification** column of the queue —
+**Clean**, **N may remain** (in red), **Check failed**, or **Not checked** — so you can tell at a glance
+which finished documents still need attention. The same result, with the time it was checked, also
+appears in **View Details** (right-click a document). Running **Verify Redaction** again refreshes it.
+
+Verification reads the **written output**, not an in-memory copy, so it also catches any problem in how
+a particular format was saved. Like everything else in Philter Desktop, it runs **entirely on your
+device** — nothing is sent anywhere. The result is remembered with the document and is included in the
+redaction report below.
+
+!!! note "Verification is a safety net, not a guarantee"
+    A "passed" result means nothing the **current policy** can detect remains. It can't prove a document
+    is free of every possible identifier. Always give an important document a human review as well.
+
 ## Generating a redaction report (a shareable certificate)
 
 When you need to **prove what was done** — for a case file, a client, or a compliance record — you can
@@ -421,6 +469,8 @@ report as a **PDF** and opens it. The report summarizes the redaction:
   tied to exactly those documents and any later change is detectable).
 - The **policy** and **context** used, the **Philter Desktop version**, and the **date and time**.
 - A **count of what was removed, by type** — for example, *7 Email Address, 3 Ssn* — and the total.
+- The **verification result** (when verification has run): whether the output passed, or how many items
+  may remain.
 - If you chose the detailed table: a row per redaction with its **type, location, and replacement**.
 
 The report is saved as a new file next to your other output; your original and redacted files are not

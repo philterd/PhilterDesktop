@@ -120,6 +120,25 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void Build_VerificationSummary_RendersWhenProvided_OmittedWhenNotRun()
+        {
+            RedactionReportModel notRun = Build(new RedactionReportOptions());
+            Assert.Null(notRun.VerificationSummary);
+
+            RedactionReportModel clean = RedactionReport.Build(
+                Version(), Spans(), "1.0.0", Generated, "h1", "h2", new RedactionReportOptions(),
+                verificationStatus: "Clean", verificationCount: 0, verificationCheckedAt: new DateTime(2026, 6, 27, 0, 0, 0, DateTimeKind.Utc));
+            Assert.NotNull(clean.VerificationSummary);
+            Assert.Contains("no detectable PII", clean.VerificationSummary!);
+            Assert.Contains(clean.VerificationSummary!, RedactionReport.ToHtml(clean));
+
+            RedactionReportModel residual = RedactionReport.Build(
+                Version(), Spans(), "1.0.0", Generated, "h1", "h2", new RedactionReportOptions(),
+                verificationStatus: "ResidualsFound", verificationCount: 2);
+            Assert.Contains("2 possible items may remain", residual.VerificationSummary!);
+        }
+
+        [Fact]
         public void ToHtml_EncodesValues_NoRawAngleBrackets_FromData()
         {
             var version = Version();

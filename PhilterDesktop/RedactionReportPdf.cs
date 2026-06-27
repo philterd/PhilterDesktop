@@ -56,6 +56,12 @@ namespace PhilterDesktop
                 w.Field("Source", m.SourceSha256, mono: true);
                 w.Field("Redacted output", m.OutputSha256, mono: true);
 
+                if (m.VerificationSummary is not null)
+                {
+                    w.Section("Verification");
+                    w.Muted(m.VerificationSummary);
+                }
+
                 w.Section("What was removed");
                 w.Heading($"{m.TotalRedactions} redaction{(m.TotalRedactions == 1 ? "" : "s")}", 16f);
                 w.Gap(4f);

@@ -85,6 +85,10 @@ namespace PhilterDesktop
             chkPassphrase = new CheckBox();
             btnChangePassphrase = new Button();
             lblSecurityStatus = new Label();
+            chkVerifyAfterRedaction = new CheckBox();
+            rdoVerifySamePolicy = new RadioButton();
+            rdoVerifyBroadPolicy = new RadioButton();
+            lblVerifyHint = new Label();
             groupBoxOutput.SuspendLayout();
             groupBoxLogging.SuspendLayout();
             tabControl.SuspendLayout();
@@ -473,6 +477,10 @@ namespace PhilterDesktop
             tabSecurity.Controls.Add(chkPassphrase);
             tabSecurity.Controls.Add(btnChangePassphrase);
             tabSecurity.Controls.Add(lblSecurityStatus);
+            tabSecurity.Controls.Add(chkVerifyAfterRedaction);
+            tabSecurity.Controls.Add(rdoVerifySamePolicy);
+            tabSecurity.Controls.Add(rdoVerifyBroadPolicy);
+            tabSecurity.Controls.Add(lblVerifyHint);
             tabSecurity.Location = new Point(4, 24);
             tabSecurity.Name = "tabSecurity";
             tabSecurity.Padding = new Padding(3);
@@ -518,6 +526,49 @@ namespace PhilterDesktop
             lblSecurityStatus.Name = "lblSecurityStatus";
             lblSecurityStatus.Size = new Size(0, 15);
             lblSecurityStatus.TabIndex = 3;
+            //
+            // chkVerifyAfterRedaction
+            //
+            chkVerifyAfterRedaction.AutoSize = true;
+            chkVerifyAfterRedaction.Location = new Point(12, 200);
+            chkVerifyAfterRedaction.Name = "chkVerifyAfterRedaction";
+            chkVerifyAfterRedaction.Size = new Size(420, 19);
+            chkVerifyAfterRedaction.TabIndex = 4;
+            chkVerifyAfterRedaction.Text = "Verify each redaction by re-scanning the output for PII that may remain";
+            chkVerifyAfterRedaction.UseVisualStyleBackColor = true;
+            chkVerifyAfterRedaction.CheckedChanged += ChkVerifyAfterRedaction_CheckedChanged;
+            //
+            // rdoVerifySamePolicy
+            //
+            rdoVerifySamePolicy.AutoSize = true;
+            rdoVerifySamePolicy.Location = new Point(32, 225);
+            rdoVerifySamePolicy.Name = "rdoVerifySamePolicy";
+            rdoVerifySamePolicy.Size = new Size(300, 19);
+            rdoVerifySamePolicy.TabIndex = 5;
+            rdoVerifySamePolicy.TabStop = true;
+            rdoVerifySamePolicy.Text = "Scan with the same policy used to redact";
+            rdoVerifySamePolicy.UseVisualStyleBackColor = true;
+            //
+            // rdoVerifyBroadPolicy
+            //
+            rdoVerifyBroadPolicy.AutoSize = true;
+            rdoVerifyBroadPolicy.Location = new Point(32, 248);
+            rdoVerifyBroadPolicy.Name = "rdoVerifyBroadPolicy";
+            rdoVerifyBroadPolicy.Size = new Size(320, 19);
+            rdoVerifyBroadPolicy.TabIndex = 6;
+            rdoVerifyBroadPolicy.Text = "Scan with a broad policy (every detector on)";
+            rdoVerifyBroadPolicy.UseVisualStyleBackColor = true;
+            //
+            // lblVerifyHint
+            //
+            lblVerifyHint.AutoSize = true;
+            lblVerifyHint.ForeColor = SystemColors.GrayText;
+            lblVerifyHint.Location = new Point(30, 273);
+            lblVerifyHint.MaximumSize = new Size(520, 0);
+            lblVerifyHint.Name = "lblVerifyHint";
+            lblVerifyHint.Size = new Size(0, 15);
+            lblVerifyHint.TabIndex = 7;
+            lblVerifyHint.Text = "A broad scan can flag PII types the redaction policy didn't cover, including items you chose not to redact. Runs entirely on this device; you can also verify any completed document by right-clicking it.";
             // 
             // SettingsForm
             // 
@@ -569,6 +620,10 @@ namespace PhilterDesktop
         private TabPage tabGeneral;
         private TabPage tabNotifications;
         private CheckBox chkShowNotifications;
+        private CheckBox chkVerifyAfterRedaction;
+        private RadioButton rdoVerifySamePolicy;
+        private RadioButton rdoVerifyBroadPolicy;
+        private Label lblVerifyHint;
         private Label lblNotificationsHint;
         private TabPage tabWatched;
         private Label lblConcurrency;

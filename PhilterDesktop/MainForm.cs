@@ -344,6 +344,16 @@ namespace PhilterDesktop
                 }
             };
 
+            var searchLabel = new Label
+            {
+                Dock = DockStyle.Left,
+                Text = "Search for",
+                AutoSize = false,
+                Width = 72,
+                TextAlign = ContentAlignment.MiddleLeft,
+                ForeColor = ModernTheme.Text
+            };
+
             var panel = new Panel
             {
                 Dock = DockStyle.Top,
@@ -351,7 +361,9 @@ namespace PhilterDesktop
                 Padding = new Padding(8, 6, 8, 4),
                 BackColor = ModernTheme.Surface
             };
+            // Add the Fill text box first (lowest z-order) so the Left label docks beside it, not over it.
             panel.Controls.Add(_filterBox);
+            panel.Controls.Add(searchLabel);
             Controls.Add(panel);
 
             // Docking is applied back-to-front in the z-order. Put the panel at index 1 so it docks
@@ -384,6 +396,7 @@ namespace PhilterDesktop
             viewDiffToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE7C4", menuSize, ModernTheme.Text);               // TwoPage (compare)
             viewDetailsToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE946", menuSize, ModernTheme.Text);            // Info (details)
             exportExplanationToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE898", menuSize, ModernTheme.Text);      // Save/Export (explanation)
+            verifyRedactionToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uEA18", menuSize, ModernTheme.Text);       // Shield (verify)
             generateReportToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE7C3", menuSize, ModernTheme.Text);        // Page (report)
 
             // Redact split-button dropdown items.
@@ -612,6 +625,7 @@ namespace PhilterDesktop
 
             int succeeded = items.Count(i => i.Success);
             int failed = items.Count - succeeded;
+            int needCheck = items.Count(i => i.VerificationWarning is not null);
 
             // The most recent successful output drives click-to-open.
             WatchedFileProcessedEventArgs? lastSuccess =
@@ -625,8 +639,12 @@ namespace PhilterDesktop
                 WatchedFileProcessedEventArgs only = items[0];
                 if (only.Success)
                 {
-                    title = "File redacted";
+                    title = only.VerificationWarning is null ? "File redacted" : "File redacted — check needed";
                     text = $"{Path.GetFileName(only.InputPath)} → {Path.GetDirectoryName(only.OutputPath)}";
+                    if (only.VerificationWarning is not null)
+                    {
+                        text += $"\n{only.VerificationWarning}";
+                    }
                 }
                 else
                 {
@@ -646,10 +664,14 @@ namespace PhilterDesktop
                 {
                     parts.Add($"{failed} failed");
                 }
+                if (needCheck > 0)
+                {
+                    parts.Add($"{needCheck} may need review");
+                }
                 text = string.Join(", ", parts) + ".";
             }
 
-            _trayIcon.BalloonTipIcon = failed > 0 && succeeded == 0 ? ToolTipIcon.Warning : ToolTipIcon.Info;
+            _trayIcon.BalloonTipIcon = (failed > 0 && succeeded == 0) || needCheck > 0 ? ToolTipIcon.Warning : ToolTipIcon.Info;
             _trayIcon.BalloonTipTitle = title;
             _trayIcon.BalloonTipText = text;
             _trayIcon.ShowBalloonTip(5000);
@@ -1000,7 +1022,7 @@ namespace PhilterDesktop
                 return;
             }
 
-            int fixedWidth = columnHeader2.Width + columnHeader4.Width + columnHeader3.Width;
+            int fixedWidth = columnHeader2.Width + columnHeader4.Width + columnHeader3.Width + columnHeader5.Width;
             int available = listView1.ClientSize.Width - fixedWidth - 4;
             columnHeader1.Width = Math.Max(220, available);
         }
@@ -1545,6 +1567,7 @@ namespace PhilterDesktop
 
             viewDetailsToolStripMenuItem.Enabled = hasSelection;
             exportExplanationToolStripMenuItem.Enabled = selectedCompleted; // needs captured spans
+            verifyRedactionToolStripMenuItem.Enabled = selectedCompleted;   // re-scans a finished output
             generateReportToolStripMenuItem.Enabled = selectedCompleted;    // summarizes a finished redaction
         }
 
@@ -1694,7 +1717,10 @@ namespace PhilterDesktop
                 ("Policy", string.IsNullOrEmpty(entity.Policy) ? "—" : entity.Policy),
                 ("Context", string.IsNullOrEmpty(entity.Context) ? "—" : entity.Context),
                 ("Redactions", redactionCount),
-                ("Redacted", timestamp)
+                ("Redacted", timestamp),
+                ("Verification", entity.VerificationCheckedAt is { } vc
+                    ? $"{VerificationDisplay(entity)} ({vc.ToLocalTime():f})"
+                    : VerificationDisplay(entity))
             };
 
             // For a failed document, show why so the user isn't left guessing.
@@ -1790,6 +1816,103 @@ namespace PhilterDesktop
             }
         }
 
+        private void verifyWithSamePolicyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return;
+            }
+            RunAndShowVerification(this, id, quietWhenClean: false, broadPolicy: false);
+        }
+
+        private void verifyWithBroadPolicyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return;
+            }
+            RunAndShowVerification(this, id, quietWhenClean: false, broadPolicy: true);
+        }
+
+        // Copies a verification outcome onto the queue entity (does not persist; the caller saves).
+        private static void ApplyVerificationFields(RedactionQueueEntity entity, VerificationOutcome? outcome)
+        {
+            if (outcome is null)
+            {
+                return;
+            }
+            entity.VerificationStatus = outcome.Status.ToString();
+            entity.VerificationFindingCount = outcome.Count;
+            entity.VerificationCheckedAt = DateTime.UtcNow;
+        }
+
+        // A short, human display of an item's stored verification status (queue column + View Details).
+        private static string VerificationDisplay(RedactionQueueEntity e) => e.VerificationStatus switch
+        {
+            "Clean" => "Clean",
+            "ResidualsFound" => $"{e.VerificationFindingCount} may remain",
+            "Error" => "Check failed",
+            _ => "Not checked"
+        };
+
+        private static string? ResidualWarning(VerificationOutcome? outcome) =>
+            outcome is { Status: VerificationStatus.ResidualsFound }
+                ? $"Verification: {outcome.Count} possible item{(outcome.Count == 1 ? "" : "s")} may remain"
+                : null;
+
+        // Builds the effective policy for a completed item and verifies its redacted output, persisting
+        // the result and (unless clean and asked to stay quiet) showing it. Used on demand and after a
+        // preview save. With broadPolicy, scans with every detector on (catches types the redaction
+        // policy didn't cover); otherwise re-uses the redaction's own policy.
+        private VerificationOutcome? RunAndShowVerification(IWin32Window owner, ObjectId id, bool quietWhenClean, bool broadPolicy)
+        {
+            RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
+            RedactionVersionEntity? latest = _redactionVersionRepository.GetForDocument(id).LastOrDefault();
+            if (entity is null || latest is null)
+            {
+                return null;
+            }
+
+            string output = ResolveRedactedOutputPath(id, entity.Name);
+            Policy policy;
+            if (broadPolicy)
+            {
+                policy = VerificationPolicy.Broad();
+            }
+            else
+            {
+                PolicyEntity? policyEntity = _policyRepository.FindByName(latest.Policy);
+                policy = PolicySerializer.DeserializeFromJson(
+                    string.IsNullOrWhiteSpace(policyEntity?.Json) ? "{}" : policyEntity!.Json);
+            }
+            GlobalLists.Apply(policy, _settingsRepository.GetSettings());
+
+            VerificationOutcome outcome;
+            Cursor? previous = Cursor.Current;
+            UseWaitCursor = true;
+            Cursor.Current = Cursors.WaitCursor;
+            try
+            {
+                outcome = RedactionVerifier.Verify(output, policy, latest.Context, new FilterService());
+            }
+            finally
+            {
+                Cursor.Current = previous;
+                UseWaitCursor = false;
+            }
+
+            ApplyVerificationFields(entity, outcome);
+            _redactionQueueRepository.Update(entity);
+            LoadRedactionQueue();
+
+            if (!(quietWhenClean && outcome.Status == VerificationStatus.Clean))
+            {
+                using var form = new VerificationResultForm(Path.GetFileName(output), outcome);
+                form.ShowDialog(owner);
+            }
+            return outcome;
+        }
+
         private void generateReportToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
@@ -1860,7 +1983,8 @@ namespace PhilterDesktop
                     latest, spans, toolVersion, DateTimeOffset.UtcNow,
                     FileHash.Sha256OrUnavailable(source),
                     FileHash.Sha256OrUnavailable(outputPath),
-                    options);
+                    options,
+                    entity.VerificationStatus, entity.VerificationFindingCount, entity.VerificationCheckedAt);
 
                 RedactionReportPdf.Write(model, save.FileName);
             }
@@ -1996,6 +2120,14 @@ namespace PhilterDesktop
             RememberLastUsed(policy, context, Path.GetDirectoryName(outputPath));
             LoadRedactionQueue();
 
+            // Self-check the output for residual PII when the setting is on. Show the result only when
+            // something remains (a clean pass shouldn't add a click to the careful preview workflow).
+            SettingsEntity verifySettings = _settingsRepository.GetSettings();
+            if (verifySettings.VerifyAfterRedaction)
+            {
+                RunAndShowVerification(this, entity.Id, quietWhenClean: true, broadPolicy: verifySettings.VerificationUseBroadPolicy);
+            }
+
             // The preview Save flow is the careful, single-document workflow, so offer a report inline
             // (it's also always available later by right-clicking the completed item).
             if (MessageBox.Show(this,
@@ -2058,12 +2190,14 @@ namespace PhilterDesktop
                     {
                         SaveRedactionVersion(entity, result.OutputPath!, result.Spans.ToList());
                         entity.ErrorMessage = string.Empty; // clear any prior failure reason
+                        ApplyVerificationFields(entity, result.Verification);
                         UpdateEntityStatus(entity, "Completed");
                         QueueNotification(new WatchedFileProcessedEventArgs
                         {
                             InputPath = entity.Name,
                             OutputPath = result.OutputPath,
-                            Success = true
+                            Success = true,
+                            VerificationWarning = ResidualWarning(result.Verification)
                         });
 
                         if (_loggingEnabled)
@@ -2147,8 +2281,15 @@ namespace PhilterDesktop
                 item.SubItems.Add(entity.Status);
                 item.SubItems.Add(entity.Policy);
                 item.SubItems.Add(entity.Context);
+                ListViewItem.ListViewSubItem verification = item.SubItems.Add(VerificationDisplay(entity));
                 item.Tag = entity.Id;
                 item.ImageIndex = 0;
+                if (entity.VerificationStatus == "ResidualsFound")
+                {
+                    // Make a "needs review" result stand out without affecting the rest of the row.
+                    item.UseItemStyleForSubItems = false;
+                    verification.ForeColor = Color.FromArgb(0x8A, 0x1C, 0x1C);
+                }
                 if (!string.IsNullOrEmpty(entity.ErrorMessage))
                 {
                     item.ToolTipText = entity.ErrorMessage; // hover a failed row to see why

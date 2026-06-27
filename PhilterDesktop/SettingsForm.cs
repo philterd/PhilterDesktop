@@ -129,6 +129,15 @@ namespace PhilterDesktop
             finally { _suppressPassphraseToggle = false; }
         }
 
+        // The "same vs broad policy" choice only applies when automatic verification is on.
+        private void ChkVerifyAfterRedaction_CheckedChanged(object? sender, EventArgs e) => UpdateVerifyPolicyEnabled();
+
+        private void UpdateVerifyPolicyEnabled()
+        {
+            rdoVerifySamePolicy.Enabled = chkVerifyAfterRedaction.Checked;
+            rdoVerifyBroadPolicy.Enabled = chkVerifyAfterRedaction.Checked;
+        }
+
         private void ChkPassphrase_CheckedChanged(object sender, EventArgs e)
         {
             if (_suppressPassphraseToggle || _keyStore is null)
@@ -420,6 +429,10 @@ namespace PhilterDesktop
             txtSuffix.Text = RedactionService.NormalizeSuffix(_settings.RedactedSuffix);
             chkEnableLogging.Checked = _settings.LoggingEnabled;
             chkShowNotifications.Checked = _settings.NotificationsEnabled;
+            chkVerifyAfterRedaction.Checked = _settings.VerifyAfterRedaction;
+            rdoVerifyBroadPolicy.Checked = _settings.VerificationUseBroadPolicy;
+            rdoVerifySamePolicy.Checked = !_settings.VerificationUseBroadPolicy;
+            UpdateVerifyPolicyEnabled();
             cmbConcurrency.SelectedItem = Math.Clamp(_settings.WatchedFolderMaxConcurrency, 1, 4).ToString();
         }
 
@@ -588,6 +601,8 @@ namespace PhilterDesktop
             _settings.RedactedSuffix = RedactionService.NormalizeSuffix(txtSuffix.Text);
             _settings.LoggingEnabled = chkEnableLogging.Checked;
             _settings.NotificationsEnabled = chkShowNotifications.Checked;
+            _settings.VerifyAfterRedaction = chkVerifyAfterRedaction.Checked;
+            _settings.VerificationUseBroadPolicy = rdoVerifyBroadPolicy.Checked;
             _settings.WatchedFolderMaxConcurrency = int.TryParse(cmbConcurrency.Text, out int n) ? Math.Clamp(n, 1, 4) : 1;
 
             _settingsRepository.SaveSettings(_settings);
