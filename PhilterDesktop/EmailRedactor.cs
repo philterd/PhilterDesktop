@@ -94,6 +94,55 @@ namespace PhilterDesktop
         }
 
         /// <summary>
+        /// Returns each redactable field's label and current text, in the canonical field order (so the
+        /// index matches <see cref="RedactionSpanEntity.ParagraphIndex"/>). Read-only; for the preview.
+        /// </summary>
+        public static List<(string Label, string Text, bool IsBody)> ReadFields(string inputPath)
+        {
+            MimeMessage message = Load(inputPath);
+            return EnumerateFields(message).Select(f => (f.Label, f.Get(), f.IsBody)).ToList();
+        }
+
+        /// <summary>
+        /// Detects the redactions <see cref="Redact"/> would apply, without writing anything: spans are
+        /// field-indexed via <see cref="RedactionSpanEntity.ParagraphIndex"/>. Used by the preview.
+        /// </summary>
+        public static List<RedactionSpanEntity> Detect(string inputPath, Func<string, TextFilterResult> filter)
+        {
+            MimeMessage message = Load(inputPath);
+            var captured = new List<RedactionSpanEntity>();
+            int order = 0;
+            int fieldIndex = 0;
+
+            foreach (IEmailField field in EnumerateFields(message))
+            {
+                string original = field.Get();
+                if (!string.IsNullOrEmpty(original))
+                {
+                    foreach (Span s in filter(original).Spans
+                        .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
+                        .OrderBy(s => s.CharacterStart))
+                    {
+                        var entity = new RedactionSpanEntity
+                        {
+                            Order = order++,
+                            ParagraphIndex = fieldIndex,
+                            CharacterStart = s.CharacterStart,
+                            CharacterEnd = s.CharacterEnd,
+                            Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
+                            Replacement = s.Replacement ?? string.Empty,
+                            Classification = s.Classification ?? string.Empty
+                        };
+                        SpanExplanation.Populate(entity, s);
+                        captured.Add(entity);
+                    }
+                }
+                fieldIndex++;
+            }
+            return captured;
+        }
+
+        /// <summary>
         /// Re-applies an explicit (edited) span set to <paramref name="inputPath"/>, writing the result
         /// as <c>.eml</c> to <paramref name="outputPath"/>. Each span is applied by <b>position</b>: its
         /// <see cref="RedactionSpanEntity.ParagraphIndex"/> (the field index) plus character start/stop
@@ -157,6 +206,9 @@ namespace PhilterDesktop
         /// <summary>One redactable text field of a message (a header value or a body part).</summary>
         private interface IEmailField
         {
+            string Label { get; }
+            /// <summary>True for a body part (free text where a character position is meaningful), false for a header.</summary>
+            bool IsBody { get; }
             string Get();
             void Set(string value);
         }
@@ -164,7 +216,9 @@ namespace PhilterDesktop
         private sealed class HeaderField : IEmailField
         {
             private readonly Header _header;
-            public HeaderField(Header header) => _header = header;
+            public HeaderField(Header header, string label) { _header = header; Label = label; }
+            public string Label { get; }
+            public bool IsBody => false;
             public string Get() => _header.Value ?? string.Empty;
             public void Set(string value) => _header.Value = value;
         }
@@ -173,6 +227,8 @@ namespace PhilterDesktop
         {
             private readonly TextPart _part;
             public TextPartField(TextPart part) => _part = part;
+            public string Label => _part.IsHtml ? "Body (HTML)" : "Body (text)";
+            public bool IsBody => true;
             public string Get() => _part.Text ?? string.Empty;
             public void Set(string value) => _part.Text = value;
         }
@@ -187,12 +243,16 @@ namespace PhilterDesktop
         {
             var fields = new List<IEmailField>();
 
-            foreach (HeaderId id in new[] { HeaderId.Subject, HeaderId.From, HeaderId.To, HeaderId.Cc })
+            foreach ((HeaderId id, string label) in new[]
+                     {
+                         (HeaderId.Subject, "Subject"), (HeaderId.From, "From"),
+                         (HeaderId.To, "To"), (HeaderId.Cc, "Cc")
+                     })
             {
                 Header? header = message.Headers.FirstOrDefault(h => h.Id == id);
                 if (header is not null)
                 {
-                    fields.Add(new HeaderField(header));
+                    fields.Add(new HeaderField(header, label));
                 }
             }
 

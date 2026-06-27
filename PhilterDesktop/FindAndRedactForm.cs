@@ -28,7 +28,7 @@ namespace PhilterDesktop
     internal sealed partial class FindAndRedactForm : Form
     {
         private readonly SettingsEntity _settings;
-        private readonly FilterService _filterService = new();
+        private readonly FilterService _filterService = SharedFilterService.Instance;
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public FindAndRedactForm() : this(new SettingsEntity())
@@ -94,7 +94,8 @@ namespace PhilterDesktop
             try
             {
                 List<RedactionSpanEntity> spans =
-                    await RedactionService.RedactFileAsync(source, output, policy, string.Empty, _filterService);
+                    await RedactionService.RedactFileAsync(source, output, policy, string.Empty, _filterService,
+                        wordScrub: DocumentMetadata.OptionsFor(_settings));
 
                 Cursor = Cursors.Default;
                 string summary = $"Redacted {spans.Count} item{(spans.Count == 1 ? "" : "s")}." +

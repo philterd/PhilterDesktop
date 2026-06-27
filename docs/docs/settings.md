@@ -68,6 +68,25 @@ A few practical notes:
   the [command line](redacting-documents.md#for-advanced-users-and-it-redacting-from-a-command-line)
   directly.
 
+## Microsoft Word tab
+
+Word documents quietly carry information that has nothing to do with the visible text — and a
+"redacted" `.docx` that still includes it defeats the purpose. The **Microsoft Word** tab lets you
+strip these hidden channels from every redacted Word file. All four options are **on by default**, and
+each applies whenever Philter Desktop produces a redacted `.docx`:
+
+- **Remove document metadata (author, company, title, keywords, custom fields).** Clears the document's
+  properties so the redacted copy doesn't name who wrote it or where it came from.
+- **Remove reviewer comments.** Deletes all comments (and the reviewer names attached to them).
+- **Accept and remove tracked changes (revisions).** Accepts every insertion and deletion and removes
+  the revision history, so no record of who changed what — or what the earlier text was — remains.
+- **Remove hidden text.** Deletes text that was marked hidden, which wouldn't show on screen but is
+  still present in the file.
+
+Leave these on unless you have a specific reason to keep that information. They affect only what's
+stored in the redacted copy — your original document is never changed, and you should still review the
+finished file.
+
 ## Notifications tab
 
 The **Notifications** tab controls the small pop-up messages (sometimes called "balloon" or "toast"
@@ -159,6 +178,26 @@ off whenever you like.
 > means the responsibility is yours. Also note that, because the program must be unlocked before it
 > can do anything, you'll be asked for the passphrase even when Philter Desktop starts automatically
 > at sign-in (which keeps your watched folders working).
+
+### Verifying redactions automatically
+
+The **Verify each redaction by re-scanning the output for PII that may remain** option (on by default)
+makes Philter Desktop double-check its own work: after each document is redacted, it re-opens the
+finished file and runs the detector again, looking for anything the policy might have missed. If
+something is found, you're warned and shown what and where. It runs entirely on your device.
+
+Two scan choices sit underneath it (they apply to the automatic check):
+
+- **Scan with the same policy used to redact** (default) — confirms that everything the policy was
+  meant to remove is genuinely gone from the saved file.
+- **Scan with a broad policy (every detector on)** — also looks for kinds of information your policy
+  didn't cover. This catches more, but may flag things you deliberately left unredacted.
+
+You can leave verification on for peace of mind, or turn it off if you prefer to verify manually — you
+can always right-click a finished document and choose **Verify Redaction**, which lets you pick **With
+same policy** or **With broad policy** for that one document. See
+[Checking the result for anything missed](redacting-documents.md#checking-the-result-for-anything-missed-verification)
+for details.
 
 ### Clearing your saved redaction history
 

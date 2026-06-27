@@ -142,6 +142,60 @@ namespace PhilterDesktop
             return captured;
         }
 
+        /// <summary>
+        /// Detects redactions for <paramref name="inputPath"/> using <paramref name="filter"/> without
+        /// writing anything, returning the cell-indexed spans the text-cell pass of <see cref="Redact"/>
+        /// would apply. Used by the post-redaction verification pass to scan a written output. (Whole-
+        /// column redaction isn't reproduced here — verification looks for content the detector flags.)
+        /// </summary>
+        public static List<RedactionSpanEntity> Detect(string inputPath, Func<string, TextFilterResult> filter)
+        {
+            using SpreadsheetDocument document = SpreadsheetDocument.Open(inputPath, isEditable: false);
+            WorkbookPart? workbookPart = document.WorkbookPart;
+            var captured = new List<RedactionSpanEntity>();
+            if (workbookPart is null)
+            {
+                return captured;
+            }
+
+            int order = 0;
+            int cellIndex = 0;
+            foreach ((Cell cell, bool _) in EnumerateCells(workbookPart))
+            {
+                int currentIndex = cellIndex++;
+                if (cell.CellFormula is not null || !IsTextCell(cell))
+                {
+                    continue;
+                }
+
+                string original = GetCellText(cell, workbookPart);
+                if (string.IsNullOrEmpty(original))
+                {
+                    continue;
+                }
+
+                foreach (Span s in filter(original).Spans
+                    .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
+                    .OrderBy(s => s.CharacterStart))
+                {
+                    var entity = new RedactionSpanEntity
+                    {
+                        Order = order++,
+                        ParagraphIndex = currentIndex,
+                        CharacterStart = s.CharacterStart,
+                        CharacterEnd = s.CharacterEnd,
+                        Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
+                        Replacement = s.Replacement ?? string.Empty,
+                        Classification = s.Classification ?? string.Empty
+                    };
+                    SpanExplanation.Populate(entity, s);
+                    captured.Add(entity);
+                }
+            }
+
+            return captured;
+        }
+
         public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans)
         {
             File.Copy(inputPath, outputPath, overwrite: true);

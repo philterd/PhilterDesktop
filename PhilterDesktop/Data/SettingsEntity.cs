@@ -68,6 +68,36 @@ namespace PhilterData
         /// </summary>
         public int WatchedFolderMaxConcurrency { get; set; } = 1;
 
+        /// <summary>
+        /// Whether to automatically verify each redaction by re-scanning the written output for residual
+        /// PII (the false-negative self-check). On by default; can be toggled in Settings. Verification
+        /// can also be run on demand for any completed item.
+        /// </summary>
+        public bool VerifyAfterRedaction { get; set; } = true;
+
+        /// <summary>
+        /// When verifying, scan with a broad "all detectors on" policy instead of the policy used to
+        /// redact. This can surface PII <i>types</i> the redaction policy didn't cover, at the cost of
+        /// flagging items the user may have intentionally left unredacted. Off by default.
+        /// </summary>
+        public bool VerificationUseBroadPolicy { get; set; } = false;
+
+        /// <summary>
+        /// Strip document metadata (author, company, last-modified-by, title, keywords, custom fields)
+        /// from redacted Office output so a "redacted" file doesn't leak identifying info through its
+        /// properties. On by default.
+        /// </summary>
+        public bool ScrubDocumentMetadata { get; set; } = true;
+
+        /// <summary>Remove reviewer comments from redacted Word output. On by default.</summary>
+        public bool ScrubWordComments { get; set; } = true;
+
+        /// <summary>Accept/strip tracked changes (revisions) in redacted Word output. On by default.</summary>
+        public bool ScrubWordTrackedChanges { get; set; } = true;
+
+        /// <summary>Remove hidden text from redacted Word output. On by default.</summary>
+        public bool ScrubWordHiddenText { get; set; } = true;
+
         /// <summary>Global "always redact" terms (one per line), applied on top of every policy.</summary>
         public string GlobalAlwaysRedact { get; set; } = string.Empty;
 

@@ -36,6 +36,13 @@ namespace PhilterDesktop
         /// <param name="writing">True for a save/write operation; false for an open/read.</param>
         public static string Describe(Exception ex, string path, bool writing)
         {
+            // Document problems we already explained (e.g. password-protected / corrupt) carry a
+            // ready-made, friendly message — use it as-is.
+            if (ex is DocumentLoadException)
+            {
+                return ex.Message;
+            }
+
             string verb = writing ? "save" : "open";
             string name = string.IsNullOrEmpty(path) ? "the file" : $"\"{Path.GetFileName(path)}\"";
 

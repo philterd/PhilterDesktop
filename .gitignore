@@ -41,6 +41,10 @@ PhilterDesktop/Models/ph-eye-pii-en-xsmall/
 # text, so they are as sensitive as the source and must never be committed.
 *-explanation.json
 
+# Generated redaction reports (e.g. *_redaction-report.pdf). These contain no original text,
+# but they are generated artifacts and shouldn't be committed.
+*_redaction-report.*
+
 # Visual Studio regenerates a companion .sln; the canonical solution is PhilterDesktop.slnx.
 /PhilterDesktop.sln
 
@@ -74,3 +78,10 @@ msbuild.wrn
 node_modules/
 package-lock.json
 package.json
+
+# App screenshots (published in the philterd-website repo; generated locally on demand)
+screenshots/
+
+# Real public-domain test documents (kept local, not committed). Integration tests that use them
+# skip automatically when the directory is empty/absent.
+real-documents/

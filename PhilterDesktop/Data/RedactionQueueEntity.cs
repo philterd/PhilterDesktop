@@ -43,5 +43,19 @@ namespace PhilterData
         public List<int> FullyRedactedColumns { get; set; } = new();
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // --- Post-redaction verification (residual-PII self-check) -----------------------------------
+
+        /// <summary>
+        /// The result of the verification pass over this item's redacted output: "NotRun", "Clean",
+        /// "ResidualsFound", or "Error". Stored so it survives restarts and can feed the report.
+        /// </summary>
+        public string VerificationStatus { get; set; } = "NotRun";
+
+        /// <summary>How many residual items the verification pass detected (0 when clean/not run).</summary>
+        public int VerificationFindingCount { get; set; }
+
+        /// <summary>When the verification pass last ran (UTC); null if it has not run.</summary>
+        public DateTime? VerificationCheckedAt { get; set; }
     }
 }

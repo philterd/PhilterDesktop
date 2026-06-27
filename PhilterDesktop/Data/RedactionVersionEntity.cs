@@ -50,5 +50,11 @@ namespace PhilterData
         public bool Highlight { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// End-to-end time, in milliseconds, taken to produce this redaction (detect + write, plus the
+        /// verification pass when enabled). 0 when not measured.
+        /// </summary>
+        public long DurationMs { get; set; }
     }
 }

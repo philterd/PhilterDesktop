@@ -99,7 +99,8 @@ namespace PhilterDesktop
                     PhileasPolicy policy = DeserializePolicy(policyJson);
                     GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
                     string outputPath = RedactionService.GetOutputPath(path, settings);
-                    RedactionService.RedactFileAsync(path, outputPath, policy, contextName, filterService)
+                    RedactionService.RedactFileAsync(path, outputPath, policy, contextName, filterService,
+                            wordScrub: DocumentMetadata.OptionsFor(settings))
                         .GetAwaiter().GetResult();
                     Console.WriteLine($"Redacted: {path} -> {outputPath}");
                 }

@@ -63,6 +63,7 @@ namespace PhilterDesktop
             previewDropDownItem = new ToolStripMenuItem();
             findRedactDropDownItem = new ToolStripMenuItem();
             spreadsheetDropDownItem = new ToolStripMenuItem();
+            folderDropDownItem = new ToolStripMenuItem();
             toolStripSeparator3 = new ToolStripSeparator();
             policiesToolStripButton = new ToolStripButton();
             contextsToolStripButton = new ToolStripButton();
@@ -79,6 +80,7 @@ namespace PhilterDesktop
             columnHeader2 = new ColumnHeader();
             columnHeader4 = new ColumnHeader();
             columnHeader3 = new ColumnHeader();
+            columnHeader5 = new ColumnHeader();
             contextMenuStrip1 = new ContextMenuStrip(components);
             addFilesToRedactToolStripMenuItem = new ToolStripMenuItem();
             redactPreviewToolStripMenuItem = new ToolStripMenuItem();
@@ -96,6 +98,10 @@ namespace PhilterDesktop
             viewDiffToolStripMenuItem = new ToolStripMenuItem();
             viewDetailsToolStripMenuItem = new ToolStripMenuItem();
             exportExplanationToolStripMenuItem = new ToolStripMenuItem();
+            verifyRedactionToolStripMenuItem = new ToolStripMenuItem();
+            verifyWithSamePolicyToolStripMenuItem = new ToolStripMenuItem();
+            verifyWithBroadPolicyToolStripMenuItem = new ToolStripMenuItem();
+            generateReportToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator7 = new ToolStripSeparator();
             refreshToolStripMenuItem = new ToolStripMenuItem();
             imageList1 = new ImageList(components);
@@ -198,7 +204,7 @@ namespace PhilterDesktop
             // toolStripButtonRedact
             // 
             toolStripButtonRedact.AutoToolTip = false;
-            toolStripButtonRedact.DropDownItems.AddRange(new ToolStripItem[] { redactDropDownItem, previewDropDownItem, findRedactDropDownItem, spreadsheetDropDownItem });
+            toolStripButtonRedact.DropDownItems.AddRange(new ToolStripItem[] { redactDropDownItem, previewDropDownItem, findRedactDropDownItem, spreadsheetDropDownItem, folderDropDownItem });
             toolStripButtonRedact.ImageTransparentColor = Color.Magenta;
             toolStripButtonRedact.Name = "toolStripButtonRedact";
             toolStripButtonRedact.Size = new Size(59, 22);
@@ -235,6 +241,14 @@ namespace PhilterDesktop
             spreadsheetDropDownItem.Size = new Size(189, 22);
             spreadsheetDropDownItem.Text = "Redact Spreadsheet...";
             spreadsheetDropDownItem.Click += redactSpreadsheetToolStripMenuItem_Click;
+            //
+            // folderDropDownItem
+            //
+            folderDropDownItem.Name = "folderDropDownItem";
+            folderDropDownItem.Size = new Size(189, 22);
+            folderDropDownItem.Text = "Redact Folder...";
+            folderDropDownItem.ToolTipText = "Add every supported file in a folder to the redaction queue";
+            folderDropDownItem.Click += redactFolderToolStripMenuItem_Click;
             //
             // toolStripSeparator3
             // 
@@ -330,7 +344,7 @@ namespace PhilterDesktop
             // 
             listView1.AccessibleDescription = "Documents to redact, with their status, policy, and context";
             listView1.AccessibleName = "Redaction queue";
-            listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader2, columnHeader4, columnHeader3 });
+            listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader2, columnHeader4, columnHeader3, columnHeader5 });
             listView1.ContextMenuStrip = contextMenuStrip1;
             listView1.Dock = DockStyle.Fill;
             listView1.FullRowSelect = true;
@@ -364,11 +378,16 @@ namespace PhilterDesktop
             // 
             columnHeader3.Text = "Context";
             columnHeader3.Width = 120;
+            //
+            // columnHeader5
+            //
+            columnHeader5.Text = "Verification";
+            columnHeader5.Width = 130;
             // 
             // contextMenuStrip1
             // 
             contextMenuStrip1.ImageScalingSize = new Size(24, 24);
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, redactPreviewToolStripMenuItem, findAndRedactToolStripMenuItem, redactSpreadsheetToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, openContainingFolderToolStripMenuItem, toolStripSeparator8, modifyRedactionToolStripMenuItem, viewDiffToolStripMenuItem, viewDetailsToolStripMenuItem, exportExplanationToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, redactPreviewToolStripMenuItem, findAndRedactToolStripMenuItem, redactSpreadsheetToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, openContainingFolderToolStripMenuItem, toolStripSeparator8, modifyRedactionToolStripMenuItem, viewDiffToolStripMenuItem, viewDetailsToolStripMenuItem, exportExplanationToolStripMenuItem, verifyRedactionToolStripMenuItem, generateReportToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(278, 314);
             // 
@@ -482,6 +501,38 @@ namespace PhilterDesktop
             exportExplanationToolStripMenuItem.Size = new Size(277, 22);
             exportExplanationToolStripMenuItem.Text = "Export Explanation (JSON)...";
             exportExplanationToolStripMenuItem.Click += exportExplanationToolStripMenuItem_Click;
+            //
+            // verifyRedactionToolStripMenuItem
+            //
+            verifyRedactionToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { verifyWithSamePolicyToolStripMenuItem, verifyWithBroadPolicyToolStripMenuItem });
+            verifyRedactionToolStripMenuItem.Name = "verifyRedactionToolStripMenuItem";
+            verifyRedactionToolStripMenuItem.Size = new Size(277, 22);
+            verifyRedactionToolStripMenuItem.Text = "Verify Redaction";
+            verifyRedactionToolStripMenuItem.ToolTipText = "Re-scan the redacted output for any PII that may remain";
+            //
+            // verifyWithSamePolicyToolStripMenuItem
+            //
+            verifyWithSamePolicyToolStripMenuItem.Name = "verifyWithSamePolicyToolStripMenuItem";
+            verifyWithSamePolicyToolStripMenuItem.Size = new Size(220, 22);
+            verifyWithSamePolicyToolStripMenuItem.Text = "With same policy";
+            verifyWithSamePolicyToolStripMenuItem.ToolTipText = "Re-scan using the same policy that redacted this document";
+            verifyWithSamePolicyToolStripMenuItem.Click += verifyWithSamePolicyToolStripMenuItem_Click;
+            //
+            // verifyWithBroadPolicyToolStripMenuItem
+            //
+            verifyWithBroadPolicyToolStripMenuItem.Name = "verifyWithBroadPolicyToolStripMenuItem";
+            verifyWithBroadPolicyToolStripMenuItem.Size = new Size(220, 22);
+            verifyWithBroadPolicyToolStripMenuItem.Text = "With broad policy";
+            verifyWithBroadPolicyToolStripMenuItem.ToolTipText = "Re-scan with every detector on (may flag items you chose not to redact)";
+            verifyWithBroadPolicyToolStripMenuItem.Click += verifyWithBroadPolicyToolStripMenuItem_Click;
+            //
+            // generateReportToolStripMenuItem
+            //
+            generateReportToolStripMenuItem.Name = "generateReportToolStripMenuItem";
+            generateReportToolStripMenuItem.Size = new Size(277, 22);
+            generateReportToolStripMenuItem.Text = "Generate Report...";
+            generateReportToolStripMenuItem.ToolTipText = "Create a shareable PDF/HTML summary of this redaction (no original text)";
+            generateReportToolStripMenuItem.Click += generateReportToolStripMenuItem_Click;
             // 
             // toolStripSeparator7
             // 
@@ -550,11 +601,13 @@ namespace PhilterDesktop
         private ToolStripMenuItem previewDropDownItem;
         private ToolStripMenuItem findRedactDropDownItem;
         private ToolStripMenuItem spreadsheetDropDownItem;
+        private ToolStripMenuItem folderDropDownItem;
         private ListView listView1;
         private ColumnHeader columnHeader1;
         private ColumnHeader columnHeader2;
         private ColumnHeader columnHeader4;
         private ColumnHeader columnHeader3;
+        private ColumnHeader columnHeader5;
         private ToolStripSeparator toolStripSeparator3;
         private ToolStripButton policiesToolStripButton;
         private ToolStripButton contextsToolStripButton;
@@ -577,6 +630,10 @@ namespace PhilterDesktop
         private ToolStripMenuItem viewDiffToolStripMenuItem;
         private ToolStripMenuItem viewDetailsToolStripMenuItem;
         private ToolStripMenuItem exportExplanationToolStripMenuItem;
+        private ToolStripMenuItem verifyRedactionToolStripMenuItem;
+        private ToolStripMenuItem verifyWithSamePolicyToolStripMenuItem;
+        private ToolStripMenuItem verifyWithBroadPolicyToolStripMenuItem;
+        private ToolStripMenuItem generateReportToolStripMenuItem;
         private System.Windows.Forms.Timer redactionQueueTimer;
         private ToolStripSeparator toolStripSeparator7;
         private ToolStripMenuItem refreshToolStripMenuItem;

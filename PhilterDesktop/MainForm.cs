@@ -62,7 +62,7 @@ namespace PhilterDesktop
         private readonly QueueColumnSorter _sorter = new();
 
         private const string DefaultEmptyText =
-            "No documents queued\r\n\r\nClick \"Redact\" or drag .txt, .docx, .pdf, .rtf, .xlsx, .csv, .eml, or .msg files here";
+            "No documents queued\r\n\r\nClick \"Redact\" or drag documents here";
         private const string FilterEmptyText =
             "No documents match your filter.\r\n\r\nClear the filter box to see the whole queue.";
         private System.Windows.Forms.Timer _statusAnimTimer = null!;
@@ -155,6 +155,10 @@ namespace PhilterDesktop
             }
 
             RestoreUiState();
+
+            // Load the on-device name model in the background now, so the first redaction/preview that
+            // uses it doesn't stall for tens of seconds loading it on demand.
+            SharedFilterService.WarmUp();
         }
 
         // Restore the remembered window size/position, sort, and column widths. Best-effort: a bad or
@@ -344,6 +348,16 @@ namespace PhilterDesktop
                 }
             };
 
+            var searchLabel = new Label
+            {
+                Dock = DockStyle.Left,
+                Text = "Search for",
+                AutoSize = false,
+                Width = 72,
+                TextAlign = ContentAlignment.MiddleLeft,
+                ForeColor = ModernTheme.Text
+            };
+
             var panel = new Panel
             {
                 Dock = DockStyle.Top,
@@ -351,7 +365,9 @@ namespace PhilterDesktop
                 Padding = new Padding(8, 6, 8, 4),
                 BackColor = ModernTheme.Surface
             };
+            // Add the Fill text box first (lowest z-order) so the Left label docks beside it, not over it.
             panel.Controls.Add(_filterBox);
+            panel.Controls.Add(searchLabel);
             Controls.Add(panel);
 
             // Docking is applied back-to-front in the z-order. Put the panel at index 1 so it docks
@@ -384,6 +400,8 @@ namespace PhilterDesktop
             viewDiffToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE7C4", menuSize, ModernTheme.Text);               // TwoPage (compare)
             viewDetailsToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE946", menuSize, ModernTheme.Text);            // Info (details)
             exportExplanationToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE898", menuSize, ModernTheme.Text);      // Save/Export (explanation)
+            verifyRedactionToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uEA18", menuSize, ModernTheme.Text);       // Shield (verify)
+            generateReportToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE7C3", menuSize, ModernTheme.Text);        // Page (report)
 
             // Redact split-button dropdown items.
             redactDropDownItem.Image = ModernTheme.CreateGlyphImage("\uE72E", menuSize, ModernTheme.Accent);                    // Lock (redact)
@@ -611,6 +629,7 @@ namespace PhilterDesktop
 
             int succeeded = items.Count(i => i.Success);
             int failed = items.Count - succeeded;
+            int needCheck = items.Count(i => i.VerificationWarning is not null);
 
             // The most recent successful output drives click-to-open.
             WatchedFileProcessedEventArgs? lastSuccess =
@@ -624,8 +643,12 @@ namespace PhilterDesktop
                 WatchedFileProcessedEventArgs only = items[0];
                 if (only.Success)
                 {
-                    title = "File redacted";
+                    title = only.VerificationWarning is null ? "File redacted" : "File redacted — check needed";
                     text = $"{Path.GetFileName(only.InputPath)} → {Path.GetDirectoryName(only.OutputPath)}";
+                    if (only.VerificationWarning is not null)
+                    {
+                        text += $"\n{only.VerificationWarning}";
+                    }
                 }
                 else
                 {
@@ -645,10 +668,14 @@ namespace PhilterDesktop
                 {
                     parts.Add($"{failed} failed");
                 }
+                if (needCheck > 0)
+                {
+                    parts.Add($"{needCheck} may need review");
+                }
                 text = string.Join(", ", parts) + ".";
             }
 
-            _trayIcon.BalloonTipIcon = failed > 0 && succeeded == 0 ? ToolTipIcon.Warning : ToolTipIcon.Info;
+            _trayIcon.BalloonTipIcon = (failed > 0 && succeeded == 0) || needCheck > 0 ? ToolTipIcon.Warning : ToolTipIcon.Info;
             _trayIcon.BalloonTipTitle = title;
             _trayIcon.BalloonTipText = text;
             _trayIcon.ShowBalloonTip(5000);
@@ -999,7 +1026,7 @@ namespace PhilterDesktop
                 return;
             }
 
-            int fixedWidth = columnHeader2.Width + columnHeader4.Width + columnHeader3.Width;
+            int fixedWidth = columnHeader2.Width + columnHeader4.Width + columnHeader3.Width + columnHeader5.Width;
             int available = listView1.ClientSize.Width - fixedWidth - 4;
             columnHeader1.Width = Math.Max(220, available);
         }
@@ -1332,12 +1359,17 @@ namespace PhilterDesktop
                 Logger.LogInfo("Opening Settings dialog");
             }
 
+            // The max-concurrency setting is read by the watcher only when it (re)starts, so note its
+            // value beforehand to detect a change and restart the watcher when it does.
+            int previousConcurrency = _settingsRepository.GetSettings().WatchedFolderMaxConcurrency;
+
             using var settingsForm = new SettingsForm(
                 _settingsRepository, _policyRepository, _contextRepository, _watchedFolderRepository,
                 _watchedFolderLogRepository, EncryptedDatabase.CurrentKeyStore);
             var result = settingsForm.ShowDialog();
 
-            // Reload logging setting in case it changed.
+            // Reload settings that changed (saved only on OK).
+            bool concurrencyChanged = false;
             if (result == DialogResult.OK)
             {
                 var settings = _settingsRepository.GetSettings();
@@ -1352,11 +1384,15 @@ namespace PhilterDesktop
                 {
                     Logger.LogInfo("Logging disabled via settings");
                 }
+
+                concurrencyChanged = settings.WatchedFolderMaxConcurrency != previousConcurrency;
             }
 
-            // Watched folders are persisted immediately (independent of Save/Cancel); restart the
-            // watcher if the list changed so monitoring reflects the new configuration.
-            if (settingsForm.WatchedFoldersChanged)
+            // Restart the watcher if the folder list changed (persisted immediately, independent of
+            // Save/Cancel) or the max-concurrency setting changed, so monitoring reflects the new
+            // configuration without an app restart. Re-scanning on restart is safe: already-redacted
+            // output is skipped.
+            if (settingsForm.WatchedFoldersChanged || concurrencyChanged)
             {
                 StartFolderWatcher();
             }
@@ -1378,14 +1414,15 @@ namespace PhilterDesktop
                 return;
             }
 
+            SettingsEntity modifySettings = _settingsRepository.GetSettings();
             using var form = new ModifyRedactionForm(
                 id, _redactionVersionRepository, _redactionSpanRepository, _policyRepository,
-                _settingsRepository.GetSettings().RedactedSuffix);
+                modifySettings.RedactedSuffix, DocumentMetadata.OptionsFor(modifySettings));
             form.ShowDialog(this);
         }
 
         // Stores the initial redaction as version 1 (with its spans) so it can be reviewed/modified.
-        private void SaveRedactionVersion(RedactionQueueEntity entity, string outputPath, List<RedactionSpanEntity> spans)
+        private void SaveRedactionVersion(RedactionQueueEntity entity, string outputPath, List<RedactionSpanEntity> spans, long durationMs = 0)
         {
             try
             {
@@ -1398,7 +1435,8 @@ namespace PhilterDesktop
                     FileType = Path.GetExtension(entity.Name).ToLowerInvariant(),
                     Policy = entity.Policy,
                     Context = entity.Context,
-                    Highlight = entity.Highlight
+                    Highlight = entity.Highlight,
+                    DurationMs = durationMs
                 };
                 _redactionVersionRepository.Insert(version);
 
@@ -1535,6 +1573,8 @@ namespace PhilterDesktop
 
             viewDetailsToolStripMenuItem.Enabled = hasSelection;
             exportExplanationToolStripMenuItem.Enabled = selectedCompleted; // needs captured spans
+            verifyRedactionToolStripMenuItem.Enabled = selectedCompleted;   // re-scans a finished output
+            generateReportToolStripMenuItem.Enabled = selectedCompleted;    // summarizes a finished redaction
         }
 
         /// <summary>The source file path of the selected queue item, or null.</summary>
@@ -1666,11 +1706,13 @@ namespace PhilterDesktop
             string redactedFile = "—";
             string redactionCount = "—";
             string timestamp = "—";
+            string duration = "—";
             if (latest is not null)
             {
                 redactedFile = ResolveRedactedOutputPath(id, source);
                 redactionCount = _redactionSpanRepository.GetForVersion(latest.Id).Count.ToString();
                 timestamp = latest.CreatedAt.ToLocalTime().ToString("f");
+                duration = DurationFormat.Humanize(latest.DurationMs);
             }
 
             var rows = new List<(string, string)>
@@ -1683,7 +1725,11 @@ namespace PhilterDesktop
                 ("Policy", string.IsNullOrEmpty(entity.Policy) ? "—" : entity.Policy),
                 ("Context", string.IsNullOrEmpty(entity.Context) ? "—" : entity.Context),
                 ("Redactions", redactionCount),
-                ("Redacted", timestamp)
+                ("Redacted", timestamp),
+                ("Time to redact", duration),
+                ("Verification", entity.VerificationCheckedAt is { } vc
+                    ? $"{VerificationDisplay(entity)} ({vc.ToLocalTime():f})"
+                    : VerificationDisplay(entity))
             };
 
             // For a failed document, show why so the user isn't left guessing.
@@ -1779,6 +1825,194 @@ namespace PhilterDesktop
             }
         }
 
+        private void verifyWithSamePolicyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return;
+            }
+            RunAndShowVerification(this, id, quietWhenClean: false, broadPolicy: false);
+        }
+
+        private void verifyWithBroadPolicyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return;
+            }
+            RunAndShowVerification(this, id, quietWhenClean: false, broadPolicy: true);
+        }
+
+        // Copies a verification outcome onto the queue entity (does not persist; the caller saves).
+        private static void ApplyVerificationFields(RedactionQueueEntity entity, VerificationOutcome? outcome)
+        {
+            if (outcome is null)
+            {
+                return;
+            }
+            entity.VerificationStatus = outcome.Status.ToString();
+            entity.VerificationFindingCount = outcome.Count;
+            entity.VerificationCheckedAt = DateTime.UtcNow;
+        }
+
+        // A short, human display of an item's stored verification status (queue column + View Details).
+        private static string VerificationDisplay(RedactionQueueEntity e) => e.VerificationStatus switch
+        {
+            "Clean" => "Clean",
+            "ResidualsFound" => $"{e.VerificationFindingCount} may remain",
+            "Error" => "Check failed",
+            _ => "Not checked"
+        };
+
+        private static string? ResidualWarning(VerificationOutcome? outcome) =>
+            outcome is { Status: VerificationStatus.ResidualsFound }
+                ? $"Verification: {outcome.Count} possible item{(outcome.Count == 1 ? "" : "s")} may remain"
+                : null;
+
+        // Builds the effective policy for a completed item and verifies its redacted output, persisting
+        // the result and (unless clean and asked to stay quiet) showing it. Used on demand and after a
+        // preview save. With broadPolicy, scans with every detector on (catches types the redaction
+        // policy didn't cover); otherwise re-uses the redaction's own policy.
+        private VerificationOutcome? RunAndShowVerification(IWin32Window owner, ObjectId id, bool quietWhenClean, bool broadPolicy)
+        {
+            RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
+            RedactionVersionEntity? latest = _redactionVersionRepository.GetForDocument(id).LastOrDefault();
+            if (entity is null || latest is null)
+            {
+                return null;
+            }
+
+            string output = ResolveRedactedOutputPath(id, entity.Name);
+            Policy policy;
+            if (broadPolicy)
+            {
+                policy = VerificationPolicy.Broad();
+            }
+            else
+            {
+                PolicyEntity? policyEntity = _policyRepository.FindByName(latest.Policy);
+                policy = PolicySerializer.DeserializeFromJson(
+                    string.IsNullOrWhiteSpace(policyEntity?.Json) ? "{}" : policyEntity!.Json);
+            }
+            GlobalLists.Apply(policy, _settingsRepository.GetSettings());
+
+            VerificationOutcome outcome;
+            Cursor? previous = Cursor.Current;
+            UseWaitCursor = true;
+            Cursor.Current = Cursors.WaitCursor;
+            try
+            {
+                outcome = RedactionVerifier.Verify(output, policy, latest.Context, SharedFilterService.Instance);
+            }
+            finally
+            {
+                Cursor.Current = previous;
+                UseWaitCursor = false;
+            }
+
+            ApplyVerificationFields(entity, outcome);
+            _redactionQueueRepository.Update(entity);
+            LoadRedactionQueue();
+
+            if (!(quietWhenClean && outcome.Status == VerificationStatus.Clean))
+            {
+                using var form = new VerificationResultForm(Path.GetFileName(output), outcome);
+                form.ShowDialog(owner);
+            }
+            return outcome;
+        }
+
+        private void generateReportToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return;
+            }
+            GenerateReportFor(this, id);
+        }
+
+        // Writes a shareable redaction report (PDF or HTML) for the document's latest version. Unlike
+        // the explanation JSON, the report contains NO original text, so it's safe to file alongside the
+        // redacted copy. Shared by the queue context menu and the post-preview offer.
+        private void GenerateReportFor(IWin32Window owner, ObjectId id)
+        {
+            RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
+            if (entity is null)
+            {
+                return;
+            }
+
+            RedactionVersionEntity? latest = _redactionVersionRepository.GetForDocument(id).LastOrDefault();
+            if (latest is null)
+            {
+                MessageBox.Show(owner, "There is no redaction to report on for this document yet.",
+                    "Generate Report", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            IReadOnlyList<RedactionSpanEntity> spans = _redactionSpanRepository.GetForVersion(latest.Id);
+
+            // Offer the optional per-redaction detail table (still contains no original text).
+            DialogResult detail = MessageBox.Show(owner,
+                "Include a detailed per-redaction table?\n\n" +
+                "It lists each redaction's type, location, and replacement. It does not include the " +
+                "original text, so the report stays safe to share.",
+                "Generate Report", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            if (detail == DialogResult.Cancel)
+            {
+                return;
+            }
+
+            string source = entity.Name;
+            string outputPath = ResolveRedactedOutputPath(id, source);
+            using var save = new SaveFileDialog
+            {
+                Title = "Save redaction report",
+                Filter = "PDF report (*.pdf)|*.pdf",
+                DefaultExt = "pdf",
+                AddExtension = true,
+                FileName = $"{Path.GetFileNameWithoutExtension(source)}_redaction-report.pdf",
+                InitialDirectory = RedactionService.InitialSaveDirectory(_settingsRepository.GetSettings(), outputPath, source)
+            };
+            if (save.ShowDialog(owner) != DialogResult.OK)
+            {
+                return;
+            }
+
+            try
+            {
+                Version? v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                string toolVersion = v is null ? string.Empty : $"{v.Major}.{v.Minor}.{v.Build}";
+
+                var options = new RedactionReportOptions
+                {
+                    IncludeDetailTable = detail == DialogResult.Yes,
+                    IncludeMachineInfo = _loggingEnabled
+                };
+                RedactionReportModel model = RedactionReport.Build(
+                    latest, spans, toolVersion, DateTimeOffset.UtcNow,
+                    FileHash.Sha256OrUnavailable(source),
+                    FileHash.Sha256OrUnavailable(outputPath),
+                    options,
+                    entity.VerificationStatus, entity.VerificationFindingCount, entity.VerificationCheckedAt);
+
+                RedactionReportPdf.Write(model, save.FileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(owner, UserError.Describe(ex, save.FileName, writing: true),
+                    "Generate Report", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Open the saved report directly in the default PDF viewer.
+            try { System.Diagnostics.Process.Start(new ProcessStartInfo(save.FileName) { UseShellExecute = true }); }
+            catch (Exception ex)
+            {
+                MessageBox.Show(owner, $"The report was saved to:\n{save.FileName}\n\nBut it could not be opened: {ex.Message}",
+                    "Generate Report", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
         private void addFilesToRedactToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var redactDocumentsForm = new RedactDocuments(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled, _settingsRepository);
@@ -1814,12 +2048,29 @@ namespace PhilterDesktop
             }
         }
 
+        // One-shot "Redact Folder": enqueue every supported file in a chosen folder (optionally
+        // recursing) with one policy/context. The queue then redacts them like any other documents, so
+        // per-file success/failure shows up in the queue. No persistent watcher is created.
+        private void redactFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var form = new FolderRedactForm(
+                _policyRepository, _contextRepository, _redactionQueueRepository, _settingsRepository);
+            if (form.ShowDialog(this) == DialogResult.OK)
+            {
+                LoadRedactionQueue(); // show the newly queued files
+                if (_loggingEnabled)
+                {
+                    Logger.LogInfo($"Redact Folder queued {form.EnqueuedCount} file(s).");
+                }
+            }
+        }
+
         private void redactPreviewToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using var picker = new OpenFileDialog
             {
                 Title = "Select a file to redact",
-                Filter = "Supported (*.txt;*.docx;*.pdf)|*.txt;*.docx;*.pdf|Text (*.txt)|*.txt|Word (*.docx)|*.docx|PDF (*.pdf)|*.pdf"
+                Filter = "Supported (*.txt;*.docx;*.pdf;*.rtf;*.eml;*.msg)|*.txt;*.docx;*.pdf;*.rtf;*.eml;*.msg|Text (*.txt)|*.txt|Rich Text (*.rtf)|*.rtf|Word (*.docx)|*.docx|PDF (*.pdf)|*.pdf|Email (*.eml;*.msg)|*.eml;*.msg"
             };
             if (picker.ShowDialog(this) != DialogResult.OK)
             {
@@ -1834,7 +2085,7 @@ namespace PhilterDesktop
                 using var preview = new PdfRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
                 if (preview.ShowDialog(this) == DialogResult.OK)
                 {
-                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList());
+                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList(), preview.RedactionDurationMs);
                 }
             }
             else if (source.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
@@ -1842,7 +2093,16 @@ namespace PhilterDesktop
                 using var preview = new WordRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
                 if (preview.ShowDialog(this) == DialogResult.OK)
                 {
-                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList());
+                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList(), preview.RedactionDurationMs);
+                }
+            }
+            else if (source.EndsWith(".eml", StringComparison.OrdinalIgnoreCase) ||
+                     source.EndsWith(".msg", StringComparison.OrdinalIgnoreCase))
+            {
+                using var preview = new EmailRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
+                if (preview.ShowDialog(this) == DialogResult.OK)
+                {
+                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList(), preview.RedactionDurationMs);
                 }
             }
             else
@@ -1850,12 +2110,12 @@ namespace PhilterDesktop
                 using var preview = new TextRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
                 if (preview.ShowDialog(this) == DialogResult.OK)
                 {
-                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList());
+                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList(), preview.RedactionDurationMs);
                 }
             }
         }
 
-        private void RecordCompletedRedaction(string source, string outputPath, string policy, string context, List<RedactionSpanEntity> spans)
+        private void RecordCompletedRedaction(string source, string outputPath, string policy, string context, List<RedactionSpanEntity> spans, long durationMs = 0)
         {
             var entity = new RedactionQueueEntity
             {
@@ -1865,9 +2125,19 @@ namespace PhilterDesktop
                 Status = "Completed"
             };
             _redactionQueueRepository.Insert(entity);
-            SaveRedactionVersion(entity, outputPath, spans);
+            SaveRedactionVersion(entity, outputPath, spans, durationMs);
             RememberLastUsed(policy, context, Path.GetDirectoryName(outputPath));
             LoadRedactionQueue();
+
+            // Self-check the output for residual PII when the setting is on. Show the result only when
+            // something remains (a clean pass shouldn't add a click to the careful preview workflow).
+            SettingsEntity verifySettings = _settingsRepository.GetSettings();
+            if (verifySettings.VerifyAfterRedaction)
+            {
+                RunAndShowVerification(this, entity.Id, quietWhenClean: true, broadPolicy: verifySettings.VerificationUseBroadPolicy);
+            }
+
+            // A report is available on demand by right-clicking the completed item; don't prompt here.
         }
 
         // Persists the most recently used policy/context and save folder so they're pre-selected next
@@ -1909,7 +2179,7 @@ namespace PhilterDesktop
                 }
 
                 var settings = _settingsRepository.GetSettings();
-                var filterService = new FilterService();
+                FilterService filterService = SharedFilterService.Instance; // shared so the name model loads once
 
                 foreach (var entity in pendingEntities)
                 {
@@ -1920,14 +2190,16 @@ namespace PhilterDesktop
 
                     if (result.Success)
                     {
-                        SaveRedactionVersion(entity, result.OutputPath!, result.Spans.ToList());
+                        SaveRedactionVersion(entity, result.OutputPath!, result.Spans.ToList(), result.DurationMs);
                         entity.ErrorMessage = string.Empty; // clear any prior failure reason
+                        ApplyVerificationFields(entity, result.Verification);
                         UpdateEntityStatus(entity, "Completed");
                         QueueNotification(new WatchedFileProcessedEventArgs
                         {
                             InputPath = entity.Name,
                             OutputPath = result.OutputPath,
-                            Success = true
+                            Success = true,
+                            VerificationWarning = ResidualWarning(result.Verification)
                         });
 
                         if (_loggingEnabled)
@@ -2011,8 +2283,15 @@ namespace PhilterDesktop
                 item.SubItems.Add(entity.Status);
                 item.SubItems.Add(entity.Policy);
                 item.SubItems.Add(entity.Context);
+                ListViewItem.ListViewSubItem verification = item.SubItems.Add(VerificationDisplay(entity));
                 item.Tag = entity.Id;
                 item.ImageIndex = 0;
+                if (entity.VerificationStatus == "ResidualsFound")
+                {
+                    // Make a "needs review" result stand out without affecting the rest of the row.
+                    item.UseItemStyleForSubItems = false;
+                    verification.ForeColor = Color.FromArgb(0x8A, 0x1C, 0x1C);
+                }
                 if (!string.IsNullOrEmpty(entity.ErrorMessage))
                 {
                     item.ToolTipText = entity.ErrorMessage; // hover a failed row to see why

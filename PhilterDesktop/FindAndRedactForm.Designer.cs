@@ -54,6 +54,7 @@ namespace PhilterDesktop
             //
             // _source
             //
+            _source.AccessibleName = "Document to redact";
             _source.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             _source.Location = new Point(12, 33);
             _source.Name = "_source";

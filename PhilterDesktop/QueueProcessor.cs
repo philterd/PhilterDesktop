@@ -29,8 +29,15 @@ namespace PhilterDesktop
         public string? ErrorMessage { get; private init; }
         public Exception? Exception { get; private init; }
 
-        public static QueueRedactionResult Succeeded(string outputPath, IReadOnlyList<RedactionSpanEntity> spans) =>
-            new() { Success = true, OutputPath = outputPath, Spans = spans };
+        /// <summary>The verification pass result, when verification ran for this redaction; null otherwise.</summary>
+        public VerificationOutcome? Verification { get; init; }
+
+        /// <summary>End-to-end time, in milliseconds, taken to redact (and verify) this document.</summary>
+        public long DurationMs { get; init; }
+
+        public static QueueRedactionResult Succeeded(
+            string outputPath, IReadOnlyList<RedactionSpanEntity> spans, VerificationOutcome? verification = null, long durationMs = 0) =>
+            new() { Success = true, OutputPath = outputPath, Spans = spans, Verification = verification, DurationMs = durationMs };
 
         public static QueueRedactionResult Failed(string message, Exception? exception = null) =>
             new() { Success = false, ErrorMessage = message, Exception = exception };
@@ -62,13 +69,35 @@ namespace PhilterDesktop
 
             try
             {
+                // Time the whole operation end-to-end (redact + verify) for this file.
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
                 var policy = PolicySerializer.DeserializeFromJson(policyEntity.Json);
                 GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
                 string outputPath = RedactionService.GetOutputPath(entity.Name, settings);
                 List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(
                     entity.Name, outputPath, policy, entity.Context, filterService, entity.Highlight,
-                    fullyRedactedColumns: entity.FullyRedactedColumns);
-                return QueueRedactionResult.Succeeded(outputPath, spans);
+                    fullyRedactedColumns: entity.FullyRedactedColumns,
+                    wordScrub: DocumentMetadata.OptionsFor(settings));
+
+                // Self-check: re-scan the written output for residual PII (the false-negative case).
+                // Optionally with a broad "all detectors on" policy to catch types the redaction policy
+                // didn't cover; otherwise the same policy that performed the redaction.
+                VerificationOutcome? verification = null;
+                if (settings.VerifyAfterRedaction)
+                {
+                    Phileas.Policy.Policy verifyPolicy = policy;
+                    if (settings.VerificationUseBroadPolicy)
+                    {
+                        verifyPolicy = VerificationPolicy.Broad();
+                        GlobalLists.Apply(verifyPolicy, settings);
+                    }
+                    verification = await Task.Run(() =>
+                        RedactionVerifier.Verify(outputPath, verifyPolicy, entity.Context, filterService));
+                }
+
+                stopwatch.Stop();
+                return QueueRedactionResult.Succeeded(outputPath, spans, verification, stopwatch.ElapsedMilliseconds);
             }
             catch (Exception ex)
             {

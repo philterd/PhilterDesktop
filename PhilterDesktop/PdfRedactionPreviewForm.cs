@@ -33,7 +33,7 @@ namespace PhilterDesktop
         private readonly PolicyRepository _policies = null!;
         private readonly ContextRepository _contexts = null!;
         private readonly SettingsEntity _settings = new();
-        private readonly FilterService _filterService = new();
+        private readonly FilterService _filterService = SharedFilterService.Instance;
 
         private byte[] _originalBytes = Array.Empty<byte>();
         private string? _tempOutputPath;
@@ -45,6 +45,8 @@ namespace PhilterDesktop
         public string SelectedPolicy { get; private set; } = string.Empty;
         public string SelectedContext { get; private set; } = string.Empty;
         public IReadOnlyList<RedactionSpanEntity> CapturedSpans => _spans;
+        /// <summary>Time taken to produce the redacted PDF, in milliseconds.</summary>
+        public long RedactionDurationMs { get; private set; }
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public PdfRedactionPreviewForm()
@@ -132,7 +134,10 @@ namespace PhilterDesktop
                 GlobalLists.Apply(policy, _settings); // global always-redact/ignore on top of every policy
 
                 _tempOutputPath ??= Path.Combine(Path.GetTempPath(), "philter-preview-" + Guid.NewGuid().ToString("N") + ".pdf");
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 _spans = await RedactionService.RedactFileAsync(_sourcePath, _tempOutputPath, policy, _contextCombo.Text, _filterService);
+                stopwatch.Stop();
+                RedactionDurationMs = stopwatch.ElapsedMilliseconds;
 
                 byte[] redacted = await File.ReadAllBytesAsync(_tempOutputPath);
                 _view.SetDocuments(_originalBytes, redacted, "Original", "Redacted (preview)");

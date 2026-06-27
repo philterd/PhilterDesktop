@@ -26,12 +26,16 @@ using PhileasPolicy = Phileas.Policy.Policy;
 namespace PhilterDesktop
 {
     /// <summary>
-    /// Prototype "preview-first" redaction workspace for a single <c>.txt</c> document: pick a policy
-    /// and context, see a live diff of how the redacted file will look, tweak the redactions, and only
-    /// then write the output file. Detected redactions refresh when the policy/context changes.
+    /// "Preview-first" redaction workspace for a single plain-text (<c>.txt</c>) or Rich Text
+    /// (<c>.rtf</c>) document: pick a policy and context, see a live diff of how the redacted file will
+    /// look, tweak the redactions, and only then write the output. For RTF the diff is over the visible
+    /// text and the save is format-preserving (so the .rtf keeps its formatting). Detected redactions
+    /// refresh when the policy/context changes.
     /// </summary>
     public partial class TextRedactionPreviewForm : Form
     {
+        private bool IsRtf => _sourcePath.EndsWith(".rtf", StringComparison.OrdinalIgnoreCase);
+
         private static readonly Color DeletedColor = Color.FromArgb(255, 224, 224);
         private static readonly Color InsertedColor = Color.FromArgb(224, 255, 224);
         private static readonly Color ModifiedColor = Color.FromArgb(255, 246, 213);
@@ -41,7 +45,7 @@ namespace PhilterDesktop
         private readonly PolicyRepository _policies = null!;
         private readonly ContextRepository _contexts = null!;
         private readonly SettingsEntity _settings = new();
-        private readonly FilterService _filterService = new();
+        private readonly FilterService _filterService = SharedFilterService.Instance;
 
         private string _originalText = string.Empty;
         private List<RedactionSpanEntity> _spans = new();
@@ -52,6 +56,8 @@ namespace PhilterDesktop
         public string SelectedPolicy { get; private set; } = string.Empty;
         public string SelectedContext { get; private set; } = string.Empty;
         public IReadOnlyList<RedactionSpanEntity> CapturedSpans => _spans;
+        /// <summary>Time taken to write the redacted output on save, in milliseconds.</summary>
+        public long RedactionDurationMs { get; private set; }
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public TextRedactionPreviewForm()
@@ -76,7 +82,8 @@ namespace PhilterDesktop
             _loading = true;
             try
             {
-                _originalText = File.ReadAllText(_sourcePath);
+                _originalText = IsRtf ? RtfRedactor.ReadText(_sourcePath) : File.ReadAllText(_sourcePath);
+                _originalBox.Text = _originalText; // selectable copy for manual "redact selection"
                 LoadNames(_policyCombo, _policies.GetAll().Select(p => p.Name), _settings.LastPolicy);
                 LoadNames(_contextCombo, _contexts.GetAll().Select(c => c.Name), _settings.LastContext);
             }
@@ -221,6 +228,27 @@ namespace PhilterDesktop
             _remove.Enabled = hasSel;
         }
 
+        // Manual redaction: turn the reviewer's text selection (in the "Select text to redact" tab) into
+        // a user-added span over that character range. Offsets index directly into the original text.
+        private void OnRedactSelection(object? sender, EventArgs e)
+        {
+            RedactionSpanEntity? span = ManualRedaction.FromSelection(
+                _originalText, _originalBox.SelectionStart, _originalBox.SelectionLength);
+            if (span is null)
+            {
+                _leftTabs.SelectedTab = _selectTab;
+                _originalBox.Focus();
+                MessageBox.Show(this,
+                    "Select the text you want to redact in the \"Select text to redact\" tab, then click \"Redact selection\".",
+                    "Redact (Preview)", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            _spans.Add(span);
+            _spans = _spans.OrderBy(s => s.CharacterStart).ToList();
+            RefreshAll();
+        }
+
         private void OnAdd(object? sender, EventArgs e)
         {
             using var dlg = new SpanEditForm("Add Redaction", SpanPositionKind.TextOffset,
@@ -276,8 +304,8 @@ namespace PhilterDesktop
             using var dialog = new SaveFileDialog
             {
                 Title = "Save redacted file",
-                Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*",
-                DefaultExt = "txt",
+                Filter = IsRtf ? "Rich Text (*.rtf)|*.rtf|All files (*.*)|*.*" : "Text files (*.txt)|*.txt|All files (*.*)|*.*",
+                DefaultExt = IsRtf ? "rtf" : "txt",
                 AddExtension = true,
                 OverwritePrompt = true,
                 FileName = Path.GetFileName(suggested),
@@ -291,7 +319,18 @@ namespace PhilterDesktop
             string output = dialog.FileName;
             try
             {
-                File.WriteAllText(output, CurrentRedactedText());
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                if (IsRtf)
+                {
+                    // Re-apply the (possibly edited) spans to the source so the .rtf keeps its formatting.
+                    RtfRedactor.ApplySpans(_sourcePath, output, _spans);
+                }
+                else
+                {
+                    File.WriteAllText(output, CurrentRedactedText());
+                }
+                stopwatch.Stop();
+                RedactionDurationMs = stopwatch.ElapsedMilliseconds;
             }
             catch (Exception ex)
             {

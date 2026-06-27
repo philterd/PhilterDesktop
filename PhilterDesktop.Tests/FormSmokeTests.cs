@@ -66,6 +66,13 @@ namespace PhilterDesktop.Tests
             });
         }
 
+        // The app's primary window. Uses the internal ctor that takes a database instance so the test
+        // never touches the real (encrypted, PII-bearing) user database. Guards the most important form
+        // against initialization/theming/tray-setup regressions.
+        [Fact]
+        public void MainForm_Constructs() =>
+            ConstructWithDb(db => new MainForm(db, startMinimized: false));
+
         [Fact]
         public void PolicyEditorForm_Constructs() =>
             ConstructWithDb(db => new PolicyEditorForm(new PolicyRepository(db)));
@@ -146,6 +153,14 @@ namespace PhilterDesktop.Tests
                 new RedactionQueueRepository(db)));
 
         [Fact]
+        public void FolderRedactForm_Constructs() =>
+            ConstructWithDb(db => new FolderRedactForm(
+                new PolicyRepository(db),
+                new ContextRepository(db),
+                new RedactionQueueRepository(db),
+                new SettingsRepository(db)));
+
+        [Fact]
         public void SpanEditForm_Constructs() => Sta(() =>
         {
             using var f = new SpanEditForm(
@@ -153,6 +168,13 @@ namespace PhilterDesktop.Tests
                 SpanPositionKind.TextOffset,
                 new RedactionSpanEntity { UserAdded = true, CharacterStart = 0, CharacterEnd = 5, Replacement = "[X]" },
                 positionEditable: true);
+            _ = f.Handle;
+        });
+
+        [Fact]
+        public void VerificationResultForm_Constructs() => Sta(() =>
+        {
+            using var f = new VerificationResultForm();
             _ = f.Handle;
         });
 
@@ -216,6 +238,11 @@ namespace PhilterDesktop.Tests
         public void WordRedactionPreviewForm_Constructs() =>
             ConstructWithDb(db => new WordRedactionPreviewForm(
                 @"C:\docs\note.docx", new PolicyRepository(db), new ContextRepository(db), new SettingsEntity()));
+
+        [Fact]
+        public void EmailRedactionPreviewForm_Constructs() =>
+            ConstructWithDb(db => new EmailRedactionPreviewForm(
+                @"C:\docs\note.eml", new PolicyRepository(db), new ContextRepository(db), new SettingsEntity()));
 
         [Fact]
         public void CreateContextDialog_Constructs() => Sta(() => { using var f = new CreateContextDialog(); _ = f.Handle; });

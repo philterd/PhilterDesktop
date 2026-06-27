@@ -39,6 +39,7 @@ namespace PhilterDesktop
         private List<RedactionSpanEntity> _working = new();
         private RedactionVersionEntity? _selectedVersion;
         private readonly string _redactedSuffix = RedactionService.DefaultSuffix;
+        private readonly WordScrubOptions _wordScrub = WordScrubOptions.None;
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public ModifyRedactionForm()
@@ -53,7 +54,8 @@ namespace PhilterDesktop
             RedactionVersionRepository versions,
             RedactionSpanRepository spans,
             PolicyRepository policies,
-            string? redactedSuffix = null)
+            string? redactedSuffix = null,
+            WordScrubOptions wordScrub = WordScrubOptions.None)
             : this()
         {
             _documentId = documentId;
@@ -61,6 +63,7 @@ namespace PhilterDesktop
             _spans = spans;
             _policies = policies;
             _redactedSuffix = RedactionService.NormalizeSuffix(redactedSuffix);
+            _wordScrub = wordScrub;
 
             ReloadVersions(selectLatest: true);
         }
@@ -351,7 +354,8 @@ namespace PhilterDesktop
             _redact.Enabled = false;
             try
             {
-                await RedactionService.ApplySpansAsync(version.SourcePath, output, version.FileType, version.Highlight, _working, policy);
+                await RedactionService.ApplySpansAsync(version.SourcePath, output, version.FileType, version.Highlight, _working, policy,
+                    wordScrub: _wordScrub);
             }
             catch (Exception ex)
             {

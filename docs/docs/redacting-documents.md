@@ -23,6 +23,12 @@ Philter Desktop works with these document types:
 - **Email** — files ending in `.eml` (the standard email format used by most mail programs) and
   `.msg` (the format Microsoft Outlook uses when you save or drag out a message).
 
+!!! note "Password-protected Word and Excel files"
+    A Word or Excel file that has been **protected with a password** (encrypted) cannot be opened for
+    redaction. If you try, Philter Desktop tells you so clearly. To redact one, open it in Word or
+    Excel, remove the password (**File → Info → Protect Document / Protect Workbook**), save it, and
+    then redact the unprotected copy.
+
 > **One important thing about PDFs.** When Philter Desktop redacts a PDF, it does something
 > deliberately thorough: it turns each page into a flattened **picture** of the page with the
 > sensitive information painted over. The benefit is that the removed information is *truly gone* —
@@ -76,6 +82,12 @@ addresses, account numbers) are still caught reliably. But something like a lone
 — "April" — has nothing around it to signal that it's a name, so automatic name detection is **much
 weaker** on bare cells than on ordinary paragraphs of writing.
 
+There's also a point about **numbers**: a value a spreadsheet stores as a *number* — say an account
+number or an ID typed as plain digits — is **not scanned** for sensitive information, because Philter
+Desktop leaves numbers exactly as they are (so totals and calculations aren't disturbed). Sensitive
+values that look like text, such as an SSN written with dashes (`123-45-6789`), are still detected. If
+a column holds sensitive **numeric** IDs, remove it with whole-column redaction, described next.
+
 That's why spreadsheets have an extra tool: **whole-column redaction**. Use the **Redact
 Spreadsheet…** action — on the **Redact** button's arrow menu, or by right-clicking a spreadsheet in
 the queue. It opens a small window where you choose the **policy** and **context** as usual, and also
@@ -104,8 +116,9 @@ There are two ways to add files:
   This is the way to go when you want to pick specific rules for a particular batch of documents.
   The **Redact** button also has a small **arrow** beside it; clicking the arrow opens a short menu
   with alternatives — **Redact with Preview…** (see the result before saving), **Find & Redact…**
-  (remove specific words from one file), and **Redact Spreadsheet…** (redact an `.xlsx`/`.csv` with
-  optional whole-column removal). These are described later on this page.
+  (remove specific words from one file), **Redact Spreadsheet…** (redact an `.xlsx`/`.csv` with
+  optional whole-column removal), and **Redact Folder…** (add every supported file in a folder at
+  once). These are described later on this page.
 - **Drag and drop.** Drag one or more files from a Windows folder and drop them straight onto the
   Philter Desktop window. Files added this way use the **default** policy and the **default** context.
   This is the quickest way when the standard rules are fine.
@@ -135,6 +148,45 @@ by default the label is `_redacted-draft`, so `report.docx` becomes `report_reda
 and it's saved to the location you've chosen in [Settings](settings.md). The word "draft" in that
 name is a gentle reminder that you should still review the file before relying on it.
 
+For Word (`.docx`) files, Philter Desktop also cleans up hidden information in the redacted copy by
+default — the document's **metadata** (author, company, title, keywords, custom properties), reviewer
+**comments**, **tracked changes**, and **hidden text** — so a "redacted" file doesn't quietly leak
+through any of those channels. You can control each of these on the
+[Settings → Microsoft Word](settings.md#microsoft-word-tab) tab.
+
+## Redact a whole folder at once
+
+When you have a folder full of documents — a discovery dump, a case folder, a batch of exports — you
+don't have to add the files one by one. Click the small **arrow** beside the **Redact** button and
+choose **Redact Folder…**.
+
+In the dialog:
+
+1. **Choose the folder** with **Browse…** (or type/paste its path).
+2. Tick **Include files in subfolders** if you also want the documents inside any folders within it.
+3. Pick the **policy** and the **context** to use for the whole batch.
+4. Optionally tick **Highlight redactions in Word (.docx) documents**.
+
+As soon as you choose a folder, Philter Desktop scans it and tells you exactly what it found — for
+example, *"12 files will be added to the redaction queue (5 .pdf, 4 .docx, 3 .txt)."* — so you can
+sanity-check the batch before committing. Click **Add to Queue** and every supported file is added to
+the redaction queue and cleaned up the same way as any other document, with its own **Pending →
+Processing → Completed** (or **Failed**) status. Nothing about a watched folder is set up, and the
+folder is not monitored afterward — this is a one-time action.
+
+A few things worth knowing:
+
+- **Only supported file types are picked up.** Files Philter Desktop can't redact (images, archives,
+  and so on) are simply skipped, and the count tells you how many files will actually be processed.
+- **Previous results are left alone.** Files that already look like a redacted copy (their name ends
+  with your redacted-file label, `_redacted-draft` by default) are skipped, so running **Redact
+  Folder…** again won't re-redact the drafts it made last time.
+- **Per-file results are visible.** If one file can't be cleaned up (for example, a password-protected
+  Word document), that single row shows **Failed** with the reason — the rest of the batch still
+  completes.
+- **Your originals are never changed.** As always, each cleaned-up copy is written to a new, separate
+  file (see [What happens after you add a document](#what-happens-after-you-add-a-document) above).
+
 ## Redact with Preview: see the result before you commit
 
 Sometimes you'd rather **look at the result first** and only save it once you're happy. That's what
@@ -142,20 +194,42 @@ Sometimes you'd rather **look at the result first** and only save it once you're
 
 Start it from the **Redact** button on the toolbar: click the small **arrow** beside it and choose
 **Redact with Preview…** (or right-click a document and choose the same). It works with `.txt`,
-`.docx`, and `.pdf` files. (Email files — `.eml` and `.msg` — don't have a preview yet; redact them
-the ordinary way and review the cleaned-up copy afterward.) You pick the
-file, choose a **policy** and a **context**, and Philter Desktop shows you **what the cleaned-up file
-will look like before a single thing is written to disk**:
+`.rtf`, `.docx`, `.pdf`, and email (`.eml` and `.msg`) files. (Spreadsheets — `.xlsx` and `.csv` —
+don't have a preview yet; redact them the ordinary way and review the cleaned-up copy afterward.)
+You pick the file, choose a **policy** and a **context**, and Philter Desktop shows you **what the
+cleaned-up file will look like before a single thing is written to disk**:
 
-- **Plain text (`.txt`)** — a live, side-by-side comparison of the original and the cleaned-up
-  result, plus an editable list of every redaction. You can add, change, or remove individual
-  redactions right there before saving.
+- **Plain text (`.txt`) and rich text (`.rtf`)** — a live, side-by-side comparison of the original
+  and the cleaned-up result, plus an editable list of every redaction. You can add, change, or remove
+  individual redactions right there before saving. (Rich-text formatting is preserved in the saved
+  file; the preview compares the visible text.)
+    - **Redact something the detector missed by selecting it.** Switch to the **Select text to redact**
+      tab, highlight the words you want removed, and click **Redact selection**. The redaction is added
+      to the list (marked **Added**), shows up in the before/after comparison, and is applied when you
+      save — and it appears in the [redaction report](#generating-a-redaction-report-a-shareable-certificate)
+      as a user-added redaction. You can remove it again from the list like any other. (Prefer typing
+      exact positions? **Add…** still lets you enter a start and end offset by hand.)
 - **Microsoft Word (`.docx`)** — a paragraph-by-paragraph comparison showing what will be removed,
   with an editable list of redactions and an optional **highlight** setting (which marks the
   replacements so they're easy to spot during review). This preview shows you the redacted **text**;
   it is not a full picture-perfect rendering of the finished Word page.
+    - **Redact something the detector missed by selecting it.** Switch to the **Select text to redact**
+      tab, highlight the words you want removed, and click **Redact selection**. The redaction joins the
+      list (marked **Added**), appears in the comparison and the [report](#generating-a-redaction-report-a-shareable-certificate)
+      as a user-added redaction, and can be removed again like any other. A selection that crosses
+      paragraphs is split into one redaction per paragraph. (**Add…** still lets you type an exact
+      paragraph and offset by hand.)
 - **PDF (`.pdf`)** — the cleaned-up PDF shown side by side with the original, with zoom controls and
   scrolling that keeps both sides lined up.
+- **Email (`.eml` and `.msg`)** — a field-by-field comparison (subject, addresses, and body) showing
+  what will be removed, with an editable list of redactions. Each redaction is anchored to a specific
+  field; you can change its replacement or remove it. Outlook `.msg` files are saved as standard `.eml`.
+    - **Redact something the detector missed in the body by selecting it.** Switch to the **Select text
+      to redact** tab (which shows the message body), highlight the words you want removed, and click
+      **Redact selection**. It joins the list (marked **Added**) and the
+      [report](#generating-a-redaction-report-a-shareable-certificate) as a user-added redaction, and
+      can be removed again. Manual selection applies to **body** text; the subject and address headers
+      aren't hand-edited (their detected matches are still removed automatically).
 
 If you change the policy or the context while previewing, Philter Desktop re-checks the document and
 updates the preview. **Nothing is saved until you click "Save Redacted File"**, at which point you
@@ -201,7 +275,8 @@ Once a document shows **Completed**, you have several options:
     - **Open original file** — open the untouched original.
     - **Open containing folder** — show the cleaned-up file selected in File Explorer.
     - **View Details…** — see a summary of that document: the original file name, the cleaned-up file
-      name, the policy and context used, how many redactions were made, and when it was done.
+      name, the policy and context used, how many redactions were made, when it was done, and how long
+      the redaction took ("Time to redact").
     - **View Diff…** — see a precise before-and-after comparison (explained below).
     - **Modify Redaction…** — review and adjust exactly what was removed (explained below).
     - **Export Explanation (JSON)…** — save a detailed report of *why* each item was removed
@@ -229,8 +304,8 @@ When you have many documents in the queue, two tools help you find the one you w
   typed — for example, type part of a file name, or type `failed` to see only the documents that
   didn't finish. The status bar shows how many documents are being shown (for example, *Showing 3 of
   40 documents*). Clear the box (or press **Esc** while typing in it) to see the whole queue again.
-- **Sorting.** Click any column heading — **File Name**, **Status**, **Policy**, or **Context** — to
-  sort the list by that column. Click the same heading again to reverse the order. A small arrow on
+- **Sorting.** Click any column heading — **File Name**, **Status**, **Policy**, **Context**, or
+  **Verification** — to sort the list by that column. Click the same heading again to reverse the order. A small arrow on
   the heading shows which column is sorted and in which direction. (Sorting by **Status** groups the
   documents in the natural order of work: pending, then processing, then completed, then failed.)
 
@@ -357,7 +432,80 @@ marked as user-added.)
     document**. Philter Desktop reminds you of this before it saves. Store it somewhere secure, treat
     it with the same care as the original, and **never** hand it out in place of the redacted copy.
 
-## For advanced users and IT: redacting from a command line
+## Checking the result for anything missed (Verification)
+
+The worst outcome for a redaction tool is a **false negative** — sensitive text the policy missed that
+ends up in the "clean" copy. To guard against that, Philter Desktop can **verify its own work**: after
+redacting, it re-opens the **finished output file** and runs the detector over it again, looking for
+anything that still matches.
+
+This runs **automatically** after each redaction (you can turn it off in
+[Settings → Security](settings.md)), and you can run it any time by right-clicking a **Completed**
+document and choosing **Verify Redaction**.
+
+- If nothing is found, Philter Desktop tells you the output **passed verification**.
+- If something is found, it's surfaced **loudly**: a count of how many items may remain, plus a list
+  showing each item's **type, the text that's still present, and where it is**. Fix it by adjusting the
+  policy and redacting again, or by using **Modify Redaction**, before you share the file.
+
+### Two ways to scan: same policy vs. broad policy
+
+When you right-click a finished document, **Verify Redaction** offers two choices:
+
+- **With same policy** — re-scans using the **same policy that redacted the document**. This is the
+  best check that the redaction *actually took effect*: it confirms that everything the policy was
+  meant to remove is genuinely gone from the saved file. (It can't find a *kind* of information the
+  policy never looked for.)
+- **With broad policy** — re-scans with **every built-in detector turned on**. This can surface kinds
+  of information your redaction policy didn't cover (for example, a phone number when your policy only
+  removed email addresses). Because it looks for everything, it may also flag things you **chose not to
+  redact** — so treat its findings as prompts to review, not as mistakes.
+
+The automatic check after each redaction uses whichever of these you select in
+[Settings → Security](settings.md) (it uses the same policy by default).
+
+### Seeing a document's verification result later
+
+Each document's most recent result is remembered and shown in the **Verification** column of the queue —
+**Clean**, **N may remain** (in red), **Check failed**, or **Not checked** — so you can tell at a glance
+which finished documents still need attention. The same result, with the time it was checked, also
+appears in **View Details** (right-click a document). Running **Verify Redaction** again refreshes it.
+
+Verification reads the **written output**, not an in-memory copy, so it also catches any problem in how
+a particular format was saved. Like everything else in Philter Desktop, it runs **entirely on your
+device** — nothing is sent anywhere. The result is remembered with the document and is included in the
+redaction report below.
+
+!!! note "Verification is a safety net, not a guarantee"
+    A "passed" result means nothing the **current policy** can detect remains. It can't prove a document
+    is free of every possible identifier. Always give an important document a human review as well.
+
+## Generating a redaction report (a shareable certificate)
+
+When you need to **prove what was done** — for a case file, a client, or a compliance record — you can
+generate a **redaction report**. Right-click a **Completed** document and choose **Generate Report…**.
+
+Philter Desktop first asks whether to include a **detailed per-redaction table**, then saves the
+report as a **PDF** and opens it. The report summarizes the redaction:
+
+- The **source and redacted file names**, and a **SHA-256 fingerprint** of each file (so the report is
+  tied to exactly those documents and any later change is detectable).
+- The **policy** and **context** used, the **Philter Desktop version**, and the **date and time**.
+- A **count of what was removed, by type** — for example, *7 Email Address, 3 Ssn* — and the total.
+- The **verification result** (when verification has run): whether the output passed, or how many items
+  may remain.
+- If you chose the detailed table: a row per redaction with its **type, location, and replacement**.
+
+The report is saved as a new file next to your other output; your original and redacted files are not
+touched.
+
+!!! tip "The report is safe to share — it contains no original text"
+    Unlike the explanation file below, a redaction report **never includes the original, un-redacted
+    text** (not even in the detailed table — that shows only the type, location, and replacement). That
+    makes the report safe to file alongside, or hand out with, the redacted copy. When you need the
+    actual detected text for your own secure records, use **Export Explanation (JSON)** instead.
+
+## Exporting an explanation of a redaction (JSON)
 
 > **This section is optional and aimed at technical users.** If phrases like "command prompt" or
 > "script" aren't part of your day, you can skip it entirely — everything Philter Desktop does is

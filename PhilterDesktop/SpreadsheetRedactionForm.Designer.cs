@@ -41,6 +41,9 @@ namespace PhilterDesktop
             _contextLabel = new Label();
             _context = new ComboBox();
             _columnsLabel = new Label();
+            _selectAll = new LinkLabel();
+            _clearAll = new LinkLabel();
+            _selectedCount = new Label();
             _columns = new CheckedListBox();
             _redact = new Button();
             _close = new Button();
@@ -57,6 +60,7 @@ namespace PhilterDesktop
             // 
             // _source
             // 
+            _source.AccessibleName = "Spreadsheet to redact";
             _source.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             _source.Location = new Point(12, 33);
             _source.Name = "_source";
@@ -114,29 +118,63 @@ namespace PhilterDesktop
             _columnsLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             _columnsLabel.Location = new Point(12, 108);
             _columnsLabel.Name = "_columnsLabel";
-            _columnsLabel.Size = new Size(536, 38);
+            _columnsLabel.Size = new Size(536, 54);
             _columnsLabel.TabIndex = 7;
-            _columnsLabel.Text = "Sensitive information is removed from every cell. Optionally tick a column below to remove its entire contents (useful for name or ID columns the detector may miss):";
-            // 
+            _columnsLabel.Text = "Sensitive information is removed from each text cell (cells stored as numbers are not scanned). Tick a column below to remove its entire contents, useful for name, ID, or number columns:";
+            //
+            // _selectAll
+            //
+            _selectAll.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            _selectAll.AutoSize = true;
+            _selectAll.Location = new Point(12, 168);
+            _selectAll.Name = "_selectAll";
+            _selectAll.TabIndex = 8;
+            _selectAll.TabStop = true;
+            _selectAll.Text = "Select all";
+            //
+            // _clearAll
+            //
+            _clearAll.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            _clearAll.AutoSize = true;
+            _clearAll.Location = new Point(82, 168);
+            _clearAll.Name = "_clearAll";
+            _clearAll.TabIndex = 9;
+            _clearAll.TabStop = true;
+            _clearAll.Text = "Clear";
+            //
+            // _selectedCount
+            //
+            _selectedCount.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            _selectedCount.AutoSize = true;
+            _selectedCount.ForeColor = SystemColors.GrayText;
+            _selectedCount.Location = new Point(470, 168);
+            _selectedCount.Name = "_selectedCount";
+            _selectedCount.Size = new Size(78, 15);
+            _selectedCount.TabIndex = 10;
+            _selectedCount.Text = "0 selected";
+            _selectedCount.TextAlign = ContentAlignment.MiddleRight;
+            //
             // _columns
-            // 
+            //
+            _columns.AccessibleName = "Columns to redact entirely";
             _columns.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             _columns.CheckOnClick = true;
             _columns.FormattingEnabled = true;
             _columns.IntegralHeight = false;
-            _columns.Location = new Point(12, 150);
+            _columns.Location = new Point(12, 194);
             _columns.Name = "_columns";
-            _columns.Size = new Size(536, 282);
-            _columns.TabIndex = 8;
+            _columns.Size = new Size(536, 238);
+            _columns.TabIndex = 11;
             // 
             // _redact
             // 
             _redact.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            _redact.Location = new Point(382, 444);
+            _redact.Enabled = false;
+            _redact.Location = new Point(362, 444);
             _redact.Name = "_redact";
-            _redact.Size = new Size(80, 26);
-            _redact.TabIndex = 9;
-            _redact.Text = "Redact";
+            _redact.Size = new Size(100, 26);
+            _redact.TabIndex = 12;
+            _redact.Text = "Add to Queue";
             _redact.UseVisualStyleBackColor = true;
             _redact.Click += OnRedact;
             // 
@@ -147,7 +185,7 @@ namespace PhilterDesktop
             _close.Location = new Point(468, 444);
             _close.Name = "_close";
             _close.Size = new Size(80, 26);
-            _close.TabIndex = 10;
+            _close.TabIndex = 13;
             _close.Text = "Close";
             _close.UseVisualStyleBackColor = true;
             // 
@@ -166,6 +204,9 @@ namespace PhilterDesktop
             Controls.Add(_contextLabel);
             Controls.Add(_context);
             Controls.Add(_columnsLabel);
+            Controls.Add(_selectAll);
+            Controls.Add(_clearAll);
+            Controls.Add(_selectedCount);
             Controls.Add(_columns);
             Controls.Add(_redact);
             Controls.Add(_close);
@@ -190,6 +231,9 @@ namespace PhilterDesktop
         private Label _contextLabel;
         private ComboBox _context;
         private Label _columnsLabel;
+        private LinkLabel _selectAll;
+        private LinkLabel _clearAll;
+        private Label _selectedCount;
         private CheckedListBox _columns;
         private Button _redact;
         private Button _close;

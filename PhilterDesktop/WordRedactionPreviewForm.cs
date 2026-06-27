@@ -40,7 +40,7 @@ namespace PhilterDesktop
         private readonly PolicyRepository _policies = null!;
         private readonly ContextRepository _contexts = null!;
         private readonly SettingsEntity _settings = new();
-        private readonly FilterService _filterService = new();
+        private readonly FilterService _filterService = SharedFilterService.Instance;
 
         private string[] _paragraphs = Array.Empty<string>();
         private List<RedactionSpanEntity> _spans = new();
@@ -50,6 +50,8 @@ namespace PhilterDesktop
         public string SelectedPolicy { get; private set; } = string.Empty;
         public string SelectedContext { get; private set; } = string.Empty;
         public IReadOnlyList<RedactionSpanEntity> CapturedSpans => _spans;
+        /// <summary>Time taken to write the redacted output on save, in milliseconds.</summary>
+        public long RedactionDurationMs { get; private set; }
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public WordRedactionPreviewForm()
@@ -75,6 +77,7 @@ namespace PhilterDesktop
             try
             {
                 _paragraphs = WordDocumentRedactor.ReadParagraphs(_sourcePath).ToArray();
+                _originalBox.Text = string.Join(Environment.NewLine, _paragraphs); // selectable copy for manual redaction
                 LoadNames(_policyCombo, _policies.GetAll().Select(p => p.Name), _settings.LastPolicy);
                 LoadNames(_contextCombo, _contexts.GetAll().Select(c => c.Name), _settings.LastContext);
             }
@@ -216,6 +219,27 @@ namespace PhilterDesktop
             _remove.Enabled = hasSel;
         }
 
+        // Manual redaction: turn the reviewer's selection (in the "Select text to redact" tab) into
+        // user-added spans. Word redactions are per-paragraph, so a selection spanning paragraphs
+        // produces one span per paragraph. Environment.NewLine (2 chars) joins paragraphs in the box.
+        private void OnRedactSelection(object? sender, EventArgs e)
+        {
+            List<RedactionSpanEntity> added = ManualRedaction.FromParagraphSelection(
+                _paragraphs, _originalBox.SelectionStart, _originalBox.SelectionLength, Environment.NewLine.Length);
+            if (added.Count == 0)
+            {
+                _leftTabs.SelectedTab = _selectTab;
+                _originalBox.Focus();
+                MessageBox.Show(this,
+                    "Select the text you want to redact in the \"Select text to redact\" tab, then click \"Redact selection\".",
+                    "Redact (Preview)", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            _spans.AddRange(added);
+            RefreshAll();
+        }
+
         private void OnAdd(object? sender, EventArgs e)
         {
             using var dlg = new SpanEditForm("Add Redaction", SpanPositionKind.Paragraph,
@@ -289,7 +313,15 @@ namespace PhilterDesktop
             Cursor.Current = Cursors.WaitCursor;
             try
             {
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 WordDocumentRedactor.ApplySpans(_sourcePath, output, _spans, _highlight.Checked);
+                WordScrubOptions scrub = DocumentMetadata.OptionsFor(_settings);
+                if (scrub != WordScrubOptions.None)
+                {
+                    DocumentMetadata.ScrubDocx(output, scrub);
+                }
+                stopwatch.Stop();
+                RedactionDurationMs = stopwatch.ElapsedMilliseconds;
             }
             catch (Exception ex)
             {

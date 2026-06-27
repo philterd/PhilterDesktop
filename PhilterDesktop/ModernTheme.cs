@@ -114,6 +114,14 @@ namespace PhilterDesktop
             form.BackColor = Background;
             form.ForeColor = Text;
 
+            // Show the Philter icon in the title bar of every window (each form gets its own instance
+            // so disposing one form never affects another).
+            Icon? icon = CreateAppIcon();
+            if (icon is not null)
+            {
+                form.Icon = icon;
+            }
+
             // Immersive (dark) title bar once the native window exists.
             form.HandleCreated += (_, _) => ApplyTitleBar(form.Handle);
             if (form.IsHandleCreated)
@@ -122,6 +130,49 @@ namespace PhilterDesktop
             }
 
             ApplyToControls(form.Controls);
+        }
+
+        // The embedded application icon (PhilterDesktop.ico), loaded once. Loaded from a manifest
+        // resource rather than the running .exe so it is the Philter icon in the app, tests, and the
+        // screenshot harness alike.
+        private static readonly byte[]? AppIconBytes = LoadAppIconBytes();
+
+        private static byte[]? LoadAppIconBytes()
+        {
+            try
+            {
+                using System.IO.Stream? stream =
+                    typeof(ModernTheme).Assembly.GetManifestResourceStream("PhilterDesktop.AppIcon.ico");
+                if (stream is null)
+                {
+                    return null;
+                }
+                using var memory = new System.IO.MemoryStream();
+                stream.CopyTo(memory);
+                return memory.ToArray();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>A fresh app-icon instance for a form to own, or null if it couldn't be loaded.</summary>
+        private static Icon? CreateAppIcon()
+        {
+            if (AppIconBytes is null)
+            {
+                return null;
+            }
+            try
+            {
+                using var stream = new System.IO.MemoryStream(AppIconBytes);
+                return new Icon(stream);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static void ApplyTitleBar(IntPtr handle)

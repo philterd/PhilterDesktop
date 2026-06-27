@@ -40,6 +40,29 @@ namespace PhilterDesktop
             InitializeComponent();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_redact);
+
+            _selectAll.LinkClicked += (_, _) => SetAllColumns(true);
+            _clearAll.LinkClicked += (_, _) => SetAllColumns(false);
+            // ItemCheck fires before the state flips, so refresh the count after it settles.
+            _columns.ItemCheck += (_, _) => BeginInvoke(UpdateSelectedCount);
+        }
+
+        private void SetAllColumns(bool selected)
+        {
+            for (int i = 0; i < _columns.Items.Count; i++)
+            {
+                _columns.SetItemChecked(i, selected);
+            }
+            UpdateSelectedCount();
+        }
+
+        private void UpdateSelectedCount()
+        {
+            int n = _columns.CheckedIndices.Count;
+            _selectedCount.Text = $"{n} selected";
+            bool hasColumns = _columns.Items.Count > 0;
+            _selectAll.Enabled = hasColumns;
+            _clearAll.Enabled = hasColumns;
         }
 
         public SpreadsheetRedactionForm(
@@ -74,7 +97,11 @@ namespace PhilterDesktop
             {
                 LoadColumns(_source.Text);
             }
+            UpdateCanRedact();
         }
+
+        // The Redact button is only enabled once a real file is chosen.
+        private void UpdateCanRedact() => _redact.Enabled = File.Exists(_source.Text.Trim());
 
         private static void LoadNames(ComboBox combo, IEnumerable<string> names, string? preferred)
         {
@@ -98,6 +125,7 @@ namespace PhilterDesktop
             {
                 _source.Text = dlg.FileName;
                 LoadColumns(dlg.FileName);
+                UpdateCanRedact();
             }
         }
 
@@ -123,6 +151,7 @@ namespace PhilterDesktop
             {
                 _columns.Items.Add(column.Label);
             }
+            UpdateSelectedCount();
         }
 
         // Adds the configured spreadsheet (with any whole-column selections) to the redaction queue;

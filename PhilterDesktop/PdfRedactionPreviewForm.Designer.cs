@@ -47,9 +47,9 @@ namespace PhilterDesktop
             _topPanel.SuspendLayout();
             _bottomPanel.SuspendLayout();
             SuspendLayout();
-            //
+            // 
             // _topPanel
-            //
+            // 
             _topPanel.Controls.Add(_fileLabel);
             _topPanel.Controls.Add(_policyLabel);
             _topPanel.Controls.Add(_policyCombo);
@@ -60,9 +60,9 @@ namespace PhilterDesktop
             _topPanel.Name = "_topPanel";
             _topPanel.Size = new Size(1000, 72);
             _topPanel.TabIndex = 0;
-            //
+            // 
             // _fileLabel
-            //
+            // 
             _fileLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             _fileLabel.AutoEllipsis = true;
             _fileLabel.Location = new Point(12, 10);
@@ -70,55 +70,55 @@ namespace PhilterDesktop
             _fileLabel.Size = new Size(976, 20);
             _fileLabel.TabIndex = 0;
             _fileLabel.Text = "(file)";
-            //
+            // 
             // _policyLabel
-            //
+            // 
             _policyLabel.AutoSize = true;
             _policyLabel.Location = new Point(12, 41);
             _policyLabel.Name = "_policyLabel";
-            _policyLabel.Size = new Size(45, 15);
+            _policyLabel.Size = new Size(42, 15);
             _policyLabel.TabIndex = 1;
             _policyLabel.Text = "Policy:";
-            //
+            // 
             // _policyCombo
-            //
+            // 
+            _policyCombo.AccessibleName = "Policy";
             _policyCombo.DropDownStyle = ComboBoxStyle.DropDownList;
             _policyCombo.Location = new Point(72, 38);
             _policyCombo.Name = "_policyCombo";
-            _policyCombo.AccessibleName = "Policy";
             _policyCombo.Size = new Size(200, 23);
             _policyCombo.TabIndex = 2;
             _policyCombo.SelectedIndexChanged += Selection_Changed;
-            //
+            // 
             // _contextLabel
-            //
+            // 
             _contextLabel.AutoSize = true;
             _contextLabel.Location = new Point(290, 41);
             _contextLabel.Name = "_contextLabel";
-            _contextLabel.Size = new Size(53, 15);
+            _contextLabel.Size = new Size(51, 15);
             _contextLabel.TabIndex = 3;
             _contextLabel.Text = "Context:";
-            //
+            // 
             // _contextCombo
-            //
+            // 
+            _contextCombo.AccessibleName = "Context";
             _contextCombo.DropDownStyle = ComboBoxStyle.DropDownList;
             _contextCombo.Location = new Point(349, 38);
             _contextCombo.Name = "_contextCombo";
-            _contextCombo.AccessibleName = "Context";
             _contextCombo.Size = new Size(200, 23);
             _contextCombo.TabIndex = 4;
             _contextCombo.SelectedIndexChanged += Selection_Changed;
-            //
+            // 
             // _view
-            //
+            // 
             _view.Dock = DockStyle.Fill;
             _view.Location = new Point(0, 72);
             _view.Name = "_view";
             _view.Size = new Size(1000, 556);
             _view.TabIndex = 1;
-            //
+            // 
             // _bottomPanel
-            //
+            // 
             _bottomPanel.Controls.Add(_openAfter);
             _bottomPanel.Controls.Add(_save);
             _bottomPanel.Controls.Add(_cancel);
@@ -127,20 +127,20 @@ namespace PhilterDesktop
             _bottomPanel.Name = "_bottomPanel";
             _bottomPanel.Size = new Size(1000, 52);
             _bottomPanel.TabIndex = 2;
-            //
+            // 
             // _openAfter
-            //
+            // 
             _openAfter.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             _openAfter.AutoSize = true;
             _openAfter.Location = new Point(12, 16);
             _openAfter.Name = "_openAfter";
-            _openAfter.Size = new Size(210, 19);
+            _openAfter.Size = new Size(193, 19);
             _openAfter.TabIndex = 0;
             _openAfter.Text = "Open document after redaction";
             _openAfter.UseVisualStyleBackColor = true;
-            //
+            // 
             // _save
-            //
+            // 
             _save.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             _save.Location = new Point(764, 9);
             _save.Name = "_save";
@@ -149,19 +149,20 @@ namespace PhilterDesktop
             _save.Text = "Save Redacted File";
             _save.UseVisualStyleBackColor = true;
             _save.Click += OnSave;
-            //
+            // 
             // _cancel
-            //
+            // 
             _cancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             _cancel.DialogResult = DialogResult.Cancel;
             _cancel.Location = new Point(930, 9);
             _cancel.Name = "_cancel";
             _cancel.Size = new Size(58, 34);
+            _cancel.TabIndex = 1;
             _cancel.Text = "Cancel";
             _cancel.UseVisualStyleBackColor = true;
-            //
+            // 
             // PdfRedactionPreviewForm
-            //
+            // 
             AcceptButton = _save;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -174,11 +175,12 @@ namespace PhilterDesktop
             MinimumSize = new Size(820, 460);
             Name = "PdfRedactionPreviewForm";
             StartPosition = FormStartPosition.CenterParent;
-            Text = "Redact (Preview)";
+            Text = "Redact with Preview";
             Load += PdfRedactionPreviewForm_Load;
             _topPanel.ResumeLayout(false);
             _topPanel.PerformLayout();
             _bottomPanel.ResumeLayout(false);
+            _bottomPanel.PerformLayout();
             ResumeLayout(false);
         }
 
