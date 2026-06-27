@@ -183,7 +183,7 @@ namespace PhilterDesktop
             _includeSubfolders.AutoSize = true;
             _includeSubfolders.Location = new Point(12, 208);
             _includeSubfolders.Name = "_includeSubfolders";
-            _includeSubfolders.TabIndex = 9;
+            _includeSubfolders.TabIndex = 10;
             _includeSubfolders.Text = "Include subfolders";
             _includeSubfolders.UseVisualStyleBackColor = true;
             //
@@ -192,7 +192,7 @@ namespace PhilterDesktop
             _highlight.AutoSize = true;
             _highlight.Location = new Point(12, 238);
             _highlight.Name = "_highlight";
-            _highlight.TabIndex = 10;
+            _highlight.TabIndex = 11;
             _highlight.Text = "Highlight redactions in Word (.docx) documents";
             _highlight.UseVisualStyleBackColor = true;
             //
@@ -201,7 +201,7 @@ namespace PhilterDesktop
             _notify.AutoSize = true;
             _notify.Location = new Point(12, 268);
             _notify.Name = "_notify";
-            _notify.TabIndex = 11;
+            _notify.TabIndex = 12;
             _notify.Text = "Show a notification when a file is redacted";
             _notify.UseVisualStyleBackColor = true;
             //
@@ -217,14 +217,14 @@ namespace PhilterDesktop
             _output.Location = new Point(12, 330);
             _output.Name = "_output";
             _output.Size = new Size(416, 23);
-            _output.TabIndex = 12;
+            _output.TabIndex = 13;
             //
             // _browseOutput
             //
             _browseOutput.Location = new Point(436, 328);
             _browseOutput.Name = "_browseOutput";
             _browseOutput.Size = new Size(110, 34);
-            _browseOutput.TabIndex = 13;
+            _browseOutput.TabIndex = 14;
             _browseOutput.Text = "Browse…";
             _browseOutput.UseVisualStyleBackColor = true;
             _browseOutput.Click += BrowseOutput_Click;
@@ -234,7 +234,7 @@ namespace PhilterDesktop
             _ok.Location = new Point(316, 384);
             _ok.Name = "_ok";
             _ok.Size = new Size(110, 34);
-            _ok.TabIndex = 14;
+            _ok.TabIndex = 15;
             _ok.Text = "OK";
             _ok.UseVisualStyleBackColor = true;
             _ok.Click += OkButton_Click;
@@ -245,7 +245,7 @@ namespace PhilterDesktop
             _cancel.Location = new Point(436, 384);
             _cancel.Name = "_cancel";
             _cancel.Size = new Size(110, 34);
-            _cancel.TabIndex = 15;
+            _cancel.TabIndex = 16;
             _cancel.Text = "Cancel";
             _cancel.UseVisualStyleBackColor = true;
             //

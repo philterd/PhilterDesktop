@@ -251,6 +251,36 @@ namespace PhilterDesktop.Tests
             return path;
         }
 
+        [Fact]
+        public void ReadFields_ReturnsLabeledFields()
+        {
+            string input = WriteEml();
+            List<(string Label, string Text)> fields = EmailRedactor.ReadFields(input);
+
+            List<string> labels = fields.Select(f => f.Label).ToList();
+            Assert.Contains("Subject", labels);
+            Assert.Contains("From", labels);
+            Assert.Contains("To", labels);
+            Assert.Contains("Body (text)", labels);
+            Assert.Contains(fields, f => f.Text.Contains("Thanks", StringComparison.Ordinal));
+        }
+
+        [Fact]
+        public void Detect_FindsFieldIndexedSpans_WithoutWriting()
+        {
+            string input = WriteEml();
+            string before = File.ReadAllText(input);
+            var fs = new Phileas.Services.FilterService();
+            var policy = EmailPolicy();
+
+            List<RedactionSpanEntity> spans = EmailRedactor.Detect(input, t => fs.Filter(policy, "ctx", 0, t));
+
+            Assert.NotEmpty(spans);
+            Assert.All(spans, s => Assert.True(s.ParagraphIndex >= 0)); // field-indexed
+            Assert.Contains(spans, s => s.FilterType == "EmailAddress");
+            Assert.Equal(before, File.ReadAllText(input)); // read-only: source unchanged
+        }
+
         private static PhileasPolicy EmailPolicy() => new()
         {
             Name = "email",

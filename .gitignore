@@ -72,3 +72,6 @@ msbuild.wrn
 node_modules/
 package-lock.json
 package.json
+
+# App screenshots (published in the philterd-website repo; generated locally on demand)
+screenshots/

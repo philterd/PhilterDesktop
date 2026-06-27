@@ -160,6 +160,19 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void ReadText_ReturnsVisibleText_WithoutMarkup()
+        {
+            string input = WriteRtf();
+            string text = RtfRedactor.ReadText(input);
+
+            // The visible text is returned (what the preview diffs), with no RTF control words.
+            Assert.Contains("john@example.com", text);
+            Assert.Contains("123-45-6789", text);
+            Assert.DoesNotContain("\\rtf", text);
+            Assert.DoesNotContain("fonttbl", text);
+        }
+
+        [Fact]
         public void ApplySpans_Rtf_ReappliesEditedSpanSet()
         {
             string input = WriteRtf();

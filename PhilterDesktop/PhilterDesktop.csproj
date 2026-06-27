@@ -30,6 +30,12 @@
     </AssemblyAttribute>
   </ItemGroup>
 
+  <!-- The application icon, embedded so every window can show it as its title-bar icon
+       (ModernTheme.Apply loads it via this logical name). -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\images\PhilterDesktop.ico" LogicalName="PhilterDesktop.AppIcon.ico" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="MimeKit" Version="4.17.0" />

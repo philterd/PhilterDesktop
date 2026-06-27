@@ -36,6 +36,20 @@ namespace PhilterDesktop
         private const string DefaultReplacement = "{{{REDACTED-custom}}}";
 
         /// <summary>
+        /// Returns the document's visible text (what the redaction operates on). Read-only; used by the
+        /// preview to show a before/after diff without writing anything.
+        /// </summary>
+        public static string ReadText(string inputPath)
+        {
+            return RunSta(() =>
+            {
+                using var box = new RichTextBox();
+                box.LoadFile(inputPath, RichTextBoxStreamType.RichText);
+                return box.Text;
+            });
+        }
+
+        /// <summary>
         /// Loads <paramref name="inputPath"/>, redacts its visible text with <paramref name="filter"/>,
         /// writes the result to <paramref name="outputPath"/>, and returns the applied spans. The input
         /// file is left untouched.

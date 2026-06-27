@@ -62,7 +62,7 @@ namespace PhilterDesktop
         private readonly QueueColumnSorter _sorter = new();
 
         private const string DefaultEmptyText =
-            "No documents queued\r\n\r\nClick \"Redact\" or drag .txt, .docx, .pdf, .rtf, .xlsx, .csv, .eml, or .msg files here";
+            "No documents queued\r\n\r\nClick \"Redact\" or drag documents here";
         private const string FilterEmptyText =
             "No documents match your filter.\r\n\r\nClear the filter box to see the whole queue.";
         private System.Windows.Forms.Timer _statusAnimTimer = null!;
@@ -1332,12 +1332,17 @@ namespace PhilterDesktop
                 Logger.LogInfo("Opening Settings dialog");
             }
 
+            // The max-concurrency setting is read by the watcher only when it (re)starts, so note its
+            // value beforehand to detect a change and restart the watcher when it does.
+            int previousConcurrency = _settingsRepository.GetSettings().WatchedFolderMaxConcurrency;
+
             using var settingsForm = new SettingsForm(
                 _settingsRepository, _policyRepository, _contextRepository, _watchedFolderRepository,
                 _watchedFolderLogRepository, EncryptedDatabase.CurrentKeyStore);
             var result = settingsForm.ShowDialog();
 
-            // Reload logging setting in case it changed.
+            // Reload settings that changed (saved only on OK).
+            bool concurrencyChanged = false;
             if (result == DialogResult.OK)
             {
                 var settings = _settingsRepository.GetSettings();
@@ -1352,11 +1357,15 @@ namespace PhilterDesktop
                 {
                     Logger.LogInfo("Logging disabled via settings");
                 }
+
+                concurrencyChanged = settings.WatchedFolderMaxConcurrency != previousConcurrency;
             }
 
-            // Watched folders are persisted immediately (independent of Save/Cancel); restart the
-            // watcher if the list changed so monitoring reflects the new configuration.
-            if (settingsForm.WatchedFoldersChanged)
+            // Restart the watcher if the folder list changed (persisted immediately, independent of
+            // Save/Cancel) or the max-concurrency setting changed, so monitoring reflects the new
+            // configuration without an app restart. Re-scanning on restart is safe: already-redacted
+            // output is skipped.
+            if (settingsForm.WatchedFoldersChanged || concurrencyChanged)
             {
                 StartFolderWatcher();
             }
@@ -1814,12 +1823,29 @@ namespace PhilterDesktop
             }
         }
 
+        // One-shot "Redact Folder": enqueue every supported file in a chosen folder (optionally
+        // recursing) with one policy/context. The queue then redacts them like any other documents, so
+        // per-file success/failure shows up in the queue. No persistent watcher is created.
+        private void redactFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var form = new FolderRedactForm(
+                _policyRepository, _contextRepository, _redactionQueueRepository, _settingsRepository);
+            if (form.ShowDialog(this) == DialogResult.OK)
+            {
+                LoadRedactionQueue(); // show the newly queued files
+                if (_loggingEnabled)
+                {
+                    Logger.LogInfo($"Redact Folder queued {form.EnqueuedCount} file(s).");
+                }
+            }
+        }
+
         private void redactPreviewToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using var picker = new OpenFileDialog
             {
                 Title = "Select a file to redact",
-                Filter = "Supported (*.txt;*.docx;*.pdf)|*.txt;*.docx;*.pdf|Text (*.txt)|*.txt|Word (*.docx)|*.docx|PDF (*.pdf)|*.pdf"
+                Filter = "Supported (*.txt;*.docx;*.pdf;*.rtf;*.eml;*.msg)|*.txt;*.docx;*.pdf;*.rtf;*.eml;*.msg|Text (*.txt)|*.txt|Rich Text (*.rtf)|*.rtf|Word (*.docx)|*.docx|PDF (*.pdf)|*.pdf|Email (*.eml;*.msg)|*.eml;*.msg"
             };
             if (picker.ShowDialog(this) != DialogResult.OK)
             {
@@ -1840,6 +1866,15 @@ namespace PhilterDesktop
             else if (source.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
             {
                 using var preview = new WordRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
+                if (preview.ShowDialog(this) == DialogResult.OK)
+                {
+                    RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList());
+                }
+            }
+            else if (source.EndsWith(".eml", StringComparison.OrdinalIgnoreCase) ||
+                     source.EndsWith(".msg", StringComparison.OrdinalIgnoreCase))
+            {
+                using var preview = new EmailRedactionPreviewForm(source, _policyRepository, _contextRepository, settings);
                 if (preview.ShowDialog(this) == DialogResult.OK)
                 {
                     RecordCompletedRedaction(source, preview.OutputPath, preview.SelectedPolicy, preview.SelectedContext, preview.CapturedSpans.ToList());

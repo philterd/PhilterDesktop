@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-using System.Text;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
-using Phileas.Model;
 using Phileas.Policy;
 using Phileas.Services;
 using PhilterData;
@@ -26,16 +24,14 @@ using PhileasPolicy = Phileas.Policy.Policy;
 namespace PhilterDesktop
 {
     /// <summary>
-    /// "Preview-first" redaction workspace for a single plain-text (<c>.txt</c>) or Rich Text
-    /// (<c>.rtf</c>) document: pick a policy and context, see a live diff of how the redacted file will
-    /// look, tweak the redactions, and only then write the output. For RTF the diff is over the visible
-    /// text and the save is format-preserving (so the .rtf keeps its formatting). Detected redactions
-    /// refresh when the policy/context changes.
+    /// "Preview-first" redaction workspace for a single email (<c>.eml</c> or <c>.msg</c>). Shows a
+    /// field-by-field text diff (subject, addresses, body) of how the redacted email will read, with an
+    /// editable redaction list, and writes the real redacted email (always <c>.eml</c>) only on Save.
+    /// Email redactions are anchored to a specific field, so they can be reviewed, have their
+    /// replacement changed, or be removed — but not added by hand (there's no position to point at).
     /// </summary>
-    public partial class TextRedactionPreviewForm : Form
+    public partial class EmailRedactionPreviewForm : Form
     {
-        private bool IsRtf => _sourcePath.EndsWith(".rtf", StringComparison.OrdinalIgnoreCase);
-
         private static readonly Color DeletedColor = Color.FromArgb(255, 224, 224);
         private static readonly Color InsertedColor = Color.FromArgb(224, 255, 224);
         private static readonly Color ModifiedColor = Color.FromArgb(255, 246, 213);
@@ -47,25 +43,24 @@ namespace PhilterDesktop
         private readonly SettingsEntity _settings = new();
         private readonly FilterService _filterService = new();
 
-        private string _originalText = string.Empty;
+        private (string Label, string Text)[] _fields = Array.Empty<(string, string)>();
         private List<RedactionSpanEntity> _spans = new();
         private bool _loading;
 
-        // --- Results (read by the caller after DialogResult.OK) ---
         public string OutputPath { get; private set; } = string.Empty;
         public string SelectedPolicy { get; private set; } = string.Empty;
         public string SelectedContext { get; private set; } = string.Empty;
         public IReadOnlyList<RedactionSpanEntity> CapturedSpans => _spans;
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
-        public TextRedactionPreviewForm()
+        public EmailRedactionPreviewForm()
         {
             InitializeComponent();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_save);
         }
 
-        public TextRedactionPreviewForm(string sourcePath, PolicyRepository policies, ContextRepository contexts, SettingsEntity settings)
+        public EmailRedactionPreviewForm(string sourcePath, PolicyRepository policies, ContextRepository contexts, SettingsEntity settings)
             : this()
         {
             _sourcePath = sourcePath;
@@ -75,18 +70,18 @@ namespace PhilterDesktop
             _fileLabel.Text = sourcePath;
         }
 
-        private void TextRedactionPreviewForm_Load(object? sender, EventArgs e)
+        private void EmailRedactionPreviewForm_Load(object? sender, EventArgs e)
         {
             _loading = true;
             try
             {
-                _originalText = IsRtf ? RtfRedactor.ReadText(_sourcePath) : File.ReadAllText(_sourcePath);
+                _fields = EmailRedactor.ReadFields(_sourcePath).ToArray();
                 LoadNames(_policyCombo, _policies.GetAll().Select(p => p.Name), _settings.LastPolicy);
                 LoadNames(_contextCombo, _contexts.GetAll().Select(c => c.Name), _settings.LastContext);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, UserError.Describe(ex, _sourcePath, writing: false), "Redact (Preview)",
+                MessageBox.Show(this, UserError.Describe(ex, _sourcePath, writing: false), "Redact Email (Preview)",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
@@ -115,75 +110,86 @@ namespace PhilterDesktop
             }
         }
 
-        // Re-runs detection for the chosen policy/context, resetting the working redactions. Detection
-        // (and AI name detection in particular) is synchronous and can take a moment, so show a wait
-        // cursor until it (and the preview refresh) finishes.
         private void Detect()
         {
+            if (_policyCombo.SelectedItem is null || _contextCombo.SelectedItem is null)
+            {
+                _spans = new List<RedactionSpanEntity>();
+                RefreshAll();
+                return;
+            }
+
             Cursor? previousCursor = Cursor.Current;
             UseWaitCursor = true;
             Cursor.Current = Cursors.WaitCursor;
             try
             {
-                if (_policyCombo.SelectedItem is null || _contextCombo.SelectedItem is null)
-                {
-                    _spans = new List<RedactionSpanEntity>();
-                    RefreshAll();
-                    return;
-                }
+                PolicyEntity? entity = _policies.FindByName(_policyCombo.Text);
+                PhileasPolicy policy = PolicySerializer.DeserializeFromJson(
+                    string.IsNullOrWhiteSpace(entity?.Json) ? "{}" : entity!.Json);
+                GlobalLists.Apply(policy, _settings); // global always-redact/ignore on top of every policy
+                PhEyeModel.Prepare(policy);
 
-                try
-                {
-                    PolicyEntity? entity = _policies.FindByName(_policyCombo.Text);
-                    PhileasPolicy policy = PolicySerializer.DeserializeFromJson(
-                        string.IsNullOrWhiteSpace(entity?.Json) ? "{}" : entity!.Json);
-                    GlobalLists.Apply(policy, _settings); // global always-redact/ignore on top of every policy
-                    PhEyeModel.Prepare(policy);
-
-                    TextFilterResult result = _filterService.Filter(policy, _contextCombo.Text, 0, _originalText);
-                    _spans = result.Spans
-                        .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= _originalText.Length && s.CharacterEnd > s.CharacterStart)
-                        .OrderBy(s => s.CharacterStart)
-                        .Select(s => new RedactionSpanEntity
-                        {
-                            ParagraphIndex = -1,
-                            CharacterStart = s.CharacterStart,
-                            CharacterEnd = s.CharacterEnd,
-                            Text = s.Text ?? string.Empty,
-                            Replacement = s.Replacement ?? string.Empty,
-                            Classification = s.Classification ?? string.Empty
-                        })
-                        .ToList();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(this, $"Redaction failed: {ex.Message}", "Redact (Preview)",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    _spans = new List<RedactionSpanEntity>();
-                }
-
-                RefreshAll();
+                string context = _contextCombo.Text;
+                _spans = EmailRedactor.Detect(_sourcePath, text => _filterService.Filter(policy, context, 0, text));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"Redaction failed: {ex.Message}", "Redact Email (Preview)",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                _spans = new List<RedactionSpanEntity>();
             }
             finally
             {
                 Cursor.Current = previousCursor;
                 UseWaitCursor = false;
             }
+
+            RefreshAll();
         }
 
         private void RefreshAll()
         {
             RefreshList();
             RefreshPreview();
-            _save.Enabled = !string.IsNullOrEmpty(_originalText) || _spans.Count > 0;
+            _save.Enabled = _fields.Length > 0;
         }
 
-        private string CurrentRedactedText() =>
-            RedactionSpanMath.ApplySpans(_originalText, _spans, RedactionService.DefaultReplacement);
+        // Applies the working spans to each field's text (grouped by field index).
+        private string[] RedactedFields()
+        {
+            string[] result = _fields.Select(f => f.Text).ToArray();
+            foreach (IGrouping<int, RedactionSpanEntity> group in _spans.GroupBy(s => s.ParagraphIndex))
+            {
+                if (group.Key < 0 || group.Key >= result.Length)
+                {
+                    continue;
+                }
+                result[group.Key] = RedactionSpanMath.ApplySpans(result[group.Key], group, RedactionService.DefaultReplacement);
+            }
+            return result;
+        }
+
+        // Builds a labeled, line-based view of the fields so the diff reads "[Subject] …" etc. The
+        // "[Label]" header lines are identical on both sides, so only the field contents diff.
+        private static string Compose((string Label, string Text)[] fields, string[] texts)
+        {
+            var lines = new List<string>();
+            for (int i = 0; i < fields.Length; i++)
+            {
+                lines.Add($"[{fields[i].Label}]");
+                lines.Add(texts[i]);
+                lines.Add(string.Empty);
+            }
+            return string.Join("\n", lines);
+        }
 
         private void RefreshPreview()
         {
-            SideBySideDiffModel model = SideBySideDiffBuilder.Diff(_originalText, CurrentRedactedText());
+            string before = Compose(_fields, _fields.Select(f => f.Text).ToArray());
+            string after = Compose(_fields, RedactedFields());
+            SideBySideDiffModel model = SideBySideDiffBuilder.Diff(before, after);
+
             _preview.SuspendLayout();
             _preview.Rows.Clear();
             int lines = Math.Max(model.OldText.Lines.Count, model.NewText.Lines.Count);
@@ -203,18 +209,20 @@ namespace PhilterDesktop
         {
             _spanList.BeginUpdate();
             _spanList.Items.Clear();
-            foreach (RedactionSpanEntity s in _spans)
+            foreach (RedactionSpanEntity s in _spans.OrderBy(s => s.ParagraphIndex).ThenBy(s => s.CharacterStart))
             {
-                var item = new ListViewItem(s.UserAdded ? "Added" : Display(s.Classification)) { Tag = s };
+                var item = new ListViewItem(Display(s.Classification)) { Tag = s };
                 item.SubItems.Add(s.Text);
                 item.SubItems.Add(s.Replacement);
-                item.SubItems.Add(s.CharacterStart.ToString());
-                item.SubItems.Add(s.CharacterEnd.ToString());
+                item.SubItems.Add(FieldLabel(s.ParagraphIndex));
                 _spanList.Items.Add(item);
             }
             _spanList.EndUpdate();
             UpdateSpanButtons();
         }
+
+        private string FieldLabel(int index) =>
+            index >= 0 && index < _fields.Length ? _fields[index].Label : string.Empty;
 
         private void SpanList_SelectedIndexChanged(object? sender, EventArgs e) => UpdateSpanButtons();
 
@@ -225,40 +233,16 @@ namespace PhilterDesktop
             _remove.Enabled = hasSel;
         }
 
-        private void OnAdd(object? sender, EventArgs e)
-        {
-            using var dlg = new SpanEditForm("Add Redaction", SpanPositionKind.TextOffset,
-                new RedactionSpanEntity { UserAdded = true, Replacement = RedactionService.DefaultReplacement, ParagraphIndex = -1 },
-                positionEditable: true);
-            if (dlg.ShowDialog(this) == DialogResult.OK)
-            {
-                _spans.Add(new RedactionSpanEntity
-                {
-                    UserAdded = true,
-                    ParagraphIndex = -1,
-                    CharacterStart = dlg.Start,
-                    CharacterEnd = dlg.Stop,
-                    Replacement = dlg.Replacement
-                });
-                _spans = _spans.OrderBy(s => s.CharacterStart).ToList();
-                RefreshAll();
-            }
-        }
-
+        // Email redactions are field-anchored, so only the replacement text is editable (no position).
         private void OnEdit(object? sender, EventArgs e)
         {
             if (_spanList.SelectedItems.Count == 0 || _spanList.SelectedItems[0].Tag is not RedactionSpanEntity span)
             {
                 return;
             }
-            using var dlg = new SpanEditForm("Edit Redaction", SpanPositionKind.TextOffset, span, positionEditable: span.UserAdded);
+            using var dlg = new SpanEditForm("Edit Redaction", SpanPositionKind.TextOffset, span, positionEditable: false);
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
-                if (span.UserAdded)
-                {
-                    span.CharacterStart = dlg.Start;
-                    span.CharacterEnd = dlg.Stop;
-                }
                 span.Replacement = dlg.Replacement;
                 RefreshAll();
             }
@@ -276,12 +260,13 @@ namespace PhilterDesktop
 
         private void OnSave(object? sender, EventArgs e)
         {
+            // .msg is read but written back as .eml, so the suggested name already carries .eml.
             string suggested = RedactionService.GetOutputPath(_sourcePath, _settings);
             using var dialog = new SaveFileDialog
             {
-                Title = "Save redacted file",
-                Filter = IsRtf ? "Rich Text (*.rtf)|*.rtf|All files (*.*)|*.*" : "Text files (*.txt)|*.txt|All files (*.*)|*.*",
-                DefaultExt = IsRtf ? "rtf" : "txt",
+                Title = "Save redacted email",
+                Filter = "Email (*.eml)|*.eml|All files (*.*)|*.*",
+                DefaultExt = "eml",
                 AddExtension = true,
                 OverwritePrompt = true,
                 FileName = Path.GetFileName(suggested),
@@ -295,19 +280,11 @@ namespace PhilterDesktop
             string output = dialog.FileName;
             try
             {
-                if (IsRtf)
-                {
-                    // Re-apply the (possibly edited) spans to the source so the .rtf keeps its formatting.
-                    RtfRedactor.ApplySpans(_sourcePath, output, _spans);
-                }
-                else
-                {
-                    File.WriteAllText(output, CurrentRedactedText());
-                }
+                EmailRedactor.ApplySpans(_sourcePath, output, _spans);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, UserError.Describe(ex, output, writing: true), "Redact (Preview)",
+                MessageBox.Show(this, UserError.Describe(ex, output, writing: true), "Redact Email (Preview)",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
@@ -332,7 +309,7 @@ namespace PhilterDesktop
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, $"Could not open the file: {ex.Message}", "Redact (Preview)",
+                MessageBox.Show(this, $"Could not open the file: {ex.Message}", "Redact Email (Preview)",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }

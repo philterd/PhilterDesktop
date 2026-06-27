@@ -234,7 +234,7 @@ namespace PhilterDesktop
             btnStartRedaction.Name = "btnStartRedaction";
             btnStartRedaction.Size = new Size(110, 34);
             btnStartRedaction.TabIndex = 2;
-            btnStartRedaction.Text = "Start Redaction";
+            btnStartRedaction.Text = "Add to Queue";
             btnStartRedaction.UseVisualStyleBackColor = true;
             btnStartRedaction.Click += BtnStartRedaction_Click;
             // 

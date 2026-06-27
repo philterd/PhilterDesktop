@@ -272,7 +272,7 @@ namespace PhilterDesktop
             chkContextMenu.Name = "chkContextMenu";
             chkContextMenu.Size = new Size(464, 19);
             chkContextMenu.TabIndex = 2;
-            chkContextMenu.Text = "Add \"Redact with Philter Desktop\" to the Explorer right-click menu (.pdf, .docx, .txt)";
+            chkContextMenu.Text = "Add \"Redact with Philter Desktop\" to the Explorer right-click menu (all supported file types)";
             chkContextMenu.UseVisualStyleBackColor = true;
             chkContextMenu.CheckedChanged += ChkContextMenu_CheckedChanged;
             // 

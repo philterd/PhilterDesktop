@@ -63,6 +63,7 @@ namespace PhilterDesktop
             previewDropDownItem = new ToolStripMenuItem();
             findRedactDropDownItem = new ToolStripMenuItem();
             spreadsheetDropDownItem = new ToolStripMenuItem();
+            folderDropDownItem = new ToolStripMenuItem();
             toolStripSeparator3 = new ToolStripSeparator();
             policiesToolStripButton = new ToolStripButton();
             contextsToolStripButton = new ToolStripButton();
@@ -198,7 +199,7 @@ namespace PhilterDesktop
             // toolStripButtonRedact
             // 
             toolStripButtonRedact.AutoToolTip = false;
-            toolStripButtonRedact.DropDownItems.AddRange(new ToolStripItem[] { redactDropDownItem, previewDropDownItem, findRedactDropDownItem, spreadsheetDropDownItem });
+            toolStripButtonRedact.DropDownItems.AddRange(new ToolStripItem[] { redactDropDownItem, previewDropDownItem, findRedactDropDownItem, spreadsheetDropDownItem, folderDropDownItem });
             toolStripButtonRedact.ImageTransparentColor = Color.Magenta;
             toolStripButtonRedact.Name = "toolStripButtonRedact";
             toolStripButtonRedact.Size = new Size(59, 22);
@@ -235,6 +236,14 @@ namespace PhilterDesktop
             spreadsheetDropDownItem.Size = new Size(189, 22);
             spreadsheetDropDownItem.Text = "Redact Spreadsheet...";
             spreadsheetDropDownItem.Click += redactSpreadsheetToolStripMenuItem_Click;
+            //
+            // folderDropDownItem
+            //
+            folderDropDownItem.Name = "folderDropDownItem";
+            folderDropDownItem.Size = new Size(189, 22);
+            folderDropDownItem.Text = "Redact Folder...";
+            folderDropDownItem.ToolTipText = "Add every supported file in a folder to the redaction queue";
+            folderDropDownItem.Click += redactFolderToolStripMenuItem_Click;
             //
             // toolStripSeparator3
             // 
@@ -550,6 +559,7 @@ namespace PhilterDesktop
         private ToolStripMenuItem previewDropDownItem;
         private ToolStripMenuItem findRedactDropDownItem;
         private ToolStripMenuItem spreadsheetDropDownItem;
+        private ToolStripMenuItem folderDropDownItem;
         private ListView listView1;
         private ColumnHeader columnHeader1;
         private ColumnHeader columnHeader2;

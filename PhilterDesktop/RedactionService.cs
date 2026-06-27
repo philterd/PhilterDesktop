@@ -159,6 +159,23 @@ namespace PhilterDesktop
 
             string extension = Path.GetExtension(inputPath).ToLowerInvariant();
 
+            // Word/Excel files that are password-protected or corrupt fail deep inside the Open XML SDK
+            // with an opaque "corrupt data" error. Detect those up front and surface a clear message.
+            if (extension == ".docx" || extension == ".xlsx")
+            {
+                string app = extension == ".docx" ? "Word" : "Excel";
+                switch (OfficeDocument.Inspect(inputPath))
+                {
+                    case OfficeFileState.PasswordProtected:
+                        throw new DocumentLoadException(
+                            $"\"{Path.GetFileName(inputPath)}\" is password-protected, so it can't be redacted. " +
+                            $"Open it in {app}, remove the password (File → Info → Protect Document), save it, and try again.");
+                    case OfficeFileState.NotReadable:
+                        throw new DocumentLoadException(
+                            $"\"{Path.GetFileName(inputPath)}\" could not be opened. It may be corrupted, or it may not be a real {app} file.");
+                }
+            }
+
             if (extension == ".docx")
             {
                 // Word redaction is synchronous; run it off the calling thread. highlight applies
