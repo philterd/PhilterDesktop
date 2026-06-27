@@ -7,24 +7,26 @@
 #
 # The markdown under docs\docs\ stays the single source of truth: the online docs build from
 # docs\mkdocs.yml is unchanged. This script builds from docs\mkdocs.pdf.yml, an overlay that
-# inherits mkdocs.yml and only adds the mkdocs-to-pdf plugin.
+# inherits mkdocs.yml and adds the print-site plugin, which renders all pages into one combined
+# HTML page (print_page\index.html). That single page is then converted to PDF with headless
+# Microsoft Edge (or Chrome), so there are NO native PDF libraries to install.
 #
 # Prerequisites:
 #   - Python 3 (the `py -3` launcher, or `python` / `python3` on PATH). A local virtual environment
 #     is created and cached under Installer\tools\docs-venv and the docs requirements are installed
 #     into it, so this does not touch any global Python install.
-#   - WeasyPrint's native libraries. mkdocs-to-pdf renders with WeasyPrint, which needs GTK / Pango /
-#     cairo. On Windows, install them once per the WeasyPrint docs:
-#       https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#windows
-#     (Linux/macOS usually have these already or via the system package manager.)
+#   - Microsoft Edge (ships with Windows 10/11) or Google Chrome, used in headless mode to render
+#     the PDF. Override the browser with -BrowserPath if it is installed somewhere non-standard.
 #
 # Usage:
 #   pwsh Installer\build-user-guide.ps1                       # -> Installer\dist\PhilterDesktop-User-Guide.pdf
 #   pwsh Installer\build-user-guide.ps1 -OutputPath C:\tmp\guide.pdf
+#   pwsh Installer\build-user-guide.ps1 -BrowserPath "C:\Path\To\msedge.exe"
 #   pwsh Installer\build-user-guide.ps1 -Recreate            # rebuild the cached venv from scratch
 
 param(
     [string]$OutputPath,
+    [string]$BrowserPath,
     [switch]$Recreate
 )
 
@@ -52,6 +54,28 @@ function Resolve-Python {
            "Store) so the user-guide PDF can be built, or pass -NoDocs to build-setup.ps1 to skip it.")
 }
 
+# Locate headless Microsoft Edge (preferred, ships with Windows) or Google Chrome.
+function Resolve-Browser {
+    if ($BrowserPath) {
+        if (Test-Path $BrowserPath) { return $BrowserPath }
+        throw "Browser not found at -BrowserPath '$BrowserPath'."
+    }
+    $candidates = @(
+        (Join-Path ${env:ProgramFiles(x86)} 'Microsoft\Edge\Application\msedge.exe'),
+        (Join-Path $env:ProgramFiles          'Microsoft\Edge\Application\msedge.exe'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Google\Chrome\Application\chrome.exe'),
+        (Join-Path $env:ProgramFiles          'Google\Chrome\Application\chrome.exe'),
+        (Join-Path $env:LOCALAPPDATA          'Google\Chrome\Application\chrome.exe')
+    )
+    foreach ($c in $candidates) { if ($c -and (Test-Path $c)) { return $c } }
+    foreach ($n in @('msedge.exe', 'chrome.exe', 'msedge', 'chrome')) {
+        $cmd = Get-Command $n -ErrorAction SilentlyContinue
+        if ($cmd) { return $cmd.Source }
+    }
+    throw ("Microsoft Edge or Google Chrome is required to render the PDF but neither was found. " +
+           "Install Edge/Chrome, pass -BrowserPath, or pass -NoDocs to build-setup.ps1 to skip the PDF.")
+}
+
 # Create (or reuse) a cached virtual environment with the docs requirements installed.
 $venv = Join-Path $PSScriptRoot 'tools\docs-venv'
 if ($Recreate -and (Test-Path $venv)) { Remove-Item $venv -Recurse -Force }
@@ -72,31 +96,34 @@ Write-Host "Installing documentation requirements ($reqs) ..."
 & $venvPython -m pip install --quiet -r $reqs
 if ($LASTEXITCODE -ne 0) { throw "pip install of the docs requirements failed." }
 
-# Build the PDF. mkdocs-to-pdf only renders the PDF when ENABLE_PDF_EXPORT is set, so the overlay
-# config is otherwise a normal (fast) site build.
+# Build the combined HTML page (print_page\index.html) from the markdown.
 $siteDir = Join-Path ([System.IO.Path]::GetTempPath()) 'philterdesktop-userguide-site'
 if (Test-Path $siteDir) { Remove-Item $siteDir -Recurse -Force }
 
-Write-Host "Building the user-guide PDF from $config ..."
-$env:ENABLE_PDF_EXPORT = '1'
-try {
-    & $venvPython -m mkdocs build -f $config -d $siteDir
-    if ($LASTEXITCODE -ne 0) { throw "mkdocs build failed." }
-} catch {
-    throw ("Building the user-guide PDF failed: $($_.Exception.Message)`n" +
-           "If the error mentions a missing library such as 'libgobject', 'pango', or 'cairo', " +
-           "WeasyPrint's native dependencies are not installed. See " +
-           "https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#windows " +
-           "(or pass -NoDocs to build-setup.ps1 to skip the PDF).")
-} finally {
-    Remove-Item Env:\ENABLE_PDF_EXPORT -ErrorAction SilentlyContinue
+Write-Host "Building the documentation site (print page) from $config ..."
+& $venvPython -m mkdocs build -f $config -d $siteDir
+if ($LASTEXITCODE -ne 0) { throw "mkdocs build failed." }
+
+$printPage = Join-Path $siteDir 'print_page\index.html'
+if (-not (Test-Path $printPage)) { throw "Combined print page not found at $printPage (is the print-site plugin enabled in $config?)." }
+
+# Render the single HTML page to PDF with headless Edge/Chrome. No native libraries required.
+$browser = Resolve-Browser
+Write-Host "Rendering the PDF with $browser ..."
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutputPath) | Out-Null
+if (Test-Path $OutputPath) { Remove-Item $OutputPath -Force }
+
+# A throwaway profile avoids clashing with any running Edge/Chrome instance.
+$profileDir = Join-Path ([System.IO.Path]::GetTempPath()) 'philterdesktop-pdf-profile'
+$fileUrl = 'file:///' + ($printPage -replace '\\', '/')
+
+& $browser --headless=new --disable-gpu --no-pdf-header-footer ("--user-data-dir=" + $profileDir) `
+    ("--print-to-pdf=" + $OutputPath) $fileUrl
+
+if (-not (Test-Path $OutputPath) -or (Get-Item $OutputPath).Length -eq 0) {
+    throw ("The browser did not produce a PDF at $OutputPath. Ensure Edge or Chrome is installed and " +
+           "supports headless --print-to-pdf, or pass -BrowserPath.")
 }
 
-$builtPdf = Join-Path $siteDir 'PhilterDesktop-User-Guide.pdf'
-if (-not (Test-Path $builtPdf)) { throw "mkdocs reported success but no PDF was produced at $builtPdf." }
-
-New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutputPath) | Out-Null
-Copy-Item $builtPdf $OutputPath -Force
 Remove-Item $siteDir -Recurse -Force -ErrorAction SilentlyContinue
-
 Write-Host "User-guide PDF written to $OutputPath"
