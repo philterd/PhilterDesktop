@@ -1,0 +1,1186 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="User documentation for Philter Desktop, a Windows application for redacting PII from documents">
+      
+      
+        <meta name="author" content="philterd">
+      
+      
+        <link rel="canonical" href="https://philterd.github.io/PhilterDesktop/policies/">
+      
+      
+        <link rel="prev" href="../watched-folders/">
+      
+      
+        <link rel="next" href="../filter-strategies/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Policies - Philter Desktop</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="red" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#policies" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="https://www.philterd.ai" title="Philter Desktop" class="md-header__button md-logo" aria-label="Philter Desktop" data-md-component="logo">
+      
+  <img src="../img/philterd.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Philter Desktop
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Policies
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://www.github.com/philterd/PhilterDesktop" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Www
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://www.philterd.ai" title="Philter Desktop" class="md-nav__button md-logo" aria-label="Philter Desktop" data-md-component="logo">
+      
+  <img src="../img/philterd.png" alt="logo">
+
+    </a>
+    Philter Desktop
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://www.github.com/philterd/PhilterDesktop" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Www
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../redacting-documents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redacting Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../watched-folders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Watched Folders
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policies
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#a-tour-of-the-policy-editor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A tour of the Policy Editor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#turning-on-what-you-want-removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Turning on what you want removed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#starting-from-a-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Starting from a template
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-a-policy-with-the-wizard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building a policy with the Wizard
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#describing-a-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Describing a policy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saving-your-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Saving your work
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-never-redact-list-always-ignore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The "never redact" list (Always Ignore)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-always-redact-list-always-redact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The "always redact" list (Always Redact)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lists-that-apply-to-every-policy-the-lists-button" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lists that apply to every policy (the Lists button)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Lists that apply to every policy (the Lists button)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#policy-lists-vs-global-lists-which-should-i-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Policy lists vs. global lists — which should I use?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#detecting-names-with-on-device-ai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detecting names with on-device AI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redacting-your-own-special-identifiers-custom-identifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redacting your own special identifiers (Custom Identifiers)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../filter-strategies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter Strategies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../supported-filters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supported Filters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contexts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../licensing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Licensing & Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#a-tour-of-the-policy-editor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A tour of the Policy Editor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#turning-on-what-you-want-removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Turning on what you want removed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#starting-from-a-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Starting from a template
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-a-policy-with-the-wizard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building a policy with the Wizard
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#describing-a-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Describing a policy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saving-your-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Saving your work
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-never-redact-list-always-ignore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The "never redact" list (Always Ignore)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-always-redact-list-always-redact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The "always redact" list (Always Redact)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lists-that-apply-to-every-policy-the-lists-button" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lists that apply to every policy (the Lists button)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Lists that apply to every policy (the Lists button)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#policy-lists-vs-global-lists-which-should-i-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Policy lists vs. global lists — which should I use?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#detecting-names-with-on-device-ai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detecting names with on-device AI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redacting-your-own-special-identifiers-custom-identifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redacting your own special identifiers (Custom Identifiers)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="policies">Policies</h1>
+<p>A <strong>policy</strong> is simply a <strong>saved set of rules</strong> that tells Philter Desktop two things: <em>which kinds of
+sensitive information to look for</em>, and <em>how to replace each kind</em> when it's found. You can think of a
+policy as a recipe, or as a checklist of "remove this, remove that." Every document you redact is
+handled according to whichever policy you've chosen for it.</p>
+<p>You don't have to build a policy before you start — a ready-made policy named <strong>default</strong> is created
+for you, and it works well for everyday redaction. But as your needs become more specific, you'll
+likely want to create your own. For example, you might keep one policy for <strong>court filings</strong>, another
+for <strong>medical records</strong> in a personal-injury matter, and another for <strong>financial documents</strong> in
+discovery — each one tuned to remove exactly what that kind of document requires. You can create as
+many policies as you like.</p>
+<p>To work with policies, click the <strong>Policies</strong> button on the main toolbar. This opens the <strong>Policy
+Editor</strong>.</p>
+<h2 id="a-tour-of-the-policy-editor">A tour of the Policy Editor</h2>
+<p>The editor has a toolbar across the top and, below it, the kinds of information Philter
+Desktop can detect, organized into <strong>tabs</strong> (one category per tab, so the window stays compact):</p>
+<ul>
+<li><strong>Policy selector</strong> — a drop-down for choosing which policy you want to look at or change.</li>
+<li><strong>New / Save / Save As / Delete</strong> — the buttons for managing your policies (covered below).
+  <strong>New</strong> is a small menu: choose <strong>Blank Policy</strong> to start from scratch, <strong>From Template…</strong> to
+  start from a ready-made policy, or <strong>From Wizard…</strong> to be guided through a few questions.</li>
+<li><strong>Import / Export</strong> — <strong>Export</strong> saves the policy you're editing to a <code>.json</code> file (handy for backups
+  or sharing with a colleague); <strong>Import</strong> loads a policy <code>.json</code> file back in as a new policy. Imported
+  files are checked against the engine's policy schema first, so an invalid file can't be brought in.</li>
+<li><strong>The detector tabs</strong> — categories such as Personal, Contact, Location, Financial,
+  Identifiers, Technical, and Medical. Click a tab to see the specific kinds of information in that
+  category that you can choose to remove. (Your selections on every tab are saved together as one
+  policy — switching tabs doesn't lose anything.)</li>
+</ul>
+<p>(The word <strong>filter</strong> is just another word for one of these detectors: "the email-address filter,"
+"the Social Security number filter," and so on.)</p>
+<h2 id="turning-on-what-you-want-removed">Turning on what you want removed</h2>
+<ol>
+<li>Find the kind of information you want to remove — say, <strong>SSN</strong> (Social Security number) or <strong>Email
+   Address</strong> — and <strong>check the box</strong> next to it. That turns it on.</li>
+<li>When you check a box, a <strong>Configure…</strong> button appears beside it. Clicking it lets you choose
+   <em>how</em> that information should be replaced — for example, blacked out entirely, or swapped for a
+   stand-in label. Those choices are explained on the <a href="../filter-strategies/">Filter Strategies</a> page.</li>
+</ol>
+<p>You do <strong>not</strong> have to configure every detector. A detector that's turned on but not configured uses a
+sensible default: the detected text is replaced with a <strong>marker that names what was removed</strong>, like
+<code>{{{REDACTED-SSN}}}</code> for a Social Security number. To make this clear, when you open <strong>Configure…</strong> for
+a detector you've just turned on, you'll see this <strong>default redaction already listed</strong> — so you can see
+exactly what will happen and change it if you like (for example, a blackout, a fixed label, or a
+shuffled stand-in). Those choices are explained on the <a href="../filter-strategies/">Filter Strategies</a> page.
+So the quickest way to build a policy is to check the boxes for everything you want removed and save.</p>
+<p>For the complete list of what Philter Desktop can detect, see <a href="../supported-filters/">Supported Filters</a>.</p>
+<h2 id="starting-from-a-template">Starting from a template</h2>
+<p>If you'd rather not build a policy from scratch, click <strong>New</strong> and choose <strong>From Template…</strong>. Philter
+Desktop offers a small set of ready-made starting points:</p>
+<ul>
+<li><strong>Common PII (recommended)</strong> — the high-confidence everyday identifiers (Social Security numbers,
+  email, phone, credit cards, and so on) plus on-device name detection. A safe general-purpose start.</li>
+<li><strong>HIPAA Safe Harbor (template)</strong> — broad coverage aimed at the kinds of information called out by the
+  HIPAA Safe Harbor standard (names, dates, locations, ages, and more). Deliberately thorough, so
+  expect to review some over-redaction.</li>
+<li><strong>Legal court filing (template)</strong> — the personal data commonly redacted in court filings (names,
+  Social Security numbers, dates, and financial account numbers).</li>
+<li><strong>Financial records (template)</strong> — financial and account data (names, Social Security numbers,
+  credit cards, bank routing numbers, IBAN codes, and crypto addresses).</li>
+</ul>
+<p>Pick one, give your new policy a name, and it's created ready to fine-tune like any other policy.</p>
+<p>!!! warning "Templates are starting points, not compliance guarantees"
+    A template's name — even one that mentions a law or standard such as "HIPAA Safe Harbor" — is for
+    reference only. It is <strong>not</strong> a certification that the policy, or its output, meets that
+    requirement. Always review and adapt the policy to your situation, and <strong>carefully check every
+    redacted document</strong>, before relying on it.</p>
+<h2 id="building-a-policy-with-the-wizard">Building a policy with the Wizard</h2>
+<p>If you're not sure where to start, click <strong>New</strong> and choose <strong>From Wizard…</strong>. The wizard walks you
+through a few short questions and builds a policy for you:</p>
+<ol>
+<li><strong>What kind of documents are you redacting?</strong> — pick a use case (general office, healthcare, legal,
+   financial, or start from scratch). This just sets a sensible starting point; you can change
+   everything next.</li>
+<li><strong>What should be removed?</strong> — a checklist of the kinds of information, grouped into categories, with
+   the ones from your chosen starting point already ticked. Add or remove whatever you like, including
+   <strong>people's names</strong> (on-device AI).</li>
+<li><strong>How should the removed information be replaced?</strong> — choose a label (like <code>{{{REDACTED-SSN}}}</code>), a
+   fixed word, or a consistent stand-in value.</li>
+<li><strong>Name your policy</strong> — review a plain-language summary and give it a name.</li>
+</ol>
+<p>When you finish, the wizard creates the policy ready to fine-tune like any other. The same warning
+applies: a wizard-built policy is a <strong>starting point, not a compliance guarantee</strong> — review it and
+always check your redacted documents.</p>
+<h2 id="describing-a-policy">Describing a policy</h2>
+<p>Just below the toolbar there's a <strong>Description</strong> box. Use it to jot a short note about what the policy
+is for — for example, <em>"Client intake forms — removes SSNs, dates of birth, and contact details."</em> The
+description is purely to help you (and your colleagues) recognize the policy later; it has <strong>no effect
+on redaction</strong>. It's saved with the policy inside Philter Desktop, but note it is <strong>not</strong> included when
+you <strong>Export</strong> a policy to a file (the exported file contains only the engine's policy definition).</p>
+<h2 id="saving-your-work">Saving your work</h2>
+<ul>
+<li><strong>Save</strong> updates the policy you're currently editing with your changes.</li>
+<li><strong>Save As</strong> takes your current settings and saves them as a <strong>new</strong> policy under a new name —
+  handy when you want to base a new policy on an existing one without changing the original.</li>
+<li>If you switch to a different policy, or close the editor, while you have unsaved changes, Philter
+  Desktop will stop and ask whether you'd like to save first, so you won't lose anything by accident.</li>
+</ul>
+<p>The <strong>default</strong> policy cannot be deleted, so you'll always have a working starting point.</p>
+<h2 id="the-never-redact-list-always-ignore">The "never redact" list (Always Ignore)</h2>
+<p>Sometimes Philter Desktop will correctly detect something but you'd rather <strong>keep it</strong>. A common
+example: your own firm's name, a public office address, or a court's phone number might look like the
+kind of contact information that would normally be removed — but you want it left in place.</p>
+<p>Click the <strong>Always Ignore…</strong> button below the tabs and type in those terms, <strong>one per line</strong> (or click
+<strong>Import from file…</strong> to load them from a <code>.txt</code> or single-column <code>.csv</code> file). Anything on this list
+is left alone, even when a detector would otherwise have removed it.</p>
+<p>The matching works on the <strong>whole detected value</strong> (so a detected item that exactly equals one of
+your terms is left untouched), and it ignores capitalization unless you check <strong>Match case</strong>. Your
+ignore list is saved as part of <strong>this policy</strong>, so it applies only when you redact with this policy.
+If you want a term ignored <strong>no matter which policy you use</strong>, use the global <strong>Lists</strong> button on the
+main toolbar instead — see <a href="#lists-that-apply-to-every-policy-the-lists-button">Lists that apply to every policy</a>.</p>
+<h2 id="the-always-redact-list-always-redact">The "always redact" list (Always Redact)</h2>
+<p>This is the mirror image of the ignore list. Sometimes there's a word or phrase you want <strong>always
+removed</strong>, even though it isn't a standard type of personal information that Philter Desktop would
+recognize on its own — for example, a confidential project codename, an internal matter number, or a
+particular name that's sensitive in your case.</p>
+<p>Click the <strong>Always Redact…</strong> button below the tabs and type in those terms, <strong>one per line</strong> (or click
+<strong>Import from file…</strong> to load them from a <code>.txt</code> or single-column <code>.csv</code> file). Anything on this
+list is removed wherever it appears.</p>
+<p>Matching ignores capitalization. These terms are saved as part of <strong>this policy</strong> and apply only when
+you redact with it. For a term you want removed in <strong>every</strong> policy, use the global <strong>Lists</strong> button on
+the main toolbar instead — see below.</p>
+<h2 id="lists-that-apply-to-every-policy-the-lists-button">Lists that apply to every policy (the Lists button)</h2>
+<p>The two lists above live <strong>inside a single policy</strong> — they only take effect when you redact with that
+particular policy. Sometimes you want a rule that applies <strong>no matter which policy is used</strong>. For that,
+use the <strong>Lists</strong> button on the <strong>main toolbar</strong> (not in the Policy Editor).</p>
+<p>It opens a window with two tabs, each a simple box where you type terms <strong>one per line</strong>:</p>
+<ul>
+<li><strong>Always Redact</strong> — terms removed from <strong>every</strong> document you redact, with any policy.</li>
+<li><strong>Always Ignore</strong> — terms <strong>never</strong> removed, with any policy.</li>
+</ul>
+<p>You can type terms directly, or click <strong>Import from file…</strong> to load them from a <code>.txt</code> or single-column
+<code>.csv</code> file (one term per line); imported terms are added to whichever tab you're on, skipping any that
+are already in the list.</p>
+<p>Click <strong>OK</strong> to save both lists (or <strong>Cancel</strong> to discard your changes). These global lists are applied
+on top of whatever policy is in use — the default policy, policies you create, watched folders, and the
+command line all honor them.</p>
+<h3 id="policy-lists-vs-global-lists-which-should-i-use">Policy lists vs. global lists — which should I use?</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Where it lives</th>
+<th>When it applies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Policy Editor → Always Ignore / Always Redact</strong></td>
+<td>Inside one policy</td>
+<td>Only when you redact with <strong>that</strong> policy</td>
+</tr>
+<tr>
+<td><strong>Lists button (main toolbar) → Always Ignore / Always Redact</strong></td>
+<td>App-wide</td>
+<td><strong>Every</strong> redaction, with <strong>any</strong> policy</td>
+</tr>
+</tbody>
+</table>
+<p>A good rule of thumb: put case- or matter-specific terms in a <strong>policy</strong>; put terms that should always
+apply — like your own firm's name (ignore) or a standing confidential codename (always redact) — in the
+global <strong>Lists</strong>.</p>
+<h2 id="detecting-names-with-on-device-ai">Detecting names with on-device AI</h2>
+<p>On the <strong>Personal</strong> tab you'll find an entry called <strong>Names (on-device AI)</strong>. Checking it turns on
+a smart, names-specific detector.</p>
+<p>Why is this separate from the other detectors? Most sensitive information has a recognizable shape —
+a Social Security number is always nine digits in a familiar pattern, an email address always has an
+"@" in it — so a simple rule can spot it. <strong>Names are different.</strong> "April," "Hope," and "Mason" can
+be names or ordinary words; whether something is a name depends on the surrounding sentence. To handle
+this, Philter Desktop uses a small piece of <strong>artificial intelligence</strong> — a trained model that reads
+the context and decides what's a name and what isn't, much more reliably than a fixed rule could.</p>
+<p>The most important point for confidentiality: <strong>this AI runs entirely on your own computer.</strong> No part
+of your document is uploaded or sent over the internet. Nothing leaves your machine.</p>
+<p>There's nothing to configure — just check the box and save the policy. The first document you redact
+after turning it on takes a moment longer while the program loads the model; after that, it's quick.</p>
+<blockquote>
+<p>Installed copies of Philter Desktop already include this names model, so it just works. (If you are
+a technical user running the program from source code, the model is downloaded automatically when
+you make a Release build, or you can run the included <code>scripts/download-pheye-model.ps1</code>. If the
+model isn't present for some reason, checking the box simply has no effect.)</p>
+</blockquote>
+<h2 id="redacting-your-own-special-identifiers-custom-identifiers">Redacting your own special identifiers (Custom Identifiers)</h2>
+<p>Beyond the built-in types, you can teach Philter Desktop to remove information that follows <strong>your
+organization's own format</strong> — for instance, a case number like <code>CASE-2024-00123</code>, a client matter
+ID, or an internal account number.</p>
+<p>To do this, enable <strong>Custom Identifiers</strong>, click <strong>Configure…</strong>, and describe the pattern you want to
+match, along with a label to call it. Describing a pattern uses something called a <strong>regular
+expression</strong>, which is a compact way of saying "match text that looks like <em>this</em>" (for example,
+"the letters CASE, then a dash, then four digits, then a dash, then five digits"). Regular
+expressions are a technical skill; if you're not comfortable writing one, ask a technical colleague,
+or use the <strong>Always Redact</strong> list above for specific words and phrases, which needs no special
+syntax.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../watched-folders/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Watched Folders">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Watched Folders
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../filter-strategies/" class="md-footer__link md-footer__link--next" aria-label="Next: Filter Strategies">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Filter Strategies
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright 2026 Philterd, LLC
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.linkedin.com/company/philterd/" target="_blank" rel="noopener" title="www.linkedin.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.github.com/philterd/" target="_blank" rel="noopener" title="www.github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.expand", "navigation.footer"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

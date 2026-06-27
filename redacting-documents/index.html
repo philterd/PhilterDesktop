@@ -1,0 +1,1794 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="User documentation for Philter Desktop, a Windows application for redacting PII from documents">
+      
+      
+        <meta name="author" content="philterd">
+      
+      
+        <link rel="canonical" href="https://philterd.github.io/PhilterDesktop/redacting-documents/">
+      
+      
+        <link rel="prev" href="../getting-started/">
+      
+      
+        <link rel="next" href="../watched-folders/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Redacting Documents - Philter Desktop</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="red" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#redacting-documents" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="https://www.philterd.ai" title="Philter Desktop" class="md-header__button md-logo" aria-label="Philter Desktop" data-md-component="logo">
+      
+  <img src="../img/philterd.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Philter Desktop
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Redacting Documents
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://www.github.com/philterd/PhilterDesktop" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Www
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://www.philterd.ai" title="Philter Desktop" class="md-nav__button md-logo" aria-label="Philter Desktop" data-md-component="logo">
+      
+  <img src="../img/philterd.png" alt="logo">
+
+    </a>
+    Philter Desktop
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://www.github.com/philterd/PhilterDesktop" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Www
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redacting Documents
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redacting Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#which-kinds-of-documents-you-can-redact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which kinds of documents you can redact
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Which kinds of documents you can redact">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#redacting-email-and-why-msg-comes-out-as-eml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redacting email (and why .msg comes out as .eml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redacting-spreadsheets-xlsx-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redacting spreadsheets (.xlsx, .csv)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-documents-to-the-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding documents to the queue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-happens-after-you-add-a-document" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens after you add a document
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redact-a-whole-folder-at-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redact a whole folder at once
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redact-with-preview-see-the-result-before-you-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redact with Preview: see the result before you commit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#find-redact-remove-specific-words-no-policy-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find &amp; Redact: remove specific words, no policy needed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#working-with-the-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Working with the queue
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Working with the queue">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-a-document-in-a-long-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding a document in a long list
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adjusting-what-was-removed-modify-redaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adjusting what was removed (Modify Redaction)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adjusting what was removed (Modify Redaction)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-versions-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How versions work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editing-a-versions-list-of-redactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editing a version's list of redactions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparing-the-original-and-the-cleaned-up-copy-view-diff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparing the original and the cleaned-up copy (View Diff)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Comparing the original and the cleaned-up copy (View Diff)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#text-word-csv-and-email-documents-txt-docx-csv-eml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text, Word, CSV, and email documents (.txt, .docx, .csv, .eml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pdf-documents-pdf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PDF documents (.pdf)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exporting-an-explanation-of-a-redaction-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting an explanation of a redaction (JSON)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checking-the-result-for-anything-missed-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking the result for anything missed (Verification)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Checking the result for anything missed (Verification)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-ways-to-scan-same-policy-vs-broad-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two ways to scan: same policy vs. broad policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seeing-a-documents-verification-result-later" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seeing a document's verification result later
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generating-a-redaction-report-a-shareable-certificate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generating a redaction report (a shareable certificate)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exporting-an-explanation-of-a-redaction-json_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting an explanation of a redaction (JSON)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-reminder-about-what-gets-removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A reminder about what gets removed
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../watched-folders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Watched Folders
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../filter-strategies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter Strategies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../supported-filters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supported Filters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contexts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../licensing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Licensing & Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#which-kinds-of-documents-you-can-redact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which kinds of documents you can redact
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Which kinds of documents you can redact">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#redacting-email-and-why-msg-comes-out-as-eml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redacting email (and why .msg comes out as .eml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redacting-spreadsheets-xlsx-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redacting spreadsheets (.xlsx, .csv)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-documents-to-the-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding documents to the queue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-happens-after-you-add-a-document" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens after you add a document
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redact-a-whole-folder-at-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redact a whole folder at once
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redact-with-preview-see-the-result-before-you-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redact with Preview: see the result before you commit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#find-redact-remove-specific-words-no-policy-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find &amp; Redact: remove specific words, no policy needed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#working-with-the-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Working with the queue
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Working with the queue">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-a-document-in-a-long-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding a document in a long list
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adjusting-what-was-removed-modify-redaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adjusting what was removed (Modify Redaction)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adjusting what was removed (Modify Redaction)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-versions-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How versions work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editing-a-versions-list-of-redactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editing a version's list of redactions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparing-the-original-and-the-cleaned-up-copy-view-diff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparing the original and the cleaned-up copy (View Diff)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Comparing the original and the cleaned-up copy (View Diff)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#text-word-csv-and-email-documents-txt-docx-csv-eml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text, Word, CSV, and email documents (.txt, .docx, .csv, .eml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pdf-documents-pdf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PDF documents (.pdf)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exporting-an-explanation-of-a-redaction-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting an explanation of a redaction (JSON)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checking-the-result-for-anything-missed-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking the result for anything missed (Verification)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Checking the result for anything missed (Verification)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-ways-to-scan-same-policy-vs-broad-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two ways to scan: same policy vs. broad policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seeing-a-documents-verification-result-later" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seeing a document's verification result later
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generating-a-redaction-report-a-shareable-certificate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generating a redaction report (a shareable certificate)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exporting-an-explanation-of-a-redaction-json_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting an explanation of a redaction (JSON)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-reminder-about-what-gets-removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A reminder about what gets removed
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="redacting-documents">Redacting Documents</h1>
+<p>This is the page you'll come back to most often. It explains how to add documents, how Philter
+Desktop cleans them up, how to look at exactly what was removed, and how to make adjustments if the
+program removed too much or too little.</p>
+<p>The heart of the program is the <strong>redaction queue</strong> — the list that fills most of the main window.
+Think of it as your worklist: every document you hand to Philter Desktop appears here as a row, along
+with its current status, the policy (set of rules) being used, and the context (the consistency
+setting). Documents you've already finished stay in the list too, so you can re-open them, compare
+them, or fine-tune them later.</p>
+<h2 id="which-kinds-of-documents-you-can-redact">Which kinds of documents you can redact</h2>
+<p>Philter Desktop works with these document types:</p>
+<ul>
+<li><strong>Plain text</strong> — files ending in <code>.txt</code> (simple, unformatted text, like a Notepad file).</li>
+<li><strong>Microsoft Word</strong> — files ending in <code>.docx</code>.</li>
+<li><strong>PDF</strong> — files ending in <code>.pdf</code>.</li>
+<li><strong>Rich Text</strong> — files ending in <code>.rtf</code> (a formatted-text format used by WordPad and many legal and
+  records systems).</li>
+<li><strong>Spreadsheets</strong> — Excel files ending in <code>.xlsx</code> and comma-separated files ending in <code>.csv</code>.</li>
+<li><strong>Email</strong> — files ending in <code>.eml</code> (the standard email format used by most mail programs) and
+  <code>.msg</code> (the format Microsoft Outlook uses when you save or drag out a message).</li>
+</ul>
+<p>!!! note "Password-protected Word and Excel files"
+    A Word or Excel file that has been <strong>protected with a password</strong> (encrypted) cannot be opened for
+    redaction. If you try, Philter Desktop tells you so clearly. To redact one, open it in Word or
+    Excel, remove the password (<strong>File → Info → Protect Document / Protect Workbook</strong>), save it, and
+    then redact the unprotected copy.</p>
+<blockquote>
+<p><strong>One important thing about PDFs.</strong> When Philter Desktop redacts a PDF, it does something
+deliberately thorough: it turns each page into a flattened <strong>picture</strong> of the page with the
+sensitive information painted over. The benefit is that the removed information is <em>truly gone</em> —
+there is no hidden text layer left behind that someone could copy, search, or recover. (You may
+have heard stories of "redacted" PDFs where the black boxes could be copied off to reveal the text
+underneath; that cannot happen here.) The trade-off is that the cleaned-up PDF behaves like a
+scanned document: you can read it and print it, but you can no longer select or search its text.
+For most legal and confidentiality purposes, this is exactly what you want.</p>
+</blockquote>
+<h3 id="redacting-email-and-why-msg-comes-out-as-eml">Redacting email (and why <code>.msg</code> comes out as <code>.eml</code>)</h3>
+<p>When Philter Desktop redacts an email, it cleans up the <strong>subject line</strong>, the <strong>From / To / Cc</strong>
+addresses, and the <strong>message body</strong> (both plain-text and HTML versions), according to your policy —
+the same way it handles any other document.</p>
+<p>!!! warning "Attachments are not redacted"
+    Philter Desktop redacts the email <strong>message itself</strong> — the subject, the addresses, and the body. It
+    does <strong>not</strong> open, inspect, or redact <strong>attachments</strong> (a PDF, Word file, spreadsheet, image, or
+    anything else carried along with the email). Those are copied through <strong>unchanged</strong>, so any
+    sensitive information inside an attachment is left exactly as it was. If an email has attachments
+    that need redacting, <strong>save each one out as its own file and redact it separately</strong> (a <code>.pdf</code>,
+    <code>.docx</code>, or <code>.txt</code> attachment can go straight through Philter Desktop). Always review the finished
+    email <strong>and</strong> its attachments before sharing it.</p>
+<p>There's one thing to know about Outlook <code>.msg</code> files: <strong>a redacted <code>.msg</code> is saved as an <code>.eml</code> file.</strong>
+So redacting <code>message.msg</code> produces <code>message_redacted-draft.eml</code>, not a <code>.msg</code>.</p>
+<p>Why the change in file type? <code>.msg</code> is Microsoft's own private, undocumented Outlook format. Philter
+Desktop can reliably <strong>read</strong> a <code>.msg</code> and pull out everything it needs to redact, but rebuilding a
+brand-new <code>.msg</code> file faithfully — without quietly dropping or corrupting parts of the message — is not
+something it can guarantee. Rather than hand you a <code>.msg</code> that <em>might</em> be subtly broken, it writes the
+redacted result as <strong><code>.eml</code></strong>, the universal email format. An <code>.eml</code> file is a complete, standalone
+copy of the email that <strong>opens in Outlook</strong> (just double-click it) as well as in Apple Mail,
+Thunderbird, Gmail's import, and essentially every other mail program. Nothing is lost in the
+redaction itself — only the container file type changes, in exchange for a result you can trust.</p>
+<blockquote>
+<p><code>.eml</code> files redact to <code>.eml</code>, and everything else keeps its original file type as usual — only
+<code>.msg</code> changes.</p>
+</blockquote>
+<h3 id="redacting-spreadsheets-xlsx-csv">Redacting spreadsheets (<code>.xlsx</code>, <code>.csv</code>)</h3>
+<p>Spreadsheets are redacted <strong>cell by cell</strong>: Philter Desktop looks at each cell on its own and removes
+the sensitive information it finds there, leaving the rest of the table — the layout, the columns, the
+numbers, the formulas — intact. An Excel file stays <code>.xlsx</code> and a CSV stays <code>.csv</code>. (For Excel,
+<strong>formulas</strong> are left alone, since their value is calculated rather than stored.)</p>
+<p>There's an important thing to understand about spreadsheets. Philter Desktop recognizes sensitive
+information partly from the <strong>words around it</strong> — and a cell often holds a value all by itself, with no
+surrounding sentence for context. Patterns with a fixed shape (Social Security numbers, email
+addresses, account numbers) are still caught reliably. But something like a lone first name in a cell
+— "April" — has nothing around it to signal that it's a name, so automatic name detection is <strong>much
+weaker</strong> on bare cells than on ordinary paragraphs of writing.</p>
+<p>There's also a point about <strong>numbers</strong>: a value a spreadsheet stores as a <em>number</em> — say an account
+number or an ID typed as plain digits — is <strong>not scanned</strong> for sensitive information, because Philter
+Desktop leaves numbers exactly as they are (so totals and calculations aren't disturbed). Sensitive
+values that look like text, such as an SSN written with dashes (<code>123-45-6789</code>), are still detected. If
+a column holds sensitive <strong>numeric</strong> IDs, remove it with whole-column redaction, described next.</p>
+<p>That's why spreadsheets have an extra tool: <strong>whole-column redaction</strong>. Use the <strong>Redact
+Spreadsheet…</strong> action — on the <strong>Redact</strong> button's arrow menu, or by right-clicking a spreadsheet in
+the queue. It opens a small window where you choose the <strong>policy</strong> and <strong>context</strong> as usual, and also
+see a <strong>list of the file's columns</strong> (with their headers). Tick any column whose contents should be
+removed <strong>entirely</strong> — for example a "Name" column, a "Patient ID" column, or an "Account" column —
+and every <strong>data cell</strong> in that column is cleared, regardless of whether the detector would have
+flagged it. The column's <strong>header label is kept</strong> (so the table stays readable — only the values below
+it are removed). Columns you don't tick are still cleaned the normal way (detected sensitive values
+removed). This is the dependable way to handle columns of names and identifiers.</p>
+<p>When you click <strong>Redact</strong>, the spreadsheet is <strong>added to the queue</strong> with your choices and the window
+closes; it's then redacted in the background like any other document, and you'll see it appear in the
+main list with its status.</p>
+<blockquote>
+<p>When you redact a spreadsheet through the ordinary queue, drag-and-drop, a <a href="../watched-folders/">watched
+folder</a>, or the command line, Philter Desktop runs <strong>detection on every cell</strong>
+(no column is fully cleared, because those routes don't ask you any questions). To pick whole columns
+to remove, use <strong>Redact Spreadsheet…</strong>.</p>
+</blockquote>
+<h2 id="adding-documents-to-the-queue">Adding documents to the queue</h2>
+<p>There are two ways to add files:</p>
+<ul>
+<li><strong>The Redact button.</strong> Click <strong>Redact</strong> on the toolbar. You'll be asked which <strong>policy</strong> (rule set)
+  and which <strong>context</strong> (consistency setting) to use, and then you choose the files you want to add.
+  This is the way to go when you want to pick specific rules for a particular batch of documents.
+  The <strong>Redact</strong> button also has a small <strong>arrow</strong> beside it; clicking the arrow opens a short menu
+  with alternatives — <strong>Redact with Preview…</strong> (see the result before saving), <strong>Find &amp; Redact…</strong>
+  (remove specific words from one file), <strong>Redact Spreadsheet…</strong> (redact an <code>.xlsx</code>/<code>.csv</code> with
+  optional whole-column removal), and <strong>Redact Folder…</strong> (add every supported file in a folder at
+  once). These are described later on this page.</li>
+<li><strong>Drag and drop.</strong> Drag one or more files from a Windows folder and drop them straight onto the
+  Philter Desktop window. Files added this way use the <strong>default</strong> policy and the <strong>default</strong> context.
+  This is the quickest way when the standard rules are fine.</li>
+</ul>
+<h2 id="what-happens-after-you-add-a-document">What happens after you add a document</h2>
+<p>Philter Desktop redacts documents automatically, on its own, in the background — you don't have to
+press a "go" button. Each row's <strong>Status</strong> column tells you where that document is in the process:</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pending</strong></td>
+<td>The document is in line, waiting its turn.</td>
+</tr>
+<tr>
+<td><strong>Processing</strong></td>
+<td>The document is being cleaned up right now.</td>
+</tr>
+<tr>
+<td><strong>Completed</strong></td>
+<td>The document was cleaned up successfully and the copy is ready.</td>
+</tr>
+<tr>
+<td><strong>Failed</strong></td>
+<td>Something prevented the cleanup — for example, the original file was moved or deleted, the file was open in another program, or the chosen policy no longer exists.</td>
+</tr>
+</tbody>
+</table>
+<p>If a document shows <strong>Failed</strong>, Philter Desktop remembers <em>why</em>. <strong>Hover your mouse over the failed
+row</strong> to see the reason in a small pop-up, or right-click the row and choose <strong>View Details…</strong>, where
+the reason appears as a <strong>"Why it failed"</strong> line. The reasons are written in plain language — for
+example, <em>"…could not save 'report.docx' because it is open in another program (such as Microsoft
+Word or a PDF viewer). Please close it and try again."</em> Once you've fixed the cause, you can add the
+document again to retry it.</p>
+<p>Whatever happens, <strong>your original document is never changed.</strong> Philter Desktop always writes the
+result to a <strong>new, separate copy</strong>. That copy is given a name based on the original plus a label —
+by default the label is <code>_redacted-draft</code>, so <code>report.docx</code> becomes <code>report_redacted-draft.docx</code> —
+and it's saved to the location you've chosen in <a href="../settings/">Settings</a>. The word "draft" in that
+name is a gentle reminder that you should still review the file before relying on it.</p>
+<p>For Word (<code>.docx</code>) files, Philter Desktop also cleans up hidden information in the redacted copy by
+default — the document's <strong>metadata</strong> (author, company, title, keywords, custom properties), reviewer
+<strong>comments</strong>, <strong>tracked changes</strong>, and <strong>hidden text</strong> — so a "redacted" file doesn't quietly leak
+through any of those channels. You can control each of these on the
+<a href="../settings/#microsoft-word-tab">Settings → Microsoft Word</a> tab.</p>
+<h2 id="redact-a-whole-folder-at-once">Redact a whole folder at once</h2>
+<p>When you have a folder full of documents — a discovery dump, a case folder, a batch of exports — you
+don't have to add the files one by one. Click the small <strong>arrow</strong> beside the <strong>Redact</strong> button and
+choose <strong>Redact Folder…</strong>.</p>
+<p>In the dialog:</p>
+<ol>
+<li><strong>Choose the folder</strong> with <strong>Browse…</strong> (or type/paste its path).</li>
+<li>Tick <strong>Include files in subfolders</strong> if you also want the documents inside any folders within it.</li>
+<li>Pick the <strong>policy</strong> and the <strong>context</strong> to use for the whole batch.</li>
+<li>Optionally tick <strong>Highlight redactions in Word (.docx) documents</strong>.</li>
+</ol>
+<p>As soon as you choose a folder, Philter Desktop scans it and tells you exactly what it found — for
+example, <em>"12 files will be added to the redaction queue (5 .pdf, 4 .docx, 3 .txt)."</em> — so you can
+sanity-check the batch before committing. Click <strong>Add to Queue</strong> and every supported file is added to
+the redaction queue and cleaned up the same way as any other document, with its own <strong>Pending →
+Processing → Completed</strong> (or <strong>Failed</strong>) status. Nothing about a watched folder is set up, and the
+folder is not monitored afterward — this is a one-time action.</p>
+<p>A few things worth knowing:</p>
+<ul>
+<li><strong>Only supported file types are picked up.</strong> Files Philter Desktop can't redact (images, archives,
+  and so on) are simply skipped, and the count tells you how many files will actually be processed.</li>
+<li><strong>Previous results are left alone.</strong> Files that already look like a redacted copy (their name ends
+  with your redacted-file label, <code>_redacted-draft</code> by default) are skipped, so running <strong>Redact
+  Folder…</strong> again won't re-redact the drafts it made last time.</li>
+<li><strong>Per-file results are visible.</strong> If one file can't be cleaned up (for example, a password-protected
+  Word document), that single row shows <strong>Failed</strong> with the reason — the rest of the batch still
+  completes.</li>
+<li><strong>Your originals are never changed.</strong> As always, each cleaned-up copy is written to a new, separate
+  file (see <a href="#what-happens-after-you-add-a-document">What happens after you add a document</a> above).</li>
+</ul>
+<h2 id="redact-with-preview-see-the-result-before-you-commit">Redact with Preview: see the result before you commit</h2>
+<p>Sometimes you'd rather <strong>look at the result first</strong> and only save it once you're happy. That's what
+<strong>Redact with Preview</strong> is for. It's best for working carefully on a single document at a time.</p>
+<p>Start it from the <strong>Redact</strong> button on the toolbar: click the small <strong>arrow</strong> beside it and choose
+<strong>Redact with Preview…</strong> (or right-click a document and choose the same). It works with <code>.txt</code>,
+<code>.rtf</code>, <code>.docx</code>, <code>.pdf</code>, and email (<code>.eml</code> and <code>.msg</code>) files. (Spreadsheets — <code>.xlsx</code> and <code>.csv</code> —
+don't have a preview yet; redact them the ordinary way and review the cleaned-up copy afterward.)
+You pick the file, choose a <strong>policy</strong> and a <strong>context</strong>, and Philter Desktop shows you <strong>what the
+cleaned-up file will look like before a single thing is written to disk</strong>:</p>
+<ul>
+<li><strong>Plain text (<code>.txt</code>) and rich text (<code>.rtf</code>)</strong> — a live, side-by-side comparison of the original
+  and the cleaned-up result, plus an editable list of every redaction. You can add, change, or remove
+  individual redactions right there before saving. (Rich-text formatting is preserved in the saved
+  file; the preview compares the visible text.)<ul>
+<li><strong>Redact something the detector missed by selecting it.</strong> Switch to the <strong>Select text to redact</strong>
+  tab, highlight the words you want removed, and click <strong>Redact selection</strong>. The redaction is added
+  to the list (marked <strong>Added</strong>), shows up in the before/after comparison, and is applied when you
+  save — and it appears in the <a href="#generating-a-redaction-report-a-shareable-certificate">redaction report</a>
+  as a user-added redaction. You can remove it again from the list like any other. (Prefer typing
+  exact positions? <strong>Add…</strong> still lets you enter a start and end offset by hand.)</li>
+</ul>
+</li>
+<li><strong>Microsoft Word (<code>.docx</code>)</strong> — a paragraph-by-paragraph comparison showing what will be removed,
+  with an editable list of redactions and an optional <strong>highlight</strong> setting (which marks the
+  replacements so they're easy to spot during review). This preview shows you the redacted <strong>text</strong>;
+  it is not a full picture-perfect rendering of the finished Word page.<ul>
+<li><strong>Redact something the detector missed by selecting it.</strong> Switch to the <strong>Select text to redact</strong>
+  tab, highlight the words you want removed, and click <strong>Redact selection</strong>. The redaction joins the
+  list (marked <strong>Added</strong>), appears in the comparison and the <a href="#generating-a-redaction-report-a-shareable-certificate">report</a>
+  as a user-added redaction, and can be removed again like any other. A selection that crosses
+  paragraphs is split into one redaction per paragraph. (<strong>Add…</strong> still lets you type an exact
+  paragraph and offset by hand.)</li>
+</ul>
+</li>
+<li><strong>PDF (<code>.pdf</code>)</strong> — the cleaned-up PDF shown side by side with the original, with zoom controls and
+  scrolling that keeps both sides lined up.</li>
+<li><strong>Email (<code>.eml</code> and <code>.msg</code>)</strong> — a field-by-field comparison (subject, addresses, and body) showing
+  what will be removed, with an editable list of redactions. Each redaction is anchored to a specific
+  field; you can change its replacement or remove it. Outlook <code>.msg</code> files are saved as standard <code>.eml</code>.<ul>
+<li><strong>Redact something the detector missed in the body by selecting it.</strong> Switch to the <strong>Select text
+  to redact</strong> tab (which shows the message body), highlight the words you want removed, and click
+  <strong>Redact selection</strong>. It joins the list (marked <strong>Added</strong>) and the
+  <a href="#generating-a-redaction-report-a-shareable-certificate">report</a> as a user-added redaction, and
+  can be removed again. Manual selection applies to <strong>body</strong> text; the subject and address headers
+  aren't hand-edited (their detected matches are still removed automatically).</li>
+</ul>
+</li>
+</ul>
+<p>If you change the policy or the context while previewing, Philter Desktop re-checks the document and
+updates the preview. <strong>Nothing is saved until you click "Save Redacted File"</strong>, at which point you
+choose where to put it. Once saved, the document is added to your queue (marked <strong>Completed</strong>), so you
+can re-open it, compare it, or adjust it later just like any other finished document.</p>
+<p>Preview is the "look first, then save" approach. The ordinary queue, the <a href="../watched-folders/">watched
+folders</a> feature, and the command line (described near the end of this page) are
+the better choices when you need to clean up <strong>many documents at once</strong>.</p>
+<h2 id="find-redact-remove-specific-words-no-policy-needed">Find &amp; Redact: remove specific words, no policy needed</h2>
+<p>Sometimes you don't need a whole policy — you just want to <strong>strike a few specific words or phrases</strong>
+out of one document. Maybe it's a particular name, a project codename, or a phrase your client asked
+you to remove. For that there's <strong>Find &amp; Redact</strong>.</p>
+<p>Open it from the <strong>Redact</strong> button's <strong>arrow</strong> menu on the toolbar and choose <strong>Find &amp; Redact…</strong> (or
+right-click a document in the queue and choose the same — if you'd already selected a document, its
+path is filled in for you). A small window opens where you:</p>
+<ol>
+<li>Choose the <strong>document</strong> to redact (<code>.txt</code>, <code>.docx</code>, <code>.pdf</code>, <code>.rtf</code>, <code>.xlsx</code>, <code>.csv</code>, <code>.eml</code>, or <code>.msg</code>).</li>
+<li>Type the <strong>exact terms</strong> to remove, <strong>one per line</strong> — or click <strong>Import from file…</strong> to load them
+   from a <code>.txt</code> or single-column <code>.csv</code> file.</li>
+<li>Click <strong>Redact</strong>.</li>
+</ol>
+<p>Philter Desktop removes every occurrence of those terms (ignoring capitalization) and saves a redacted
+copy alongside the original, then offers to open the containing folder. It doesn't touch your policies,
+your queue, or your history — it's a quick, self-contained one-off.</p>
+<p>This is the right tool when you know <strong>exactly</strong> what text to remove. When you instead want Philter
+Desktop to <em>find</em> sensitive information by its kind — every Social Security number, every email
+address, every name — use a <a href="../policies/">policy</a> with the ordinary <strong>Redact</strong> or <strong>Redact with
+Preview</strong> actions above. And for terms you want removed in <em>every</em> redaction, not just this one, use
+the global <a href="../policies/#lists-that-apply-to-every-policy-the-lists-button">Lists</a> instead.</p>
+<h2 id="working-with-the-queue">Working with the queue</h2>
+<p>Once a document shows <strong>Completed</strong>, you have several options:</p>
+<ul>
+<li><strong>Double-click</strong> the row to open the cleaned-up file immediately.</li>
+<li><strong>Right-click</strong> the row to:<ul>
+<li><strong>Open redacted file</strong> — open the cleaned-up copy.</li>
+<li><strong>Open original file</strong> — open the untouched original.</li>
+<li><strong>Open containing folder</strong> — show the cleaned-up file selected in File Explorer.</li>
+<li><strong>View Details…</strong> — see a summary of that document: the original file name, the cleaned-up file
+  name, the policy and context used, how many redactions were made, when it was done, and how long
+  the redaction took ("Time to redact").</li>
+<li><strong>View Diff…</strong> — see a precise before-and-after comparison (explained below).</li>
+<li><strong>Modify Redaction…</strong> — review and adjust exactly what was removed (explained below).</li>
+<li><strong>Export Explanation (JSON)…</strong> — save a detailed report of <em>why</em> each item was removed
+  (explained below).</li>
+<li><strong>Remove</strong>, <strong>Remove completed</strong>, or <strong>Remove all</strong> — take items off the list.</li>
+<li><strong>Refresh</strong> — reload the list.</li>
+</ul>
+</li>
+</ul>
+<p>The list updates itself as documents are processed, so you rarely need to refresh by hand. A
+<strong>Refresh</strong> button is also on the toolbar (and <strong>F5</strong> refreshes too) — handy when documents were added
+from the <a href="#for-advanced-users-and-it-redacting-from-a-command-line">command line</a> or the
+<a href="../settings/#explorer-right-click-menu">Explorer right-click menu</a> while Philter Desktop was open.</p>
+<p>When you remove several items at once, Philter Desktop asks you to confirm first, so you can't clear
+your list by accident.</p>
+<p><strong>Keyboard shortcuts:</strong> <strong>F5</strong> refreshes the list, <strong>Delete</strong> removes the selected document, <strong>Enter</strong>
+opens a completed document's redacted file, and <strong>Ctrl+O</strong> adds files.</p>
+<h3 id="finding-a-document-in-a-long-list">Finding a document in a long list</h3>
+<p>When you have many documents in the queue, two tools help you find the one you want:</p>
+<ul>
+<li><strong>Filter box.</strong> Just above the list is a box labelled <em>Filter by file name, status, policy, or
+  context</em>. Start typing and the list immediately narrows to only the documents that match what you
+  typed — for example, type part of a file name, or type <code>failed</code> to see only the documents that
+  didn't finish. The status bar shows how many documents are being shown (for example, <em>Showing 3 of
+  40 documents</em>). Clear the box (or press <strong>Esc</strong> while typing in it) to see the whole queue again.</li>
+<li><strong>Sorting.</strong> Click any column heading — <strong>File Name</strong>, <strong>Status</strong>, <strong>Policy</strong>, <strong>Context</strong>, or
+  <strong>Verification</strong> — to sort the list by that column. Click the same heading again to reverse the order. A small arrow on
+  the heading shows which column is sorted and in which direction. (Sorting by <strong>Status</strong> groups the
+  documents in the natural order of work: pending, then processing, then completed, then failed.)</li>
+</ul>
+<h2 id="adjusting-what-was-removed-modify-redaction">Adjusting what was removed (Modify Redaction)</h2>
+<p>Automatic redaction is thorough, but you are always in charge. After a document is cleaned up, Philter
+Desktop <strong>remembers the exact list of things it removed</strong>, so you can fine-tune that list without
+having to start over. For instance, you might want to <em>stop</em> hiding a name that's actually fine to
+keep, or you might want to hide one extra item the program didn't catch.</p>
+<p>To do this, right-click a <strong>Completed</strong> document and choose <strong>Modify Redaction…</strong>.</p>
+<p>The window that opens shows two things:</p>
+<ul>
+<li>A <strong>Versions</strong> list. The very first, automatic cleanup is called <strong>Version 1</strong>. Think of versions
+  like saved drafts: each one is a snapshot of a particular set of redaction choices.</li>
+<li>The <strong>list of redactions</strong> for whichever version you've selected. For each item you'll see its
+  type, the original text, what it was replaced with, the exact character positions it covers, and
+  where in the document it sits.</li>
+</ul>
+<h3 id="how-versions-work">How versions work</h3>
+<ul>
+<li><strong>New Version</strong> makes a fresh version by copying the most recent one. This lets you experiment
+  freely: your earlier work is preserved, so you can always go back. (Creating a new version from
+  Version 4, for example, gives you a Version 5 that starts out identical to 4.)</li>
+<li><strong>Delete</strong> removes the version you've selected — but <strong>Version 1 can never be deleted</strong>, because it
+  preserves the original automatic result.</li>
+<li>Selecting a version shows its list of redactions, and any edits you make are saved to that version.</li>
+</ul>
+<p><strong>Version 1 is read-only.</strong> Because it's the permanent record of the original automatic cleanup, you
+cannot edit or delete its list. If you want to make changes, click <strong>New Version</strong> first and edit
+that.</p>
+<h3 id="editing-a-versions-list-of-redactions">Editing a version's list of redactions</h3>
+<p>To open a single redaction for editing, <strong>double-click it</strong> in the list. You can:</p>
+<ul>
+<li><strong>Remove</strong> a redaction — for example, to stop hiding one particular name that's safe to keep.</li>
+<li><strong>Edit</strong> what a redaction is replaced with (and, for redactions you added yourself, where it sits
+  in the document).</li>
+<li><strong>Add</strong> a brand-new redaction. You add it <strong>by position</strong> — that is, by telling Philter Desktop
+  <em>where</em> in the document to redact — and then give it the replacement text. What "position" means
+  depends on the document type:<ul>
+<li><strong>Plain text (<code>.txt</code>) and Rich Text (<code>.rtf</code>)</strong> — the starting and ending character positions.</li>
+<li><strong>Microsoft Word (<code>.docx</code>)</strong> — which paragraph, plus the start and end positions within that
+  paragraph.</li>
+<li><strong>PDF (<code>.pdf</code>)</strong> — which page, plus a rectangle on the page.</li>
+</ul>
+</li>
+</ul>
+<p>!!! note "Spreadsheets and email: review and adjust, but no manual <em>Add</em>"
+    For <strong>spreadsheets (<code>.xlsx</code>, <code>.csv</code>)</strong> and <strong>email (<code>.eml</code>, <code>.msg</code>)</strong>, each redaction belongs to a
+    specific <strong>cell</strong> or <strong>email field</strong> rather than a position you can point to. You can still
+    <strong>review</strong> the redactions, <strong>remove</strong> ones you'd rather keep, <strong>change the replacement text</strong>, and
+    <strong>Redact</strong> to regenerate the file — but <strong>Add</strong> is turned off for these formats (there's no
+    cell-by-cell "add here" to choose). If you need to remove the entire contents of a column in a
+    spreadsheet, use <strong>Redact Spreadsheet…</strong> and tick that column instead. The location column shows
+    which <strong>Cell</strong> or <strong>Field</strong> each redaction sits in.</p>
+<p>A helpful detail: redactions are tracked <strong>by their position in the document</strong>, not by searching for
+their text. That means every redaction — whether Philter Desktop found it automatically or you added
+it by hand — is re-applied to the exact spot it belongs, even if the same words appear elsewhere in
+the document.</p>
+<p>When your list looks right, click <strong>Redact</strong> to produce the cleaned-up file from that version. Philter
+Desktop re-applies that version's redactions to your <strong>original document</strong> and writes a fresh copy
+(Version 1 produces <code>report_redacted-draft.docx</code>, later versions add a number, like
+<code>report_redacted-draft_2.docx</code>). Because the file is built from the original, <strong>the original document
+must still be in its original location.</strong> The finished document opens automatically when it's ready.</p>
+<h2 id="comparing-the-original-and-the-cleaned-up-copy-view-diff">Comparing the original and the cleaned-up copy (View Diff)</h2>
+<p>Before you rely on a redacted document, it's wise to confirm exactly what changed. Right-click a
+<strong>Completed</strong> item and choose <strong>View Diff…</strong> (available for <code>.txt</code>, <code>.docx</code>, <code>.pdf</code>, <code>.csv</code>, and
+<code>.eml</code> files). This opens a <strong>before-and-after comparison</strong>: the original on the <strong>left</strong> ("Before")
+and the cleaned-up copy on the <strong>right</strong> ("After"). This view is <strong>read-only</strong> — looking at it never
+changes either file.</p>
+<blockquote>
+<p><strong>Large files.</strong> Comparing very large files would be slow and memory-hungry, so <strong>View Diff is
+turned off for files over 10 MB</strong> (the menu item is greyed out and labelled "file too large"). You
+can still open the original and redacted files directly to review them.</p>
+</blockquote>
+<h3 id="text-word-csv-and-email-documents-txt-docx-csv-eml">Text, Word, CSV, and email documents (<code>.txt</code>, <code>.docx</code>, <code>.csv</code>, <code>.eml</code>)</h3>
+<p>You'll see a line-by-line comparison with the matching lines kept side by side and color-coded so
+changes jump out:</p>
+<ul>
+<li><strong>Red</strong> marks text that was <strong>removed</strong>.</li>
+<li><strong>Green</strong> marks text that was <strong>added</strong> (the replacements that went in).</li>
+<li><strong>Yellow</strong> marks lines that were <strong>changed</strong>.</li>
+</ul>
+<p>Long lines wrap so you can read them in full, and the two sides scroll together. For Word documents,
+the comparison looks at the <strong>paragraphs of text</strong> in the document (one paragraph per line) — the
+actual words Philter Desktop worked on — rather than the page's fonts, spacing, or layout.</p>
+<h3 id="pdf-documents-pdf">PDF documents (<code>.pdf</code>)</h3>
+<p>You'll see the pages <strong>side by side as pictures</strong>: each page of the original next to the same page of
+the cleaned-up copy, so you can visually confirm every redaction. Use <strong>Previous</strong> and <strong>Next</strong> to
+move through the pages, the <strong>Fit</strong>, <strong>100%</strong>, <strong>+</strong>, and <strong>−</strong> buttons to zoom, and (when zoomed in)
+both sides scroll together. Because redacted PDFs are flattened to images, this is a visual
+comparison rather than a word-by-word text comparison.</p>
+<h2 id="exporting-an-explanation-of-a-redaction-json">Exporting an explanation of a redaction (JSON)</h2>
+<p>If you ever need to show your work — for a colleague, a reviewer, an audit, or just your own
+records — you can export a detailed <strong>explanation</strong> of a finished redaction. Right-click a <strong>Completed</strong>
+document and choose <strong>Export Explanation (JSON)…</strong>.</p>
+<p>This saves a <code>.json</code> file that lists, for <strong>every item Philter Desktop removed</strong>:</p>
+<ul>
+<li><strong>What</strong> it was — the original text, and what it was replaced with.</li>
+<li><strong>Why</strong> it was flagged — the detector that matched (for example, an email-address or Social Security
+  number detector), how confident the detector was, and (for rule-based detectors) the pattern it
+  matched and the words surrounding it.</li>
+<li><strong>Where</strong> it was — the position in the document (character position and paragraph for text and Word
+  files; the page and location for PDFs).</li>
+</ul>
+<p>A <code>.json</code> file is a plain-text format that's easy for other programs to read, and is also readable by
+a person who knows where to look. (Items you added by hand in <strong>Modify Redaction</strong> are included too,
+marked as user-added.)</p>
+<p>!!! danger "The explanation file contains the original sensitive text"
+    Because the report lists the <strong>original, un-redacted text</strong> of everything that was found — along
+    with the surrounding words — the explanation file is <strong>just as sensitive as the original
+    document</strong>. Philter Desktop reminds you of this before it saves. Store it somewhere secure, treat
+    it with the same care as the original, and <strong>never</strong> hand it out in place of the redacted copy.</p>
+<h2 id="checking-the-result-for-anything-missed-verification">Checking the result for anything missed (Verification)</h2>
+<p>The worst outcome for a redaction tool is a <strong>false negative</strong> — sensitive text the policy missed that
+ends up in the "clean" copy. To guard against that, Philter Desktop can <strong>verify its own work</strong>: after
+redacting, it re-opens the <strong>finished output file</strong> and runs the detector over it again, looking for
+anything that still matches.</p>
+<p>This runs <strong>automatically</strong> after each redaction (you can turn it off in
+<a href="../settings/">Settings → Security</a>), and you can run it any time by right-clicking a <strong>Completed</strong>
+document and choosing <strong>Verify Redaction</strong>.</p>
+<ul>
+<li>If nothing is found, Philter Desktop tells you the output <strong>passed verification</strong>.</li>
+<li>If something is found, it's surfaced <strong>loudly</strong>: a count of how many items may remain, plus a list
+  showing each item's <strong>type, the text that's still present, and where it is</strong>. Fix it by adjusting the
+  policy and redacting again, or by using <strong>Modify Redaction</strong>, before you share the file.</li>
+</ul>
+<h3 id="two-ways-to-scan-same-policy-vs-broad-policy">Two ways to scan: same policy vs. broad policy</h3>
+<p>When you right-click a finished document, <strong>Verify Redaction</strong> offers two choices:</p>
+<ul>
+<li><strong>With same policy</strong> — re-scans using the <strong>same policy that redacted the document</strong>. This is the
+  best check that the redaction <em>actually took effect</em>: it confirms that everything the policy was
+  meant to remove is genuinely gone from the saved file. (It can't find a <em>kind</em> of information the
+  policy never looked for.)</li>
+<li><strong>With broad policy</strong> — re-scans with <strong>every built-in detector turned on</strong>. This can surface kinds
+  of information your redaction policy didn't cover (for example, a phone number when your policy only
+  removed email addresses). Because it looks for everything, it may also flag things you <strong>chose not to
+  redact</strong> — so treat its findings as prompts to review, not as mistakes.</li>
+</ul>
+<p>The automatic check after each redaction uses whichever of these you select in
+<a href="../settings/">Settings → Security</a> (it uses the same policy by default).</p>
+<h3 id="seeing-a-documents-verification-result-later">Seeing a document's verification result later</h3>
+<p>Each document's most recent result is remembered and shown in the <strong>Verification</strong> column of the queue —
+<strong>Clean</strong>, <strong>N may remain</strong> (in red), <strong>Check failed</strong>, or <strong>Not checked</strong> — so you can tell at a glance
+which finished documents still need attention. The same result, with the time it was checked, also
+appears in <strong>View Details</strong> (right-click a document). Running <strong>Verify Redaction</strong> again refreshes it.</p>
+<p>Verification reads the <strong>written output</strong>, not an in-memory copy, so it also catches any problem in how
+a particular format was saved. Like everything else in Philter Desktop, it runs <strong>entirely on your
+device</strong> — nothing is sent anywhere. The result is remembered with the document and is included in the
+redaction report below.</p>
+<p>!!! note "Verification is a safety net, not a guarantee"
+    A "passed" result means nothing the <strong>current policy</strong> can detect remains. It can't prove a document
+    is free of every possible identifier. Always give an important document a human review as well.</p>
+<h2 id="generating-a-redaction-report-a-shareable-certificate">Generating a redaction report (a shareable certificate)</h2>
+<p>When you need to <strong>prove what was done</strong> — for a case file, a client, or a compliance record — you can
+generate a <strong>redaction report</strong>. Right-click a <strong>Completed</strong> document and choose <strong>Generate Report…</strong>.</p>
+<p>Philter Desktop first asks whether to include a <strong>detailed per-redaction table</strong>, then saves the
+report as a <strong>PDF</strong> and opens it. The report summarizes the redaction:</p>
+<ul>
+<li>The <strong>source and redacted file names</strong>, and a <strong>SHA-256 fingerprint</strong> of each file (so the report is
+  tied to exactly those documents and any later change is detectable).</li>
+<li>The <strong>policy</strong> and <strong>context</strong> used, the <strong>Philter Desktop version</strong>, and the <strong>date and time</strong>.</li>
+<li>A <strong>count of what was removed, by type</strong> — for example, <em>7 Email Address, 3 Ssn</em> — and the total.</li>
+<li>The <strong>verification result</strong> (when verification has run): whether the output passed, or how many items
+  may remain.</li>
+<li>If you chose the detailed table: a row per redaction with its <strong>type, location, and replacement</strong>.</li>
+</ul>
+<p>The report is saved as a new file next to your other output; your original and redacted files are not
+touched.</p>
+<p>!!! tip "The report is safe to share — it contains no original text"
+    Unlike the explanation file below, a redaction report <strong>never includes the original, un-redacted
+    text</strong> (not even in the detailed table — that shows only the type, location, and replacement). That
+    makes the report safe to file alongside, or hand out with, the redacted copy. When you need the
+    actual detected text for your own secure records, use <strong>Export Explanation (JSON)</strong> instead.</p>
+<h2 id="exporting-an-explanation-of-a-redaction-json_1">Exporting an explanation of a redaction (JSON)</h2>
+<blockquote>
+<p><strong>This section is optional and aimed at technical users.</strong> If phrases like "command prompt" or
+"script" aren't part of your day, you can skip it entirely — everything Philter Desktop does is
+available through the normal window. This option exists mainly so that an IT department can automate
+redaction.</p>
+</blockquote>
+<p>Philter Desktop can redact files without opening its window at all, which is handy for automation. You
+run it from a command prompt (Command Prompt or PowerShell) and hand it one or more files, optionally
+naming a policy and context:</p>
+<pre><code>PhilterDesktop.exe /p mypolicy /c mycontext file1.pdf file2.pdf file3.pdf
+</code></pre>
+<ul>
+<li><strong><code>/p</code></strong> or <strong><code>--policy</code></strong> — the name of the policy (rule set) to use. Optional; if you leave it
+  off, the <strong>default</strong> policy is used.</li>
+<li><strong><code>/c</code></strong> or <strong><code>--context</code></strong> — the name of the context (consistency setting) to use. Optional; if
+  you leave it off, the <strong>default</strong> context is used.</li>
+<li><strong><code>/h</code></strong> or <strong><code>--help</code></strong> — show a short usage reminder.</li>
+</ul>
+<p>Each file is cleaned up into a copy with the usual <code>_redacted-draft</code> label (and saved according to
+your output-location <a href="../settings/">setting</a>); originals are never changed. The supported types are the
+same as always: <code>.txt</code>, <code>.docx</code>, <code>.pdf</code>, <code>.rtf</code>, <code>.xlsx</code>, <code>.csv</code>, <code>.eml</code>, and <code>.msg</code> (an <code>.msg</code> is
+redacted to an <code>.eml</code>, as described above). When it finishes, it reports a result code: <strong>0</strong> means
+everything succeeded, <strong>1</strong> means at least one file failed, and <strong>2</strong> means there was a mistake in
+how the command was typed or an unknown policy was named.</p>
+<blockquote>
+<p>Run it from a terminal window to see the result for each file. This mode never opens the main
+window, and it works even when Philter Desktop is already open, which is what makes it suitable for
+the Windows Explorer right-click menu described below.</p>
+</blockquote>
+<p>If you'd like a <strong>no-typing</strong> way to redact straight from a Windows folder, turn on the
+<a href="../settings/#explorer-right-click-menu">Explorer right-click menu</a> in Settings. With it on, you can
+right-click files in any folder, and Philter Desktop opens a friendly dialog where you choose the
+policy and context and add the files to the queue — no command typing required.</p>
+<h2 id="a-reminder-about-what-gets-removed">A reminder about what gets removed</h2>
+<p>Everything Philter Desktop looks for, and the way it replaces what it finds, is decided by the
+<strong>policy</strong> assigned to each document. To change what's removed or how it's replaced, see
+<a href="../policies/">Policies</a> and <a href="../filter-strategies/">Filter Strategies</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../getting-started/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Getting Started">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Getting Started
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../watched-folders/" class="md-footer__link md-footer__link--next" aria-label="Next: Watched Folders">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Watched Folders
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright 2026 Philterd, LLC
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.linkedin.com/company/philterd/" target="_blank" rel="noopener" title="www.linkedin.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.github.com/philterd/" target="_blank" rel="noopener" title="www.github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.expand", "navigation.footer"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
