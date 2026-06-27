@@ -50,6 +50,8 @@ namespace PhilterDesktop
             _typePdf = new CheckBox();
             _typeDocx = new CheckBox();
             _typeTxt = new CheckBox();
+            _typeRtf = new CheckBox();
+            _typeEmail = new CheckBox();
             _includeSubfolders = new CheckBox();
             _highlight = new CheckBox();
             _notify = new CheckBox();
@@ -148,63 +150,81 @@ namespace PhilterDesktop
             _typeTxt.Text = "Text (.txt)";
             _typeTxt.UseVisualStyleBackColor = true;
             //
+            // _typeRtf
+            //
+            _typeRtf.AutoSize = true;
+            _typeRtf.Location = new Point(95, 172);
+            _typeRtf.Name = "_typeRtf";
+            _typeRtf.TabIndex = 7;
+            _typeRtf.Text = "Rich Text (.rtf)";
+            _typeRtf.UseVisualStyleBackColor = true;
+            //
+            // _typeEmail
+            //
+            _typeEmail.AutoSize = true;
+            _typeEmail.Location = new Point(200, 172);
+            _typeEmail.Name = "_typeEmail";
+            _typeEmail.TabIndex = 8;
+            _typeEmail.Text = "Email (.eml, .msg)";
+            _typeEmail.UseVisualStyleBackColor = true;
+            //
             // _includeSubfolders
             //
             _includeSubfolders.AutoSize = true;
-            _includeSubfolders.Location = new Point(12, 182);
+            _includeSubfolders.Location = new Point(12, 208);
             _includeSubfolders.Name = "_includeSubfolders";
-            _includeSubfolders.TabIndex = 7;
+            _includeSubfolders.TabIndex = 9;
             _includeSubfolders.Text = "Include subfolders";
             _includeSubfolders.UseVisualStyleBackColor = true;
             //
             // _highlight
             //
             _highlight.AutoSize = true;
-            _highlight.Location = new Point(12, 212);
+            _highlight.Location = new Point(12, 238);
             _highlight.Name = "_highlight";
-            _highlight.TabIndex = 8;
+            _highlight.TabIndex = 10;
             _highlight.Text = "Highlight redactions in Word (.docx) documents";
             _highlight.UseVisualStyleBackColor = true;
             //
             // _notify
             //
             _notify.AutoSize = true;
-            _notify.Location = new Point(12, 242);
+            _notify.Location = new Point(12, 268);
             _notify.Name = "_notify";
-            _notify.TabIndex = 9;
+            _notify.TabIndex = 11;
             _notify.Text = "Show a notification when a file is redacted";
             _notify.UseVisualStyleBackColor = true;
             //
             // outputLabel
             //
             outputLabel.AutoSize = true;
-            outputLabel.Location = new Point(12, 282);
+            outputLabel.Location = new Point(12, 308);
             outputLabel.Name = "outputLabel";
             outputLabel.Text = "Output folder:";
             //
             // _output
             //
-            _output.Location = new Point(12, 304);
+            _output.Location = new Point(12, 330);
             _output.Name = "_output";
             _output.Size = new Size(416, 23);
-            _output.TabIndex = 10;
+            _output.TabIndex = 12;
             //
             // _browseOutput
             //
-            _browseOutput.Location = new Point(436, 302);
+            _browseOutput.Location = new Point(436, 328);
             _browseOutput.Name = "_browseOutput";
             _browseOutput.Size = new Size(110, 34);
-            _browseOutput.TabIndex = 11;
+            _browseOutput.TabIndex = 13;
             _browseOutput.Text = "Browse…";
             _browseOutput.UseVisualStyleBackColor = true;
             _browseOutput.Click += BrowseOutput_Click;
             //
             // _ok
             //
-            _ok.Location = new Point(316, 358);
+            _ok.Location = new Point(316, 384);
             _ok.Name = "_ok";
             _ok.Size = new Size(110, 34);
-            _ok.TabIndex = 12;
+            _ok.TabIndex = 14;
             _ok.Text = "OK";
             _ok.UseVisualStyleBackColor = true;
             _ok.Click += OkButton_Click;
@@ -212,10 +232,10 @@ namespace PhilterDesktop
             // _cancel
             //
             _cancel.DialogResult = DialogResult.Cancel;
-            _cancel.Location = new Point(436, 358);
+            _cancel.Location = new Point(436, 384);
             _cancel.Name = "_cancel";
             _cancel.Size = new Size(110, 34);
-            _cancel.TabIndex = 13;
+            _cancel.TabIndex = 15;
             _cancel.Text = "Cancel";
             _cancel.UseVisualStyleBackColor = true;
             //
@@ -225,7 +245,7 @@ namespace PhilterDesktop
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = _cancel;
-            ClientSize = new Size(560, 416);
+            ClientSize = new Size(560, 442);
             Controls.Add(folderLabel);
             Controls.Add(_folder);
             Controls.Add(_browseFolder);
@@ -237,6 +257,8 @@ namespace PhilterDesktop
             Controls.Add(_typePdf);
             Controls.Add(_typeDocx);
             Controls.Add(_typeTxt);
+            Controls.Add(_typeRtf);
+            Controls.Add(_typeEmail);
             Controls.Add(_includeSubfolders);
             Controls.Add(_highlight);
             Controls.Add(_notify);
@@ -269,6 +291,8 @@ namespace PhilterDesktop
         private CheckBox _typePdf;
         private CheckBox _typeDocx;
         private CheckBox _typeTxt;
+        private CheckBox _typeRtf;
+        private CheckBox _typeEmail;
         private CheckBox _includeSubfolders;
         private CheckBox _highlight;
         private CheckBox _notify;

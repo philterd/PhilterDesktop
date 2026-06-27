@@ -334,7 +334,7 @@ namespace PhilterDesktop
 
             string dir = Path.GetDirectoryName(version.SourcePath) ?? string.Empty;
             string baseName = Path.GetFileNameWithoutExtension(version.SourcePath);
-            string ext = Path.GetExtension(version.SourcePath);
+            string ext = RedactionService.OutputExtension(version.SourcePath);
             string output = version.Version == 1
                 ? Path.Combine(dir, $"{baseName}{_redactedSuffix}{ext}")
                 : Path.Combine(dir, $"{baseName}{_redactedSuffix}_{version.Version}{ext}");

@@ -45,6 +45,22 @@ namespace PhilterData
         /// <summary>True for a span the user added by hand (located by term search when re-applied).</summary>
         public bool UserAdded { get; set; }
 
+        // --- Explanation detail (why the engine flagged this) ---------------------------------------
+        // Populated from the engine's Span when a detection is captured. Empty/zero for user-added
+        // spans. Used by the "Export Explanation (JSON)" feature.
+
+        /// <summary>The engine filter that matched (e.g. "EMAIL_ADDRESS", "SSN").</summary>
+        public string FilterType { get; set; } = string.Empty;
+
+        /// <summary>The engine's confidence in this detection (0–1).</summary>
+        public double Confidence { get; set; }
+
+        /// <summary>The rule/regex pattern that matched, when the filter is pattern-based.</summary>
+        public string Pattern { get; set; } = string.Empty;
+
+        /// <summary>The surrounding tokens (context window) the engine considered, when available.</summary>
+        public List<string> Window { get; set; } = new();
+
         // --- Text location (.txt and .docx) ---
         public int CharacterStart { get; set; }
         public int CharacterEnd { get; set; }

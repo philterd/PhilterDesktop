@@ -1,9 +1,10 @@
 # Watched Folders (Automatic, Hands-Off Redaction)
 
 A **watched folder** is a folder that Philter Desktop keeps an eye on for you. Whenever a new
-`.txt`, `.docx`, or `.pdf` file shows up in that folder, Philter Desktop notices it, redacts it
-automatically, and saves the cleaned-up copy to an output folder you've chosen — all without you
-having to add anything to the queue by hand.
+`.txt`, `.docx`, `.pdf`, `.rtf`, `.eml`, or `.msg` file shows up in that folder, Philter Desktop notices it,
+redacts it automatically, and saves the cleaned-up copy to an output folder you've chosen — all without
+you having to add anything to the queue by hand. (As elsewhere, a redacted `.msg` is saved as an
+`.eml` — see [Redacting email](redacting-documents.md#redacting-email-and-why-msg-comes-out-as-eml).)
 
 This turns redaction into a "drop box" that runs itself. For example, you could point a watched folder
 at the place where your scanner saves documents, at your Downloads folder, or at a shared network
@@ -19,9 +20,10 @@ be asked to fill in a few things:
 - **Policy** — the [policy](policies.md) (set of rules) that decides what to remove and how, for
   files in this folder.
 - **Context** — the [context](contexts.md) (consistency setting) to use for these files.
-- **File types** — which of **PDF (.pdf)**, **Word (.docx)**, and **Text (.txt)** you want redacted
-  in this folder. You must pick at least one; any other kinds of files in the folder are simply
-  ignored.
+- **File types** — which of **PDF (.pdf)**, **Word (.docx)**, **Text (.txt)**, **Rich Text (.rtf)**,
+  and **Email (.eml, .msg)** you want redacted in this folder. You must pick at least one; any other
+  kinds of files in the folder are simply ignored. (Redacted emails are written as `.eml`, so an `.msg`
+  dropped here becomes a redacted `.eml` in the output folder.)
 - **Highlight redactions in Word (.docx) documents** — when checked, the replacements in cleaned-up
   Word documents are highlighted, making them easy to spot when you review the file.
 - **Show a notification when a file is redacted** — when checked, a small pop-up appears near the
@@ -52,8 +54,8 @@ away.
 
 A few details worth knowing about how watching works:
 
-- **Which files are handled:** only `.txt`, `.docx`, and `.pdf` files are redacted; everything else
-  in the folder is left alone.
+- **Which files are handled:** only `.txt`, `.docx`, `.pdf`, `.rtf`, `.eml`, and `.msg` files are
+  redacted; everything else in the folder is left alone. (A redacted `.msg` is saved as an `.eml`.)
 - **What the copies are named:** cleaned-up copies are saved to the output folder with the usual
   label (by default `_redacted-draft`, so `invoice.pdf` becomes `invoice_redacted-draft.pdf`). Your
   originals are never changed.

@@ -43,6 +43,9 @@ namespace PhilterDesktop.PolicyEditing
             caseSensitiveCheckBox.Checked = caseSensitive;
         }
 
+        private void ImportButton_Click(object? sender, EventArgs e) =>
+            TermFileImporter.PromptAndAppend(this, termsTextBox);
+
         private void OkButton_Click(object? sender, EventArgs e)
         {
             Terms = ParseTerms(termsTextBox.Text);

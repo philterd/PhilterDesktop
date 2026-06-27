@@ -55,13 +55,25 @@ namespace PhilterDesktop
 
         /// <summary>Builds the redacted output file name (<c>name + suffix + ext</c>) for a source path.</summary>
         public static string ApplySuffix(string sourcePath, string? suffix) =>
-            $"{Path.GetFileNameWithoutExtension(sourcePath)}{NormalizeSuffix(suffix)}{Path.GetExtension(sourcePath)}";
+            $"{Path.GetFileNameWithoutExtension(sourcePath)}{NormalizeSuffix(suffix)}{OutputExtension(sourcePath)}";
+
+        /// <summary>
+        /// The extension the redacted output takes for a given source. It matches the input except for
+        /// Outlook <c>.msg</c> files, which are written back as standard <c>.eml</c> — the proprietary
+        /// <c>.msg</c> container is read, but not faithfully rewritten.
+        /// </summary>
+        public static string OutputExtension(string sourcePath)
+        {
+            string ext = Path.GetExtension(sourcePath);
+            return ext.Equals(".msg", StringComparison.OrdinalIgnoreCase) ? ".eml" : ext;
+        }
 
         /// <summary>
         /// The file extensions Philter Desktop can redact (legacy binary Word .doc is not supported).
-        /// This is the single source of truth used by the UI file pickers/drag-drop.
+        /// This is the single source of truth used by the UI file pickers/drag-drop. Email files
+        /// (<c>.eml</c>, <c>.msg</c>) are redacted to <c>.eml</c> (see <see cref="OutputExtension"/>).
         /// </summary>
-        public static readonly string[] SupportedExtensions = { ".txt", ".docx", ".pdf" };
+        public static readonly string[] SupportedExtensions = { ".txt", ".docx", ".pdf", ".rtf", ".eml", ".msg" };
 
         /// <summary>Returns true if the file's extension is a supported, redactable type.</summary>
         public static bool IsSupported(string path) =>
@@ -143,6 +155,24 @@ namespace PhilterDesktop
                     highlight));
             }
 
+            if (extension == ".eml" || extension == ".msg")
+            {
+                // Email (.eml round-trips; .msg is read and written back as .eml). Field-indexed spans.
+                return await Task.Run(() => EmailRedactor.Redact(
+                    inputPath,
+                    outputPath,
+                    text => filterService.Filter(policy, context, 0, text)));
+            }
+
+            if (extension == ".rtf")
+            {
+                // RTF is redacted via the RichTextBox engine (preserves control words/formatting).
+                return await Task.Run(() => RtfRedactor.Redact(
+                    inputPath,
+                    outputPath,
+                    text => filterService.Filter(policy, context, 0, text)));
+            }
+
             if (extension == ".pdf")
             {
                 PreparePdfPolicy(policy);
@@ -182,6 +212,13 @@ namespace PhilterDesktop
                 case ".pdf":
                     await ApplyPdfSpansAsync(sourcePath, outputPath, spans, policy, filterService);
                     break;
+                case ".eml":
+                case ".msg":
+                    await Task.Run(() => EmailRedactor.ApplySpans(sourcePath, outputPath, spans));
+                    break;
+                case ".rtf":
+                    await Task.Run(() => RtfRedactor.ApplySpans(sourcePath, outputPath, spans));
+                    break;
                 default:
                     await ApplyTextSpansAsync(sourcePath, outputPath, spans);
                     break;
@@ -196,7 +233,7 @@ namespace PhilterDesktop
             int order = 0;
             foreach (Span s in spans.OrderBy(s => s.CharacterStart))
             {
-                list.Add(new RedactionSpanEntity
+                var entity = new RedactionSpanEntity
                 {
                     Order = order++,
                     ParagraphIndex = -1,
@@ -205,7 +242,9 @@ namespace PhilterDesktop
                     Text = s.Text ?? string.Empty,
                     Replacement = s.Replacement ?? string.Empty,
                     Classification = s.Classification ?? string.Empty
-                });
+                };
+                SpanExplanation.Populate(entity, s);
+                list.Add(entity);
             }
             return list;
         }
@@ -216,7 +255,7 @@ namespace PhilterDesktop
             int order = 0;
             foreach (Span s in spans)
             {
-                list.Add(new RedactionSpanEntity
+                var entity = new RedactionSpanEntity
                 {
                     Order = order++,
                     ParagraphIndex = -1,
@@ -228,7 +267,9 @@ namespace PhilterDesktop
                     LowerLeftY = s.LowerLeftY,
                     UpperRightX = s.UpperRightX,
                     UpperRightY = s.UpperRightY
-                });
+                };
+                SpanExplanation.Populate(entity, s);
+                list.Add(entity);
             }
             return list;
         }

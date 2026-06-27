@@ -119,7 +119,8 @@ Sometimes Philter Desktop will correctly detect something but you'd rather **kee
 example: your own firm's name, a public office address, or a court's phone number might look like the
 kind of contact information that would normally be removed — but you want it left in place.
 
-Click the **Always Ignore…** button below the tabs and type in those terms, **one per line**. Anything on this list
+Click the **Always Ignore…** button below the tabs and type in those terms, **one per line** (or click
+**Import from file…** to load them from a `.txt` or single-column `.csv` file). Anything on this list
 is left alone, even when a detector would otherwise have removed it.
 
 The matching works on the **whole detected value** (so a detected item that exactly equals one of
@@ -135,7 +136,8 @@ removed**, even though it isn't a standard type of personal information that Phi
 recognize on its own — for example, a confidential project codename, an internal matter number, or a
 particular name that's sensitive in your case.
 
-Click the **Always Redact…** button below the tabs and type in those terms, **one per line**. Anything on this
+Click the **Always Redact…** button below the tabs and type in those terms, **one per line** (or click
+**Import from file…** to load them from a `.txt` or single-column `.csv` file). Anything on this
 list is removed wherever it appears.
 
 Matching ignores capitalization. These terms are saved as part of **this policy** and apply only when
@@ -152,6 +154,10 @@ It opens a window with two tabs, each a simple box where you type terms **one pe
 
 - **Always Redact** — terms removed from **every** document you redact, with any policy.
 - **Always Ignore** — terms **never** removed, with any policy.
+
+You can type terms directly, or click **Import from file…** to load them from a `.txt` or single-column
+`.csv` file (one term per line); imported terms are added to whichever tab you're on, skipping any that
+are already in the list.
 
 Click **OK** to save both lists (or **Cancel** to discard your changes). These global lists are applied
 on top of whatever policy is in use — the default policy, policies you create, watched folders, and the

@@ -273,6 +273,78 @@ namespace PhilterDesktop.Tests
             Assert.False(raised);
         }
 
+        [Fact]
+        public async Task Watcher_RedactsEmail_MsgInput_ProducesRedactedEml()
+        {
+            string watched = Path.Combine(_root, "watched-email");
+            string output = Path.Combine(_root, "output-email");
+            Directory.CreateDirectory(watched);
+
+            var folder = new WatchedFolderEntity
+            {
+                FolderPath = watched,
+                OutputFolder = output,
+                Policy = "p",
+                Context = "ctx",
+                FileTypes = new List<string> { ".eml", ".msg" }
+            };
+
+            using var watcher = new FolderWatcherService(_policyRepo, loggingEnabled: false);
+            watcher.Restart(new[] { folder });
+
+            // Drop a real Outlook .msg; the watcher should redact it and write a .eml.
+            WriteMsg(Path.Combine(watched, "memo.msg"));
+
+            // .msg input maps to .eml output.
+            string expected = Path.Combine(output, "memo_redacted-draft.eml");
+            string redacted = await WaitForFileAsync(expected);
+
+            Assert.DoesNotContain("secret@example.com", redacted);
+            Assert.False(File.Exists(Path.Combine(output, "memo_redacted-draft.msg")),
+                "a redacted .msg must be written as .eml, not .msg");
+        }
+
+        [Fact]
+        public async Task Watcher_RedactsRtf_KeepsRtfExtension()
+        {
+            string watched = Path.Combine(_root, "watched-rtf");
+            string output = Path.Combine(_root, "output-rtf");
+            Directory.CreateDirectory(watched);
+
+            var folder = new WatchedFolderEntity
+            {
+                FolderPath = watched,
+                OutputFolder = output,
+                Policy = "p",
+                Context = "ctx",
+                FileTypes = new List<string> { ".rtf" }
+            };
+
+            using var watcher = new FolderWatcherService(_policyRepo, loggingEnabled: false);
+            watcher.Restart(new[] { folder });
+
+            await File.WriteAllTextAsync(Path.Combine(watched, "note.rtf"),
+                @"{\rtf1\ansi\deff0{\fonttbl{\f0\fnil Arial;}}\f0\fs24 Email watch@example.com here.\par}");
+
+            string redacted = await WaitForFileAsync(Path.Combine(output, "note_redacted-draft.rtf"));
+
+            Assert.DoesNotContain("watch@example.com", redacted);
+            Assert.StartsWith(@"{\rtf", redacted);
+        }
+
+        // Builds a minimal real Outlook .msg fixture with MsgKit (test-only dependency).
+        private static void WriteMsg(string path)
+        {
+            using var email = new MsgKit.Email(
+                new MsgKit.Sender("george@fake.com", "George Banks"),
+                "Watched email")
+            {
+                BodyText = "Please email secret@example.com about the matter."
+            };
+            email.Recipients.AddTo("mary@example.org", "Mary Johnson");
+            email.Save(path);
+        }
+
         private static async Task<WatchedFileProcessedEventArgs> WaitForEventAsync(
             System.Collections.Concurrent.ConcurrentQueue<WatchedFileProcessedEventArgs> queue,
             Func<WatchedFileProcessedEventArgs, bool> predicate, int timeoutMs = 15000)

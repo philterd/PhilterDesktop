@@ -34,6 +34,7 @@ namespace PhilterDesktop
         private void InitializeComponent()
         {
             tabControl = new TabControl();
+            btnImport = new Button();
             tabRedact = new TabPage();
             txtRedact = new TextBox();
             lblRedact = new Label();
@@ -146,6 +147,20 @@ namespace PhilterDesktop
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = true;
             //
+            // btnImport
+            //
+            btnImport.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnImport.AutoSize = true;
+            btnImport.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnImport.Location = new Point(12, 403);
+            btnImport.MinimumSize = new Size(0, 26);
+            btnImport.Name = "btnImport";
+            btnImport.Padding = new Padding(10, 0, 10, 0);
+            btnImport.TabIndex = 3;
+            btnImport.Text = "Import from file…";
+            btnImport.UseVisualStyleBackColor = true;
+            btnImport.Click += btnImport_Click;
+            //
             // GlobalListsForm
             //
             AcceptButton = btnOk;
@@ -156,6 +171,7 @@ namespace PhilterDesktop
             Controls.Add(tabControl);
             Controls.Add(btnOk);
             Controls.Add(btnCancel);
+            Controls.Add(btnImport);
             MinimizeBox = false;
             MinimumSize = new Size(396, 359);
             Name = "GlobalListsForm";
@@ -181,5 +197,6 @@ namespace PhilterDesktop
         private Label lblIgnore;
         private Button btnOk;
         private Button btnCancel;
+        private Button btnImport;
     }
 }

@@ -22,8 +22,8 @@ using PhilterData;
 namespace PhilterDesktop
 {
     /// <summary>
-    /// Continuously monitors a set of watched folders for new .txt/.docx/.pdf files and redacts
-    /// each one (with its folder's policy/context) to the folder's output directory. Uses a
+    /// Continuously monitors a set of watched folders for new .txt/.docx/.pdf/.rtf/.eml/.msg files and
+    /// redacts each one (with its folder's policy/context) to the folder's output directory. Uses a
     /// <see cref="FileSystemWatcher"/> per folder plus an initial scan so files dropped while the
     /// app was closed are still picked up. Redactions are serialized to avoid overloading the
     /// machine, and redacted output (files ending with the configured suffix) is ignored to prevent loops.

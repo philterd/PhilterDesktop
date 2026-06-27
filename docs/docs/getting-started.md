@@ -11,8 +11,8 @@ you can install an ordinary Windows program and open a file, you can do everythi
 That's the whole list on the technical side. Philter Desktop is a **per-user subscription that
 includes support** (see [Licensing & Support](licensing.md)); with your subscription you get the
 official, signed installer from [philterd.ai](https://www.philterd.ai). There's no product key to type
-in — the build just works — and all three document types (plain text, Microsoft Word, and PDF) redact
-straight out of the box. You do **not** need administrator rights: Philter Desktop installs just for
+in — the build just works — and every supported document type (plain text, Microsoft Word, PDF, Rich
+Text, and email) redacts straight out of the box. You do **not** need administrator rights: Philter Desktop installs just for
 your own user account by default.
 
 ## Installing Philter Desktop

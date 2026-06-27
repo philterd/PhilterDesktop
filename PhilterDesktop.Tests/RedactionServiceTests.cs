@@ -46,11 +46,40 @@ namespace PhilterDesktop.Tests
         [InlineData("report.docx", true)]
         [InlineData("report.DOCX", true)]
         [InlineData("report.pdf", true)]
+        [InlineData("report.rtf", true)]
+        [InlineData("report.RTF", true)]
+        [InlineData("message.eml", true)]
+        [InlineData("message.msg", true)]
+        [InlineData("message.MSG", true)]
         [InlineData("report.doc", false)]   // legacy binary Word is not supported
         [InlineData("report", false)]
         public void IsSupported_RecognizesRedactableTypes(string name, bool expected)
         {
             Assert.Equal(expected, RedactionService.IsSupported(name));
+        }
+
+        [Theory]
+        [InlineData("memo.txt", ".txt")]
+        [InlineData("memo.docx", ".docx")]
+        [InlineData("memo.pdf", ".pdf")]
+        [InlineData("memo.rtf", ".rtf")]   // RTF keeps its own extension
+        [InlineData("memo.eml", ".eml")]
+        [InlineData("memo.msg", ".eml")]   // .msg is read but written back as .eml
+        [InlineData("memo.MSG", ".eml")]
+        public void OutputExtension_MapsMsgToEml(string name, string expected)
+        {
+            Assert.Equal(expected, RedactionService.OutputExtension(name));
+        }
+
+        [Fact]
+        public void GetOutputPath_MsgInput_ProducesEmlOutput()
+        {
+            var settings = new SettingsEntity { OutputToOriginalLocation = true };
+            string input = Path.Combine(_tempDir, "memo.msg");
+
+            string output = RedactionService.GetOutputPath(input, settings);
+
+            Assert.Equal(Path.Combine(_tempDir, "memo_redacted-draft.eml"), output);
         }
 
         [Fact]
@@ -208,6 +237,22 @@ namespace PhilterDesktop.Tests
             Assert.DoesNotContain("john@example.com", result);
             Assert.DoesNotContain("555-123-4567", result);
             Assert.DoesNotContain("123-45-6789", result);
+        }
+
+        [Fact]
+        public async Task RedactFileAsync_CapturesExplanationDetailOnSpans()
+        {
+            string input = Path.Combine(_tempDir, "in.txt");
+            string output = Path.Combine(_tempDir, "out.txt");
+            await File.WriteAllTextAsync(input, "Email john@example.com here.");
+
+            var policy = new PhileasPolicy { Name = "x", Identifiers = new Identifiers { EmailAddress = new EmailAddress() } };
+            List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(input, output, policy, "ctx");
+
+            RedactionSpanEntity span = Assert.Single(spans);
+            // The engine's "why" detail is captured for the explanation export.
+            Assert.Equal("EmailAddress", span.FilterType);
+            Assert.True(span.Confidence > 0);
         }
 
         [Fact]

@@ -149,8 +149,8 @@ namespace PhilterDesktop
                 CheckFileExists = true,
                 CheckPathExists = true,
                 Multiselect = true,
-                Filter = "Text Files (*.txt)|*.txt|Microsoft Word Documents (*.docx)|*.docx|PDF Documents (*.pdf)|*.pdf|All Supported Files|*.txt;*.docx;*.pdf",
-                FilterIndex = 4,
+                Filter = "Text Files (*.txt)|*.txt|Microsoft Word Documents (*.docx)|*.docx|PDF Documents (*.pdf)|*.pdf|Rich Text (*.rtf)|*.rtf|Email (*.eml;*.msg)|*.eml;*.msg|All Supported Files|*.txt;*.docx;*.pdf;*.rtf;*.eml;*.msg",
+                FilterIndex = 6,
                 Title = "Select Files to Redact"
             };
 

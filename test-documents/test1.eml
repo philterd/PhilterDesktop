@@ -1,0 +1,16 @@
+From: George Banks <george@fake.com>
+To: Mary Johnson <mary.johnson@example-clinic.org>
+Cc: Records Dept <records@example-clinic.org>
+Subject: Intake for John Smith - SSN 123-45-6789
+Date: Tue, 24 Jun 2025 09:30:00 +0000
+Message-ID: <sample-eml-001@philterd.example>
+Content-Type: text/plain; charset=utf-8
+
+Hello Mary,
+
+Please find the intake details for patient John Smith below.
+You can reach me at george@fake.com or by phone at 555-123-4567.
+His SSN is 123-45-6789 and his date of birth is 04/12/1980.
+
+Thanks,
+George Banks

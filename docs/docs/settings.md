@@ -49,8 +49,8 @@ This option lets you redact files **straight from a Windows folder**, without op
 first.
 
 Turn on **Add "Redact with Philter Desktop" to the Explorer right-click menu**. Once it's on, you can
-go to any folder, select one or more `.pdf`, `.docx`, or `.txt` files, **right-click** them, and
-choose **Redact with Philter Desktop**. A small window appears listing the files you picked and
+go to any folder, select one or more `.pdf`, `.docx`, `.txt`, `.rtf`, `.eml`, or `.msg` files,
+**right-click** them, and choose **Redact with Philter Desktop**. A small window appears listing the files you picked and
 letting you choose the **policy** and **context** to use (and whether to highlight redactions in Word
 documents). When you click **Redact**, the files are handed to Philter Desktop's
 [redaction queue](redacting-documents.md) and processed just like any other document — and Philter

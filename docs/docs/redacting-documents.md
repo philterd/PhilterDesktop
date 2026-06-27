@@ -12,11 +12,15 @@ them, or fine-tune them later.
 
 ## Which kinds of documents you can redact
 
-Philter Desktop works with three common document types:
+Philter Desktop works with these document types:
 
 - **Plain text** — files ending in `.txt` (simple, unformatted text, like a Notepad file).
 - **Microsoft Word** — files ending in `.docx`.
 - **PDF** — files ending in `.pdf`.
+- **Rich Text** — files ending in `.rtf` (a formatted-text format used by WordPad and many legal and
+  records systems).
+- **Email** — files ending in `.eml` (the standard email format used by most mail programs) and
+  `.msg` (the format Microsoft Outlook uses when you save or drag out a message).
 
 > **One important thing about PDFs.** When Philter Desktop redacts a PDF, it does something
 > deliberately thorough: it turns each page into a flattened **picture** of the page with the
@@ -27,6 +31,36 @@ Philter Desktop works with three common document types:
 > scanned document: you can read it and print it, but you can no longer select or search its text.
 > For most legal and confidentiality purposes, this is exactly what you want.
 
+### Redacting email (and why `.msg` comes out as `.eml`)
+
+When Philter Desktop redacts an email, it cleans up the **subject line**, the **From / To / Cc**
+addresses, and the **message body** (both plain-text and HTML versions), according to your policy —
+the same way it handles any other document.
+
+!!! warning "Attachments are not redacted"
+    Philter Desktop redacts the email **message itself** — the subject, the addresses, and the body. It
+    does **not** open, inspect, or redact **attachments** (a PDF, Word file, spreadsheet, image, or
+    anything else carried along with the email). Those are copied through **unchanged**, so any
+    sensitive information inside an attachment is left exactly as it was. If an email has attachments
+    that need redacting, **save each one out as its own file and redact it separately** (a `.pdf`,
+    `.docx`, or `.txt` attachment can go straight through Philter Desktop). Always review the finished
+    email **and** its attachments before sharing it.
+
+There's one thing to know about Outlook `.msg` files: **a redacted `.msg` is saved as an `.eml` file.**
+So redacting `message.msg` produces `message_redacted-draft.eml`, not a `.msg`.
+
+Why the change in file type? `.msg` is Microsoft's own private, undocumented Outlook format. Philter
+Desktop can reliably **read** a `.msg` and pull out everything it needs to redact, but rebuilding a
+brand-new `.msg` file faithfully — without quietly dropping or corrupting parts of the message — is not
+something it can guarantee. Rather than hand you a `.msg` that *might* be subtly broken, it writes the
+redacted result as **`.eml`**, the universal email format. An `.eml` file is a complete, standalone
+copy of the email that **opens in Outlook** (just double-click it) as well as in Apple Mail,
+Thunderbird, Gmail's import, and essentially every other mail program. Nothing is lost in the
+redaction itself — only the container file type changes, in exchange for a result you can trust.
+
+> `.eml` files redact to `.eml`, and everything else keeps its original file type as usual — only
+> `.msg` changes.
+
 ## Adding documents to the queue
 
 There are two ways to add files:
@@ -34,6 +68,9 @@ There are two ways to add files:
 - **The Redact button.** Click **Redact** on the toolbar. You'll be asked which **policy** (rule set)
   and which **context** (consistency setting) to use, and then you choose the files you want to add.
   This is the way to go when you want to pick specific rules for a particular batch of documents.
+  The **Redact** button also has a small **arrow** beside it; clicking the arrow opens a short menu
+  with two alternatives — **Redact with Preview…** (see the result before saving) and **Find &
+  Redact…** (remove specific words from one file). Both are described later on this page.
 - **Drag and drop.** Drag one or more files from a Windows folder and drop them straight onto the
   Philter Desktop window. Files added this way use the **default** policy and the **default** context.
   This is the quickest way when the standard rules are fine.
@@ -68,8 +105,10 @@ name is a gentle reminder that you should still review the file before relying o
 Sometimes you'd rather **look at the result first** and only save it once you're happy. That's what
 **Redact with Preview** is for. It's best for working carefully on a single document at a time.
 
-Start it with the **Preview** button on the toolbar (next to **Redact**), or by right-clicking and
-choosing **Redact with Preview…**. It works with `.txt`, `.docx`, and `.pdf` files. You pick the
+Start it from the **Redact** button on the toolbar: click the small **arrow** beside it and choose
+**Redact with Preview…** (or right-click a document and choose the same). It works with `.txt`,
+`.docx`, and `.pdf` files. (Email files — `.eml` and `.msg` — don't have a preview yet; redact them
+the ordinary way and review the cleaned-up copy afterward.) You pick the
 file, choose a **policy** and a **context**, and Philter Desktop shows you **what the cleaned-up file
 will look like before a single thing is written to disk**:
 
@@ -92,6 +131,31 @@ Preview is the "look first, then save" approach. The ordinary queue, the [watche
 folders](watched-folders.md) feature, and the command line (described near the end of this page) are
 the better choices when you need to clean up **many documents at once**.
 
+## Find & Redact: remove specific words, no policy needed
+
+Sometimes you don't need a whole policy — you just want to **strike a few specific words or phrases**
+out of one document. Maybe it's a particular name, a project codename, or a phrase your client asked
+you to remove. For that there's **Find & Redact**.
+
+Open it from the **Redact** button's **arrow** menu on the toolbar and choose **Find & Redact…** (or
+right-click a document in the queue and choose the same — if you'd already selected a document, its
+path is filled in for you). A small window opens where you:
+
+1. Choose the **document** to redact (`.txt`, `.docx`, `.pdf`, `.rtf`, `.eml`, or `.msg`).
+2. Type the **exact terms** to remove, **one per line** — or click **Import from file…** to load them
+   from a `.txt` or single-column `.csv` file.
+3. Click **Redact**.
+
+Philter Desktop removes every occurrence of those terms (ignoring capitalization) and saves a redacted
+copy alongside the original, then offers to open the containing folder. It doesn't touch your policies,
+your queue, or your history — it's a quick, self-contained one-off.
+
+This is the right tool when you know **exactly** what text to remove. When you instead want Philter
+Desktop to *find* sensitive information by its kind — every Social Security number, every email
+address, every name — use a [policy](policies.md) with the ordinary **Redact** or **Redact with
+Preview** actions above. And for terms you want removed in *every* redaction, not just this one, use
+the global [Lists](policies.md#lists-that-apply-to-every-policy-the-lists-button) instead.
+
 ## Working with the queue
 
 Once a document shows **Completed**, you have several options:
@@ -105,6 +169,8 @@ Once a document shows **Completed**, you have several options:
       name, the policy and context used, how many redactions were made, and when it was done.
     - **View Diff…** — see a precise before-and-after comparison (explained below).
     - **Modify Redaction…** — review and adjust exactly what was removed (explained below).
+    - **Export Explanation (JSON)…** — save a detailed report of *why* each item was removed
+      (explained below).
     - **Remove**, **Remove completed**, or **Remove all** — take items off the list.
     - **Refresh** — reload the list.
 
@@ -218,6 +284,31 @@ move through the pages, the **Fit**, **100%**, **+**, and **−** buttons to zoo
 both sides scroll together. Because redacted PDFs are flattened to images, this is a visual
 comparison rather than a word-by-word text comparison.
 
+## Exporting an explanation of a redaction (JSON)
+
+If you ever need to show your work — for a colleague, a reviewer, an audit, or just your own
+records — you can export a detailed **explanation** of a finished redaction. Right-click a **Completed**
+document and choose **Export Explanation (JSON)…**.
+
+This saves a `.json` file that lists, for **every item Philter Desktop removed**:
+
+- **What** it was — the original text, and what it was replaced with.
+- **Why** it was flagged — the detector that matched (for example, an email-address or Social Security
+  number detector), how confident the detector was, and (for rule-based detectors) the pattern it
+  matched and the words surrounding it.
+- **Where** it was — the position in the document (character position and paragraph for text and Word
+  files; the page and location for PDFs).
+
+A `.json` file is a plain-text format that's easy for other programs to read, and is also readable by
+a person who knows where to look. (Items you added by hand in **Modify Redaction** are included too,
+marked as user-added.)
+
+!!! danger "The explanation file contains the original sensitive text"
+    Because the report lists the **original, un-redacted text** of everything that was found — along
+    with the surrounding words — the explanation file is **just as sensitive as the original
+    document**. Philter Desktop reminds you of this before it saves. Store it somewhere secure, treat
+    it with the same care as the original, and **never** hand it out in place of the redacted copy.
+
 ## For advanced users and IT: redacting from a command line
 
 > **This section is optional and aimed at technical users.** If phrases like "command prompt" or
@@ -241,7 +332,8 @@ PhilterDesktop.exe /p mypolicy /c mycontext file1.pdf file2.pdf file3.pdf
 
 Each file is cleaned up into a copy with the usual `_redacted-draft` label (and saved according to
 your output-location [setting](settings.md)); originals are never changed. The supported types are the
-same as always: `.txt`, `.docx`, and `.pdf`. When it finishes, it reports a result code: **0** means
+same as always: `.txt`, `.docx`, `.pdf`, `.rtf`, `.eml`, and `.msg` (an `.msg` is redacted to an
+`.eml`, as described above). When it finishes, it reports a result code: **0** means
 everything succeeded, **1** means at least one file failed, and **2** means there was a mistake in
 how the command was typed or an unknown policy was named.
 

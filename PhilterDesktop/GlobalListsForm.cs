@@ -39,5 +39,12 @@ namespace PhilterDesktop
             txtRedact.Text = alwaysRedact;
             txtIgnore.Text = alwaysIgnore;
         }
+
+        // Import into whichever tab is showing.
+        private void btnImport_Click(object sender, EventArgs e)
+        {
+            TextBox target = tabControl.SelectedTab == tabIgnore ? txtIgnore : txtRedact;
+            TermFileImporter.PromptAndAppend(this, target);
+        }
     }
 }

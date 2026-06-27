@@ -44,6 +44,9 @@ namespace PhilterDesktop.PolicyEditing
             Terms = ParseTerms(termsTextBox.Text);
         }
 
+        private void ImportButton_Click(object? sender, EventArgs e) =>
+            TermFileImporter.PromptAndAppend(this, termsTextBox);
+
         // One term per line; trims whitespace, drops blanks, and removes case-insensitive duplicates
         // while preserving order.
         private static List<string> ParseTerms(string text)

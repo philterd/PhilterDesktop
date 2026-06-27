@@ -45,6 +45,7 @@ namespace PhilterDesktop.PolicyEditing
             caseSensitiveCheckBox = new CheckBox();
             okButton = new Button();
             cancelButton = new Button();
+            importButton = new Button();
             bottomPanel.SuspendLayout();
             SuspendLayout();
             // 
@@ -76,6 +77,7 @@ namespace PhilterDesktop.PolicyEditing
             bottomPanel.Controls.Add(caseSensitiveCheckBox);
             bottomPanel.Controls.Add(okButton);
             bottomPanel.Controls.Add(cancelButton);
+            bottomPanel.Controls.Add(importButton);
             bottomPanel.Dock = DockStyle.Bottom;
             bottomPanel.Location = new Point(12, 230);
             bottomPanel.Name = "bottomPanel";
@@ -114,9 +116,23 @@ namespace PhilterDesktop.PolicyEditing
             cancelButton.TabIndex = 2;
             cancelButton.Text = "Cancel";
             cancelButton.UseVisualStyleBackColor = true;
-            // 
+            //
+            // importButton
+            //
+            importButton.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            importButton.AutoSize = true;
+            importButton.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            importButton.Location = new Point(96, 13);
+            importButton.MinimumSize = new Size(0, 34);
+            importButton.Name = "importButton";
+            importButton.Padding = new Padding(10, 0, 10, 0);
+            importButton.TabIndex = 3;
+            importButton.Text = "Import from file…";
+            importButton.UseVisualStyleBackColor = true;
+            importButton.Click += ImportButton_Click;
+            //
             // IgnoredTermsForm
-            // 
+            //
             AcceptButton = okButton;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -147,5 +163,6 @@ namespace PhilterDesktop.PolicyEditing
         private CheckBox caseSensitiveCheckBox;
         private Button okButton;
         private Button cancelButton;
+        private Button importButton;
     }
 }

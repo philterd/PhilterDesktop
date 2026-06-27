@@ -71,7 +71,7 @@ namespace PhilterDesktop
                         .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
                         .OrderBy(s => s.CharacterStart))
                     {
-                        captured.Add(new RedactionSpanEntity
+                        var entity = new RedactionSpanEntity
                         {
                             Order = order++,
                             ParagraphIndex = paragraphIndex,
@@ -80,7 +80,9 @@ namespace PhilterDesktop
                             Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
                             Replacement = s.Replacement ?? string.Empty,
                             Classification = s.Classification ?? string.Empty
-                        });
+                        };
+                        SpanExplanation.Populate(entity, s);
+                        captured.Add(entity);
                     }
                 }
                 paragraphIndex++;
@@ -123,7 +125,7 @@ namespace PhilterDesktop
 
                         foreach (Span s in spans)
                         {
-                            captured.Add(new RedactionSpanEntity
+                            var entity = new RedactionSpanEntity
                             {
                                 Order = order++,
                                 ParagraphIndex = paragraphIndex,
@@ -132,7 +134,9 @@ namespace PhilterDesktop
                                 Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
                                 Replacement = s.Replacement ?? string.Empty,
                                 Classification = s.Classification ?? string.Empty
-                            });
+                            };
+                            SpanExplanation.Populate(entity, s);
+                            captured.Add(entity);
                         }
                     }
                 }

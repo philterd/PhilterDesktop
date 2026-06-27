@@ -62,7 +62,7 @@ namespace PhilterDesktop
         private readonly QueueColumnSorter _sorter = new();
 
         private const string DefaultEmptyText =
-            "No documents queued\r\n\r\nClick \"Redact\" or drag .txt, .docx, or .pdf files here";
+            "No documents queued\r\n\r\nClick \"Redact\" or drag .txt, .docx, .pdf, .rtf, .eml, or .msg files here";
         private const string FilterEmptyText =
             "No documents match your filter.\r\n\r\nClear the filter box to see the whole queue.";
         private System.Windows.Forms.Timer _statusAnimTimer = null!;
@@ -359,8 +359,7 @@ namespace PhilterDesktop
         {
             const int size = 24;
             // Segoe Fluent / MDL2 glyphs. Redact is accent-colored as the primary action.
-            toolStripButtonRedactDocuments.Image = ModernTheme.CreateGlyphImage("\uE72E", size, ModernTheme.Accent); // Lock
-            toolStripButtonRedactPreview.Image = ModernTheme.CreateGlyphImage("\uE890", size, ModernTheme.Accent);  // View (preview)
+            toolStripButtonRedact.Image = ModernTheme.CreateGlyphImage("\uE72E", size, ModernTheme.Accent);          // Lock
             policiesToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE8FD", size, ModernTheme.Text);          // BulletedList
             contextsToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE8EC", size, ModernTheme.Text);         // Tag
             listsToolStripButton.Image = ModernTheme.CreateGlyphImage("\uE71C", size, ModernTheme.Text);            // Filter (global lists)
@@ -1519,6 +1518,7 @@ namespace PhilterDesktop
                  src.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
 
             viewDetailsToolStripMenuItem.Enabled = hasSelection;
+            exportExplanationToolStripMenuItem.Enabled = selectedCompleted; // needs captured spans
         }
 
         /// <summary>The source file path of the selected queue item, or null.</summary>
@@ -1653,6 +1653,78 @@ namespace PhilterDesktop
             details.ShowDialog(this);
         }
 
+        private void exportExplanationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return;
+            }
+            RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
+            if (entity is null)
+            {
+                return;
+            }
+
+            RedactionVersionEntity? latest = _redactionVersionRepository.GetForDocument(id).LastOrDefault();
+            if (latest is null)
+            {
+                MessageBox.Show(this,
+                    "There is no redaction detail to explain for this document yet.",
+                    "Export Explanation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            IReadOnlyList<RedactionSpanEntity> spans = _redactionSpanRepository.GetForVersion(latest.Id);
+
+            // The explanation lists the ORIGINAL detected text (and its context), so the file is as
+            // sensitive as the source. Make sure the user understands before writing it.
+            DialogResult ack = MessageBox.Show(this,
+                "The explanation file lists every item that was found — including the original, " +
+                "un-redacted text and the words around it.\n\n" +
+                "That makes this file as sensitive as the original document. Save it somewhere secure, " +
+                "and don't share it in place of the redacted copy.\n\nDo you want to continue?",
+                "Export Explanation", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
+            if (ack != DialogResult.OK)
+            {
+                return;
+            }
+
+            string source = entity.Name;
+            using var save = new SaveFileDialog
+            {
+                Title = "Save redaction explanation",
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                FileName = $"{Path.GetFileNameWithoutExtension(source)}_redaction-explanation.json",
+                InitialDirectory = RedactionService.InitialSaveDirectory(
+                    _settingsRepository.GetSettings(), ResolveRedactedOutputPath(id, source), source)
+            };
+            if (save.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            try
+            {
+                Version? v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                string toolVersion = v is null ? string.Empty : $"{v.Major}.{v.Minor}.{v.Build}";
+                string json = RedactionExplanation.ToJson(latest, spans, toolVersion, DateTimeOffset.UtcNow);
+                File.WriteAllText(save.FileName, json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, UserError.Describe(ex, save.FileName, writing: true),
+                    "Export Explanation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (MessageBox.Show(this,
+                    $"Saved the explanation for {spans.Count} item{(spans.Count == 1 ? "" : "s")} to:\n{save.FileName}\n\nOpen the containing folder?",
+                    "Export Explanation", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+            {
+                try { System.Diagnostics.Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{save.FileName}\"") { UseShellExecute = true }); }
+                catch { /* best effort */ }
+            }
+        }
+
         private void addFilesToRedactToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var redactDocumentsForm = new RedactDocuments(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled, _settingsRepository);
@@ -1663,6 +1735,13 @@ namespace PhilterDesktop
         // Prototype preview-first flow for a single .txt or .pdf file: pick the file, preview the
         // redaction, and only write the output on Save. The result is recorded as a Completed queue
         // item (with version history) so View Diff / Modify Redaction work on it afterward.
+        private void findAndRedactToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Pre-fill the source from the selected queue item, if any; otherwise the dialog's Browse.
+            using var form = new FindAndRedactForm(_settingsRepository.GetSettings(), SelectedSourcePath());
+            form.ShowDialog(this);
+        }
+
         private void redactPreviewToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using var picker = new OpenFileDialog

@@ -19,8 +19,8 @@ using Microsoft.Win32;
 namespace PhilterDesktop
 {
     /// <summary>
-    /// Manages the Windows Explorer right-click ("Redact with Philter Desktop") menu entry for
-    /// <c>.pdf</c>, <c>.docx</c>, and <c>.txt</c> files. The entries are written per-user under
+    /// Manages the Windows Explorer right-click ("Redact with Philter Desktop") menu entry for the
+    /// supported file types (PDF, Word, text, RTF, and email). The entries are written per-user under
     /// <c>HKCU\Software\Classes\SystemFileAssociations\&lt;ext&gt;\shell\PhilterDesktop</c> (no admin
     /// needed) and invoke the app's command-line redactor on the selected file. The unpackaged
     /// installer also declares these keys with the "delete on uninstall" flag so they're cleaned up.
@@ -32,7 +32,7 @@ namespace PhilterDesktop
         private const string DefaultBaseSubKey = @"Software\Classes\SystemFileAssociations";
 
         /// <summary>File types the context-menu entry is registered for.</summary>
-        public static readonly string[] Extensions = { ".pdf", ".docx", ".txt" };
+        public static readonly string[] Extensions = { ".pdf", ".docx", ".txt", ".rtf", ".eml", ".msg" };
 
         private readonly string _exePath;
         private readonly string _caption;

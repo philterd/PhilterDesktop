@@ -87,6 +87,14 @@ namespace PhilterDesktop.Tests
             });
 
         [Fact]
+        public void FindAndRedactForm_Constructs() =>
+            Sta(() =>
+            {
+                using var form = new FindAndRedactForm(new SettingsEntity());
+                _ = form.Handle;
+            });
+
+        [Fact]
         public void RedactDocuments_Constructs() =>
             ConstructWithDb(db => new RedactDocuments(
                 new PolicyRepository(db), new ContextRepository(db), new RedactionQueueRepository(db), loggingEnabled: false));
