@@ -51,6 +51,7 @@ namespace PhilterDesktop
             _typeDocx = new CheckBox();
             _typeTxt = new CheckBox();
             _typeRtf = new CheckBox();
+            _typeSpreadsheet = new CheckBox();
             _typeEmail = new CheckBox();
             _includeSubfolders = new CheckBox();
             _highlight = new CheckBox();
@@ -159,12 +160,21 @@ namespace PhilterDesktop
             _typeRtf.Text = "Rich Text (.rtf)";
             _typeRtf.UseVisualStyleBackColor = true;
             //
+            // _typeSpreadsheet
+            //
+            _typeSpreadsheet.AutoSize = true;
+            _typeSpreadsheet.Location = new Point(200, 172);
+            _typeSpreadsheet.Name = "_typeSpreadsheet";
+            _typeSpreadsheet.TabIndex = 8;
+            _typeSpreadsheet.Text = "Spreadsheet (.xlsx, .csv)";
+            _typeSpreadsheet.UseVisualStyleBackColor = true;
+            //
             // _typeEmail
             //
             _typeEmail.AutoSize = true;
-            _typeEmail.Location = new Point(200, 172);
+            _typeEmail.Location = new Point(375, 172);
             _typeEmail.Name = "_typeEmail";
-            _typeEmail.TabIndex = 8;
+            _typeEmail.TabIndex = 9;
             _typeEmail.Text = "Email (.eml, .msg)";
             _typeEmail.UseVisualStyleBackColor = true;
             //
@@ -258,6 +268,7 @@ namespace PhilterDesktop
             Controls.Add(_typeDocx);
             Controls.Add(_typeTxt);
             Controls.Add(_typeRtf);
+            Controls.Add(_typeSpreadsheet);
             Controls.Add(_typeEmail);
             Controls.Add(_includeSubfolders);
             Controls.Add(_highlight);
@@ -292,6 +303,7 @@ namespace PhilterDesktop
         private CheckBox _typeDocx;
         private CheckBox _typeTxt;
         private CheckBox _typeRtf;
+        private CheckBox _typeSpreadsheet;
         private CheckBox _typeEmail;
         private CheckBox _includeSubfolders;
         private CheckBox _highlight;

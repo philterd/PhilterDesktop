@@ -19,6 +19,7 @@ Philter Desktop works with these document types:
 - **PDF** — files ending in `.pdf`.
 - **Rich Text** — files ending in `.rtf` (a formatted-text format used by WordPad and many legal and
   records systems).
+- **Spreadsheets** — Excel files ending in `.xlsx` and comma-separated files ending in `.csv`.
 - **Email** — files ending in `.eml` (the standard email format used by most mail programs) and
   `.msg` (the format Microsoft Outlook uses when you save or drag out a message).
 
@@ -61,6 +62,39 @@ redaction itself — only the container file type changes, in exchange for a res
 > `.eml` files redact to `.eml`, and everything else keeps its original file type as usual — only
 > `.msg` changes.
 
+### Redacting spreadsheets (`.xlsx`, `.csv`)
+
+Spreadsheets are redacted **cell by cell**: Philter Desktop looks at each cell on its own and removes
+the sensitive information it finds there, leaving the rest of the table — the layout, the columns, the
+numbers, the formulas — intact. An Excel file stays `.xlsx` and a CSV stays `.csv`. (For Excel,
+**formulas** are left alone, since their value is calculated rather than stored.)
+
+There's an important thing to understand about spreadsheets. Philter Desktop recognizes sensitive
+information partly from the **words around it** — and a cell often holds a value all by itself, with no
+surrounding sentence for context. Patterns with a fixed shape (Social Security numbers, email
+addresses, account numbers) are still caught reliably. But something like a lone first name in a cell
+— "April" — has nothing around it to signal that it's a name, so automatic name detection is **much
+weaker** on bare cells than on ordinary paragraphs of writing.
+
+That's why spreadsheets have an extra tool: **whole-column redaction**. Use the **Redact
+Spreadsheet…** action — on the **Redact** button's arrow menu, or by right-clicking a spreadsheet in
+the queue. It opens a small window where you choose the **policy** and **context** as usual, and also
+see a **list of the file's columns** (with their headers). Tick any column whose contents should be
+removed **entirely** — for example a "Name" column, a "Patient ID" column, or an "Account" column —
+and every **data cell** in that column is cleared, regardless of whether the detector would have
+flagged it. The column's **header label is kept** (so the table stays readable — only the values below
+it are removed). Columns you don't tick are still cleaned the normal way (detected sensitive values
+removed). This is the dependable way to handle columns of names and identifiers.
+
+When you click **Redact**, the spreadsheet is **added to the queue** with your choices and the window
+closes; it's then redacted in the background like any other document, and you'll see it appear in the
+main list with its status.
+
+> When you redact a spreadsheet through the ordinary queue, drag-and-drop, a [watched
+> folder](watched-folders.md), or the command line, Philter Desktop runs **detection on every cell**
+> (no column is fully cleared, because those routes don't ask you any questions). To pick whole columns
+> to remove, use **Redact Spreadsheet…**.
+
 ## Adding documents to the queue
 
 There are two ways to add files:
@@ -69,8 +103,9 @@ There are two ways to add files:
   and which **context** (consistency setting) to use, and then you choose the files you want to add.
   This is the way to go when you want to pick specific rules for a particular batch of documents.
   The **Redact** button also has a small **arrow** beside it; clicking the arrow opens a short menu
-  with two alternatives — **Redact with Preview…** (see the result before saving) and **Find &
-  Redact…** (remove specific words from one file). Both are described later on this page.
+  with alternatives — **Redact with Preview…** (see the result before saving), **Find & Redact…**
+  (remove specific words from one file), and **Redact Spreadsheet…** (redact an `.xlsx`/`.csv` with
+  optional whole-column removal). These are described later on this page.
 - **Drag and drop.** Drag one or more files from a Windows folder and drop them straight onto the
   Philter Desktop window. Files added this way use the **default** policy and the **default** context.
   This is the quickest way when the standard rules are fine.
@@ -141,7 +176,7 @@ Open it from the **Redact** button's **arrow** menu on the toolbar and choose **
 right-click a document in the queue and choose the same — if you'd already selected a document, its
 path is filled in for you). A small window opens where you:
 
-1. Choose the **document** to redact (`.txt`, `.docx`, `.pdf`, `.rtf`, `.eml`, or `.msg`).
+1. Choose the **document** to redact (`.txt`, `.docx`, `.pdf`, `.rtf`, `.xlsx`, `.csv`, `.eml`, or `.msg`).
 2. Type the **exact terms** to remove, **one per line** — or click **Import from file…** to load them
    from a `.txt` or single-column `.csv` file.
 3. Click **Redact**.
@@ -239,10 +274,19 @@ To open a single redaction for editing, **double-click it** in the list. You can
 - **Add** a brand-new redaction. You add it **by position** — that is, by telling Philter Desktop
   *where* in the document to redact — and then give it the replacement text. What "position" means
   depends on the document type:
-    - **Plain text (`.txt`)** — the starting and ending character positions.
+    - **Plain text (`.txt`) and Rich Text (`.rtf`)** — the starting and ending character positions.
     - **Microsoft Word (`.docx`)** — which paragraph, plus the start and end positions within that
       paragraph.
     - **PDF (`.pdf`)** — which page, plus a rectangle on the page.
+
+!!! note "Spreadsheets and email: review and adjust, but no manual *Add*"
+    For **spreadsheets (`.xlsx`, `.csv`)** and **email (`.eml`, `.msg`)**, each redaction belongs to a
+    specific **cell** or **email field** rather than a position you can point to. You can still
+    **review** the redactions, **remove** ones you'd rather keep, **change the replacement text**, and
+    **Redact** to regenerate the file — but **Add** is turned off for these formats (there's no
+    cell-by-cell "add here" to choose). If you need to remove the entire contents of a column in a
+    spreadsheet, use **Redact Spreadsheet…** and tick that column instead. The location column shows
+    which **Cell** or **Field** each redaction sits in.
 
 A helpful detail: redactions are tracked **by their position in the document**, not by searching for
 their text. That means every redaction — whether Philter Desktop found it automatically or you added
@@ -258,12 +302,16 @@ must still be in its original location.** The finished document opens automatica
 ## Comparing the original and the cleaned-up copy (View Diff)
 
 Before you rely on a redacted document, it's wise to confirm exactly what changed. Right-click a
-**Completed** item and choose **View Diff…** (available for `.txt`, `.docx`, and `.pdf` files). This
-opens a **before-and-after comparison**: the original on the **left** ("Before") and the cleaned-up
-copy on the **right** ("After"). This view is **read-only** — looking at it never changes either
-file.
+**Completed** item and choose **View Diff…** (available for `.txt`, `.docx`, `.pdf`, `.csv`, and
+`.eml` files). This opens a **before-and-after comparison**: the original on the **left** ("Before")
+and the cleaned-up copy on the **right** ("After"). This view is **read-only** — looking at it never
+changes either file.
 
-### Text and Word documents (`.txt`, `.docx`)
+> **Large files.** Comparing very large files would be slow and memory-hungry, so **View Diff is
+> turned off for files over 10 MB** (the menu item is greyed out and labelled "file too large"). You
+> can still open the original and redacted files directly to review them.
+
+### Text, Word, CSV, and email documents (`.txt`, `.docx`, `.csv`, `.eml`)
 
 You'll see a line-by-line comparison with the matching lines kept side by side and color-coded so
 changes jump out:
@@ -332,8 +380,8 @@ PhilterDesktop.exe /p mypolicy /c mycontext file1.pdf file2.pdf file3.pdf
 
 Each file is cleaned up into a copy with the usual `_redacted-draft` label (and saved according to
 your output-location [setting](settings.md)); originals are never changed. The supported types are the
-same as always: `.txt`, `.docx`, `.pdf`, `.rtf`, `.eml`, and `.msg` (an `.msg` is redacted to an
-`.eml`, as described above). When it finishes, it reports a result code: **0** means
+same as always: `.txt`, `.docx`, `.pdf`, `.rtf`, `.xlsx`, `.csv`, `.eml`, and `.msg` (an `.msg` is
+redacted to an `.eml`, as described above). When it finishes, it reports a result code: **0** means
 everything succeeded, **1** means at least one file failed, and **2** means there was a mistake in
 how the command was typed or an unknown policy was named.
 

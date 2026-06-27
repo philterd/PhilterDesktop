@@ -62,6 +62,7 @@ namespace PhilterDesktop
             redactDropDownItem = new ToolStripMenuItem();
             previewDropDownItem = new ToolStripMenuItem();
             findRedactDropDownItem = new ToolStripMenuItem();
+            spreadsheetDropDownItem = new ToolStripMenuItem();
             toolStripSeparator3 = new ToolStripSeparator();
             policiesToolStripButton = new ToolStripButton();
             contextsToolStripButton = new ToolStripButton();
@@ -82,6 +83,7 @@ namespace PhilterDesktop
             addFilesToRedactToolStripMenuItem = new ToolStripMenuItem();
             redactPreviewToolStripMenuItem = new ToolStripMenuItem();
             findAndRedactToolStripMenuItem = new ToolStripMenuItem();
+            redactSpreadsheetToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator2 = new ToolStripSeparator();
             removeToolStripMenuItem = new ToolStripMenuItem();
             removeAllToolStripMenuItem = new ToolStripMenuItem();
@@ -196,7 +198,7 @@ namespace PhilterDesktop
             // toolStripButtonRedact
             // 
             toolStripButtonRedact.AutoToolTip = false;
-            toolStripButtonRedact.DropDownItems.AddRange(new ToolStripItem[] { redactDropDownItem, previewDropDownItem, findRedactDropDownItem });
+            toolStripButtonRedact.DropDownItems.AddRange(new ToolStripItem[] { redactDropDownItem, previewDropDownItem, findRedactDropDownItem, spreadsheetDropDownItem });
             toolStripButtonRedact.ImageTransparentColor = Color.Magenta;
             toolStripButtonRedact.Name = "toolStripButtonRedact";
             toolStripButtonRedact.Size = new Size(59, 22);
@@ -226,7 +228,14 @@ namespace PhilterDesktop
             findRedactDropDownItem.Size = new Size(189, 22);
             findRedactDropDownItem.Text = "Find && Redact...";
             findRedactDropDownItem.Click += findAndRedactToolStripMenuItem_Click;
-            // 
+            //
+            // spreadsheetDropDownItem
+            //
+            spreadsheetDropDownItem.Name = "spreadsheetDropDownItem";
+            spreadsheetDropDownItem.Size = new Size(189, 22);
+            spreadsheetDropDownItem.Text = "Redact Spreadsheet...";
+            spreadsheetDropDownItem.Click += redactSpreadsheetToolStripMenuItem_Click;
+            //
             // toolStripSeparator3
             // 
             toolStripSeparator3.Name = "toolStripSeparator3";
@@ -359,7 +368,7 @@ namespace PhilterDesktop
             // contextMenuStrip1
             // 
             contextMenuStrip1.ImageScalingSize = new Size(24, 24);
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, redactPreviewToolStripMenuItem, findAndRedactToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, openContainingFolderToolStripMenuItem, toolStripSeparator8, modifyRedactionToolStripMenuItem, viewDiffToolStripMenuItem, viewDetailsToolStripMenuItem, exportExplanationToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, redactPreviewToolStripMenuItem, findAndRedactToolStripMenuItem, redactSpreadsheetToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, openContainingFolderToolStripMenuItem, toolStripSeparator8, modifyRedactionToolStripMenuItem, viewDiffToolStripMenuItem, viewDetailsToolStripMenuItem, exportExplanationToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(278, 314);
             // 
@@ -384,7 +393,14 @@ namespace PhilterDesktop
             findAndRedactToolStripMenuItem.Size = new Size(277, 22);
             findAndRedactToolStripMenuItem.Text = "Find && Redact... (redact specific text)";
             findAndRedactToolStripMenuItem.Click += findAndRedactToolStripMenuItem_Click;
-            // 
+            //
+            // redactSpreadsheetToolStripMenuItem
+            //
+            redactSpreadsheetToolStripMenuItem.Name = "redactSpreadsheetToolStripMenuItem";
+            redactSpreadsheetToolStripMenuItem.Size = new Size(277, 22);
+            redactSpreadsheetToolStripMenuItem.Text = "Redact Spreadsheet... (.xlsx, .csv)";
+            redactSpreadsheetToolStripMenuItem.Click += redactSpreadsheetToolStripMenuItem_Click;
+            //
             // toolStripSeparator2
             // 
             toolStripSeparator2.Name = "toolStripSeparator2";
@@ -533,6 +549,7 @@ namespace PhilterDesktop
         private ToolStripMenuItem redactDropDownItem;
         private ToolStripMenuItem previewDropDownItem;
         private ToolStripMenuItem findRedactDropDownItem;
+        private ToolStripMenuItem spreadsheetDropDownItem;
         private ListView listView1;
         private ColumnHeader columnHeader1;
         private ColumnHeader columnHeader2;
@@ -548,6 +565,7 @@ namespace PhilterDesktop
         private ToolStripMenuItem addFilesToRedactToolStripMenuItem;
         private ToolStripMenuItem redactPreviewToolStripMenuItem;
         private ToolStripMenuItem findAndRedactToolStripMenuItem;
+        private ToolStripMenuItem redactSpreadsheetToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripMenuItem removeToolStripMenuItem;
         private ToolStripMenuItem removeAllToolStripMenuItem;

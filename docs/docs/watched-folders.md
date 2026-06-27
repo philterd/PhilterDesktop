@@ -1,7 +1,7 @@
 # Watched Folders (Automatic, Hands-Off Redaction)
 
 A **watched folder** is a folder that Philter Desktop keeps an eye on for you. Whenever a new
-`.txt`, `.docx`, `.pdf`, `.rtf`, `.eml`, or `.msg` file shows up in that folder, Philter Desktop notices it,
+`.txt`, `.docx`, `.pdf`, `.rtf`, `.xlsx`, `.csv`, `.eml`, or `.msg` file shows up in that folder, Philter Desktop notices it,
 redacts it automatically, and saves the cleaned-up copy to an output folder you've chosen — all without
 you having to add anything to the queue by hand. (As elsewhere, a redacted `.msg` is saved as an
 `.eml` — see [Redacting email](redacting-documents.md#redacting-email-and-why-msg-comes-out-as-eml).)
@@ -21,9 +21,11 @@ be asked to fill in a few things:
   files in this folder.
 - **Context** — the [context](contexts.md) (consistency setting) to use for these files.
 - **File types** — which of **PDF (.pdf)**, **Word (.docx)**, **Text (.txt)**, **Rich Text (.rtf)**,
-  and **Email (.eml, .msg)** you want redacted in this folder. You must pick at least one; any other
-  kinds of files in the folder are simply ignored. (Redacted emails are written as `.eml`, so an `.msg`
-  dropped here becomes a redacted `.eml` in the output folder.)
+  **Spreadsheet (.xlsx, .csv)**, and **Email (.eml, .msg)** you want redacted in this folder. You must
+  pick at least one; any other kinds of files in the folder are simply ignored. (Redacted emails are
+  written as `.eml`, so an `.msg` dropped here becomes a redacted `.eml` in the output folder.
+  Spreadsheets dropped here are redacted cell-by-cell with detection only — to remove whole columns,
+  use **Redact Spreadsheet…** in the main window instead.)
 - **Highlight redactions in Word (.docx) documents** — when checked, the replacements in cleaned-up
   Word documents are highlighted, making them easy to spot when you review the file.
 - **Show a notification when a file is redacted** — when checked, a small pop-up appears near the
@@ -54,8 +56,9 @@ away.
 
 A few details worth knowing about how watching works:
 
-- **Which files are handled:** only `.txt`, `.docx`, `.pdf`, `.rtf`, `.eml`, and `.msg` files are
-  redacted; everything else in the folder is left alone. (A redacted `.msg` is saved as an `.eml`.)
+- **Which files are handled:** only `.txt`, `.docx`, `.pdf`, `.rtf`, `.xlsx`, `.csv`, `.eml`, and
+  `.msg` files are redacted; everything else in the folder is left alone. (A redacted `.msg` is saved
+  as an `.eml`.)
 - **What the copies are named:** cleaned-up copies are saved to the output folder with the usual
   label (by default `_redacted-draft`, so `invoice.pdf` becomes `invoice_redacted-draft.pdf`). Your
   originals are never changed.
@@ -66,6 +69,30 @@ A few details worth knowing about how watching works:
 - **Large or still-arriving files:** if a file is still being copied or downloaded, Philter Desktop
   waits until it has fully finished arriving before redacting it, so it never works on a half-written
   file.
+- **One at a time, by default:** watched files are redacted **one at a time**. This keeps memory use
+  low and predictable — only a single document is ever loaded at once — so even a folder full of large
+  files can't overwhelm your computer. (See the setting below if you want to change this.)
+
+## Processing more than one file at a time
+
+By default Philter Desktop redacts watched-folder files **one at a time**. On the **Watched Folders**
+tab in [Settings](settings.md), the option **"Watched-folder files to redact at once"** lets you raise
+this to up to **4**. If you routinely drop in **lots of small files** (say, exported records), allowing
+2–4 at once can finish the batch noticeably faster.
+
+Two things make this safe to raise:
+
+- **Big files still run alone.** Any file over 50 MB is always redacted by itself, never alongside
+  others, so a large, memory-heavy document can never pile on top of other work.
+- It only affects **watched folders** — the main window's queue and one-off redactions are unchanged.
+
+!!! warning "Change this setting only with careful consideration"
+    Leave this at **1** unless you have a specific reason to change it. Running several redactions at
+    once uses **more memory and more processor** — each file in progress is held in memory while it's
+    cleaned — and if a policy uses on-device **name detection**, that work is demanding too. On a
+    modest machine, or with larger documents, a higher number can make the whole computer feel slow or,
+    in extreme cases, run out of memory. Raise it gradually (try **2** first), watch how your machine
+    copes, and lower it again if anything struggles. When in doubt, **1** is the safe choice.
 
 ## The activity log
 

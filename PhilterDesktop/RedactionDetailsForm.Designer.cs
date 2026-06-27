@@ -36,6 +36,7 @@ namespace PhilterDesktop
             _list = new ListView();
             _propColumn = new ColumnHeader();
             _valueColumn = new ColumnHeader();
+            _export = new Button();
             _close = new Button();
             SuspendLayout();
             //
@@ -64,6 +65,20 @@ namespace PhilterDesktop
             _valueColumn.Text = "Value";
             _valueColumn.Width = 420;
             //
+            // _export
+            //
+            _export.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            _export.AutoSize = true;
+            _export.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            _export.Location = new Point(12, 318);
+            _export.MinimumSize = new Size(0, 34);
+            _export.Name = "_export";
+            _export.Padding = new Padding(10, 0, 10, 0);
+            _export.TabIndex = 2;
+            _export.Text = "Export Explanation (JSON)…";
+            _export.UseVisualStyleBackColor = true;
+            _export.Visible = false;
+            //
             // _close
             //
             _close.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
@@ -83,6 +98,7 @@ namespace PhilterDesktop
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(600, 364);
             Controls.Add(_list);
+            Controls.Add(_export);
             Controls.Add(_close);
             MinimizeBox = false;
             MinimumSize = new Size(420, 280);
@@ -98,6 +114,7 @@ namespace PhilterDesktop
         private ListView _list;
         private ColumnHeader _propColumn;
         private ColumnHeader _valueColumn;
+        private Button _export;
         private Button _close;
     }
 }

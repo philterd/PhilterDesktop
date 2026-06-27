@@ -79,6 +79,9 @@ namespace PhilterDesktop
             _typeDocx.Checked = all || _entity.FileTypes.Contains(".docx", StringComparer.OrdinalIgnoreCase);
             _typeTxt.Checked = all || _entity.FileTypes.Contains(".txt", StringComparer.OrdinalIgnoreCase);
             _typeRtf.Checked = all || _entity.FileTypes.Contains(".rtf", StringComparer.OrdinalIgnoreCase);
+            _typeSpreadsheet.Checked = all
+                || _entity.FileTypes.Contains(".xlsx", StringComparer.OrdinalIgnoreCase)
+                || _entity.FileTypes.Contains(".csv", StringComparer.OrdinalIgnoreCase);
             _typeEmail.Checked = all
                 || _entity.FileTypes.Contains(".eml", StringComparer.OrdinalIgnoreCase)
                 || _entity.FileTypes.Contains(".msg", StringComparer.OrdinalIgnoreCase);
@@ -145,7 +148,7 @@ namespace PhilterDesktop
                 Warn("Please choose an output folder.");
                 return;
             }
-            if (!_typePdf.Checked && !_typeDocx.Checked && !_typeTxt.Checked && !_typeRtf.Checked && !_typeEmail.Checked)
+            if (!_typePdf.Checked && !_typeDocx.Checked && !_typeTxt.Checked && !_typeRtf.Checked && !_typeSpreadsheet.Checked && !_typeEmail.Checked)
             {
                 Warn("Please select at least one file type to redact.");
                 return;
@@ -175,6 +178,7 @@ namespace PhilterDesktop
             if (_typeDocx.Checked) { types.Add(".docx"); }
             if (_typeTxt.Checked) { types.Add(".txt"); }
             if (_typeRtf.Checked) { types.Add(".rtf"); }
+            if (_typeSpreadsheet.Checked) { types.Add(".xlsx"); types.Add(".csv"); }
             if (_typeEmail.Checked) { types.Add(".eml"); types.Add(".msg"); }
             _entity.FileTypes = types;
 

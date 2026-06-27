@@ -88,7 +88,7 @@ namespace PhilterDesktop
                 }
                 if (!RedactionService.IsSupported(path))
                 {
-                    Console.Error.WriteLine($"Unsupported file type (expected .txt, .docx, .pdf, .rtf, .eml, or .msg): {file}");
+                    Console.Error.WriteLine($"Unsupported file type (expected .txt, .docx, .pdf, .rtf, .xlsx, .csv, .eml, or .msg): {file}");
                     failures++;
                     continue;
                 }
@@ -179,7 +179,7 @@ namespace PhilterDesktop
             Console.WriteLine("  /h, --help     Show this help.");
             Console.WriteLine();
             Console.WriteLine("Each file is redacted to a copy with the configured suffix (default \"_redacted-draft\"); the original is not changed.");
-            Console.WriteLine("Supported file types: .txt, .docx, .pdf, .rtf, .eml, .msg (.msg is redacted to .eml).");
+            Console.WriteLine("Supported file types: .txt, .docx, .pdf, .rtf, .xlsx, .csv, .eml, .msg (.msg is redacted to .eml).");
             Console.WriteLine();
             Console.WriteLine("Redacting in a data pipeline or at scale? Philter (server/API) is built for it:");
             Console.WriteLine("  " + Upsell.PhilterUrl("cli"));

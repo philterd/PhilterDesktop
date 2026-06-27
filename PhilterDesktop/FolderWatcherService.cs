@@ -22,8 +22,8 @@ using PhilterData;
 namespace PhilterDesktop
 {
     /// <summary>
-    /// Continuously monitors a set of watched folders for new .txt/.docx/.pdf/.rtf/.eml/.msg files and
-    /// redacts each one (with its folder's policy/context) to the folder's output directory. Uses a
+    /// Continuously monitors a set of watched folders for new .txt/.docx/.pdf/.rtf/.xlsx/.csv/.eml/.msg
+    /// files and redacts each one (with its folder's policy/context) to the output directory. Uses a
     /// <see cref="FileSystemWatcher"/> per folder plus an initial scan so files dropped while the
     /// app was closed are still picked up. Redactions are serialized to avoid overloading the
     /// machine, and redacted output (files ending with the configured suffix) is ignored to prevent loops.
@@ -42,7 +42,9 @@ namespace PhilterDesktop
         private readonly FilterService _filterService = new();
         private readonly List<FileSystemWatcher> _watchers = new();
         private readonly object _gate = new();
-        private readonly SemaphoreSlim _redactionGate = new(1, 1);
+        // Limits how many files redact at once (default 1). Re-created from settings on Restart; large
+        // files always run solo. The shared FilterService is stateless, so concurrent use is safe.
+        private RedactionConcurrencyGate _redactionGate = new(1);
         private readonly ConcurrentDictionary<string, byte> _inFlight = new(StringComparer.OrdinalIgnoreCase);
 
         private bool _loggingEnabled;
@@ -86,6 +88,11 @@ namespace PhilterDesktop
                 }
 
                 StopWatchersNoLock();
+
+                // Size the concurrency gate from settings (large files still run solo). In-flight
+                // redactions keep using the gate they captured, so swapping the reference is safe.
+                int maxConcurrency = _settingsRepository?.GetSettings().WatchedFolderMaxConcurrency ?? 1;
+                _redactionGate = new RedactionConcurrencyGate(maxConcurrency);
 
                 foreach (WatchedFolderEntity folder in folders)
                 {
@@ -309,8 +316,11 @@ namespace PhilterDesktop
 
         private async Task RedactWatchedFileAsync(string fullPath, WatchedFolderEntity folder)
         {
-            await _redactionGate.WaitAsync().ConfigureAwait(false);
-            try
+            // Capture the current gate (Restart may swap it) and run; large files redact solo so a
+            // big, memory-heavy file never runs alongside others.
+            RedactionConcurrencyGate gate = _redactionGate;
+            bool solo = LargeFileWarning.IsLarge(fullPath);
+            using IDisposable slot = await gate.EnterAsync(solo).ConfigureAwait(false);
             {
                 if (!File.Exists(fullPath))
                 {
@@ -351,10 +361,6 @@ namespace PhilterDesktop
                 Log($"Redacted watched file '{fullPath}' -> '{outputPath}'.");
                 Activity(folder, "Info", $"Redacted: {fullPath} → {outputPath}");
                 RaiseProcessed(folder, fullPath, outputPath, success: true, error: null);
-            }
-            finally
-            {
-                _redactionGate.Release();
             }
         }
 

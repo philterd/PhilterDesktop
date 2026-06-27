@@ -1,0 +1,176 @@
+/*
+ * Copyright 2026 Philterd, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+using PhilterData;
+
+namespace PhilterDesktop
+{
+    /// <summary>
+    /// Configures redaction of a single spreadsheet (<c>.xlsx</c>) or CSV file and adds it to the
+    /// redaction queue (the actual redaction runs in the background like any other queued document).
+    /// Detected sensitive information is removed from every cell; the user may also tick whole columns
+    /// to remove their data cells entirely — useful for name/ID columns the detector can miss when a
+    /// value sits alone in a cell (the column's header label is kept).
+    /// </summary>
+    internal sealed partial class SpreadsheetRedactionForm : Form
+    {
+        private readonly PolicyRepository _policies = null!;
+        private readonly ContextRepository _contexts = null!;
+        private readonly RedactionQueueRepository _queue = null!;
+        private readonly SettingsEntity _settings = new();
+
+        private List<SpreadsheetColumn> _columnList = new();
+
+        /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
+        public SpreadsheetRedactionForm()
+        {
+            InitializeComponent();
+            ModernTheme.Apply(this);
+            ModernTheme.MakePrimary(_redact);
+        }
+
+        public SpreadsheetRedactionForm(
+            PolicyRepository policies,
+            ContextRepository contexts,
+            RedactionQueueRepository queue,
+            SettingsEntity settings,
+            string? initialSource = null)
+            : this()
+        {
+            _policies = policies;
+            _contexts = contexts;
+            _queue = queue;
+            _settings = settings;
+            if (!string.IsNullOrEmpty(initialSource))
+            {
+                _source.Text = initialSource;
+            }
+        }
+
+        private void SpreadsheetRedactionForm_Load(object? sender, EventArgs e)
+        {
+            if (_policies is null || _contexts is null)
+            {
+                return; // designer / smoke-test construction
+            }
+
+            LoadNames(_policy, _policies.GetAll().Select(p => p.Name), _settings.LastPolicy);
+            LoadNames(_context, _contexts.GetAll().Select(c => c.Name), _settings.LastContext);
+
+            if (!string.IsNullOrEmpty(_source.Text))
+            {
+                LoadColumns(_source.Text);
+            }
+        }
+
+        private static void LoadNames(ComboBox combo, IEnumerable<string> names, string? preferred)
+        {
+            combo.Items.Clear();
+            foreach (string name in names.OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
+            {
+                combo.Items.Add(name);
+            }
+            ComboSelection.Select(combo, preferred);
+        }
+
+        private void OnBrowse(object? sender, EventArgs e)
+        {
+            using var dlg = new OpenFileDialog
+            {
+                Title = "Choose a spreadsheet",
+                Filter = "Spreadsheets (*.xlsx;*.csv)|*.xlsx;*.csv|Excel (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv",
+                CheckFileExists = true
+            };
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+            {
+                _source.Text = dlg.FileName;
+                LoadColumns(dlg.FileName);
+            }
+        }
+
+        // Populates the column checklist from the chosen file (Excel or CSV).
+        private void LoadColumns(string path)
+        {
+            _columns.Items.Clear();
+            _columnList = new List<SpreadsheetColumn>();
+            try
+            {
+                _columnList = path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                    ? CsvRedactor.ReadColumns(path)
+                    : XlsxRedactor.ReadColumns(path);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, UserError.Describe(ex, path, writing: false), "Redact Spreadsheet",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            foreach (SpreadsheetColumn column in _columnList)
+            {
+                _columns.Items.Add(column.Label);
+            }
+        }
+
+        // Adds the configured spreadsheet (with any whole-column selections) to the redaction queue;
+        // the background queue processor does the actual redaction. The form just closes.
+        private void OnRedact(object? sender, EventArgs e)
+        {
+            string source = _source.Text.Trim();
+            if (string.IsNullOrEmpty(source) || !File.Exists(source))
+            {
+                MessageBox.Show(this, "Choose a spreadsheet to redact.", "Redact Spreadsheet", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (!RedactionService.IsSupported(source))
+            {
+                MessageBox.Show(this, "Unsupported file type. Choose a .xlsx or .csv file.", "Redact Spreadsheet", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (_policy.SelectedItem is null || _context.SelectedItem is null)
+            {
+                MessageBox.Show(this, "Choose a policy and a context.", "Redact Spreadsheet", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Map the checked rows back to 1-based column indices.
+            var fullColumns = new List<int>();
+            foreach (int index in _columns.CheckedIndices)
+            {
+                if (index >= 0 && index < _columnList.Count)
+                {
+                    fullColumns.Add(_columnList[index].Index);
+                }
+            }
+
+            if (!LargeFileWarning.ConfirmIfLarge(this, new[] { source }))
+            {
+                return;
+            }
+
+            _queue.Insert(new RedactionQueueEntity
+            {
+                Name = source,
+                Policy = _policy.Text,
+                Context = _context.Text,
+                FullyRedactedColumns = fullColumns
+            });
+
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+    }
+}

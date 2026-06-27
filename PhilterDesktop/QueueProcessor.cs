@@ -66,7 +66,8 @@ namespace PhilterDesktop
                 GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
                 string outputPath = RedactionService.GetOutputPath(entity.Name, settings);
                 List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(
-                    entity.Name, outputPath, policy, entity.Context, filterService, entity.Highlight);
+                    entity.Name, outputPath, policy, entity.Context, filterService, entity.Highlight,
+                    fullyRedactedColumns: entity.FullyRedactedColumns);
                 return QueueRedactionResult.Succeeded(outputPath, spans);
             }
             catch (Exception ex)

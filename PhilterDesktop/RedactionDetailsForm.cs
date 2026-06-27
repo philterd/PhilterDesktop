@@ -23,6 +23,7 @@ namespace PhilterDesktop
     public partial class RedactionDetailsForm : Form
     {
         private readonly ToolStripMenuItem _copyItem;
+        private Action<IWin32Window>? _exportExplanation;
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public RedactionDetailsForm()
@@ -30,6 +31,7 @@ namespace PhilterDesktop
             InitializeComponent();
             ModernTheme.Apply(this);
             _list.Resize += (_, _) => SizeValueColumn();
+            _export.Click += (_, _) => _exportExplanation?.Invoke(this);
 
             // Right-click a row to copy its value (e.g. the redacted file path) to the clipboard.
             var menu = new ContextMenuStrip();
@@ -83,10 +85,17 @@ namespace PhilterDesktop
             }
         }
 
-        public RedactionDetailsForm(string title, IReadOnlyList<(string Label, string Value)> rows)
+        /// <param name="exportExplanation">
+        /// When supplied, an "Export Explanation (JSON)…" button is shown; the action is invoked with
+        /// this dialog as the owner so its save/confirm dialogs are modal over it.
+        /// </param>
+        public RedactionDetailsForm(string title, IReadOnlyList<(string Label, string Value)> rows,
+            Action<IWin32Window>? exportExplanation = null)
             : this()
         {
             Text = title;
+            _exportExplanation = exportExplanation;
+            _export.Visible = exportExplanation is not null;
             _list.BeginUpdate();
             foreach ((string label, string value) in rows)
             {

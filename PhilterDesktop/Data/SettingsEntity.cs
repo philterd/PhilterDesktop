@@ -62,6 +62,12 @@ namespace PhilterData
         /// <summary>Whether a tray balloon is shown when a document finishes redacting (default on).</summary>
         public bool NotificationsEnabled { get; set; } = true;
 
+        /// <summary>
+        /// How many watched-folder files may be redacted at once (default 1). Higher values speed up
+        /// bursts of small files; large files always run alone regardless. Clamped to 1–4 in the UI.
+        /// </summary>
+        public int WatchedFolderMaxConcurrency { get; set; } = 1;
+
         /// <summary>Global "always redact" terms (one per line), applied on top of every policy.</summary>
         public string GlobalAlwaysRedact { get; set; } = string.Empty;
 

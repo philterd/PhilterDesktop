@@ -141,6 +141,35 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public async Task ProcessAsync_Csv_AppliesFullyRedactedColumns_KeepsHeader()
+        {
+            // Empty policy: nothing is detected, so only the selected full column should be cleared,
+            // proving the queued column selection travels through to the redactor.
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{}" });
+
+            string input = Path.Combine(_tempDir, "people.csv");
+            await File.WriteAllTextAsync(input, "Name,Email\r\nAlice,a@example.com\r\nBob,b@example.com\r\n");
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = true };
+            var entity = new RedactionQueueEntity
+            {
+                Name = input,
+                Policy = "p",
+                Context = "ctx",
+                FullyRedactedColumns = new List<int> { 1 } // column A (Name)
+            };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.True(result.Success);
+            string redacted = await File.ReadAllTextAsync(result.OutputPath!);
+            Assert.DoesNotContain("Alice", redacted);
+            Assert.DoesNotContain("Bob", redacted);
+            Assert.Contains("Name", redacted);                 // header preserved
+            Assert.Contains("a@example.com", redacted);        // column B untouched (empty policy)
+        }
+
+        [Fact]
         public void DescribeFailure_NonExceptionResult_UsesItsMessage()
         {
             var result = QueueRedactionResult.Failed("Policy 'nope' was not found");

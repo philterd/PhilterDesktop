@@ -49,8 +49,8 @@ This option lets you redact files **straight from a Windows folder**, without op
 first.
 
 Turn on **Add "Redact with Philter Desktop" to the Explorer right-click menu**. Once it's on, you can
-go to any folder, select one or more `.pdf`, `.docx`, `.txt`, `.rtf`, `.eml`, or `.msg` files,
-**right-click** them, and choose **Redact with Philter Desktop**. A small window appears listing the files you picked and
+go to any folder, select one or more `.pdf`, `.docx`, `.txt`, `.rtf`, `.xlsx`, `.csv`, `.eml`, or
+`.msg` files, **right-click** them, and choose **Redact with Philter Desktop**. A small window appears listing the files you picked and
 letting you choose the **policy** and **context** to use (and whether to highlight redactions in Word
 documents). When you click **Redact**, the files are handed to Philter Desktop's
 [redaction queue](redacting-documents.md) and processed just like any other document — and Philter
@@ -102,6 +102,11 @@ by hand. This tab is also where you turn on having Philter Desktop start automat
 in to Windows, and it lets the program keep working quietly from the system tray (the small icons near
 the clock) even when its window is closed. This feature has its own detailed page; see
 [Watched Folders](watched-folders.md).
+
+It also has a **"Watched-folder files to redact at once"** setting. Leave this at **1** (the default)
+unless you have a specific reason to change it: redacting several files at once uses more memory and
+processor, so a higher number should be chosen only with careful consideration. See [Processing more
+than one file at a time](watched-folders.md#processing-more-than-one-file-at-a-time) for guidance.
 
 ## Security tab — protecting your stored information
 

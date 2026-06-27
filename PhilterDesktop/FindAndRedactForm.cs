@@ -54,7 +54,7 @@ namespace PhilterDesktop
             using var dlg = new OpenFileDialog
             {
                 Title = "Choose a document",
-                Filter = "Supported documents (*.txt;*.docx;*.pdf;*.rtf;*.eml;*.msg)|*.txt;*.docx;*.pdf;*.rtf;*.eml;*.msg|All files (*.*)|*.*",
+                Filter = "Supported documents (*.txt;*.docx;*.pdf;*.rtf;*.xlsx;*.csv;*.eml;*.msg)|*.txt;*.docx;*.pdf;*.rtf;*.xlsx;*.csv;*.eml;*.msg|All files (*.*)|*.*",
                 CheckFileExists = true
             };
             if (dlg.ShowDialog(this) == DialogResult.OK)
@@ -75,7 +75,7 @@ namespace PhilterDesktop
             }
             if (!RedactionService.IsSupported(source))
             {
-                MessageBox.Show(this, "Unsupported file type. Choose a .txt, .docx, .pdf, .rtf, .eml, or .msg file.", "Find & Redact", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, "Unsupported file type. Choose a .txt, .docx, .pdf, .rtf, .xlsx, .csv, .eml, or .msg file.", "Find & Redact", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 

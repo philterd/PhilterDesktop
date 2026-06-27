@@ -79,7 +79,7 @@ namespace PhilterDesktop
                 LinkLabel philterLink = Upsell.CreateLink(
                     "Automating redaction across systems or at scale? Philter runs it in your data pipeline →",
                     Upsell.PhilterUrl("watched-folders"));
-                philterLink.Location = new Point(6, 266);
+                philterLink.Location = new Point(6, 292);
                 tabWatched.Controls.Add(philterLink);
                 philterLink.BringToFront();
             }
@@ -420,6 +420,7 @@ namespace PhilterDesktop
             txtSuffix.Text = RedactionService.NormalizeSuffix(_settings.RedactedSuffix);
             chkEnableLogging.Checked = _settings.LoggingEnabled;
             chkShowNotifications.Checked = _settings.NotificationsEnabled;
+            cmbConcurrency.SelectedItem = Math.Clamp(_settings.WatchedFolderMaxConcurrency, 1, 4).ToString();
         }
 
         private void RadioOriginalLocation_CheckedChanged(object sender, EventArgs e)
@@ -587,6 +588,7 @@ namespace PhilterDesktop
             _settings.RedactedSuffix = RedactionService.NormalizeSuffix(txtSuffix.Text);
             _settings.LoggingEnabled = chkEnableLogging.Checked;
             _settings.NotificationsEnabled = chkShowNotifications.Checked;
+            _settings.WatchedFolderMaxConcurrency = int.TryParse(cmbConcurrency.Text, out int n) ? Math.Clamp(n, 1, 4) : 1;
 
             _settingsRepository.SaveSettings(_settings);
 

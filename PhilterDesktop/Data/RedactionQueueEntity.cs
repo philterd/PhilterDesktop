@@ -35,6 +35,13 @@ namespace PhilterData
         /// <summary>When true, redacted replacements in .docx output are highlighted.</summary>
         public bool Highlight { get; set; }
 
+        /// <summary>
+        /// For spreadsheets (.xlsx/.csv): 1-based column indices whose every data cell should be
+        /// redacted in full (the column header is preserved). Empty for all other documents and for
+        /// spreadsheets queued without column selection.
+        /// </summary>
+        public List<int> FullyRedactedColumns { get; set; } = new();
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

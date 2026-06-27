@@ -62,7 +62,7 @@ namespace PhilterDesktop
         private readonly QueueColumnSorter _sorter = new();
 
         private const string DefaultEmptyText =
-            "No documents queued\r\n\r\nClick \"Redact\" or drag .txt, .docx, .pdf, .rtf, .eml, or .msg files here";
+            "No documents queued\r\n\r\nClick \"Redact\" or drag .txt, .docx, .pdf, .rtf, .xlsx, .csv, .eml, or .msg files here";
         private const string FilterEmptyText =
             "No documents match your filter.\r\n\r\nClear the filter box to see the whole queue.";
         private System.Windows.Forms.Timer _statusAnimTimer = null!;
@@ -74,7 +74,23 @@ namespace PhilterDesktop
         {
         }
 
-        public MainForm(bool startMinimized)
+        // Opens the encrypted user database under LocalAppData\PhilterDesktop (creating the folder).
+        private static LiteDatabase OpenDefaultDatabase()
+        {
+            string folder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PhilterDesktop");
+            Directory.CreateDirectory(folder);
+            return EncryptedDatabase.Open(Path.Combine(folder, "data.db"));
+        }
+
+        public MainForm(bool startMinimized) : this(OpenDefaultDatabase(), startMinimized)
+        {
+        }
+
+        // Test/screenshot hook: builds the main form against a supplied (already-open) database instead
+        // of the encrypted user database, so it can be exercised/rendered with seeded data without
+        // touching the real one. The running app always uses the parameterless/bool constructors.
+        internal MainForm(LiteDatabase database, bool startMinimized)
         {
             InitializeComponent();
             ModernTheme.Apply(this);
@@ -82,20 +98,8 @@ namespace PhilterDesktop
             InitializeTray();
             _startMinimized = startMinimized;
 
-            string root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-
-            // 2. Combine with your specific App Folder
-            string folder = Path.Combine(root, "PhilterDesktop");
-            string dbPath = Path.Combine(folder, "data.db");
-
-            // 3. The Magic Step: Ensure the directory exists
-            if (!Directory.Exists(folder))
-            {
-                Directory.CreateDirectory(folder);
-            }
-
-            // Create a single shared database instance, encrypted at rest (it stores detected PII).
-            _database = EncryptedDatabase.Open(dbPath);
+            // Single shared database instance (the default path is encrypted at rest — it stores PII).
+            _database = database;
 
             // Pass the shared database to all repositories
             _policyRepository = new PolicyRepository(_database);
@@ -375,6 +379,15 @@ namespace PhilterDesktop
             openContainingFolderToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE838", menuSize, ModernTheme.Text);   // FolderOpen
             refreshToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE72C", menuSize, ModernTheme.Text);                // Refresh
             removeToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE74D", menuSize, ModernTheme.Text);                 // Delete
+            redactPreviewToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE890", menuSize, ModernTheme.Text);          // View (preview)
+            modifyRedactionToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE70F", menuSize, ModernTheme.Text);        // Edit
+            viewDiffToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE7C4", menuSize, ModernTheme.Text);               // TwoPage (compare)
+            viewDetailsToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE946", menuSize, ModernTheme.Text);            // Info (details)
+            exportExplanationToolStripMenuItem.Image = ModernTheme.CreateGlyphImage("\uE898", menuSize, ModernTheme.Text);      // Save/Export (explanation)
+
+            // Redact split-button dropdown items.
+            redactDropDownItem.Image = ModernTheme.CreateGlyphImage("\uE72E", menuSize, ModernTheme.Accent);                    // Lock (redact)
+            previewDropDownItem.Image = ModernTheme.CreateGlyphImage("\uE890", menuSize, ModernTheme.Text);                     // View (preview)
         }
 
         private void StatusAnimTimer_Tick(object? sender, EventArgs e)
@@ -1055,8 +1068,9 @@ namespace PhilterDesktop
             }
 
             // Ask which policy/context to apply to the dropped files (rather than silently
-            // using the default policy, which may redact nothing).
-            if (valid.Count > 0 && PromptPolicyContext(out string policy, out string context))
+            // using the default policy, which may redact nothing). Warn first if any are very large.
+            if (valid.Count > 0 && LargeFileWarning.ConfirmIfLarge(this, valid) &&
+                PromptPolicyContext(out string policy, out string context))
             {
                 foreach (string path in valid)
                 {
@@ -1510,12 +1524,14 @@ namespace PhilterDesktop
             openContainingFolderToolStripMenuItem.Enabled = selectedCompleted; // redacted file exists once completed
             modifyRedactionToolStripMenuItem.Enabled = selectedCompleted; // versions exist once redacted
 
-            // Enable for a completed .txt / .docx (text diff) or .pdf (side-by-side page comparison).
-            viewDiffToolStripMenuItem.Enabled = selectedCompleted &&
-                SelectedSourcePath() is { } src &&
-                (src.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) ||
-                 src.EndsWith(".docx", StringComparison.OrdinalIgnoreCase) ||
-                 src.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
+            // Enable for a completed, diffable type. Text-based types (.txt/.docx/.csv/.eml) use the
+            // text diff; .pdf uses the side-by-side page comparison. Very large files are excluded
+            // because the text diff loads both files and renders a row per line — see MaxDiffFileBytes.
+            ObjectId? selectedId = hasSelection && listView1.SelectedItems[0].Tag is ObjectId oid ? oid : null;
+            bool diffableType = selectedCompleted && SelectedSourcePath() is { } src && IsDiffableType(src);
+            bool diffTooLarge = diffableType && selectedId is { } did && !DiffWithinSizeLimit(did, SelectedSourcePath()!);
+            viewDiffToolStripMenuItem.Enabled = diffableType && !diffTooLarge;
+            viewDiffToolStripMenuItem.Text = diffTooLarge ? "View Diff... (file too large)" : "View Diff...";
 
             viewDetailsToolStripMenuItem.Enabled = hasSelection;
             exportExplanationToolStripMenuItem.Enabled = selectedCompleted; // needs captured spans
@@ -1529,6 +1545,25 @@ namespace PhilterDesktop
                 return null;
             }
             return _redactionQueueRepository.GetById(id)?.Name;
+        }
+
+        private static bool IsDiffableType(string path) => DiffViewGate.IsDiffableType(path);
+
+        /// <summary>True when both the source and the redacted output are within the diff size limit.</summary>
+        private bool DiffWithinSizeLimit(ObjectId id, string source) =>
+            FileWithinLimit(source) && FileWithinLimit(ResolveRedactedOutputPath(id, source));
+
+        private static bool FileWithinLimit(string path)
+        {
+            try
+            {
+                var info = new FileInfo(path);
+                return !info.Exists || DiffViewGate.IsWithinSizeLimit(info.Length);
+            }
+            catch
+            {
+                return true; // don't block the diff on a stat error
+            }
         }
 
         /// <summary>
@@ -1569,6 +1604,14 @@ namespace PhilterDesktop
             {
                 MessageBox.Show($"The redacted file could not be found:\n\n{output}", "View Diff",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (!FileWithinLimit(source) || !FileWithinLimit(output))
+            {
+                MessageBox.Show(
+                    $"This file is too large to compare (the limit is {DiffViewGate.MaxFileSizeText}).\n\n" +
+                    "Open the original and redacted files directly to review them.",
+                    "View Diff", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -1649,7 +1692,10 @@ namespace PhilterDesktop
                 rows.Add(("Why it failed", entity.ErrorMessage));
             }
 
-            using var details = new RedactionDetailsForm($"Details — {Path.GetFileName(source)}", rows);
+            // Offer the explanation export from the Details dialog too, but only when there's a
+            // completed redaction to explain.
+            Action<IWin32Window>? export = latest is not null ? owner => ExportExplanationFor(owner, id) : null;
+            using var details = new RedactionDetailsForm($"Details — {Path.GetFileName(source)}", rows, export);
             details.ShowDialog(this);
         }
 
@@ -1659,6 +1705,14 @@ namespace PhilterDesktop
             {
                 return;
             }
+            ExportExplanationFor(this, id);
+        }
+
+        // Writes a redaction-explanation JSON for the document's latest version. Shared by the queue's
+        // context menu and the View Details dialog (which passes itself as the owner). The explanation
+        // contains the original sensitive text, so the user is warned before it's written.
+        private void ExportExplanationFor(IWin32Window owner, ObjectId id)
+        {
             RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
             if (entity is null)
             {
@@ -1668,7 +1722,7 @@ namespace PhilterDesktop
             RedactionVersionEntity? latest = _redactionVersionRepository.GetForDocument(id).LastOrDefault();
             if (latest is null)
             {
-                MessageBox.Show(this,
+                MessageBox.Show(owner,
                     "There is no redaction detail to explain for this document yet.",
                     "Export Explanation", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
@@ -1677,7 +1731,7 @@ namespace PhilterDesktop
 
             // The explanation lists the ORIGINAL detected text (and its context), so the file is as
             // sensitive as the source. Make sure the user understands before writing it.
-            DialogResult ack = MessageBox.Show(this,
+            DialogResult ack = MessageBox.Show(owner,
                 "The explanation file lists every item that was found — including the original, " +
                 "un-redacted text and the words around it.\n\n" +
                 "That makes this file as sensitive as the original document. Save it somewhere secure, " +
@@ -1697,7 +1751,7 @@ namespace PhilterDesktop
                 InitialDirectory = RedactionService.InitialSaveDirectory(
                     _settingsRepository.GetSettings(), ResolveRedactedOutputPath(id, source), source)
             };
-            if (save.ShowDialog(this) != DialogResult.OK)
+            if (save.ShowDialog(owner) != DialogResult.OK)
             {
                 return;
             }
@@ -1711,12 +1765,12 @@ namespace PhilterDesktop
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, UserError.Describe(ex, save.FileName, writing: true),
+                MessageBox.Show(owner, UserError.Describe(ex, save.FileName, writing: true),
                     "Export Explanation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            if (MessageBox.Show(this,
+            if (MessageBox.Show(owner,
                     $"Saved the explanation for {spans.Count} item{(spans.Count == 1 ? "" : "s")} to:\n{save.FileName}\n\nOpen the containing folder?",
                     "Export Explanation", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
             {
@@ -1740,6 +1794,24 @@ namespace PhilterDesktop
             // Pre-fill the source from the selected queue item, if any; otherwise the dialog's Browse.
             using var form = new FindAndRedactForm(_settingsRepository.GetSettings(), SelectedSourcePath());
             form.ShowDialog(this);
+        }
+
+        private void redactSpreadsheetToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Spreadsheets/CSV with optional whole-column redaction; pre-fill a selected .xlsx/.csv.
+            string? selected = SelectedSourcePath();
+            string? initial = selected is not null &&
+                (selected.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase) ||
+                 selected.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+                ? selected
+                : null;
+
+            using var form = new SpreadsheetRedactionForm(
+                _policyRepository, _contextRepository, _redactionQueueRepository, _settingsRepository.GetSettings(), initial);
+            if (form.ShowDialog(this) == DialogResult.OK)
+            {
+                LoadRedactionQueue(); // show the newly queued spreadsheet
+            }
         }
 
         private void redactPreviewToolStripMenuItem_Click(object sender, EventArgs e)

@@ -95,6 +95,14 @@ namespace PhilterDesktop.Tests
             });
 
         [Fact]
+        public void SpreadsheetRedactionForm_Constructs() =>
+            Sta(() =>
+            {
+                using var form = new SpreadsheetRedactionForm();
+                _ = form.Handle;
+            });
+
+        [Fact]
         public void RedactDocuments_Constructs() =>
             ConstructWithDb(db => new RedactDocuments(
                 new PolicyRepository(db), new ContextRepository(db), new RedactionQueueRepository(db), loggingEnabled: false));

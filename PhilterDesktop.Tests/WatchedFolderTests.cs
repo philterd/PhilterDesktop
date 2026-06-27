@@ -305,6 +305,34 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public async Task Watcher_RedactsCsv_KeepsCsvExtension()
+        {
+            string watched = Path.Combine(_root, "watched-csv");
+            string output = Path.Combine(_root, "output-csv");
+            Directory.CreateDirectory(watched);
+
+            var folder = new WatchedFolderEntity
+            {
+                FolderPath = watched,
+                OutputFolder = output,
+                Policy = "p",
+                Context = "ctx",
+                FileTypes = new List<string> { ".xlsx", ".csv" }
+            };
+
+            using var watcher = new FolderWatcherService(_policyRepo, loggingEnabled: false);
+            watcher.Restart(new[] { folder });
+
+            await File.WriteAllTextAsync(Path.Combine(watched, "list.csv"),
+                "Name,Email\r\nAlice,watch@example.com\r\n");
+
+            string redacted = await WaitForFileAsync(Path.Combine(output, "list_redacted-draft.csv"));
+
+            Assert.DoesNotContain("watch@example.com", redacted);
+            Assert.Contains("Name,Email", redacted);
+        }
+
+        [Fact]
         public async Task Watcher_RedactsRtf_KeepsRtfExtension()
         {
             string watched = Path.Combine(_root, "watched-rtf");

@@ -32,7 +32,7 @@ namespace PhilterDesktop
         private const string DefaultBaseSubKey = @"Software\Classes\SystemFileAssociations";
 
         /// <summary>File types the context-menu entry is registered for.</summary>
-        public static readonly string[] Extensions = { ".pdf", ".docx", ".txt", ".rtf", ".eml", ".msg" };
+        public static readonly string[] Extensions = { ".pdf", ".docx", ".txt", ".rtf", ".xlsx", ".csv", ".eml", ".msg" };
 
         private readonly string _exePath;
         private readonly string _caption;

@@ -1,0 +1,118 @@
+{
+  "tool": "Philter Desktop",
+  "toolVersion": "1.0.0",
+  "generatedUtc": "2026-06-27T14:40:42.0984865+00:00",
+  "source": "C:\\work\\philterd\\code\\PhilterDesktop\\test-documents\\test1.xlsx",
+  "redactedOutput": "C:\\work\\philterd\\code\\PhilterDesktop\\test-documents\\test1_redacted-draft.xlsx",
+  "fileType": ".xlsx",
+  "policy": "default",
+  "context": "default",
+  "version": 1,
+  "redactedUtc": "2026-06-27T10:40:22.494Z",
+  "detectionCount": 7,
+  "detections": [
+    {
+      "order": 0,
+      "filterType": "Other",
+      "classification": "name",
+      "confidence": 0.9945222634693917,
+      "text": "George Banks",
+      "replacement": "{{{REDACTED-ph-eye}}}",
+      "window": [
+        "George",
+        "Banks"
+      ],
+      "location": {
+        "paragraphIndex": 5,
+        "characterStart": 0,
+        "characterEnd": 12
+      }
+    },
+    {
+      "order": 1,
+      "filterType": "EmailAddress",
+      "confidence": 0.99,
+      "text": "george@fake.com",
+      "replacement": "{{{REDACTED-email-address}}}",
+      "window": [
+        "george@fake.com"
+      ],
+      "location": {
+        "paragraphIndex": 6,
+        "characterStart": 0,
+        "characterEnd": 15
+      }
+    },
+    {
+      "order": 2,
+      "filterType": "Ssn",
+      "confidence": 0.9,
+      "text": "123-45-6789",
+      "replacement": "{{{REDACTED-ssn}}}",
+      "window": [
+        "123-45-6789"
+      ],
+      "location": {
+        "paragraphIndex": 7,
+        "characterStart": 0,
+        "characterEnd": 11
+      }
+    },
+    {
+      "order": 3,
+      "classification": "full-column",
+      "confidence": 0,
+      "text": "12500",
+      "replacement": "{{{REDACTED}}}",
+      "location": {
+        "paragraphIndex": 8,
+        "characterStart": 0,
+        "characterEnd": 5
+      }
+    },
+    {
+      "order": 4,
+      "filterType": "Other",
+      "classification": "name",
+      "confidence": 0.9934741595894564,
+      "text": "Mary Johnson",
+      "replacement": "{{{REDACTED-ph-eye}}}",
+      "window": [
+        "Mary",
+        "Johnson"
+      ],
+      "location": {
+        "paragraphIndex": 10,
+        "characterStart": 0,
+        "characterEnd": 12
+      }
+    },
+    {
+      "order": 5,
+      "filterType": "EmailAddress",
+      "confidence": 0.99,
+      "text": "mary@example.org",
+      "replacement": "{{{REDACTED-email-address}}}",
+      "window": [
+        "mary@example.org"
+      ],
+      "location": {
+        "paragraphIndex": 11,
+        "characterStart": 0,
+        "characterEnd": 16
+      }
+    },
+    {
+      "order": 6,
+      "classification": "full-column",
+      "confidence": 0,
+      "text": "3400",
+      "replacement": "{{{REDACTED}}}",
+      "location": {
+        "paragraphIndex": 13,
+        "characterStart": 0,
+        "characterEnd": 4
+      }
+    }
+  ]
+}

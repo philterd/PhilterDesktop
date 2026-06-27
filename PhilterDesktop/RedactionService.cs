@@ -73,11 +73,25 @@ namespace PhilterDesktop
         /// This is the single source of truth used by the UI file pickers/drag-drop. Email files
         /// (<c>.eml</c>, <c>.msg</c>) are redacted to <c>.eml</c> (see <see cref="OutputExtension"/>).
         /// </summary>
-        public static readonly string[] SupportedExtensions = { ".txt", ".docx", ".pdf", ".rtf", ".eml", ".msg" };
+        public static readonly string[] SupportedExtensions = { ".txt", ".docx", ".pdf", ".rtf", ".xlsx", ".csv", ".eml", ".msg" };
 
         /// <summary>Returns true if the file's extension is a supported, redactable type.</summary>
         public static bool IsSupported(string path) =>
             SupportedExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// True for formats whose redaction spans are located by an <b>ordinal</b> — a spreadsheet cell
+        /// (<c>.xlsx</c>, <c>.csv</c>) or an email field (<c>.eml</c>, <c>.msg</c>) — rather than a
+        /// user-addressable position. For these, Modify Redaction can review, remove, or change the
+        /// replacement of a span, but a span cannot be <i>added</i> by hand (there's no position to pick,
+        /// and a hand-placed span couldn't be matched back to a cell/field). Accepts a path or a bare
+        /// extension (e.g. <c>".csv"</c>).
+        /// </summary>
+        public static bool UsesOrdinalSpanAddressing(string pathOrExtension)
+        {
+            string ext = pathOrExtension.StartsWith('.') ? pathOrExtension : Path.GetExtension(pathOrExtension);
+            return ext.ToLowerInvariant() is ".xlsx" or ".csv" or ".eml" or ".msg";
+        }
 
         /// <summary>
         /// Computes the redacted output path for an input file, honoring the output-location
@@ -134,7 +148,8 @@ namespace PhilterDesktop
             PhileasPolicy policy,
             string context,
             FilterService? filterService = null,
-            bool highlight = false)
+            bool highlight = false,
+            IReadOnlyCollection<int>? fullyRedactedColumns = null)
         {
             filterService ??= new FilterService();
 
@@ -173,6 +188,26 @@ namespace PhilterDesktop
                     text => filterService.Filter(policy, context, 0, text)));
             }
 
+            if (extension == ".xlsx")
+            {
+                // Spreadsheet: redact per cell; optionally fully redact selected columns.
+                return await Task.Run(() => XlsxRedactor.Redact(
+                    inputPath,
+                    outputPath,
+                    text => filterService.Filter(policy, context, 0, text),
+                    fullyRedactedColumns));
+            }
+
+            if (extension == ".csv")
+            {
+                // CSV: redact per field; optionally fully redact selected columns.
+                return await Task.Run(() => CsvRedactor.Redact(
+                    inputPath,
+                    outputPath,
+                    text => filterService.Filter(policy, context, 0, text),
+                    fullyRedactedColumns));
+            }
+
             if (extension == ".pdf")
             {
                 PreparePdfPolicy(policy);
@@ -184,8 +219,11 @@ namespace PhilterDesktop
                 return MapPdfSpans(result.Spans);
             }
 
+            // Plain text. Run the filter off the calling thread too (consistent with the other
+            // formats), so a large .txt — especially with on-device name detection — never blocks the
+            // UI thread that drives the queue/preview.
             string text = await File.ReadAllTextAsync(inputPath);
-            TextFilterResult textResult = filterService.Filter(policy, context, 0, text);
+            TextFilterResult textResult = await Task.Run(() => filterService.Filter(policy, context, 0, text));
             await File.WriteAllTextAsync(outputPath, textResult.FilteredText);
             return MapTextSpans(textResult.Spans);
         }
@@ -218,6 +256,12 @@ namespace PhilterDesktop
                     break;
                 case ".rtf":
                     await Task.Run(() => RtfRedactor.ApplySpans(sourcePath, outputPath, spans));
+                    break;
+                case ".xlsx":
+                    await Task.Run(() => XlsxRedactor.ApplySpans(sourcePath, outputPath, spans));
+                    break;
+                case ".csv":
+                    await Task.Run(() => CsvRedactor.ApplySpans(sourcePath, outputPath, spans));
                     break;
                 default:
                     await ApplyTextSpansAsync(sourcePath, outputPath, spans);

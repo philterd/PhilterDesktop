@@ -146,7 +146,13 @@ namespace PhilterDesktop
             // and the version itself can't be deleted. Make a new version to change anything.
             bool editable = hasVersion && _selectedVersion!.Version != 1;
 
-            _add.Enabled = editable;
+            // Cell/field-indexed formats (spreadsheets, email) address spans by an ordinal, not by a
+            // user-pickable position, so there's no coherent way to *add* a redaction by hand — only
+            // to remove one or change its replacement. Disable Add for them (it would otherwise be a
+            // silent no-op, since a hand-placed span can't be matched back to a cell/field).
+            bool indexed = hasVersion && RedactionService.UsesOrdinalSpanAddressing(_selectedVersion!.FileType);
+
+            _add.Enabled = editable && !indexed;
             _edit.Enabled = hasSpan && editable;
             _remove.Enabled = hasSpan && editable;
             _redact.Enabled = hasVersion;
@@ -225,9 +231,9 @@ namespace PhilterDesktop
 
         private void OnAdd(object? sender, EventArgs e)
         {
-            if (IsReadOnlyVersion)
+            if (IsReadOnlyVersion || RedactionService.UsesOrdinalSpanAddressing(_selectedVersion!.FileType))
             {
-                return;
+                return; // no per-cell/field add UI (the button is disabled for these formats)
             }
             SpanPositionKind kind = KindFor(_selectedVersion!.FileType);
             var template = new RedactionSpanEntity
@@ -253,8 +259,9 @@ namespace PhilterDesktop
             }
             SpanPositionKind kind = KindFor(_selectedVersion!.FileType);
             // A detected span's position is fixed (anchored to where it was found); only user-added
-            // spans can have their position changed. The replacement is always editable.
-            bool positionEditable = span.UserAdded;
+            // spans can have their position changed. Cell/field-indexed formats have no positional UI,
+            // so there the replacement is the only editable part. The replacement is always editable.
+            bool positionEditable = span.UserAdded && !RedactionService.UsesOrdinalSpanAddressing(_selectedVersion!.FileType);
             using var dlg = new SpanEditForm("Edit Redaction", kind, span, positionEditable);
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
@@ -396,10 +403,25 @@ namespace PhilterDesktop
         private static string Display(string classification) =>
             string.IsNullOrEmpty(classification) ? "Detected" : classification;
 
-        private static string DescribeLocation(RedactionSpanEntity s) =>
-            s.PageNumber > 0 ? $"Page {s.PageNumber}"
-            : s.ParagraphIndex >= 0 ? $"¶ {s.ParagraphIndex + 1}"
-            : string.Empty;
+        private string DescribeLocation(RedactionSpanEntity s)
+        {
+            if (s.PageNumber > 0)
+            {
+                return $"Page {s.PageNumber}";
+            }
+            if (s.ParagraphIndex < 0)
+            {
+                return string.Empty;
+            }
+            // The "paragraph index" doubles as a cell ordinal (spreadsheets) or field ordinal (email);
+            // label it for what it actually is so the location isn't misleading.
+            return _selectedVersion?.FileType.ToLowerInvariant() switch
+            {
+                ".xlsx" or ".csv" => $"Cell {s.ParagraphIndex + 1}",
+                ".eml" or ".msg" => $"Field {s.ParagraphIndex + 1}",
+                _ => $"¶ {s.ParagraphIndex + 1}"
+            };
+        }
 
         // PDF spans are located by page + coordinates, not character offsets, so leave start/stop blank.
         private static string StartText(RedactionSpanEntity s) =>

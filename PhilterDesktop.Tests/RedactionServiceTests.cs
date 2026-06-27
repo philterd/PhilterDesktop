@@ -71,6 +71,21 @@ namespace PhilterDesktop.Tests
             Assert.Equal(expected, RedactionService.OutputExtension(name));
         }
 
+        [Theory]
+        [InlineData("book.xlsx", true)]
+        [InlineData("data.csv", true)]
+        [InlineData("note.eml", true)]
+        [InlineData("note.msg", true)]
+        [InlineData(".CSV", true)]               // bare extension, case-insensitive
+        [InlineData("memo.docx", false)]         // paragraph-addressed (Modify can add by hand)
+        [InlineData("report.pdf", false)]
+        [InlineData("notes.txt", false)]
+        [InlineData("letter.rtf", false)]        // whole-text offsets
+        public void UsesOrdinalSpanAddressing_IdentifiesCellAndFieldFormats(string input, bool expected)
+        {
+            Assert.Equal(expected, RedactionService.UsesOrdinalSpanAddressing(input));
+        }
+
         [Fact]
         public void GetOutputPath_MsgInput_ProducesEmlOutput()
         {

@@ -149,8 +149,8 @@ namespace PhilterDesktop
                 CheckFileExists = true,
                 CheckPathExists = true,
                 Multiselect = true,
-                Filter = "Text Files (*.txt)|*.txt|Microsoft Word Documents (*.docx)|*.docx|PDF Documents (*.pdf)|*.pdf|Rich Text (*.rtf)|*.rtf|Email (*.eml;*.msg)|*.eml;*.msg|All Supported Files|*.txt;*.docx;*.pdf;*.rtf;*.eml;*.msg",
-                FilterIndex = 6,
+                Filter = "Text Files (*.txt)|*.txt|Microsoft Word Documents (*.docx)|*.docx|PDF Documents (*.pdf)|*.pdf|Rich Text (*.rtf)|*.rtf|Spreadsheet (*.xlsx;*.csv)|*.xlsx;*.csv|Email (*.eml;*.msg)|*.eml;*.msg|All Supported Files|*.txt;*.docx;*.pdf;*.rtf;*.xlsx;*.csv;*.eml;*.msg",
+                FilterIndex = 7,
                 Title = "Select Files to Redact"
             };
 
@@ -235,6 +235,12 @@ namespace PhilterDesktop
             if (filesListBox.Items.Count == 0)
             {
                 MessageBox.Show("No files selected for redaction.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Heads-up before queueing very large files (redaction is memory-heavy for big inputs).
+            if (!LargeFileWarning.ConfirmIfLarge(this, filesListBox.Items.Cast<string>().ToList()))
+            {
                 return;
             }
 

@@ -78,6 +78,8 @@ namespace PhilterDesktop
             btnViewLog = new Button();
             chkStartWithWindows = new CheckBox();
             lblStartupHint = new Label();
+            lblConcurrency = new Label();
+            cmbConcurrency = new ComboBox();
             tabSecurity = new TabPage();
             lblSecurityInfo = new Label();
             chkPassphrase = new CheckBox();
@@ -215,7 +217,7 @@ namespace PhilterDesktop
             // btnSave
             // 
             btnSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnSave.Location = new Point(346, 326);
+            btnSave.Location = new Point(346, 356);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(110, 34);
             btnSave.TabIndex = 1;
@@ -226,7 +228,7 @@ namespace PhilterDesktop
             // btnCancel
             // 
             btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnCancel.Location = new Point(462, 326);
+            btnCancel.Location = new Point(462, 356);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(110, 34);
             btnCancel.TabIndex = 2;
@@ -245,7 +247,7 @@ namespace PhilterDesktop
             tabControl.Margin = new Padding(2);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(573, 316);
+            tabControl.Size = new Size(573, 346);
             tabControl.TabIndex = 0;
             // 
             // tabGeneral
@@ -326,6 +328,8 @@ namespace PhilterDesktop
             tabWatched.Controls.Add(btnViewLog);
             tabWatched.Controls.Add(chkStartWithWindows);
             tabWatched.Controls.Add(lblStartupHint);
+            tabWatched.Controls.Add(lblConcurrency);
+            tabWatched.Controls.Add(cmbConcurrency);
             tabWatched.Location = new Point(4, 24);
             tabWatched.Margin = new Padding(2);
             tabWatched.Name = "tabWatched";
@@ -444,7 +448,25 @@ namespace PhilterDesktop
             lblStartupHint.Name = "lblStartupHint";
             lblStartupHint.Size = new Size(0, 15);
             lblStartupHint.TabIndex = 6;
-            // 
+            //
+            // lblConcurrency
+            //
+            lblConcurrency.AutoSize = true;
+            lblConcurrency.Location = new Point(6, 266);
+            lblConcurrency.Margin = new Padding(2, 0, 2, 0);
+            lblConcurrency.Name = "lblConcurrency";
+            lblConcurrency.TabIndex = 7;
+            lblConcurrency.Text = "Watched-folder files to redact at once (usually leave at 1):";
+            //
+            // cmbConcurrency
+            //
+            cmbConcurrency.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbConcurrency.Items.AddRange(new object[] { "1", "2", "3", "4" });
+            cmbConcurrency.Location = new Point(372, 262);
+            cmbConcurrency.Name = "cmbConcurrency";
+            cmbConcurrency.Size = new Size(55, 23);
+            cmbConcurrency.TabIndex = 8;
+            //
             // tabSecurity
             // 
             tabSecurity.Controls.Add(lblSecurityInfo);
@@ -501,7 +523,7 @@ namespace PhilterDesktop
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(584, 366);
+            ClientSize = new Size(584, 396);
             Controls.Add(btnCancel);
             Controls.Add(btnSave);
             Controls.Add(tabControl);
@@ -549,6 +571,8 @@ namespace PhilterDesktop
         private CheckBox chkShowNotifications;
         private Label lblNotificationsHint;
         private TabPage tabWatched;
+        private Label lblConcurrency;
+        private ComboBox cmbConcurrency;
         private TabPage tabSecurity;
         private Label lblSecurityInfo;
         private CheckBox chkPassphrase;
