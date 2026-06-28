@@ -238,16 +238,13 @@ namespace PhilterDesktop
             {
                 PreparePdfPolicy(policy);
 
-                // SPIKE: in local-engine builds, when the OCR setting is on, use a hybrid extractor that
-                // OCRs scanned (text-layer-less) pages so their PII is detected. Normal builds pass null
-                // and use the default text-layer extractor unchanged.
+                // When the OCR setting is on, use a hybrid extractor that OCRs scanned (text-layer-less)
+                // pages so their PII is detected; otherwise the default text-layer extractor is used.
                 Phileas.Services.Pdf.ITextExtractor? pdfExtractor = null;
-#if USE_LOCAL_PHILEAS
                 if (ocrScannedPdfs)
                 {
                     pdfExtractor = new HybridTextExtractor(ocrTextCoverage, ocrImageCoverage);
                 }
-#endif
 
                 byte[] input = await File.ReadAllBytesAsync(inputPath);
                 BinaryDocumentFilterResult result = await Task.Run(() =>

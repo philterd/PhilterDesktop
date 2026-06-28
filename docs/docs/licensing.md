@@ -1,7 +1,7 @@
 # Licensing & Support
 
 Philter Desktop is made by **Philterd**, the company behind the
-[Phileas](https://github.com/philterd/phileas-net) redaction engine that powers it. This page
+[Phileas](https://github.com/philterd/phileas-dotnet) redaction engine that powers it. This page
 explains, in plain terms, how the **free and open-source software** and the **paid official product**
 fit together.
 

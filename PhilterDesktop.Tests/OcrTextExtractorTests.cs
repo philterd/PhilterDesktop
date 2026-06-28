@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-// SPIKE: exercises the on-device OCR extractor end to end. Only compiled in local-engine builds
-// (-p:UseLocalPhileas=true), matching the gating of the extractor it tests.
-#if USE_LOCAL_PHILEAS
 using Phileas.Services.Pdf;
 using PhilterDesktop;
 using SkiaSharp;
@@ -157,4 +154,3 @@ namespace PhilterDesktop.Tests
         }
     }
 }
-#endif

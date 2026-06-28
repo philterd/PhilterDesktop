@@ -28,8 +28,8 @@ details in the document."
 
 ## What Philter Desktop does for you
 
-- It reads **plain-text files (`.txt`)**, **Microsoft Word documents (`.docx`)**, and **PDF files
-  (`.pdf`)**.
+- It reads **text files (`.txt`, `.rtf`)**, **Microsoft Word documents (`.docx`)**, **PDF files
+  (`.pdf`)**, **spreadsheets (`.xlsx`, `.csv`)**, and **email (`.eml`, `.msg`)**.
 - It finds a wide range of sensitive information automatically — names, email addresses, phone
   numbers, Social Security numbers, credit-card and bank-account numbers, street addresses, dates,
   and many more (the full list is on the [Supported Filters](supported-filters.md) page).

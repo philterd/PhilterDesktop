@@ -406,6 +406,20 @@ namespace PhilterDesktop
             HelpToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
             HelpToolStripButton.ToolTipText = "Open the help documentation";
 
+            // A quiet, right-aligned CTA: the official signed build comes with support (a paid per-user
+            // subscription). Kept distinct from policy consulting, which lives in its own contextual spots.
+            // Tagged utm_medium=toolbar so its click-through can be measured against the other links.
+            var support = new ToolStripLabel("Support")
+            {
+                IsLink = true,
+                Alignment = ToolStripItemAlignment.Right,
+                LinkColor = ModernTheme.Accent,
+                ActiveLinkColor = ModernTheme.Accent,
+                ToolTipText = "The official, signed build comes with support — a per-user subscription from Philterd"
+            };
+            support.Click += (_, _) => Links.Open(Links.SupportUrl("toolbar"));
+            toolStrip1.Items.Add(support);
+
             toolStrip1.ResumeLayout(false);
             toolStrip1.PerformLayout();
         }

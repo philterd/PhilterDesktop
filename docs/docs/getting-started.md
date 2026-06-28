@@ -60,24 +60,34 @@ install for all users, which does require an administrator.)
 
 ## Your first time opening the program
 
-When you open Philter Desktop, you'll see its main window. The top of the window has a row of buttons
+The very first time you run Philter Desktop, it shows a short **welcome and license agreement** screen.
+Read it and click **I Agree** to continue (a **Don't show this again** option keeps it from reappearing).
+It's also where you're reminded of the most important rule: automated redaction can miss things, so
+always review each cleaned-up document before sharing it.
+
+After that, you'll see its main window. The top of the window has a row of buttons
 (a **toolbar**), and most of the window is taken up by the **redaction queue** — the list of
 documents you've asked it to clean up. The first time you open the program, this list is empty,
 because you haven't given it anything to do yet.
 
 The toolbar buttons are:
 
-- **Redact** — add one or more documents to be redacted.
-- **Preview** — redact with a live before-and-after preview before saving.
+- **Redact** — add one or more documents to be redacted. Click the small **arrow** on this button for
+  more ways to redact: **Redact with Preview…** (a live before-and-after preview before saving),
+  **Find & Redact…** (remove specific words you type in), **Redact Spreadsheet…** (for `.xlsx` and
+  `.csv` files), and **Redact Folder…** (redact every supported file in a folder).
 - **Policies** — create and edit [policies](policies.md) (the rules for what gets removed).
 - **Contexts** — manage [contexts](contexts.md) (consistent replacements).
 - **Lists** — edit the global **Always Redact** and **Always Ignore** term lists that apply to
   **every** redaction, no matter which policy is used. (This is different from the per-policy lists
   inside the Policy Editor — see
   [Lists that apply to every policy](policies.md#lists-that-apply-to-every-policy-the-lists-button).)
-- **Settings** — output location, logging, watched folders, security, and notifications.
+- **Settings** — output location, logging, Word and PDF handling, watched folders, security, and
+  notifications.
 - **Refresh** — reload the queue (you can also press **F5**).
 - **Help** — open this documentation.
+- **Support** — a link (at the far right) to the Philter Desktop product page, where the official,
+  signed build and the support subscription live (see [Licensing & Support](licensing.md)).
 
 To make things easy, Philter Desktop already creates a starter **policy** named **default** (the set
 of rules for what to remove) and a starter **context** named **default** (the setting that keeps
@@ -102,6 +112,10 @@ was. Always open the cleaned-up copy and read through it before you send it to a
 When a newer version of Philter Desktop comes out, you don't need to uninstall the old one first.
 Just download the new `PhilterDesktop-Setup-…exe` and run it the same way; it will install **over** your
 existing copy, keeping all of your policies, contexts, settings, and history intact.
+
+Philter Desktop can also tell you when an update is available: choose **Help → Check for Updates…**. If
+a newer version exists, it lets you know and points you to your account page to download it — it never
+downloads or installs anything on its own.
 
 ## Uninstalling Philter Desktop
 

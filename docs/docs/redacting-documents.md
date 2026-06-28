@@ -231,7 +231,13 @@ cleaned-up file will look like before a single thing is written to disk**:
       paragraphs is split into one redaction per paragraph. (**Add…** still lets you type an exact
       paragraph and offset by hand.)
 - **PDF (`.pdf`)** — the cleaned-up PDF shown side by side with the original, with zoom controls and
-  scrolling that keeps both sides lined up.
+  scrolling that keeps both sides lined up, plus an editable list of the redactions on each page.
+    - **Redact a region the detector missed by drawing a box.** Turn on **Add Redaction (draw)** in the
+      side panel, then drag a rectangle over the area on the **original (left) page** you want removed.
+      The box is added to the list (marked **Added**), the redacted side updates to show it, and it
+      appears in the [report](#generating-a-redaction-report-a-shareable-certificate) as a user-added
+      redaction; select it and click **Remove** to undo it. Because a redacted PDF is flattened to an
+      image, the area you draw over is genuinely destroyed in the saved file, not merely hidden.
 - **Email (`.eml` and `.msg`)** — a field-by-field comparison (subject, addresses, and body) showing
   what will be removed, with an editable list of redactions. Each redaction is anchored to a specific
   field; you can change its replacement or remove it. Outlook `.msg` files are saved as standard `.eml`.
@@ -516,7 +522,7 @@ touched.
     makes the report safe to file alongside, or hand out with, the redacted copy. When you need the
     actual detected text for your own secure records, use **Export Explanation (JSON)** instead.
 
-## Exporting an explanation of a redaction (JSON)
+## For advanced users and IT: redacting from a command line
 
 > **This section is optional and aimed at technical users.** If phrases like "command prompt" or
 > "script" aren't part of your day, you can skip it entirely — everything Philter Desktop does is

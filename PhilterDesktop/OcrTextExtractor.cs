@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-// SPIKE: on-device OCR of scanned PDFs via Windows.Media.Ocr. Gated to local-engine builds because it
-// produces the engine's CharBox-based PdfLine, which only exists in the local phileas-dotnet source
-// (not yet in the published NuGet). Build with -p:UseLocalPhileas=true to include it.
-#if USE_LOCAL_PHILEAS
+// On-device OCR of scanned PDFs via Windows.Media.Ocr. Produces the engine's CharBox-based PdfLine
+// (Phileas .NET 1.4.0+) so OCR-recognized text flows through the normal PDF redaction pipeline.
 using System.Drawing;
 using System.Text;
 using PDFtoImage;
@@ -297,4 +295,3 @@ namespace PhilterDesktop
         }
     }
 }
-#endif

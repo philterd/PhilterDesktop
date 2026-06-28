@@ -28,8 +28,8 @@ Desktop can detect, organized into **tabs** (one category per tab, so the window
   or sharing with a colleague); **Import** loads a policy `.json` file back in as a new policy. Imported
   files are checked against the engine's policy schema first, so an invalid file can't be brought in.
 - **The detector tabs** — categories such as Personal, Contact, Location, Financial,
-  Identifiers, Technical, and Medical. Click a tab to see the specific kinds of information in that
-  category that you can choose to remove. (Your selections on every tab are saved together as one
+  Identifiers, Technical, Medical, and Other. Click a tab to see the specific kinds of information in
+  that category that you can choose to remove. (Your selections on every tab are saved together as one
   policy — switching tabs doesn't lose anything.)
 
 (The word **filter** is just another word for one of these detectors: "the email-address filter,"

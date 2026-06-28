@@ -30,9 +30,16 @@ namespace PhilterDesktop
         private const string ScopeBase = "https://www.philterd.ai/philter-scope";
         private const string DiffuseBase = "https://www.philterd.ai/philter-diffuse";
         private const string ConsultingBase = "https://www.philterd.ai/consulting";
+        private const string SupportBase = "https://www.philterd.ai/philter-desktop";
 
         /// <summary>Philter (server/API) landing page, tagged with the calling surface.</summary>
         public static string PhilterUrl(string medium) => Tag(PhilterBase, medium);
+
+        /// <summary>
+        ///     Philter Desktop product page (the official signed build + support subscription), tagged
+        ///     with the calling surface. Distinct from <see cref="ConsultingUrl" /> (a services offering).
+        /// </summary>
+        public static string SupportUrl(string medium) => Tag(SupportBase, medium);
 
         /// <summary>Philter Scope (policy scoring) landing page, tagged with the calling surface.</summary>
         public static string ScopeUrl(string medium) => Tag(ScopeBase, medium);
