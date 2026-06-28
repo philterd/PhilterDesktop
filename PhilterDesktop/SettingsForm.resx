@@ -117,6 +117,18 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="lblWordInfo.Text" xml:space="preserve">
+    <value>When redacting Microsoft Office files, strip the hidden information channels a redacted copy could otherwise leak through. "Remove document metadata" applies to both Word (.docx) and Excel (.xlsx); the comments, tracked-changes, and hidden-text options apply to Word documents.</value>
+  </data>
+  <data name="lblOcrInfo.Text" xml:space="preserve">
+    <value>Scanned PDFs are images with no text to detect. When enabled, Philter Desktop recognizes the text on scanned pages on your own computer (nothing is uploaded) so PII can be found and redacted. OCR is slower and best-effort: it can miss low-quality scans and does not read handwriting, so always review the redacted file before sharing it.</value>
+  </data>
+  <data name="lblEmailInfo.Text" xml:space="preserve">
+    <value>A redacted email keeps technical headers that can identify the sender and route: the originating IP address, the mail program used, and the server-by-server delivery trail (Received, X-* / ARC-* headers, Message-ID, and similar). When on, these are stripped from the redacted .eml; the visible Subject, From, To, Cc, body, and Date are kept (and their PII is still redacted). On by default.</value>
+  </data>
+  <data name="lblMaxFileSizeHint.Text" xml:space="preserve">
+    <value>Larger files are skipped (and logged) on the automatic paths, since redaction loads a document into memory. 0 = no limit. Default 500 MB. When you add files yourself, Philter Desktop still warns above 50 MB but lets you proceed.</value>
+  </data>
   <data name="lblSecurityInfo.Text" xml:space="preserve">
     <value>The database (which can contain detected personal data) is always encrypted at rest. By default the key is protected by your Windows account. You can also require a passphrase to open Philter Desktop. If you forget the passphrase, the data cannot be recovered.</value>
   </data>

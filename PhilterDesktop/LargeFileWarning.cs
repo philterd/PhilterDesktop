@@ -46,6 +46,27 @@ namespace PhilterDesktop
             }
         }
 
+        /// <summary>
+        /// True if <paramref name="bytes"/> exceeds the configured hard size limit. A limit of 0 (or
+        /// less) means "no limit". Used by the non-interactive paths (watched folders, command line) to
+        /// skip files too large to load safely into memory.
+        /// </summary>
+        public static bool ExceedsHardLimit(long bytes, int maxMb) => maxMb > 0 && bytes > (long)maxMb * 1024 * 1024;
+
+        /// <summary>True if the file at <paramref name="path"/> exceeds the hard size limit (see above).</summary>
+        public static bool ExceedsHardLimit(string path, int maxMb)
+        {
+            try
+            {
+                var info = new FileInfo(path);
+                return info.Exists && ExceedsHardLimit(info.Length, maxMb);
+            }
+            catch
+            {
+                return false; // can't stat it — let the normal redaction path handle/report it
+            }
+        }
+
         /// <summary>The subset of <paramref name="paths"/> that exceed the threshold.</summary>
         public static List<string> LargeFiles(IEnumerable<string> paths) => paths.Where(IsLarge).ToList();
 

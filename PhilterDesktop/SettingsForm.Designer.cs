@@ -68,6 +68,13 @@ namespace PhilterDesktop
             tabGeneral = new TabPage();
             chkContextMenu = new CheckBox();
             lblContextMenuHint = new Label();
+            tabPdf = new TabPage();
+            lblOcrInfo = new Label();
+            chkOcrScannedPdfs = new CheckBox();
+            btnOcrAdvanced = new Button();
+            tabEmail = new TabPage();
+            lblEmailInfo = new Label();
+            chkScrubEmailHeaders = new CheckBox();
             tabNotifications = new TabPage();
             chkShowNotifications = new CheckBox();
             lblNotificationsHint = new Label();
@@ -82,10 +89,14 @@ namespace PhilterDesktop
             btnEditWatched = new Button();
             btnRemoveWatched = new Button();
             btnViewLog = new Button();
-            chkStartWithWindows = new CheckBox();
             lblStartupHint = new Label();
             lblConcurrency = new Label();
             cmbConcurrency = new ComboBox();
+            tabLimits = new TabPage();
+            lblLimitsIntro = new Label();
+            lblMaxFileSize = new Label();
+            numMaxFileSize = new NumericUpDown();
+            lblMaxFileSizeHint = new Label();
             tabSecurity = new TabPage();
             lblSecurityInfo = new Label();
             chkPassphrase = new CheckBox();
@@ -95,23 +106,19 @@ namespace PhilterDesktop
             rdoVerifySamePolicy = new RadioButton();
             rdoVerifyBroadPolicy = new RadioButton();
             lblVerifyHint = new Label();
-            tabPdf = new TabPage();
-            chkOcrScannedPdfs = new CheckBox();
-            lblOcrInfo = new Label();
-            btnOcrAdvanced = new Button();
-            tabEmail = new TabPage();
-            chkScrubEmailHeaders = new CheckBox();
-            lblEmailInfo = new Label();
+            chkStartWithWindows = new CheckBox();
             groupBoxOutput.SuspendLayout();
             tabWord.SuspendLayout();
             groupBoxLogging.SuspendLayout();
             tabControl.SuspendLayout();
             tabGeneral.SuspendLayout();
+            tabPdf.SuspendLayout();
+            tabEmail.SuspendLayout();
             tabNotifications.SuspendLayout();
             tabWatched.SuspendLayout();
+            tabLimits.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)numMaxFileSize).BeginInit();
             tabSecurity.SuspendLayout();
-            tabEmail.SuspendLayout();
-            tabPdf.SuspendLayout();
             SuspendLayout();
             // 
             // groupBoxOutput
@@ -232,9 +239,9 @@ namespace PhilterDesktop
             lblWordInfo.Location = new Point(13, 18);
             lblWordInfo.MaximumSize = new Size(530, 0);
             lblWordInfo.Name = "lblWordInfo";
-            lblWordInfo.Size = new Size(528, 30);
+            lblWordInfo.Size = new Size(529, 45);
             lblWordInfo.TabIndex = 0;
-            lblWordInfo.Text = "When redacting Microsoft Office files, strip the hidden information channels a redacted copy could otherwise leak through. \"Remove document metadata\" applies to both Word (.docx) and Excel (.xlsx); the comments, tracked-changes, and hidden-text options apply to Word documents.";
+            lblWordInfo.Text = resources.GetString("lblWordInfo.Text");
             // 
             // tabWord
             // 
@@ -331,6 +338,7 @@ namespace PhilterDesktop
             tabControl.Controls.Add(tabEmail);
             tabControl.Controls.Add(tabNotifications);
             tabControl.Controls.Add(tabWatched);
+            tabControl.Controls.Add(tabLimits);
             tabControl.Controls.Add(tabSecurity);
             tabControl.Location = new Point(6, 7);
             tabControl.Margin = new Padding(2);
@@ -341,6 +349,7 @@ namespace PhilterDesktop
             // 
             // tabGeneral
             // 
+            tabGeneral.Controls.Add(chkStartWithWindows);
             tabGeneral.Controls.Add(groupBoxOutput);
             tabGeneral.Controls.Add(groupBoxLogging);
             tabGeneral.Controls.Add(chkContextMenu);
@@ -373,6 +382,84 @@ namespace PhilterDesktop
             lblContextMenuHint.Name = "lblContextMenuHint";
             lblContextMenuHint.Size = new Size(0, 15);
             lblContextMenuHint.TabIndex = 3;
+            // 
+            // tabPdf
+            // 
+            tabPdf.Controls.Add(lblOcrInfo);
+            tabPdf.Controls.Add(chkOcrScannedPdfs);
+            tabPdf.Controls.Add(btnOcrAdvanced);
+            tabPdf.Location = new Point(4, 24);
+            tabPdf.Name = "tabPdf";
+            tabPdf.Padding = new Padding(3);
+            tabPdf.Size = new Size(565, 318);
+            tabPdf.TabIndex = 5;
+            tabPdf.Text = "PDF";
+            tabPdf.UseVisualStyleBackColor = true;
+            // 
+            // lblOcrInfo
+            // 
+            lblOcrInfo.AutoSize = true;
+            lblOcrInfo.ForeColor = SystemColors.GrayText;
+            lblOcrInfo.Location = new Point(30, 41);
+            lblOcrInfo.MaximumSize = new Size(520, 0);
+            lblOcrInfo.Name = "lblOcrInfo";
+            lblOcrInfo.Size = new Size(506, 60);
+            lblOcrInfo.TabIndex = 1;
+            lblOcrInfo.Text = resources.GetString("lblOcrInfo.Text");
+            // 
+            // chkOcrScannedPdfs
+            // 
+            chkOcrScannedPdfs.AutoSize = true;
+            chkOcrScannedPdfs.Location = new Point(13, 18);
+            chkOcrScannedPdfs.Name = "chkOcrScannedPdfs";
+            chkOcrScannedPdfs.Size = new Size(338, 19);
+            chkOcrScannedPdfs.TabIndex = 0;
+            chkOcrScannedPdfs.Text = "Read scanned (image-only) PDF pages with on-device OCR";
+            chkOcrScannedPdfs.UseVisualStyleBackColor = true;
+            chkOcrScannedPdfs.CheckedChanged += ChkOcrScannedPdfs_CheckedChanged;
+            // 
+            // btnOcrAdvanced
+            // 
+            btnOcrAdvanced.Location = new Point(13, 165);
+            btnOcrAdvanced.Name = "btnOcrAdvanced";
+            btnOcrAdvanced.Size = new Size(160, 34);
+            btnOcrAdvanced.TabIndex = 2;
+            btnOcrAdvanced.Text = "Advanced…";
+            btnOcrAdvanced.UseVisualStyleBackColor = true;
+            btnOcrAdvanced.Click += BtnOcrAdvanced_Click;
+            // 
+            // tabEmail
+            // 
+            tabEmail.Controls.Add(lblEmailInfo);
+            tabEmail.Controls.Add(chkScrubEmailHeaders);
+            tabEmail.Location = new Point(4, 24);
+            tabEmail.Name = "tabEmail";
+            tabEmail.Padding = new Padding(3);
+            tabEmail.Size = new Size(565, 318);
+            tabEmail.TabIndex = 6;
+            tabEmail.Text = "Email";
+            tabEmail.UseVisualStyleBackColor = true;
+            // 
+            // lblEmailInfo
+            // 
+            lblEmailInfo.AutoSize = true;
+            lblEmailInfo.ForeColor = SystemColors.GrayText;
+            lblEmailInfo.Location = new Point(30, 41);
+            lblEmailInfo.MaximumSize = new Size(520, 0);
+            lblEmailInfo.Name = "lblEmailInfo";
+            lblEmailInfo.Size = new Size(520, 60);
+            lblEmailInfo.TabIndex = 1;
+            lblEmailInfo.Text = resources.GetString("lblEmailInfo.Text");
+            // 
+            // chkScrubEmailHeaders
+            // 
+            chkScrubEmailHeaders.AutoSize = true;
+            chkScrubEmailHeaders.Location = new Point(13, 18);
+            chkScrubEmailHeaders.Name = "chkScrubEmailHeaders";
+            chkScrubEmailHeaders.Size = new Size(306, 19);
+            chkScrubEmailHeaders.TabIndex = 0;
+            chkScrubEmailHeaders.Text = "Remove technical email headers from redacted email";
+            chkScrubEmailHeaders.UseVisualStyleBackColor = true;
             // 
             // tabNotifications
             // 
@@ -415,7 +502,6 @@ namespace PhilterDesktop
             tabWatched.Controls.Add(btnEditWatched);
             tabWatched.Controls.Add(btnRemoveWatched);
             tabWatched.Controls.Add(btnViewLog);
-            tabWatched.Controls.Add(chkStartWithWindows);
             tabWatched.Controls.Add(lblStartupHint);
             tabWatched.Controls.Add(lblConcurrency);
             tabWatched.Controls.Add(cmbConcurrency);
@@ -516,18 +602,6 @@ namespace PhilterDesktop
             btnViewLog.UseVisualStyleBackColor = true;
             btnViewLog.Click += BtnViewLog_Click;
             // 
-            // chkStartWithWindows
-            // 
-            chkStartWithWindows.AutoSize = true;
-            chkStartWithWindows.Location = new Point(6, 230);
-            chkStartWithWindows.Margin = new Padding(2);
-            chkStartWithWindows.Name = "chkStartWithWindows";
-            chkStartWithWindows.Size = new Size(444, 19);
-            chkStartWithWindows.TabIndex = 5;
-            chkStartWithWindows.Text = "Start Philter Desktop at sign-in (runs minimized to the tray and keeps watching)";
-            chkStartWithWindows.UseVisualStyleBackColor = true;
-            chkStartWithWindows.CheckedChanged += ChkStartWithWindows_CheckedChanged;
-            // 
             // lblStartupHint
             // 
             lblStartupHint.AutoSize = true;
@@ -541,7 +615,7 @@ namespace PhilterDesktop
             // lblConcurrency
             // 
             lblConcurrency.AutoSize = true;
-            lblConcurrency.Location = new Point(6, 266);
+            lblConcurrency.Location = new Point(6, 280);
             lblConcurrency.Margin = new Padding(2, 0, 2, 0);
             lblConcurrency.Name = "lblConcurrency";
             lblConcurrency.Size = new Size(309, 15);
@@ -552,10 +626,61 @@ namespace PhilterDesktop
             // 
             cmbConcurrency.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbConcurrency.Items.AddRange(new object[] { "1", "2", "3", "4" });
-            cmbConcurrency.Location = new Point(372, 262);
+            cmbConcurrency.Location = new Point(320, 277);
             cmbConcurrency.Name = "cmbConcurrency";
-            cmbConcurrency.Size = new Size(55, 23);
+            cmbConcurrency.Size = new Size(77, 23);
             cmbConcurrency.TabIndex = 8;
+            // 
+            // tabLimits
+            // 
+            tabLimits.Controls.Add(lblLimitsIntro);
+            tabLimits.Controls.Add(lblMaxFileSize);
+            tabLimits.Controls.Add(numMaxFileSize);
+            tabLimits.Controls.Add(lblMaxFileSizeHint);
+            tabLimits.Location = new Point(4, 24);
+            tabLimits.Margin = new Padding(2);
+            tabLimits.Name = "tabLimits";
+            tabLimits.Padding = new Padding(2);
+            tabLimits.Size = new Size(565, 318);
+            tabLimits.TabIndex = 7;
+            tabLimits.Text = "Limits";
+            tabLimits.UseVisualStyleBackColor = true;
+            // 
+            // lblLimitsIntro
+            // 
+            lblLimitsIntro.AutoSize = true;
+            lblLimitsIntro.Location = new Point(12, 16);
+            lblLimitsIntro.Name = "lblLimitsIntro";
+            lblLimitsIntro.Size = new Size(406, 15);
+            lblLimitsIntro.TabIndex = 0;
+            lblLimitsIntro.Text = "Safeguards that keep very large or unusual inputs from exhausting memory.";
+            // 
+            // lblMaxFileSize
+            // 
+            lblMaxFileSize.AutoSize = true;
+            lblMaxFileSize.Location = new Point(12, 56);
+            lblMaxFileSize.Name = "lblMaxFileSize";
+            lblMaxFileSize.Size = new Size(481, 15);
+            lblMaxFileSize.TabIndex = 1;
+            lblMaxFileSize.Text = "Skip input files larger than this many megabytes (watched folders and the command line):";
+            // 
+            // numMaxFileSize
+            // 
+            numMaxFileSize.Increment = new decimal(new int[] { 50, 0, 0, 0 });
+            numMaxFileSize.Location = new Point(12, 78);
+            numMaxFileSize.Maximum = new decimal(new int[] { 100000, 0, 0, 0 });
+            numMaxFileSize.Name = "numMaxFileSize";
+            numMaxFileSize.Size = new Size(90, 23);
+            numMaxFileSize.TabIndex = 2;
+            // 
+            // lblMaxFileSizeHint
+            // 
+            lblMaxFileSizeHint.ForeColor = SystemColors.GrayText;
+            lblMaxFileSizeHint.Location = new Point(12, 108);
+            lblMaxFileSizeHint.Name = "lblMaxFileSizeHint";
+            lblMaxFileSizeHint.Size = new Size(540, 50);
+            lblMaxFileSizeHint.TabIndex = 3;
+            lblMaxFileSizeHint.Text = resources.GetString("lblMaxFileSizeHint.Text");
             // 
             // tabSecurity
             // 
@@ -655,87 +780,20 @@ namespace PhilterDesktop
             lblVerifyHint.Size = new Size(511, 45);
             lblVerifyHint.TabIndex = 7;
             lblVerifyHint.Text = resources.GetString("lblVerifyHint.Text");
-            //
-            // tabPdf
-            //
-            tabPdf.Controls.Add(lblOcrInfo);
-            tabPdf.Controls.Add(chkOcrScannedPdfs);
-            tabPdf.Controls.Add(btnOcrAdvanced);
-            tabPdf.Location = new Point(4, 24);
-            tabPdf.Name = "tabPdf";
-            tabPdf.Padding = new Padding(3);
-            tabPdf.Size = new Size(565, 318);
-            tabPdf.TabIndex = 5;
-            tabPdf.Text = "PDF";
-            tabPdf.UseVisualStyleBackColor = true;
-            //
-            // chkOcrScannedPdfs
-            //
-            chkOcrScannedPdfs.AutoSize = true;
-            chkOcrScannedPdfs.Location = new Point(13, 18);
-            chkOcrScannedPdfs.Name = "chkOcrScannedPdfs";
-            chkOcrScannedPdfs.Size = new Size(372, 19);
-            chkOcrScannedPdfs.TabIndex = 0;
-            chkOcrScannedPdfs.Text = "Read scanned (image-only) PDF pages with on-device OCR";
-            chkOcrScannedPdfs.UseVisualStyleBackColor = true;
-            chkOcrScannedPdfs.CheckedChanged += ChkOcrScannedPdfs_CheckedChanged;
-            //
-            // lblOcrInfo
-            //
-            lblOcrInfo.AutoSize = true;
-            lblOcrInfo.ForeColor = SystemColors.GrayText;
-            lblOcrInfo.Location = new Point(30, 41);
-            lblOcrInfo.MaximumSize = new Size(520, 0);
-            lblOcrInfo.Name = "lblOcrInfo";
-            lblOcrInfo.Size = new Size(515, 60);
-            lblOcrInfo.TabIndex = 1;
-            lblOcrInfo.Text = "Scanned PDFs are images with no text to detect. When enabled, Philter Desktop recognizes the text on scanned pages on your own computer (nothing is uploaded) so PII can be found and redacted. OCR is slower and best-effort: it can miss low-quality scans and does not read handwriting, so always review the redacted file before sharing it.";
-            //
-            // btnOcrAdvanced
-            //
-            btnOcrAdvanced.Location = new Point(13, 165);
-            btnOcrAdvanced.Name = "btnOcrAdvanced";
-            btnOcrAdvanced.Size = new Size(160, 34);
-            btnOcrAdvanced.TabIndex = 2;
-            btnOcrAdvanced.Text = "Advanced…";
-            btnOcrAdvanced.UseVisualStyleBackColor = true;
-            btnOcrAdvanced.Click += BtnOcrAdvanced_Click;
-            //
-            // tabEmail
-            //
-            tabEmail.Controls.Add(lblEmailInfo);
-            tabEmail.Controls.Add(chkScrubEmailHeaders);
-            tabEmail.Location = new Point(4, 24);
-            tabEmail.Name = "tabEmail";
-            tabEmail.Padding = new Padding(3);
-            tabEmail.Size = new Size(565, 318);
-            tabEmail.TabIndex = 6;
-            tabEmail.Text = "Email";
-            tabEmail.UseVisualStyleBackColor = true;
-            //
-            // chkScrubEmailHeaders
-            //
-            chkScrubEmailHeaders.AutoSize = true;
-            chkScrubEmailHeaders.Location = new Point(13, 18);
-            chkScrubEmailHeaders.Name = "chkScrubEmailHeaders";
-            chkScrubEmailHeaders.Size = new Size(360, 19);
-            chkScrubEmailHeaders.TabIndex = 0;
-            chkScrubEmailHeaders.Text = "Remove technical email headers from redacted email";
-            chkScrubEmailHeaders.UseVisualStyleBackColor = true;
-            //
-            // lblEmailInfo
-            //
-            lblEmailInfo.AutoSize = true;
-            lblEmailInfo.ForeColor = SystemColors.GrayText;
-            lblEmailInfo.Location = new Point(30, 41);
-            lblEmailInfo.MaximumSize = new Size(520, 0);
-            lblEmailInfo.Name = "lblEmailInfo";
-            lblEmailInfo.Size = new Size(515, 45);
-            lblEmailInfo.TabIndex = 1;
-            lblEmailInfo.Text = "A redacted email keeps technical headers that can identify the sender and route: the originating IP address, the mail program used, and the server-by-server delivery trail (Received, X-* / ARC-* headers, Message-ID, and similar). When on, these are stripped from the redacted .eml; the visible Subject, From, To, Cc, body, and Date are kept (and their PII is still redacted). On by default.";
-            //
+            // 
+            // chkStartWithWindows
+            // 
+            chkStartWithWindows.AutoSize = true;
+            chkStartWithWindows.Location = new Point(12, 280);
+            chkStartWithWindows.Margin = new Padding(2);
+            chkStartWithWindows.Name = "chkStartWithWindows";
+            chkStartWithWindows.Size = new Size(444, 19);
+            chkStartWithWindows.TabIndex = 6;
+            chkStartWithWindows.Text = "Start Philter Desktop at sign-in (runs minimized to the tray and keeps watching)";
+            chkStartWithWindows.UseVisualStyleBackColor = true;
+            // 
             // SettingsForm
-            //
+            // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(584, 396);
@@ -758,16 +816,19 @@ namespace PhilterDesktop
             tabControl.ResumeLayout(false);
             tabGeneral.ResumeLayout(false);
             tabGeneral.PerformLayout();
-            tabNotifications.ResumeLayout(false);
-            tabNotifications.PerformLayout();
-            tabWatched.ResumeLayout(false);
-            tabWatched.PerformLayout();
-            tabSecurity.ResumeLayout(false);
-            tabSecurity.PerformLayout();
             tabPdf.ResumeLayout(false);
             tabPdf.PerformLayout();
             tabEmail.ResumeLayout(false);
             tabEmail.PerformLayout();
+            tabNotifications.ResumeLayout(false);
+            tabNotifications.PerformLayout();
+            tabWatched.ResumeLayout(false);
+            tabWatched.PerformLayout();
+            tabLimits.ResumeLayout(false);
+            tabLimits.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)numMaxFileSize).EndInit();
+            tabSecurity.ResumeLayout(false);
+            tabSecurity.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -804,6 +865,11 @@ namespace PhilterDesktop
         private TabPage tabWatched;
         private Label lblConcurrency;
         private ComboBox cmbConcurrency;
+        private TabPage tabLimits;
+        private Label lblLimitsIntro;
+        private Label lblMaxFileSize;
+        private NumericUpDown numMaxFileSize;
+        private Label lblMaxFileSizeHint;
         private TabPage tabSecurity;
         private Label lblSecurityInfo;
         private CheckBox chkPassphrase;
@@ -819,7 +885,6 @@ namespace PhilterDesktop
         private Button btnEditWatched;
         private Button btnRemoveWatched;
         private Button btnViewLog;
-        private CheckBox chkStartWithWindows;
         private Label lblStartupHint;
         private CheckBox chkContextMenu;
         private Label lblContextMenuHint;
@@ -830,5 +895,6 @@ namespace PhilterDesktop
         private TabPage tabEmail;
         private CheckBox chkScrubEmailHeaders;
         private Label lblEmailInfo;
+        private CheckBox chkStartWithWindows;
     }
 }

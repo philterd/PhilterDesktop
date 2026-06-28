@@ -138,11 +138,12 @@ namespace PhilterDesktop
         private void BtnOcrAdvanced_Click(object? sender, EventArgs e)
         {
             using var dialog = new OcrAdvancedSettingsForm(
-                _settings.OcrTextCoverageThreshold, _settings.OcrImageCoverageThreshold);
+                _settings.OcrTextCoverageThreshold, _settings.OcrImageCoverageThreshold, _settings.OcrMaxPages);
             if (dialog.ShowDialog(this) == DialogResult.OK)
             {
                 _settings.OcrTextCoverageThreshold = dialog.TextCoverageThreshold;
                 _settings.OcrImageCoverageThreshold = dialog.ImageCoverageThreshold;
+                _settings.OcrMaxPages = dialog.MaxPages;
             }
         }
 
@@ -458,6 +459,7 @@ namespace PhilterDesktop
             rdoVerifySamePolicy.Checked = !_settings.VerificationUseBroadPolicy;
             UpdateVerifyPolicyEnabled();
             cmbConcurrency.SelectedItem = Math.Clamp(_settings.WatchedFolderMaxConcurrency, 1, 4).ToString();
+            numMaxFileSize.Value = Math.Clamp(_settings.MaxInputFileSizeMb, (int)numMaxFileSize.Minimum, (int)numMaxFileSize.Maximum);
         }
 
         private void RadioOriginalLocation_CheckedChanged(object sender, EventArgs e)
@@ -634,6 +636,7 @@ namespace PhilterDesktop
             _settings.VerifyAfterRedaction = chkVerifyAfterRedaction.Checked;
             _settings.VerificationUseBroadPolicy = rdoVerifyBroadPolicy.Checked;
             _settings.WatchedFolderMaxConcurrency = int.TryParse(cmbConcurrency.Text, out int n) ? Math.Clamp(n, 1, 4) : 1;
+            _settings.MaxInputFileSizeMb = (int)numMaxFileSize.Value;
 
             _settingsRepository.SaveSettings(_settings);
 

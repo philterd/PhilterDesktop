@@ -48,5 +48,21 @@ namespace PhilterDesktop.Tests
             Assert.True(v.Major >= 0 && v.Minor >= 0 && v.Build >= 0);
             Assert.Equal(-1, v.Revision); // normalized to Major.Minor.Build (no revision)
         }
+
+        [Theory]
+        [InlineData("http://philterd.ai/philterdesktop.json")] // plaintext HTTP is rejected
+        [InlineData("ftp://philterd.ai/manifest.json")]        // non-HTTPS scheme
+        [InlineData("philterd.ai/philterdesktop.json")]        // not an absolute URL
+        [InlineData("")]                                        // empty
+        public async Task FetchAsync_RejectsNonHttpsUrls(string url)
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => UpdateChecker.FetchAsync(url));
+        }
+
+        [Fact]
+        public void DefaultManifestUrl_IsHttps()
+        {
+            Assert.StartsWith("https://", UpdateChecker.ManifestUrl);
+        }
     }
 }

@@ -93,5 +93,17 @@ namespace PhilterDesktop.Tests
 
             Assert.Contains("weird thing", msg);
         }
+
+        [Fact]
+        public void Describe_OcrPageLimit_ReturnsItsOwnMessage_NotSaveFraming()
+        {
+            var ex = new OcrPageLimitExceededException(201, 200);
+            string msg = UserError.Describe(ex, @"C:\scans\big.pdf", writing: true);
+
+            // Uses the exception's ready-made guidance verbatim — not the generic "could not save" wrapper.
+            Assert.Equal(ex.Message, msg);
+            Assert.Contains("Maximum pages to OCR", msg);
+            Assert.DoesNotContain("could not save", msg);
+        }
     }
 }

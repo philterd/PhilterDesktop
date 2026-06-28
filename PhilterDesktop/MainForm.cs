@@ -437,6 +437,9 @@ namespace PhilterDesktop
             removeToolStripMenuItem = new ToolStripMenuItem();
             removeAllToolStripMenuItem = new ToolStripMenuItem();
             removeCompletedToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparatorRetry = new ToolStripSeparator();
+            retryToolStripMenuItem = new ToolStripMenuItem();
+            retryAllFailedToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator5 = new ToolStripSeparator();
             openRedactedFileToolStripMenuItem = new ToolStripMenuItem();
             openOriginalFileToolStripMenuItem = new ToolStripMenuItem();
@@ -456,7 +459,7 @@ namespace PhilterDesktop
             contextMenuStrip1.SuspendLayout();
 
             contextMenuStrip1.ImageScalingSize = new Size(24, 24);
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, redactPreviewToolStripMenuItem, findAndRedactToolStripMenuItem, redactSpreadsheetToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, openContainingFolderToolStripMenuItem, toolStripSeparator8, modifyRedactionToolStripMenuItem, viewDiffToolStripMenuItem, viewDetailsToolStripMenuItem, exportExplanationToolStripMenuItem, verifyRedactionToolStripMenuItem, generateReportToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, redactPreviewToolStripMenuItem, findAndRedactToolStripMenuItem, redactSpreadsheetToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparatorRetry, retryToolStripMenuItem, retryAllFailedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, openContainingFolderToolStripMenuItem, toolStripSeparator8, modifyRedactionToolStripMenuItem, viewDiffToolStripMenuItem, viewDetailsToolStripMenuItem, exportExplanationToolStripMenuItem, verifyRedactionToolStripMenuItem, generateReportToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(278, 314);
 
@@ -499,6 +502,19 @@ namespace PhilterDesktop
             removeCompletedToolStripMenuItem.Size = new Size(277, 22);
             removeCompletedToolStripMenuItem.Text = "Remove Completed...";
             removeCompletedToolStripMenuItem.Click += removeCompletedToolStripMenuItem_Click;
+
+            toolStripSeparatorRetry.Name = "toolStripSeparatorRetry";
+            toolStripSeparatorRetry.Size = new Size(274, 6);
+
+            retryToolStripMenuItem.Name = "retryToolStripMenuItem";
+            retryToolStripMenuItem.Size = new Size(277, 22);
+            retryToolStripMenuItem.Text = "Retry";
+            retryToolStripMenuItem.Click += retryToolStripMenuItem_Click;
+
+            retryAllFailedToolStripMenuItem.Name = "retryAllFailedToolStripMenuItem";
+            retryAllFailedToolStripMenuItem.Size = new Size(277, 22);
+            retryAllFailedToolStripMenuItem.Text = "Retry All Failed";
+            retryAllFailedToolStripMenuItem.Click += retryAllFailedToolStripMenuItem_Click;
 
             toolStripSeparator5.Name = "toolStripSeparator5";
             toolStripSeparator5.Size = new Size(274, 6);
@@ -1000,6 +1016,11 @@ namespace PhilterDesktop
                 return;
             }
             _started = true;
+
+            // Recover from a crash/abrupt exit: any item still marked "Processing" was interrupted (the
+            // process that owned it is gone), so reset it to "Pending" to be reprocessed. The GUI is
+            // single-instance and is the only processor of the queue, so this can't disturb live work.
+            RecoverInterruptedQueueItems();
 
             redactionQueueTimer.Start();
             AdjustColumns();
@@ -2056,6 +2077,63 @@ namespace PhilterDesktop
             LoadRedactionQueue();
         }
 
+        // Requeues a single failed item: the background queue timer picks up anything set back to
+        // "Pending" on its next tick and runs it through redaction again.
+        private void retryToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            {
+                return;
+            }
+            RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
+            if (entity is null || !string.Equals(entity.Status, "Failed", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+            RequeueForRetry(entity);
+            LoadRedactionQueue();
+        }
+
+        // Requeues every failed item at once (e.g. after fixing a shared cause such as a full disk).
+        private void retryAllFailedToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            List<RedactionQueueEntity> failed = _redactionQueueRepository.Find(x => x.Status == "Failed").ToList();
+            if (failed.Count == 0)
+            {
+                return;
+            }
+            foreach (RedactionQueueEntity entity in failed)
+            {
+                RequeueForRetry(entity);
+            }
+            LoadRedactionQueue();
+        }
+
+        // Resets a failed item to Pending and clears its recorded error so the timer reprocesses it.
+        private void RequeueForRetry(RedactionQueueEntity entity)
+        {
+            entity.Status = "Pending";
+            entity.ErrorMessage = string.Empty;
+            _redactionQueueRepository.Update(entity);
+        }
+
+        // On startup, requeue items left "Processing" by a previous crash/abrupt exit (see EnsureStarted).
+        private void RecoverInterruptedQueueItems()
+        {
+            List<RedactionQueueEntity> interrupted =
+                _redactionQueueRepository.Find(x => x.Status == "Processing").ToList();
+            foreach (RedactionQueueEntity stuck in interrupted)
+            {
+                stuck.Status = "Pending";
+                stuck.ErrorMessage = string.Empty;
+                _redactionQueueRepository.Update(stuck);
+            }
+            if (interrupted.Count > 0 && _loggingEnabled)
+            {
+                Logger.LogInfo($"Reset {interrupted.Count} interrupted queue item(s) from Processing to Pending after restart.");
+            }
+        }
+
         private void ContextMenuStrip1_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             bool hasSelection = listView1.SelectedItems.Count > 0;
@@ -2063,19 +2141,26 @@ namespace PhilterDesktop
             bool selectedCompleted = hasSelection && IsCompleted(listView1.SelectedItems[0]);
 
             bool anyCompleted = false;
+            bool anyFailed = false;
             foreach (ListViewItem item in listView1.Items)
             {
                 if (IsCompleted(item))
                 {
                     anyCompleted = true;
-                    break;
+                }
+                else if (IsFailed(item))
+                {
+                    anyFailed = true;
                 }
             }
+            bool selectedFailed = hasSelection && IsFailed(listView1.SelectedItems[0]);
 
             // "Add Files…" and "Refresh" don't depend on the queue and stay enabled.
             removeToolStripMenuItem.Enabled = hasSelection;
             removeAllToolStripMenuItem.Enabled = hasItems;
             removeCompletedToolStripMenuItem.Enabled = anyCompleted;
+            retryToolStripMenuItem.Enabled = selectedFailed;       // requeue this failed item
+            retryAllFailedToolStripMenuItem.Enabled = anyFailed;   // requeue every failed item
             openRedactedFileToolStripMenuItem.Enabled = selectedCompleted; // exists only once redacted
             openOriginalFileToolStripMenuItem.Enabled = hasSelection;
             openContainingFolderToolStripMenuItem.Enabled = selectedCompleted; // redacted file exists once completed
@@ -2137,6 +2222,9 @@ namespace PhilterDesktop
 
         private static bool IsCompleted(ListViewItem item) =>
             item.SubItems.Count > 1 && string.Equals(item.SubItems[1].Text, "Completed", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsFailed(ListViewItem item) =>
+            item.SubItems.Count > 1 && string.Equals(item.SubItems[1].Text, "Failed", StringComparison.OrdinalIgnoreCase);
 
         private void viewDiffToolStripMenuItem_Click(object? sender, EventArgs e)
         {

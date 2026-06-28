@@ -52,6 +52,16 @@ namespace PhilterDesktop.Tests
             }
         }
 
+        [Theory]
+        [InlineData(100L * 1024 * 1024, 500, false)]        // under the limit
+        [InlineData(500L * 1024 * 1024, 500, false)]        // exactly at the limit is allowed
+        [InlineData(500L * 1024 * 1024 + 1, 500, true)]     // just over
+        [InlineData(10L * 1024 * 1024 * 1024, 0, false)]    // 0 = no limit, never exceeds
+        public void ExceedsHardLimit_HonorsConfiguredLimit(long bytes, int maxMb, bool expected)
+        {
+            Assert.Equal(expected, LargeFileWarning.ExceedsHardLimit(bytes, maxMb));
+        }
+
         [Fact]
         public void BuildMessage_ListsFileNamesAndThreshold()
         {

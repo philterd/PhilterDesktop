@@ -356,12 +356,24 @@ namespace PhilterDesktop
                 }
 
                 SettingsEntity watcherSettings = _settingsRepository?.GetSettings() ?? new SettingsEntity();
+
+                // Skip files too large to load safely into memory (no partial output, so no false sense
+                // of redaction). Surfaced to the activity log so the user knows the file was left alone.
+                if (LargeFileWarning.ExceedsHardLimit(fullPath, watcherSettings.MaxInputFileSizeMb))
+                {
+                    Log($"Watched file exceeds the {watcherSettings.MaxInputFileSizeMb} MB size limit, skipping: {fullPath}", warning: true);
+                    Activity(folder, "Error", $"Skipped (exceeds {watcherSettings.MaxInputFileSizeMb} MB size limit): {fullPath}");
+                    RaiseProcessed(folder, fullPath, null, success: false, error: $"Exceeds the {watcherSettings.MaxInputFileSizeMb} MB size limit.");
+                    return;
+                }
+
                 await RedactionService.RedactFileAsync(
                     fullPath, outputPath, policy, folder.Context, _filterService, folder.Highlight,
                     wordScrub: DocumentMetadata.OptionsFor(watcherSettings),
                     ocrScannedPdfs: watcherSettings.OcrScannedPdfs,
                     ocrTextCoverage: watcherSettings.OcrTextCoverageThreshold,
                     ocrImageCoverage: watcherSettings.OcrImageCoverageThreshold,
+                    ocrMaxPages: watcherSettings.OcrMaxPages,
                     scrubEmailHeaders: watcherSettings.ScrubEmailHeaders).ConfigureAwait(false);
 
                 Log($"Redacted watched file '{fullPath}' -> '{outputPath}'.");

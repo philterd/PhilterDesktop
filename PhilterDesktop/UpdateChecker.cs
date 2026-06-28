@@ -47,6 +47,15 @@ namespace PhilterDesktop
         /// <summary>Downloads and parses the update manifest. Throws on network/parse failure.</summary>
         public static async Task<UpdateManifest?> FetchAsync(string url = ManifestUrl, CancellationToken cancellationToken = default)
         {
+            // The manifest's integrity in transit relies entirely on TLS, so refuse anything that isn't
+            // an absolute HTTPS URL. This keeps a typo or a future edit from silently downgrading to
+            // plaintext HTTP, where the response could be tampered with en route.
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) ||
+                !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("The update manifest URL must be an absolute HTTPS URL.", nameof(url));
+            }
+
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
             http.DefaultRequestHeaders.UserAgent.ParseAdd("PhilterDesktop");
 

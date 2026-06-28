@@ -156,12 +156,15 @@ namespace PhilterDesktop
             {
                 return null;
             }
+            byte[]? passwordBytes = null;
+            byte[]? wrappingKey = null;
             try
             {
                 byte[] salt = Convert.FromBase64String(model.Salt!);
                 byte[] wrapped = Convert.FromBase64String(model.WrappedKey!);
-                byte[] wrappingKey = Rfc2898DeriveBytes.Pbkdf2(
-                    Encoding.UTF8.GetBytes(passphrase), salt, model.Iterations, HashAlgorithmName.SHA256, KeySize);
+                passwordBytes = Encoding.UTF8.GetBytes(passphrase);
+                wrappingKey = Rfc2898DeriveBytes.Pbkdf2(
+                    passwordBytes, salt, model.Iterations, HashAlgorithmName.SHA256, KeySize);
 
                 byte[] nonce = wrapped[..NonceSize];
                 byte[] tag = wrapped[NonceSize..(NonceSize + TagSize)];
@@ -174,6 +177,13 @@ namespace PhilterDesktop
             catch (Exception ex) when (ex is CryptographicException or FormatException or ArgumentException)
             {
                 return null;
+            }
+            finally
+            {
+                // Wipe the passphrase-derived key material (and the passphrase bytes) from the heap; the
+                // returned database key is kept, but these intermediates must not linger.
+                if (wrappingKey is not null) CryptographicOperations.ZeroMemory(wrappingKey);
+                if (passwordBytes is not null) CryptographicOperations.ZeroMemory(passwordBytes);
             }
         }
 
@@ -194,30 +204,39 @@ namespace PhilterDesktop
         private void WritePassphraseModel(string passphrase)
         {
             byte[] salt = RandomNumberGenerator.GetBytes(SaltSize);
+            byte[] passwordBytes = Encoding.UTF8.GetBytes(passphrase);
             byte[] wrappingKey = Rfc2898DeriveBytes.Pbkdf2(
-                Encoding.UTF8.GetBytes(passphrase), salt, Pbkdf2Iterations, HashAlgorithmName.SHA256, KeySize);
-
-            byte[] nonce = RandomNumberGenerator.GetBytes(NonceSize);
-            byte[] cipher = new byte[_key!.Length];
-            byte[] tag = new byte[TagSize];
-            using (var gcm = new AesGcm(wrappingKey, TagSize))
+                passwordBytes, salt, Pbkdf2Iterations, HashAlgorithmName.SHA256, KeySize);
+            try
             {
-                gcm.Encrypt(nonce, _key, cipher, tag);
+                byte[] nonce = RandomNumberGenerator.GetBytes(NonceSize);
+                byte[] cipher = new byte[_key!.Length];
+                byte[] tag = new byte[TagSize];
+                using (var gcm = new AesGcm(wrappingKey, TagSize))
+                {
+                    gcm.Encrypt(nonce, _key, cipher, tag);
+                }
+
+                byte[] wrapped = new byte[NonceSize + TagSize + cipher.Length];
+                Buffer.BlockCopy(nonce, 0, wrapped, 0, NonceSize);
+                Buffer.BlockCopy(tag, 0, wrapped, NonceSize, TagSize);
+                Buffer.BlockCopy(cipher, 0, wrapped, NonceSize + TagSize, cipher.Length);
+
+                WriteModel(new KeyFileModel
+                {
+                    Version = FormatVersion,
+                    Mode = ModePassphrase,
+                    Salt = Convert.ToBase64String(salt),
+                    Iterations = Pbkdf2Iterations,
+                    WrappedKey = Convert.ToBase64String(wrapped)
+                });
             }
-
-            byte[] wrapped = new byte[NonceSize + TagSize + cipher.Length];
-            Buffer.BlockCopy(nonce, 0, wrapped, 0, NonceSize);
-            Buffer.BlockCopy(tag, 0, wrapped, NonceSize, TagSize);
-            Buffer.BlockCopy(cipher, 0, wrapped, NonceSize + TagSize, cipher.Length);
-
-            WriteModel(new KeyFileModel
+            finally
             {
-                Version = FormatVersion,
-                Mode = ModePassphrase,
-                Salt = Convert.ToBase64String(salt),
-                Iterations = Pbkdf2Iterations,
-                WrappedKey = Convert.ToBase64String(wrapped)
-            });
+                // Wipe the passphrase-derived key material (and the passphrase bytes) from the heap.
+                CryptographicOperations.ZeroMemory(wrappingKey);
+                CryptographicOperations.ZeroMemory(passwordBytes);
+            }
         }
 
         private KeyFileModel? ReadModel()

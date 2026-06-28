@@ -24,10 +24,11 @@ namespace PhilterDesktop
     /// <summary>
     /// Prototype "preview-first" redaction workspace for a single <c>.pdf</c>: pick a policy/context,
     /// see the redacted PDF rendered next to the original, and only write the output on Save. The
-    /// preview redacts to a temporary file (which Save then copies to the final location). The reviewer
-    /// can also add redactions the detector missed by drawing a box on the original page; those join the
-    /// redaction list (flagged user-added) and are burned into the rasterized output on Save like a
-    /// detected one, so the covered content is destroyed, not merely hidden.
+    /// preview redacts entirely in memory — the redacted bytes are held in <see cref="_redactedBytes"/>
+    /// and are written to disk only when the reviewer saves, so no redacted PII ever lands in a temp
+    /// file. The reviewer can also add redactions the detector missed by drawing a box on the original
+    /// page; those join the redaction list (flagged user-added) and are burned into the rasterized
+    /// output on Save like a detected one, so the covered content is destroyed, not merely hidden.
     /// </summary>
     public partial class PdfRedactionPreviewForm : Form
     {
@@ -38,7 +39,7 @@ namespace PhilterDesktop
         private readonly FilterService _filterService = SharedFilterService.Instance;
 
         private byte[] _originalBytes = Array.Empty<byte>();
-        private string? _tempOutputPath;
+        private byte[] _redactedBytes = Array.Empty<byte>();
         private List<RedactionSpanEntity> _spans = new();
         private bool _loading;
         private bool _busy;
@@ -164,12 +165,6 @@ namespace PhilterDesktop
             await DetectAsync();
         }
 
-        protected override void OnFormClosed(FormClosedEventArgs e)
-        {
-            base.OnFormClosed(e);
-            TryDeleteTemp();
-        }
-
         private static void LoadNames(ComboBox combo, IEnumerable<string> names, string? preferred)
         {
             combo.Items.Clear();
@@ -188,7 +183,7 @@ namespace PhilterDesktop
             }
         }
 
-        // Redacts to a temp file for the chosen policy/context and shows it next to the original.
+        // Redacts the PDF in memory for the chosen policy/context and shows it next to the original.
         // PDF redaction/rendering can take a moment; it's awaited (not blocked) so the UI stays
         // responsive, with a wait cursor until it finishes.
         private async Task DetectAsync()
@@ -209,26 +204,34 @@ namespace PhilterDesktop
                 // Keep any reviewer-added regions across a re-detect (e.g. when the policy/context changes).
                 List<RedactionSpanEntity> userAdded = _spans.Where(s => s.UserAdded).ToList();
 
-                _tempOutputPath ??= Path.Combine(Path.GetTempPath(), "philter-preview-" + Guid.NewGuid().ToString("N") + ".pdf");
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                _spans = await RedactionService.RedactFileAsync(_sourcePath, _tempOutputPath, policy, _contextCombo.Text, _filterService,
+                (byte[] redacted, List<RedactionSpanEntity> spans) = await RedactionService.RedactPdfBytesAsync(
+                    _originalBytes, policy, _contextCombo.Text, _filterService,
                     ocrScannedPdfs: _settings.OcrScannedPdfs,
                     ocrTextCoverage: _settings.OcrTextCoverageThreshold,
-                    ocrImageCoverage: _settings.OcrImageCoverageThreshold);
+                    ocrImageCoverage: _settings.OcrImageCoverageThreshold,
+                    ocrMaxPages: _settings.OcrMaxPages);
+                _spans = spans;
                 _spans.AddRange(userAdded);
 
-                // RedactFileAsync wrote the temp with detected spans only; re-apply if there are added ones.
+                // RedactPdfBytesAsync produced the detected spans only; re-burn if there are added ones.
                 if (userAdded.Count > 0)
                 {
-                    await RedactionService.ApplySpansAsync(_sourcePath, _tempOutputPath, ".pdf", false, _spans, policy, _filterService);
+                    redacted = await RedactionService.ApplyPdfSpansToBytesAsync(_originalBytes, _spans, policy, _filterService);
                 }
                 stopwatch.Stop();
                 RedactionDurationMs = stopwatch.ElapsedMilliseconds;
 
-                byte[] redacted = await File.ReadAllBytesAsync(_tempOutputPath);
-                _view.SetDocuments(_originalBytes, redacted, "Original", "Redacted (preview)");
+                _redactedBytes = redacted;
+                _view.SetDocuments(_originalBytes, _redactedBytes, "Original", "Redacted (preview)");
                 RefreshRedactionList();
                 _save.Enabled = true;
+            }
+            catch (OcrPageLimitExceededException ex)
+            {
+                MessageBox.Show(this, ex.Message, "Too many pages to OCR",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                _save.Enabled = false;
             }
             catch (Exception ex)
             {
@@ -304,11 +307,11 @@ namespace PhilterDesktop
                 && _redactionList.SelectedItems[0].Tag is RedactionSpanEntity { UserAdded: true };
         }
 
-        // Re-burns the current span set (detected + reviewer-added) into the temp output and refreshes
-        // only the redacted pane, keeping the reviewer on the current page.
+        // Re-burns the current span set (detected + reviewer-added) into the in-memory redacted bytes
+        // and refreshes only the redacted pane, keeping the reviewer on the current page.
         private async Task ReapplyAsync()
         {
-            if (_busy || _originalBytes.Length == 0 || _tempOutputPath is null)
+            if (_busy || _originalBytes.Length == 0)
             {
                 return;
             }
@@ -317,12 +320,12 @@ namespace PhilterDesktop
             try
             {
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                await RedactionService.ApplySpansAsync(_sourcePath, _tempOutputPath, ".pdf", false, _spans, CurrentPolicy(), _filterService);
+                _redactedBytes = await RedactionService.ApplyPdfSpansToBytesAsync(
+                    _originalBytes, _spans, CurrentPolicy(), _filterService);
                 stopwatch.Stop();
                 RedactionDurationMs = stopwatch.ElapsedMilliseconds;
 
-                byte[] redacted = await File.ReadAllBytesAsync(_tempOutputPath);
-                _view.UpdateAfter(redacted);
+                _view.UpdateAfter(_redactedBytes);
                 _save.Enabled = true;
             }
             catch (Exception ex)
@@ -353,7 +356,7 @@ namespace PhilterDesktop
 
         private void OnSave(object? sender, EventArgs e)
         {
-            if (_tempOutputPath is null || !File.Exists(_tempOutputPath))
+            if (_redactedBytes.Length == 0)
             {
                 return;
             }
@@ -377,7 +380,7 @@ namespace PhilterDesktop
             string output = dialog.FileName;
             try
             {
-                File.Copy(_tempOutputPath, output, overwrite: true);
+                File.WriteAllBytes(output, _redactedBytes);
             }
             catch (Exception ex)
             {
@@ -404,14 +407,6 @@ namespace PhilterDesktop
             SelectedContext = _contextCombo.Text;
             DialogResult = DialogResult.OK;
             Close();
-        }
-
-        private void TryDeleteTemp()
-        {
-            if (_tempOutputPath is not null)
-            {
-                try { File.Delete(_tempOutputPath); } catch { /* best effort */ }
-            }
         }
     }
 }

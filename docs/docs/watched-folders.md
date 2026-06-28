@@ -134,9 +134,8 @@ folders are being monitored.
 ## Starting automatically when you sign in
 
 To have Philter Desktop watch your folders even after a restart, turn on **Start Philter Desktop at
-sign-in** on the **Watched Folder** tab — a simple on/off setting you control with that checkbox.
-After that, it launches on its own whenever you sign in to Windows and picks up watching right where
-it left off.
+sign-in** on the **General** tab of Settings — a simple on/off checkbox. After that, it launches on
+its own whenever you sign in to Windows and picks up watching right where it left off.
 
 ## Things to keep in mind
 

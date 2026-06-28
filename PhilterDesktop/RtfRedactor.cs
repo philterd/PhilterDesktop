@@ -15,6 +15,7 @@
  */
 
 using System.Runtime.ExceptionServices;
+using System.Text;
 using System.Threading;
 using Phileas.Model;
 using PhilterData;
@@ -44,7 +45,7 @@ namespace PhilterDesktop
             return RunSta(() =>
             {
                 using var box = new RichTextBox();
-                box.LoadFile(inputPath, RichTextBoxStreamType.RichText);
+                LoadSanitized(box, inputPath);
                 return box.Text;
             });
         }
@@ -59,7 +60,7 @@ namespace PhilterDesktop
             return RunSta(() =>
             {
                 using var box = new RichTextBox();
-                box.LoadFile(inputPath, RichTextBoxStreamType.RichText);
+                LoadSanitized(box, inputPath);
 
                 string text = box.Text;
                 TextFilterResult result = filter(text);
@@ -108,7 +109,7 @@ namespace PhilterDesktop
             RunSta<object?>(() =>
             {
                 using var box = new RichTextBox();
-                box.LoadFile(inputPath, RichTextBoxStreamType.RichText);
+                LoadSanitized(box, inputPath);
 
                 string text = box.Text;
                 var ranges = new List<ReplacementRange>();
@@ -130,6 +131,18 @@ namespace PhilterDesktop
                 box.SaveFile(outputPath, RichTextBoxStreamType.RichText);
                 return null;
             });
+        }
+
+        // Loads the RTF into the control after stripping embedded OLE objects. Reading the file as
+        // Latin1 round-trips every byte 1:1 (RTF is a 7-bit-safe format that escapes non-ASCII as
+        // \'xx), so the only change is the removed object groups. Setting box.Rtf (rather than
+        // LoadFile) lets us hand RichTextBox the already-sanitized markup so it never instantiates an
+        // embedded OLE server.
+        private static void LoadSanitized(RichTextBox box, string inputPath)
+        {
+            byte[] bytes = File.ReadAllBytes(inputPath);
+            string rtf = Encoding.Latin1.GetString(bytes);
+            box.Rtf = RtfSanitizer.RemoveEmbeddedObjects(rtf);
         }
 
         // RichTextBox requires an STA thread; the pipeline runs on MTA background threads, so do the

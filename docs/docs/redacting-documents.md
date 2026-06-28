@@ -19,7 +19,8 @@ Philter Desktop works with these document types:
 - **PDF** — files ending in `.pdf`.
 - **Rich Text** — files ending in `.rtf` (a formatted-text format used by WordPad and many legal and
   records systems). A redacted `.rtf` is rebuilt from its visible content, so document metadata it
-  carried (such as the author or title) is dropped automatically.
+  carried (such as the author or title) is dropped automatically, and any embedded objects (such as an
+  attached spreadsheet or Word file) are removed so they can't carry unredacted content into the output.
 - **Spreadsheets** — Excel files ending in `.xlsx` and comma-separated files ending in `.csv`.
 - **Email** — files ending in `.eml` (the standard email format used by most mail programs) and
   `.msg` (the format Microsoft Outlook uses when you save or drag out a message).
@@ -153,8 +154,25 @@ If a document shows **Failed**, Philter Desktop remembers *why*. **Hover your mo
 row** to see the reason in a small pop-up, or right-click the row and choose **View Details…**, where
 the reason appears as a **"Why it failed"** line. The reasons are written in plain language — for
 example, *"…could not save 'report.docx' because it is open in another program (such as Microsoft
-Word or a PDF viewer). Please close it and try again."* Once you've fixed the cause, you can add the
-document again to retry it.
+Word or a PDF viewer). Please close it and try again."*
+
+Once you've fixed the cause (closed the file, freed up disk space, raised a limit in Settings, and so
+on), you don't need to add the document again — just **retry** it:
+
+- **Retry** — right-click the failed row and choose **Retry**. The document goes back to **Pending**
+  and is cleaned up again on the next pass.
+- **Retry All Failed** — right-click anywhere in the queue and choose **Retry All Failed** to requeue
+  *every* failed document at once. This is handy when a single cause (such as a full disk) tripped up
+  several documents together.
+
+A document that fails for a permanent reason (for instance, an unsupported file type) will simply fail
+again with the same explanation, so retrying it does no harm.
+
+!!! note "After an unexpected shutdown"
+    If Philter Desktop closes unexpectedly (a crash, or the computer shutting down) while a document is
+    being cleaned up, that document could be left showing **Processing**. The next time you start
+    Philter Desktop, it automatically moves any such interrupted document back to **Pending** so it is
+    picked up and finished — you don't need to do anything.
 
 Whatever happens, **your original document is never changed.** Philter Desktop always writes the
 result to a **new, separate copy**. That copy is given a name based on the original plus a label —
@@ -302,6 +320,10 @@ Once a document shows **Completed**, you have several options:
     - **Export Explanation (JSON)…** — save a detailed report of *why* each item was removed
       (explained below).
     - **Remove**, **Remove completed**, or **Remove all** — take items off the list.
+    - **Retry** / **Retry All Failed** — requeue a failed document (or every failed document) to try
+      again after you've fixed the cause; see
+      [What happens after you add a document](#what-happens-after-you-add-a-document), above.
+      (**Retry** is available on a failed row; **Retry All Failed** whenever any row has failed.)
     - **Refresh** — reload the list.
 
 The list updates itself as documents are processed, so you rarely need to refresh by hand. A

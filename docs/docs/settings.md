@@ -2,12 +2,14 @@
 
 Open **Settings** from the main toolbar to control where your cleaned-up files are saved and how the
 program behaves. The Settings window is divided into tabs: **General**, **Microsoft Office**, **PDF**,
-**Email**, **Notifications**, **Watched Folder**, and **Security**. This page walks through each of them.
+**Email**, **Notifications**, **Watched Folder**, **Limits**, and **Security**. This page walks through
+each of them.
 
 ## General tab
 
 The **General** tab is where you set the output location (where cleaned-up files go), turn logging on
-or off, and switch on the Windows Explorer right-click menu. Each of these is explained below.
+or off, switch on the Windows Explorer right-click menu, and choose whether Philter Desktop starts
+automatically when you sign in to Windows. Each of these is explained below.
 
 ## Where your cleaned-up files are saved (Output location)
 
@@ -43,6 +45,9 @@ troubleshooting (errors and the names of files that were processed) — it does 
 detected or redacted text from your documents — but since the file names themselves can be sensitive,
 you can wipe it whenever you like. A new log starts the next time something is logged.
 
+The log can't grow without bound: once it reaches about 5 MB it's rolled over to a backup (a few
+older backups are kept and the oldest is discarded), so it never fills up your disk.
+
 ## Explorer right-click menu
 
 This option lets you redact files **straight from a Windows folder**, without opening Philter Desktop
@@ -67,6 +72,14 @@ A few practical notes:
 - If you're a technical user who'd rather automate redaction without the pop-up window, you can use
   the [command line](redacting-documents.md#for-advanced-users-and-it-redacting-from-a-command-line)
   directly.
+
+## Start automatically at sign-in
+
+Turn on **Start Philter Desktop at sign-in** to have Philter Desktop launch on its own each time you
+sign in to Windows. It starts **minimized to the system tray** (the small icons near the clock) and
+keeps working quietly in the background — which is what makes [watched folders](watched-folders.md)
+useful even when you haven't opened the window yourself. Leave it **off** if you'd rather start the
+program by hand. This setting is saved with the others when you click **Save**.
 
 ## Microsoft Office tab
 
@@ -121,8 +134,12 @@ you have a specific problem and understand the trade-off.
 - **Also OCR a text page when images cover at least … %** (default **50%**). Even when a page has real
   text, if pictures cover at least this share of it, Philter Desktop also OCRs the page to catch any
   text inside those pictures. Lower it to OCR more pages that contain large images.
+- **Maximum pages to OCR in one PDF** (default **200**). A safety limit: if a single PDF needs OCR on
+  more pages than this, Philter Desktop **stops with an error** instead of partly processing it — so a
+  document is never saved looking finished while sensitive text on the un-OCR'd pages survives. Raise it
+  to handle larger scanned documents, or set it to **0** for no limit.
 
-To return to normal behavior, set these back to **1%** and **50%**.
+To return to normal behavior, set these back to **1%**, **50%**, and **200**.
 
 ## Email tab
 
@@ -170,15 +187,26 @@ watched folders either, regardless of each folder's setting.
 
 The **Watched Folder** tab lets you set up folders that Philter Desktop **watches automatically** —
 any document dropped into a watched folder is redacted on its own, without you adding it to the queue
-by hand. This tab is also where you turn on having Philter Desktop start automatically when you sign
-in to Windows, and it lets the program keep working quietly from the system tray (the small icons near
-the clock) even when its window is closed. This feature has its own detailed page; see
+by hand. So that watching keeps working even when the window is closed, the program can run quietly
+from the system tray; to have it available automatically, turn on **Start Philter Desktop at sign-in**
+on the [General tab](#start-automatically-at-sign-in). This feature has its own detailed page; see
 [Watched Folders](watched-folders.md).
 
 It also has a **"Watched-folder files to redact at once"** setting. Leave this at **1** (the default)
 unless you have a specific reason to change it: redacting several files at once uses more memory and
 processor, so a higher number should be chosen only with careful consideration. See [Processing more
 than one file at a time](watched-folders.md#processing-more-than-one-file-at-a-time) for guidance.
+
+## Limits tab
+
+The **Limits** tab holds safeguards that keep very large or unusual inputs from using up all of your
+computer's memory.
+
+- **Skip input files larger than … MB** (default **500**). Redacting a file loads it into memory, so an
+  extremely large file can be slow or fail. On the **automatic** paths — watched folders and the
+  command line — any file larger than this is **skipped** (and noted in the log) rather than processed.
+  Set it to **0** for no limit. When you add files yourself (drag-and-drop, **Add Files**, or **Redact
+  Spreadsheet**), Philter Desktop instead shows a heads-up above **50 MB** but still lets you proceed.
 
 ## Security tab — protecting your stored information
 

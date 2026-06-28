@@ -88,6 +88,9 @@ namespace PhilterDesktop
         private ToolStripSeparator toolStripSeparator7;
         private ToolStripMenuItem refreshToolStripMenuItem;
         private ToolStripMenuItem removeCompletedToolStripMenuItem;
+        private ToolStripMenuItem retryToolStripMenuItem;
+        private ToolStripMenuItem retryAllFailedToolStripMenuItem;
+        private ToolStripSeparator toolStripSeparatorRetry;
         private ImageList imageList1;
         private ToolStripSeparator toolStripSeparator6;
         private ToolStripButton HelpToolStripButton;

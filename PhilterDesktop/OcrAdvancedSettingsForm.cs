@@ -25,6 +25,7 @@ namespace PhilterDesktop
     {
         private readonly NumericUpDown _textCoverage;
         private readonly NumericUpDown _imageCoverage;
+        private readonly NumericUpDown _maxPages;
 
         /// <summary>Text-coverage threshold as a fraction (0–1): below this a page is treated as scanned.</summary>
         public double TextCoverageThreshold => (double)_textCoverage.Value / 100.0;
@@ -32,14 +33,17 @@ namespace PhilterDesktop
         /// <summary>Image-coverage threshold as a fraction (0–1): at/above this a text page is also OCR'd.</summary>
         public double ImageCoverageThreshold => (double)_imageCoverage.Value / 100.0;
 
-        public OcrAdvancedSettingsForm(double textCoverageFraction, double imageCoverageFraction)
+        /// <summary>Maximum pages to OCR in one PDF before redaction stops with an error (0 = no limit).</summary>
+        public int MaxPages => (int)_maxPages.Value;
+
+        public OcrAdvancedSettingsForm(double textCoverageFraction, double imageCoverageFraction, int maxPages)
         {
             Text = "Advanced OCR Settings";
             FormBorderStyle = FormBorderStyle.FixedDialog;
             StartPosition = FormStartPosition.CenterParent;
             MaximizeBox = false;
             MinimizeBox = false;
-            ClientSize = new Size(440, 250);
+            ClientSize = new Size(440, 320);
 
             var intro = new Label
             {
@@ -100,12 +104,37 @@ namespace PhilterDesktop
                        "body). Lower = OCR more such pages. Default 50%."
             };
 
+            var maxPagesLabel = new Label
+            {
+                Location = new Point(14, 190),
+                Size = new Size(300, 20),
+                Text = "Maximum pages to OCR in one PDF:"
+            };
+            _maxPages = new NumericUpDown
+            {
+                Location = new Point(330, 188),
+                Size = new Size(90, 23),
+                DecimalPlaces = 0,
+                Minimum = 0m,
+                Maximum = 100000m,
+                Increment = 50m,
+                Value = Math.Clamp(maxPages, 0, 100000)
+            };
+            var maxPagesHint = new Label
+            {
+                Location = new Point(14, 216),
+                Size = new Size(412, 32),
+                ForeColor = SystemColors.GrayText,
+                Text = "If a PDF needs OCR on more pages than this, redaction stops with an error instead " +
+                       "of partly processing it. 0 = no limit. Default 200."
+            };
+
             var ok = new Button
             {
                 Text = "OK",
                 DialogResult = DialogResult.OK,
                 Size = ModernTheme.StandardButtonSize,
-                Location = new Point(206, 204),
+                Location = new Point(206, 274),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right
             };
             var cancel = new Button
@@ -113,14 +142,15 @@ namespace PhilterDesktop
                 Text = "Cancel",
                 DialogResult = DialogResult.Cancel,
                 Size = ModernTheme.StandardButtonSize,
-                Location = new Point(322, 204),
+                Location = new Point(322, 274),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right
             };
 
             Controls.AddRange(new Control[]
             {
                 intro, textLabel, _textCoverage, textPct, textHint,
-                imageLabel, _imageCoverage, imagePct, imageHint, ok, cancel
+                imageLabel, _imageCoverage, imagePct, imageHint,
+                maxPagesLabel, _maxPages, maxPagesHint, ok, cancel
             });
 
             AcceptButton = ok;

@@ -28,6 +28,25 @@ using Windows.Storage.Streams;
 
 namespace PhilterDesktop
 {
+    /// <summary>
+    /// Thrown when a PDF needs OCR on more pages than the configured safety cap. Surfaced to the user
+    /// (rather than silently OCR'ing only some pages) so a partially-processed document is never mistaken
+    /// for a fully-redacted one.
+    /// </summary>
+    public sealed class OcrPageLimitExceededException : Exception
+    {
+        public int PagesNeedingOcr { get; }
+        public int Limit { get; }
+
+        public OcrPageLimitExceededException(int pagesNeedingOcr, int limit)
+            : base($"This PDF needs OCR on {pagesNeedingOcr} pages, which exceeds the limit of {limit}. " +
+                   "Increase \"Maximum pages to OCR\" in Settings → PDF → Advanced, or split the document into smaller files.")
+        {
+            PagesNeedingOcr = pagesNeedingOcr;
+            Limit = limit;
+        }
+    }
+
     /// <summary>How a page's text should be sourced for detection.</summary>
     internal enum OcrPageMode
     {
@@ -76,6 +95,37 @@ namespace PhilterDesktop
         {
             _minTextCoverage = minTextCoverage;
             _minImageCoverage = minImageCoverage;
+        }
+
+        /// <summary>
+        /// Counts how many pages would be OCR'd (Replace or Merge), without running any OCR. Used for a
+        /// cheap pre-flight so a caller can enforce a page cap and fail loudly before doing OCR work.
+        /// Returns 0 when no OCR engine is available (nothing would be OCR'd).
+        /// </summary>
+        public int CountPagesNeedingOcr(byte[] document)
+        {
+            if (OcrEngine.TryCreateFromUserProfileLanguages() is null)
+            {
+                return 0;
+            }
+
+            Dictionary<int, List<PdfLine>> byPage = _textLayer.GetLines(document)
+                .GroupBy(l => l.PageNumber)
+                .ToDictionary(g => g.Key, g => g.ToList());
+            IReadOnlyList<(double Area, double ImageCoverage)> geometry = ReadPageGeometry(document);
+
+            int count = 0;
+            for (int page = 1; page <= geometry.Count; page++)
+            {
+                List<PdfLine> pageLines = byPage.TryGetValue(page, out List<PdfLine>? l) ? l : new List<PdfLine>();
+                (double area, double imageCoverage) = geometry[page - 1];
+                OcrPageMode mode = DecideMode(SumCharArea(pageLines), area, imageCoverage, _minTextCoverage, _minImageCoverage);
+                if (mode is OcrPageMode.Replace or OcrPageMode.Merge)
+                {
+                    count++;
+                }
+            }
+            return count;
         }
 
         public IReadOnlyList<PdfLine> GetLines(byte[] document)

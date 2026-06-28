@@ -92,6 +92,12 @@ namespace PhilterDesktop
                     failures++;
                     continue;
                 }
+                if (LargeFileWarning.ExceedsHardLimit(path, settings.MaxInputFileSizeMb))
+                {
+                    Console.Error.WriteLine($"Skipped (exceeds the {settings.MaxInputFileSizeMb} MB size limit): {file}");
+                    failures++;
+                    continue;
+                }
 
                 try
                 {

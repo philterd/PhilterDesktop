@@ -154,6 +154,7 @@ namespace PhilterDesktop
             bool ocrScannedPdfs = false,
             double ocrTextCoverage = 0.01,
             double ocrImageCoverage = 0.5,
+            int ocrMaxPages = 0,
             bool scrubEmailHeaders = false)
         {
             filterService ??= new FilterService();
@@ -245,21 +246,11 @@ namespace PhilterDesktop
 
             if (extension == ".pdf")
             {
-                PreparePdfPolicy(policy);
-
-                // When the OCR setting is on, use a hybrid extractor that OCRs scanned (text-layer-less)
-                // pages so their PII is detected; otherwise the default text-layer extractor is used.
-                Phileas.Services.Pdf.ITextExtractor? pdfExtractor = null;
-                if (ocrScannedPdfs)
-                {
-                    pdfExtractor = new HybridTextExtractor(ocrTextCoverage, ocrImageCoverage);
-                }
-
                 byte[] input = await File.ReadAllBytesAsync(inputPath);
-                BinaryDocumentFilterResult result = await Task.Run(() =>
-                    new PdfFilterService(filterService, pdfExtractor).Filter(policy, context, input, MimeType.ApplicationPdf));
-                await File.WriteAllBytesAsync(outputPath, result.Document);
-                return MapPdfSpans(result.Spans);
+                (byte[] document, List<RedactionSpanEntity> pdfSpans) = await RedactPdfBytesAsync(
+                    input, policy, context, filterService, ocrScannedPdfs, ocrTextCoverage, ocrImageCoverage, ocrMaxPages);
+                await File.WriteAllBytesAsync(outputPath, document);
+                return pdfSpans;
             }
 
             // Plain text. Run the filter off the calling thread too (consistent with the other
@@ -402,6 +393,60 @@ namespace PhilterDesktop
             PhileasPolicy? policy, FilterService filterService)
         {
             byte[] bytes = await File.ReadAllBytesAsync(sourcePath);
+            byte[] outBytes = await ApplyPdfSpansToBytesAsync(bytes, spans, policy, filterService);
+            await File.WriteAllBytesAsync(outputPath, outBytes);
+        }
+
+        /// <summary>
+        /// Redacts a PDF entirely in memory (bytes in, bytes out) and returns the detected spans.
+        /// Used by the PDF preview so no redacted PII is ever written to disk until the user saves.
+        /// </summary>
+        public static async Task<(byte[] Document, List<RedactionSpanEntity> Spans)> RedactPdfBytesAsync(
+            byte[] input, PhileasPolicy policy, string context, FilterService? filterService = null,
+            bool ocrScannedPdfs = false, double ocrTextCoverage = 0.01, double ocrImageCoverage = 0.5,
+            int ocrMaxPages = 0)
+        {
+            filterService ??= new FilterService();
+            PhEyeModel.Prepare(policy);
+            PreparePdfPolicy(policy);
+
+            // When the OCR setting is on, use a hybrid extractor that OCRs scanned (text-layer-less)
+            // pages so their PII is detected; otherwise the default text-layer extractor is used.
+            Phileas.Services.Pdf.ITextExtractor? pdfExtractor = null;
+            if (ocrScannedPdfs)
+            {
+                var hybrid = new HybridTextExtractor(ocrTextCoverage, ocrImageCoverage);
+
+                // Pre-flight the OCR page cap here (a cheap count, no OCR) and fail loud before doing any
+                // work, rather than throwing from deep inside the extractor on a background thread. The
+                // throw happens on this async method's own context, so the caller's catch handles it
+                // cleanly (and the debugger doesn't flag it as user-unhandled across a Task boundary).
+                if (ocrMaxPages > 0)
+                {
+                    int pagesNeedingOcr = await Task.Run(() => hybrid.CountPagesNeedingOcr(input));
+                    if (pagesNeedingOcr > ocrMaxPages)
+                    {
+                        throw new OcrPageLimitExceededException(pagesNeedingOcr, ocrMaxPages);
+                    }
+                }
+
+                pdfExtractor = hybrid;
+            }
+
+            BinaryDocumentFilterResult result = await Task.Run(() =>
+                new PdfFilterService(filterService, pdfExtractor).Filter(policy, context, input, MimeType.ApplicationPdf));
+            return (result.Document, MapPdfSpans(result.Spans));
+        }
+
+        /// <summary>
+        /// Re-applies a set of position-based PDF spans to the original bytes in memory (bytes in,
+        /// bytes out). Used by the PDF preview when the reviewer edits/adds/removes redactions.
+        /// </summary>
+        public static async Task<byte[]> ApplyPdfSpansToBytesAsync(
+            byte[] input, IReadOnlyList<RedactionSpanEntity> spans,
+            PhileasPolicy? policy = null, FilterService? filterService = null)
+        {
+            filterService ??= new FilterService();
 
             // PDF spans are applied by page + bounding box (position), regardless of origin.
             var spanList = new List<Span>();
@@ -424,9 +469,8 @@ namespace PhilterDesktop
             PhileasPolicy applyPolicy = policy ?? new PhileasPolicy { Name = "reapply" };
             PreparePdfPolicy(applyPolicy);
 
-            byte[] outBytes = await Task.Run(() =>
-                new PdfFilterService(filterService).Apply(applyPolicy, bytes, spanList, MimeType.ApplicationPdf));
-            await File.WriteAllBytesAsync(outputPath, outBytes);
+            return await Task.Run(() =>
+                new PdfFilterService(filterService).Apply(applyPolicy, input, spanList, MimeType.ApplicationPdf));
         }
 
         // The engine renders the output PDF at 25% scale by default (forcing ~400% zoom to read);

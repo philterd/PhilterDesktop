@@ -82,6 +82,7 @@ namespace PhilterDesktop
                     ocrScannedPdfs: settings.OcrScannedPdfs,
                     ocrTextCoverage: settings.OcrTextCoverageThreshold,
                     ocrImageCoverage: settings.OcrImageCoverageThreshold,
+                    ocrMaxPages: settings.OcrMaxPages,
                     scrubEmailHeaders: settings.ScrubEmailHeaders);
 
                 // Self-check: re-scan the written output for residual PII (the false-negative case).

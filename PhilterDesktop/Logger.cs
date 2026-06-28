@@ -26,6 +26,12 @@ namespace PhilterDesktop
         private const int MaxRetries = 3;
         private const int RetryDelayMilliseconds = 100;
 
+        // Cap the log so it can't grow without bound: when application.log reaches this size it's rolled
+        // over to application.log.1 (older backups shift up), keeping at most MaxBackups of them. Total
+        // on-disk footprint is bounded at roughly (MaxBackups + 1) * MaxLogBytes.
+        private const long MaxLogBytes = 5L * 1024 * 1024; // 5 MB per file
+        private const int MaxBackups = 3;
+
         /// <summary>
         /// Gets the path to the log file.
         /// </summary>
@@ -66,6 +72,9 @@ namespace PhilterDesktop
             // Use lock to ensure thread-safe file access
             lock (_lockObject)
             {
+                // Roll the log over before appending if it has reached the size cap.
+                RotateLogIfNeeded(LogFilePath, MaxLogBytes, MaxBackups);
+
                 // Try multiple times with exponential backoff
                 for (int attempt = 0; attempt < MaxRetries; attempt++)
                 {
@@ -91,31 +100,49 @@ namespace PhilterDesktop
                     }
                 }
 
-                // If all retries failed, try fallback location
-                TryLogToFallback(logEntry);
+                // If all retries failed, fall back to the Windows Event Log. We deliberately do NOT
+                // fall back to a temp file: log lines can describe document activity, and %TEMP% is a
+                // less-controlled location, so the Event Log is the safer last resort.
+                TryLogToEventLog(logEntry);
             }
         }
 
         /// <summary>
-        /// Attempts to write to a fallback log location if the primary log fails.
+        /// Rolls <paramref name="logPath"/> over when it reaches <paramref name="maxBytes"/>: the oldest
+        /// backup is dropped, each <c>.N</c> backup shifts up to <c>.N+1</c>, and the current log becomes
+        /// <c>.1</c>, leaving a fresh (empty) log to write to. Keeps at most <paramref name="maxBackups"/>
+        /// backups. Best-effort: any failure leaves the current log in place so logging can continue.
         /// </summary>
-        /// <param name="logEntry">The log entry to write.</param>
-        private static void TryLogToFallback(string logEntry)
+        internal static void RotateLogIfNeeded(string logPath, long maxBytes, int maxBackups)
         {
             try
             {
-                // Try writing to temp directory as fallback
-                string tempLogPath = Path.Combine(Path.GetTempPath(), "PhilterDesktop_fallback.log");
-                File.AppendAllText(tempLogPath, logEntry + Environment.NewLine);
-                
-                // Also add a note that this was written to fallback
-                File.AppendAllText(tempLogPath, 
-                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [WARNING] Previous entry was written to fallback log due to primary log access failure{Environment.NewLine}");
+                var info = new FileInfo(logPath);
+                if (!info.Exists || info.Length < maxBytes)
+                {
+                    return;
+                }
+
+                // Drop the oldest backup, then shift the rest up (.2 -> .3, .1 -> .2, …).
+                string oldest = $"{logPath}.{maxBackups}";
+                if (File.Exists(oldest))
+                {
+                    File.Delete(oldest);
+                }
+                for (int i = maxBackups - 1; i >= 1; i--)
+                {
+                    string src = $"{logPath}.{i}";
+                    if (File.Exists(src))
+                    {
+                        File.Move(src, $"{logPath}.{i + 1}");
+                    }
+                }
+
+                File.Move(logPath, $"{logPath}.1");
             }
             catch
             {
-                // Last resort: write to Windows Event Log
-                TryLogToEventLog(logEntry);
+                // If rotation fails (e.g. a backup is locked), keep appending to the current log.
             }
         }
 

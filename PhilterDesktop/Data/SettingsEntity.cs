@@ -126,6 +126,20 @@ namespace PhilterData
         /// </summary>
         public double OcrImageCoverageThreshold { get; set; } = 0.5;
 
+        /// <summary>
+        /// Safety cap on how many pages of a single PDF may be OCR'd. If a document needs OCR on more
+        /// pages than this, redaction stops with a clear error rather than producing a partially-OCR'd
+        /// output that could leave PII on the un-OCR'd pages. 0 means no limit. Default 200.
+        /// </summary>
+        public int OcrMaxPages { get; set; } = 200;
+
+        /// <summary>
+        /// Hard upper bound (in megabytes) on the size of a file the non-interactive paths
+        /// (watched folders and the command line) will redact. Larger files are skipped and logged,
+        /// since redaction loads a document into memory. 0 means no limit. Default 500 MB.
+        /// </summary>
+        public int MaxInputFileSizeMb { get; set; } = 500;
+
         /// <summary>Global "always redact" terms (one per line), applied on top of every policy.</summary>
         public string GlobalAlwaysRedact { get; set; } = string.Empty;
 

@@ -137,6 +137,33 @@ namespace PhilterDesktop.Tests
         }
 
         [SkippableFact]
+        public async Task ExceedingOcrPageCap_FailsLoud_RatherThanUnderRedacting()
+        {
+            Skip.If(OcrEngine.TryCreateFromUserProfileLanguages() is null,
+                "No OCR language is available on this machine.");
+
+            string path = Path.Combine(AppContext.BaseDirectory, "test-documents", "scanned-201-pages.pdf");
+            Skip.IfNot(File.Exists(path), "scanned-201-pages.pdf not found in test-documents.");
+            byte[] pdf = File.ReadAllBytes(path);
+
+            // The pre-flight count must see all 201 image-only pages as needing OCR.
+            Assert.Equal(201, new HybridTextExtractor().CountPagesNeedingOcr(pdf));
+
+            // 201 pages all need OCR; with a cap of 200 redaction must fail loud (a clean, caught
+            // exception) rather than silently OCR only some pages and leave PII on the rest.
+            var policy = new Phileas.Policy.Policy
+            {
+                Name = "ssn",
+                Identifiers = new Phileas.Policy.Identifiers { Ssn = new Phileas.Policy.Filters.Ssn() }
+            };
+            var ex = await Assert.ThrowsAsync<OcrPageLimitExceededException>(() =>
+                RedactionService.RedactPdfBytesAsync(pdf, policy, "ctx", new Phileas.Services.FilterService(),
+                    ocrScannedPdfs: true, ocrMaxPages: 200));
+            Assert.Equal(201, ex.PagesNeedingOcr);
+            Assert.Equal(200, ex.Limit);
+        }
+
+        [SkippableFact]
         public void OcrsScannedPage_WhenTextLayerIsAbsent()
         {
             Skip.If(OcrEngine.TryCreateFromUserProfileLanguages() is null,
