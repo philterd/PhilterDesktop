@@ -65,6 +65,7 @@ namespace PhilterDesktop
             InitializeComponent();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_save);
+            if (!PhEyeModel.IsAvailable) WarningBanner.AddTo(this, PhEyeModel.UnavailableWarning);
         }
 
         public TextRedactionPreviewForm(string sourcePath, PolicyRepository policies, ContextRepository contexts, SettingsEntity settings)

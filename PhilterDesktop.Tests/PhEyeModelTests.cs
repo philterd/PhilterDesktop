@@ -83,6 +83,47 @@ namespace PhilterDesktop.Tests
             }
         }
 
+        [Fact]
+        public void RequestedButUnavailable_TrueWhenPolicyWantsNames_ButModelMissing()
+        {
+            string emptyDir = Path.Combine(Path.GetTempPath(), "pheye-empty-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(emptyDir);
+            string? previous = Environment.GetEnvironmentVariable("PHEYE_MODEL_DIR");
+            try
+            {
+                Environment.SetEnvironmentVariable("PHEYE_MODEL_DIR", emptyDir); // no model files
+                Assert.False(PhEyeModel.IsAvailable);
+
+                var wantsNames = new PhileasPolicy
+                {
+                    Name = "p",
+                    Identifiers = new Identifiers { PhEyes = new List<PhEye> { PhEyeModel.CreateDefaultFilter() } }
+                };
+                var noNames = new PhileasPolicy { Name = "p", Identifiers = new Identifiers() };
+
+                Assert.True(PhEyeModel.RequestedButUnavailable(wantsNames));  // would silently skip names
+                Assert.False(PhEyeModel.RequestedButUnavailable(noNames));    // policy never asked for names
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("PHEYE_MODEL_DIR", previous);
+                try { Directory.Delete(emptyDir, recursive: true); } catch { /* best effort */ }
+            }
+        }
+
+        [SkippableFact]
+        public void RequestedButUnavailable_FalseWhenModelPresent()
+        {
+            Skip.IfNot(PhEyeModel.IsAvailable, SkipReason);
+
+            var wantsNames = new PhileasPolicy
+            {
+                Name = "p",
+                Identifiers = new Identifiers { PhEyes = new List<PhEye> { PhEyeModel.CreateDefaultFilter() } }
+            };
+            Assert.False(PhEyeModel.RequestedButUnavailable(wantsNames)); // model is there, so names will run
+        }
+
         [SkippableFact]
         public void Prepare_InjectsBundledModelPath()
         {

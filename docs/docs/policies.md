@@ -194,8 +194,16 @@ after turning it on takes a moment longer while the program loads the model; aft
 
 > Installed copies of Philter Desktop already include this names model, so it just works. (If you are
 > a technical user running the program from source code, the model is downloaded automatically when
-> you make a Release build, or you can run the included `scripts/download-pheye-model.ps1`. If the
-> model isn't present for some reason, checking the box simply has no effect.)
+> you make a Release build, or you can run the included `scripts/download-pheye-model.ps1`.)
+
+!!! warning "If name detection is unavailable"
+    If the names model is missing for any reason (an unusual or damaged installation, or antivirus
+    quarantining it), Philter Desktop will **not** quietly pretend to redact names. It shows a clear
+    warning — an amber banner across the top of the main window and of every **Redact with Preview**
+    window (and a message on the command line) — telling you that **person names will not be redacted**
+    by policies that look for them. Pattern-based detection (Social Security numbers, email, phone, and
+    so on) still works. If you see this warning, **reinstall Philter Desktop** to restore name
+    detection, and re-redact anything that was processed while it was unavailable.
 
 ## Redacting your own special identifiers (Custom Identifiers)
 

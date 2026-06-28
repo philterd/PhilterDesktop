@@ -64,6 +64,7 @@ namespace PhilterDesktop
             BuildRedactionPanel();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_save);
+            if (!PhEyeModel.IsAvailable) WarningBanner.AddTo(this, PhEyeModel.UnavailableWarning);
 
             _view.RegionDrawn += View_RegionDrawn;
         }

@@ -56,6 +56,23 @@ namespace PhilterDesktop
         public static bool IsAvailable => HasModelFiles(ModelDirectory);
 
         /// <summary>
+        /// User-facing warning shown when the on-device name model is missing: name detection silently
+        /// does nothing, so a policy expecting to catch person names will leave them in. Surfaced loudly
+        /// (main window, redaction previews, command line) rather than failing quietly.
+        /// </summary>
+        public const string UnavailableWarning =
+            "On-device name detection is unavailable, so person names will NOT be redacted by policies " +
+            "that look for names. Reinstall Philter Desktop to restore name detection.";
+
+        /// <summary>
+        /// True when <paramref name="policy"/> asks for on-device name detection but the model is not
+        /// available — i.e. names the policy expects to catch would silently be left in. Check this
+        /// <b>before</b> <see cref="Prepare"/>, which strips the PhEye filters when the model is missing.
+        /// </summary>
+        public static bool RequestedButUnavailable(PhileasPolicy policy) =>
+            policy.Identifiers?.PhEyes is { Count: > 0 } && !IsAvailable;
+
+        /// <summary>
         /// Returns true if <paramref name="dir"/> contains the files a <c>GlinerModel</c>
         /// needs: <c>gliner_config.json</c>, <c>spm.model</c>, and an ONNX graph (directly
         /// or under an <c>onnx\</c> subdirectory).

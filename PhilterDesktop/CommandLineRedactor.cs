@@ -73,6 +73,13 @@ namespace PhilterDesktop
                 return 2;
             }
 
+            // Warn loudly if the policy expects on-device name detection but the model is missing: names
+            // would silently be left in. (Checked on the resolved policy before redaction strips it.)
+            if (PhEyeModel.RequestedButUnavailable(DeserializePolicy(policyJson)))
+            {
+                Console.Error.WriteLine("Warning: " + PhEyeModel.UnavailableWarning);
+            }
+
             var filterService = new FilterService();
             int failures = 0;
 

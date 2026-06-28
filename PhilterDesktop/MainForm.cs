@@ -658,6 +658,17 @@ namespace PhilterDesktop
             Controls.Add(statusStrip1);
             Controls.Add(toolStrip1);
             Controls.Add(menuStrip1);
+
+            // If the on-device name model is missing, name detection silently does nothing — surface
+            // that loudly with a persistent banner just above the queue (mirrors the filter bar's
+            // placement) so it's never mistaken for a working install.
+            if (!PhEyeModel.IsAvailable)
+            {
+                Panel modelWarning = WarningBanner.Create(PhEyeModel.UnavailableWarning);
+                Controls.Add(modelWarning);
+                Controls.SetChildIndex(modelWarning, 1); // just above the list, below the toolbar
+            }
+
             MainMenuStrip = menuStrip1;
             MinimumSize = new Size(722, 364);
             Name = "MainForm";
