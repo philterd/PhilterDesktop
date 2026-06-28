@@ -58,6 +58,7 @@ namespace PhilterDesktop.Tests
             Assert.Equal("https://www.philterd.ai/philter-scope?utm_source=desktop&utm_medium=verification", Links.ScopeUrl("verification"));
             Assert.Equal("https://www.philterd.ai/philter-diffuse?utm_source=desktop&utm_medium=details", Links.DiffuseUrl("details"));
             Assert.Equal("https://www.philterd.ai/consulting?utm_source=desktop&utm_medium=policy-editor", Links.ConsultingUrl("policy-editor"));
+            Assert.Equal("https://philterd.ai/open-source-software?utm_source=desktop&utm_medium=help-menu", Links.AllProductsUrl("help-menu"));
         }
 
         [Fact]

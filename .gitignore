@@ -56,6 +56,11 @@ Installer/signing.local.json
 # Auto-restored signing tools (Trusted Signing dlib from NuGet)
 Installer/tools/
 
+# Test results and code-coverage output (coverlet/XPlat writes here per run)
+[Tt]est[Rr]esults/
+*.cobertura.xml
+*.coverage
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

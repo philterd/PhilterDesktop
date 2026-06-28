@@ -1794,6 +1794,9 @@ namespace PhilterDesktop
                 null, (_, _) => Links.Open(Links.DiffuseUrl("help-menu")));
             more.DropDownItems.Add("Policy consulting — help building & validating policies",
                 null, (_, _) => Links.Open(Links.ConsultingUrl("help-menu")));
+            more.DropDownItems.Add(new ToolStripSeparator());
+            more.DropDownItems.Add("See all products",
+                null, (_, _) => Links.Open(Links.AllProductsUrl("help-menu")));
 
             // Insert just before the separator that precedes "Check for Updates..." / "About...".
             int index = helpToolStripMenuItem.DropDownItems.IndexOf(toolStripSeparator1);

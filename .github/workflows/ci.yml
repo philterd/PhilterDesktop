@@ -29,8 +29,22 @@ jobs:
       - name: Build
         run: dotnet build PhilterDesktop.Tests/PhilterDesktop.Tests.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test PhilterDesktop.Tests/PhilterDesktop.Tests.csproj -c Release --no-build --verbosity normal
+      - name: Test (with code coverage)
+        run: dotnet test PhilterDesktop.Tests/PhilterDesktop.Tests.csproj -c Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --settings PhilterDesktop.Tests/coverage.runsettings --results-directory TestResults
+
+      # Enforce the coverage gate entirely on the runner — coverlet produces a local cobertura report
+      # (no external coverage service, no upload, no account/token). Fails the build under 80% line
+      # coverage of the testable layer (see PhilterDesktop.Tests/coverage.runsettings for what's scoped).
+      - name: Enforce code-coverage threshold (80% line)
+        shell: pwsh
+        run: |
+          $report = Get-ChildItem -Path TestResults -Recurse -Filter coverage.cobertura.xml | Select-Object -First 1
+          if (-not $report) { Write-Error 'No coverage report was produced.'; exit 1 }
+          [xml]$xml = Get-Content $report.FullName
+          $rate = [double]$xml.coverage.'line-rate'
+          $pct = [math]::Round($rate * 100, 1)
+          Write-Host "Testable-layer line coverage: $pct% (threshold 80%)"
+          if ($rate -lt 0.80) { Write-Error "Coverage $pct% is below the 80% threshold."; exit 1 }
 
       # Inno Setup is needed to compile the installer; it isn't preinstalled on the runner.
       # Chocolatey is available on windows-latest and installs ISCC to its standard location,

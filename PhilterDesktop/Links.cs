@@ -31,6 +31,7 @@ namespace PhilterDesktop
         private const string DiffuseBase = "https://www.philterd.ai/philter-diffuse";
         private const string ConsultingBase = "https://www.philterd.ai/consulting";
         private const string SupportBase = "https://www.philterd.ai/philter-desktop";
+        private const string AllProductsBase = "https://philterd.ai/open-source-software";
 
         /// <summary>Philter (server/API) landing page, tagged with the calling surface.</summary>
         public static string PhilterUrl(string medium) => Tag(PhilterBase, medium);
@@ -49,6 +50,9 @@ namespace PhilterDesktop
 
         /// <summary>Policy-consulting landing page, tagged with the calling surface.</summary>
         public static string ConsultingUrl(string medium) => Tag(ConsultingBase, medium);
+
+        /// <summary>Philterd's full open-source product listing, tagged with the calling surface.</summary>
+        public static string AllProductsUrl(string medium) => Tag(AllProductsBase, medium);
 
         private static string Tag(string url, string medium) =>
             $"{url}?utm_source=desktop&utm_medium={Uri.EscapeDataString(medium)}";
