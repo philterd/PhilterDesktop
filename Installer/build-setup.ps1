@@ -257,7 +257,9 @@ if (Test-Path $outputDir) {
     Remove-Item (Join-Path $outputDir '*') -Force -Recurse -ErrorAction SilentlyContinue
 }
 
-$isccArgs = @("/DAppVersion=$Version")
+# Pass the TFM-derived publish dir so the .iss packages the right folder (its built-in default is a
+# fixed path that goes stale whenever the target framework changes).
+$isccArgs = @("/DAppVersion=$Version", "/DPublishDir=$publishDir")
 if ($Sign) {
     # Register the "philtersign" sign tool with ISCC and enable the SignTool directive in the .iss
     # (/DSign). Inno then signs the installer AND the embedded uninstaller. $q (a literal quote) and

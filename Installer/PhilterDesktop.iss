@@ -17,8 +17,10 @@
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
+; build-setup.ps1 always passes /DPublishDir (derived from the project's TargetFramework); this
+; fallback is only used for a direct ISCC run and must match the current TFM.
 #ifndef PublishDir
-  #define PublishDir "..\PhilterDesktop\bin\Release\net10.0-windows\win-x64\publish"
+  #define PublishDir "..\PhilterDesktop\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish"
 #endif
 
 [Setup]
