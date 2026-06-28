@@ -31,6 +31,13 @@ When you add or edit a strategy, you choose one of these three approaches:
   placeholders, rather than being peppered with black boxes. The stand-in values are invented; they
   do not correspond to any real person.
 
+> **A note about PDFs.** These strategies control the replacement **text**, which appears in the
+> redacted output for Word (`.docx`), text (`.txt`), rich text (`.rtf`), spreadsheet (`.xlsx`, `.csv`),
+> and email (`.eml`, `.msg`) files. **PDFs work differently:** a redacted PDF is flattened to an image
+> with every detected item painted over by a solid box (see [Redacting Documents](redacting-documents.md)).
+> So for PDFs the choice of strategy does **not** change how the result looks — you get a solid box in
+> every case, whether you picked Redact, Static replacement, or Random replacement.
+
 ## Keeping replacements consistent (Scope)
 
 When you use **random replacement**, you can decide whether the *same* original value should always

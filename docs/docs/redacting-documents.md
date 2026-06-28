@@ -36,7 +36,9 @@ Philter Desktop works with these document types:
 > have heard stories of "redacted" PDFs where the black boxes could be copied off to reveal the text
 > underneath; that cannot happen here.) The trade-off is that the cleaned-up PDF behaves like a
 > scanned document: you can read it and print it, but you can no longer select or search its text.
-> For most legal and confidentiality purposes, this is exactly what you want.
+> For most legal and confidentiality purposes, this is exactly what you want. One consequence: because
+> each item is simply painted over with a solid box, your [filter strategy](filter-strategies.md) choice
+> (the replacement text) does **not** change how a redacted PDF looks — PDFs always get solid boxes.
 
 ### Redacting email (and why `.msg` comes out as `.eml`)
 
