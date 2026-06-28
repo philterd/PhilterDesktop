@@ -42,6 +42,37 @@ namespace PhilterDesktop
         private int _renderToken;
         private readonly SemaphoreSlim _renderGate = new(1, 1);
 
+        // Reviewer "draw a box to redact" mode, active on the before (original) pane only.
+        private const int MinDragPx = 4;
+        private bool _drawMode;
+        private bool _dragging;
+        private Point _dragStart;
+        private Point _dragCurrent;
+
+        /// <summary>
+        /// When true, the reviewer can drag a rectangle on the original (left) page to mark a region to
+        /// redact; each completed rectangle raises <see cref="RegionDrawn"/> with page-space coordinates.
+        /// </summary>
+        [System.ComponentModel.Browsable(false)]
+        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+        public bool DrawToRedact
+        {
+            get => _drawMode;
+            set
+            {
+                _drawMode = value;
+                _beforePicture.Cursor = value ? Cursors.Cross : Cursors.Default;
+                if (!value)
+                {
+                    _dragging = false;
+                    _beforePicture.Invalidate();
+                }
+            }
+        }
+
+        /// <summary>Raised when the reviewer finishes drawing a redaction rectangle on the original page.</summary>
+        public event EventHandler<PdfRegionDrawnEventArgs>? RegionDrawn;
+
         public PdfSideBySideView()
         {
             InitializeComponent();
@@ -49,6 +80,28 @@ namespace PhilterDesktop
             _afterScroll.Scroll += OnPaneScroll;
             _beforeScroll.Resize += (_, _) => RelayoutIfFit(_beforeScroll, _beforePicture, _beforeImage);
             _afterScroll.Resize += (_, _) => RelayoutIfFit(_afterScroll, _afterPicture, _afterImage);
+            _beforePicture.MouseDown += BeforePicture_MouseDown;
+            _beforePicture.MouseMove += BeforePicture_MouseMove;
+            _beforePicture.MouseUp += BeforePicture_MouseUp;
+            _beforePicture.Paint += BeforePicture_Paint;
+        }
+
+        /// <summary>
+        /// Replaces only the after (redacted) document and re-renders the current page, preserving the
+        /// page the reviewer is on (unlike <see cref="SetDocuments"/>, which resets to the first page).
+        /// </summary>
+        public void UpdateAfter(byte[]? after)
+        {
+            _after = after;
+            try
+            {
+                _afterCount = PageCount(after);
+            }
+            catch
+            {
+                _afterCount = 0;
+            }
+            ShowPage(_page);
         }
 
         /// <summary>Loads two PDFs (any may be empty) and shows the first page; pass titles for each pane.</summary>
@@ -236,6 +289,111 @@ namespace PhilterDesktop
             }
         }
 
+        // --- Draw-to-redact (before pane) ------------------------------------
+
+        private void BeforePicture_MouseDown(object? sender, MouseEventArgs e)
+        {
+            if (!_drawMode || e.Button != MouseButtons.Left || _beforeImage is null)
+            {
+                return;
+            }
+            _dragging = true;
+            _dragStart = e.Location;
+            _dragCurrent = e.Location;
+        }
+
+        private void BeforePicture_MouseMove(object? sender, MouseEventArgs e)
+        {
+            if (!_dragging)
+            {
+                return;
+            }
+            _dragCurrent = e.Location;
+            _beforePicture.Invalidate();
+        }
+
+        private void BeforePicture_MouseUp(object? sender, MouseEventArgs e)
+        {
+            if (!_dragging)
+            {
+                return;
+            }
+            _dragging = false;
+            _beforePicture.Invalidate();
+
+            if (_beforeImage is null)
+            {
+                return;
+            }
+
+            Rectangle rect = NormalizedRect(_dragStart, _dragCurrent);
+            rect.Intersect(new Rectangle(Point.Empty, _beforePicture.ClientSize));
+            if (rect.Width < MinDragPx || rect.Height < MinDragPx)
+            {
+                return; // ignore stray clicks / tiny drags
+            }
+
+            PdfRegionDrawnEventArgs? region = ToPageRegion(rect);
+            if (region is not null)
+            {
+                RegionDrawn?.Invoke(this, region);
+            }
+        }
+
+        private void BeforePicture_Paint(object? sender, PaintEventArgs e)
+        {
+            if (!_dragging)
+            {
+                return;
+            }
+            Rectangle rect = NormalizedRect(_dragStart, _dragCurrent);
+            using var fill = new SolidBrush(Color.FromArgb(70, 0, 0, 0));
+            using var pen = new Pen(Color.Black, 1);
+            e.Graphics.FillRectangle(fill, rect);
+            e.Graphics.DrawRectangle(pen, rect);
+        }
+
+        private static Rectangle NormalizedRect(Point a, Point b) =>
+            Rectangle.FromLTRB(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y), Math.Max(a.X, b.X), Math.Max(a.Y, b.Y));
+
+        // Maps a rectangle in displayed-picture pixels to PDF user-space points (bottom-left origin) on
+        // the current page. The before page is rendered at RenderDpi and stretched to the picture box, so
+        // points = pixels / displayScale * 72 / RenderDpi, with the Y axis flipped about the page height.
+        private PdfRegionDrawnEventArgs? ToPageRegion(Rectangle pictureRect)
+        {
+            if (_beforeImage is null)
+            {
+                return null;
+            }
+            return MapPictureRectToPage(pictureRect, _beforePicture.ClientSize.Width,
+                _beforeImage.Width, _beforeImage.Height, _page + 1, RenderDpi);
+        }
+
+        /// <summary>
+        /// Maps a rectangle in displayed-picture pixels to a redaction region in PDF user-space points
+        /// (bottom-left origin). The page is rendered at <paramref name="renderDpi" /> and stretched to
+        /// <paramref name="pictureWidth" />, so points = pixels / displayScale * 72 / dpi, with the Y axis
+        /// flipped about the page height. Pure (no UI state) so it can be unit-tested.
+        /// </summary>
+        internal static PdfRegionDrawnEventArgs? MapPictureRectToPage(Rectangle pictureRect,
+            int pictureWidth, int imageWidth, int imageHeight, int pageNumber, int renderDpi)
+        {
+            if (pictureWidth <= 0 || imageWidth <= 0 || renderDpi <= 0)
+            {
+                return null;
+            }
+            double displayScale = (double)pictureWidth / imageWidth;
+            double ptPerPixel = 72.0 / renderDpi / displayScale;
+            double pageHeightPts = imageHeight * 72.0 / renderDpi;
+
+            double lowerLeftX = pictureRect.Left * ptPerPixel;
+            double upperRightX = pictureRect.Right * ptPerPixel;
+            double upperRightY = pageHeightPts - pictureRect.Top * ptPerPixel;
+            double lowerLeftY = pageHeightPts - pictureRect.Bottom * ptPerPixel;
+
+            return new PdfRegionDrawnEventArgs(pageNumber, lowerLeftX, lowerLeftY, upperRightX, upperRightY);
+        }
+
         // --- Rendering --------------------------------------------------------
 
         private static int PageCount(byte[]? pdf) =>
@@ -267,5 +425,28 @@ namespace PhilterDesktop
                 return null;
             }
         }
+    }
+
+    /// <summary>
+    /// A reviewer-drawn redaction rectangle, in PDF user-space points (1/72 inch, bottom-left origin)
+    /// on a specific 1-based page. These map directly onto a span's page and bounding-box fields.
+    /// </summary>
+    public sealed class PdfRegionDrawnEventArgs : EventArgs
+    {
+        public PdfRegionDrawnEventArgs(int pageNumber, double lowerLeftX, double lowerLeftY,
+            double upperRightX, double upperRightY)
+        {
+            PageNumber = pageNumber;
+            LowerLeftX = lowerLeftX;
+            LowerLeftY = lowerLeftY;
+            UpperRightX = upperRightX;
+            UpperRightY = upperRightY;
+        }
+
+        public int PageNumber { get; }
+        public double LowerLeftX { get; }
+        public double LowerLeftY { get; }
+        public double UpperRightX { get; }
+        public double UpperRightY { get; }
     }
 }

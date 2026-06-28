@@ -24,8 +24,10 @@ namespace PhilterDesktop
     /// <summary>
     /// Prototype "preview-first" redaction workspace for a single <c>.pdf</c>: pick a policy/context,
     /// see the redacted PDF rendered next to the original, and only write the output on Save. The
-    /// preview redacts to a temporary file (which Save then copies to the final location). Unlike the
-    /// text preview there is no span editing — PDF redactions are coordinate-based and image-rendered.
+    /// preview redacts to a temporary file (which Save then copies to the final location). The reviewer
+    /// can also add redactions the detector missed by drawing a box on the original page; those join the
+    /// redaction list (flagged user-added) and are burned into the rasterized output on Save like a
+    /// detected one, so the covered content is destroyed, not merely hidden.
     /// </summary>
     public partial class PdfRedactionPreviewForm : Form
     {
@@ -41,6 +43,12 @@ namespace PhilterDesktop
         private bool _loading;
         private bool _busy;
 
+        // Side panel for reviewer-added redactions (built in code; see BuildRedactionPanel).
+        private Panel _sidePanel = null!;
+        private Button _drawButton = null!;
+        private ListView _redactionList = null!;
+        private Button _removeButton = null!;
+
         public string OutputPath { get; private set; } = string.Empty;
         public string SelectedPolicy { get; private set; } = string.Empty;
         public string SelectedContext { get; private set; } = string.Empty;
@@ -52,8 +60,76 @@ namespace PhilterDesktop
         public PdfRedactionPreviewForm()
         {
             InitializeComponent();
+            BuildRedactionPanel();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_save);
+
+            _view.RegionDrawn += View_RegionDrawn;
+        }
+
+        // A right-docked panel listing redactions, with a "draw a box to redact" toggle and a Remove
+        // button. Built in code and slotted between the top/bottom bars so the viewer still fills the rest.
+        private void BuildRedactionPanel()
+        {
+            _sidePanel = new Panel { Dock = DockStyle.Right, Width = 240, Padding = new Padding(8) };
+
+            var title = new Label
+            {
+                Dock = DockStyle.Top,
+                Text = "Redactions",
+                Font = new Font(ModernTheme.UiFont, FontStyle.Bold),
+                Height = 24
+            };
+
+            _drawButton = new Button
+            {
+                Dock = DockStyle.Top,
+                Height = 34,
+                Text = "Add Redaction (draw)",
+                UseVisualStyleBackColor = true
+            };
+            _drawButton.Click += DrawButton_Click;
+
+            var hint = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 48,
+                ForeColor = ModernTheme.SubtleText,
+                Text = "Turn on, then drag a box on the original (left) page to redact a region the detector missed."
+            };
+
+            _redactionList = new ListView
+            {
+                Dock = DockStyle.Fill,
+                View = View.Details,
+                FullRowSelect = true,
+                MultiSelect = false,
+                HideSelection = false
+            };
+            _redactionList.Columns.Add("Type", 110);
+            _redactionList.Columns.Add("Location", 100);
+
+            _removeButton = new Button
+            {
+                Dock = DockStyle.Bottom,
+                Height = 34,
+                Text = "Remove Selected",
+                Enabled = false,
+                UseVisualStyleBackColor = true
+            };
+            _removeButton.Click += RemoveButton_Click;
+            _redactionList.SelectedIndexChanged += (_, _) => UpdateRemoveEnabled();
+
+            // Add the fill control first, then docked edges, so the list fills the remaining space.
+            _sidePanel.Controls.Add(_redactionList);
+            _sidePanel.Controls.Add(_removeButton);
+            _sidePanel.Controls.Add(hint);
+            _sidePanel.Controls.Add(_drawButton);
+            _sidePanel.Controls.Add(title);
+
+            Controls.Add(_sidePanel);
+            // Keep full-width top/bottom bars: dock the side panel inside them but outside the viewer.
+            Controls.SetChildIndex(_sidePanel, Controls.GetChildIndex(_view) + 1);
         }
 
         public PdfRedactionPreviewForm(string sourcePath, PolicyRepository policies, ContextRepository contexts, SettingsEntity settings)
@@ -128,19 +204,27 @@ namespace PhilterDesktop
             _contextCombo.Enabled = false;
             try
             {
-                PolicyEntity? entity = _policies.FindByName(_policyCombo.Text);
-                PhileasPolicy policy = PolicySerializer.DeserializeFromJson(
-                    string.IsNullOrWhiteSpace(entity?.Json) ? "{}" : entity!.Json);
-                GlobalLists.Apply(policy, _settings); // global always-redact/ignore on top of every policy
+                PhileasPolicy policy = CurrentPolicy();
+
+                // Keep any reviewer-added regions across a re-detect (e.g. when the policy/context changes).
+                List<RedactionSpanEntity> userAdded = _spans.Where(s => s.UserAdded).ToList();
 
                 _tempOutputPath ??= Path.Combine(Path.GetTempPath(), "philter-preview-" + Guid.NewGuid().ToString("N") + ".pdf");
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 _spans = await RedactionService.RedactFileAsync(_sourcePath, _tempOutputPath, policy, _contextCombo.Text, _filterService);
+                _spans.AddRange(userAdded);
+
+                // RedactFileAsync wrote the temp with detected spans only; re-apply if there are added ones.
+                if (userAdded.Count > 0)
+                {
+                    await RedactionService.ApplySpansAsync(_sourcePath, _tempOutputPath, ".pdf", false, _spans, policy, _filterService);
+                }
                 stopwatch.Stop();
                 RedactionDurationMs = stopwatch.ElapsedMilliseconds;
 
                 byte[] redacted = await File.ReadAllBytesAsync(_tempOutputPath);
                 _view.SetDocuments(_originalBytes, redacted, "Original", "Redacted (preview)");
+                RefreshRedactionList();
                 _save.Enabled = true;
             }
             catch (Exception ex)
@@ -156,6 +240,112 @@ namespace PhilterDesktop
                 _contextCombo.Enabled = true;
                 _busy = false;
             }
+        }
+
+        // The selected policy (with global lists applied), used for both detection and re-apply.
+        private PhileasPolicy CurrentPolicy()
+        {
+            PolicyEntity? entity = _policies.FindByName(_policyCombo.Text);
+            PhileasPolicy policy = PolicySerializer.DeserializeFromJson(
+                string.IsNullOrWhiteSpace(entity?.Json) ? "{}" : entity!.Json);
+            GlobalLists.Apply(policy, _settings); // global always-redact/ignore on top of every policy
+            return policy;
+        }
+
+        private void DrawButton_Click(object? sender, EventArgs e)
+        {
+            bool on = !_view.DrawToRedact;
+            _view.DrawToRedact = on;
+            _drawButton.Text = on ? "Drawing… drag a box (click to stop)" : "Add Redaction (draw)";
+        }
+
+        // A reviewer drew a box on the original page: add it as a user-added span and re-apply.
+        private async void View_RegionDrawn(object? sender, PdfRegionDrawnEventArgs e)
+        {
+            _spans.Add(new RedactionSpanEntity
+            {
+                UserAdded = true,
+                Order = _spans.Count,
+                PageNumber = e.PageNumber,
+                LowerLeftX = e.LowerLeftX,
+                LowerLeftY = e.LowerLeftY,
+                UpperRightX = e.UpperRightX,
+                UpperRightY = e.UpperRightY,
+                Text = string.Empty,
+                Classification = string.Empty
+            });
+            RefreshRedactionList();
+            await ReapplyAsync();
+        }
+
+        private async void RemoveButton_Click(object? sender, EventArgs e)
+        {
+            if (_redactionList.SelectedItems.Count == 0 || _redactionList.SelectedItems[0].Tag is not RedactionSpanEntity span)
+            {
+                return;
+            }
+            if (!span.UserAdded)
+            {
+                MessageBox.Show(this, "Only redactions you added here can be removed. To keep a detected item, adjust the policy.",
+                    "Remove Redaction", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            _spans.Remove(span);
+            RefreshRedactionList();
+            await ReapplyAsync();
+        }
+
+        private void UpdateRemoveEnabled()
+        {
+            _removeButton.Enabled = _redactionList.SelectedItems.Count > 0
+                && _redactionList.SelectedItems[0].Tag is RedactionSpanEntity { UserAdded: true };
+        }
+
+        // Re-burns the current span set (detected + reviewer-added) into the temp output and refreshes
+        // only the redacted pane, keeping the reviewer on the current page.
+        private async Task ReapplyAsync()
+        {
+            if (_busy || _originalBytes.Length == 0 || _tempOutputPath is null)
+            {
+                return;
+            }
+            _busy = true;
+            UseWaitCursor = true;
+            try
+            {
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                await RedactionService.ApplySpansAsync(_sourcePath, _tempOutputPath, ".pdf", false, _spans, CurrentPolicy(), _filterService);
+                stopwatch.Stop();
+                RedactionDurationMs = stopwatch.ElapsedMilliseconds;
+
+                byte[] redacted = await File.ReadAllBytesAsync(_tempOutputPath);
+                _view.UpdateAfter(redacted);
+                _save.Enabled = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"Redaction failed: {ex.Message}", "Redact (Preview)",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            finally
+            {
+                UseWaitCursor = false;
+                _busy = false;
+            }
+        }
+
+        private void RefreshRedactionList()
+        {
+            _redactionList.BeginUpdate();
+            _redactionList.Items.Clear();
+            foreach (RedactionSpanEntity span in _spans)
+            {
+                var item = new ListViewItem(RedactionReport.FriendlyType(span)) { Tag = span };
+                item.SubItems.Add(RedactionReport.LocationOf(span));
+                _redactionList.Items.Add(item);
+            }
+            _redactionList.EndUpdate();
+            UpdateRemoveEnabled();
         }
 
         private void OnSave(object? sender, EventArgs e)
