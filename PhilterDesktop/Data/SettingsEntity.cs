@@ -98,6 +98,26 @@ namespace PhilterData
         /// <summary>Remove hidden text from redacted Word output. On by default.</summary>
         public bool ScrubWordHiddenText { get; set; } = true;
 
+        /// <summary>
+        /// Read scanned (image-only) PDF pages with on-device OCR so their text can be detected and
+        /// redacted. OCR runs entirely on this computer (nothing is uploaded). On by default; it is
+        /// slower and best-effort (it can miss low-quality scans and handwriting), so the redacted
+        /// output should still be reviewed.
+        /// </summary>
+        public bool OcrScannedPdfs { get; set; } = true;
+
+        /// <summary>
+        /// Advanced OCR tuning: a PDF page whose text-layer glyphs cover less than this fraction of the
+        /// page is treated as scanned and OCR'd. Lower = OCR fewer pages. Default 0.01 (1%).
+        /// </summary>
+        public double OcrTextCoverageThreshold { get; set; } = 0.01;
+
+        /// <summary>
+        /// Advanced OCR tuning: a page that still has real text but whose embedded images cover at least
+        /// this fraction of the page is also OCR'd (to catch PII inside a large scan). Default 0.5 (50%).
+        /// </summary>
+        public double OcrImageCoverageThreshold { get; set; } = 0.5;
+
         /// <summary>Global "always redact" terms (one per line), applied on top of every policy.</summary>
         public string GlobalAlwaysRedact { get; set; } = string.Empty;
 

@@ -129,6 +129,23 @@ namespace PhilterDesktop
             finally { _suppressPassphraseToggle = false; }
         }
 
+        // Advanced OCR tuning is only meaningful when OCR is on.
+        private void ChkOcrScannedPdfs_CheckedChanged(object? sender, EventArgs e) =>
+            btnOcrAdvanced.Enabled = chkOcrScannedPdfs.Checked;
+
+        // Opens the advanced OCR threshold dialog, seeded from (and writing back to) the in-memory
+        // settings; the values are persisted with everything else when the user clicks Save.
+        private void BtnOcrAdvanced_Click(object? sender, EventArgs e)
+        {
+            using var dialog = new OcrAdvancedSettingsForm(
+                _settings.OcrTextCoverageThreshold, _settings.OcrImageCoverageThreshold);
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                _settings.OcrTextCoverageThreshold = dialog.TextCoverageThreshold;
+                _settings.OcrImageCoverageThreshold = dialog.ImageCoverageThreshold;
+            }
+        }
+
         // The "same vs broad policy" choice only applies when automatic verification is on.
         private void ChkVerifyAfterRedaction_CheckedChanged(object? sender, EventArgs e) => UpdateVerifyPolicyEnabled();
 
@@ -433,6 +450,8 @@ namespace PhilterDesktop
             chkScrubComments.Checked = _settings.ScrubWordComments;
             chkScrubTrackedChanges.Checked = _settings.ScrubWordTrackedChanges;
             chkScrubHiddenText.Checked = _settings.ScrubWordHiddenText;
+            chkOcrScannedPdfs.Checked = _settings.OcrScannedPdfs;
+            btnOcrAdvanced.Enabled = _settings.OcrScannedPdfs;
             chkVerifyAfterRedaction.Checked = _settings.VerifyAfterRedaction;
             rdoVerifyBroadPolicy.Checked = _settings.VerificationUseBroadPolicy;
             rdoVerifySamePolicy.Checked = !_settings.VerificationUseBroadPolicy;
@@ -609,6 +628,7 @@ namespace PhilterDesktop
             _settings.ScrubWordComments = chkScrubComments.Checked;
             _settings.ScrubWordTrackedChanges = chkScrubTrackedChanges.Checked;
             _settings.ScrubWordHiddenText = chkScrubHiddenText.Checked;
+            _settings.OcrScannedPdfs = chkOcrScannedPdfs.Checked;
             _settings.VerifyAfterRedaction = chkVerifyAfterRedaction.Checked;
             _settings.VerificationUseBroadPolicy = rdoVerifyBroadPolicy.Checked;
             _settings.WatchedFolderMaxConcurrency = int.TryParse(cmbConcurrency.Text, out int n) ? Math.Clamp(n, 1, 4) : 1;

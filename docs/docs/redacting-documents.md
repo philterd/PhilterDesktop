@@ -40,6 +40,15 @@ Philter Desktop works with these document types:
 > each item is simply painted over with a solid box, your [filter strategy](filter-strategies.md) choice
 > (the replacement text) does **not** change how a redacted PDF looks — PDFs always get solid boxes.
 
+**Scanned PDFs.** Some PDFs are just *pictures* of pages (for example, a document that was scanned),
+with no real text inside — so on their own there's nothing for Philter Desktop to detect. Philter
+Desktop can still handle these: when the **Read scanned PDF pages with OCR** option is on (it is by
+default), it recognizes the text on scanned pages **on your own computer** (nothing is uploaded) so the
+sensitive information can be found and removed. OCR is slower and is best-effort — it can miss
+low-quality scans and does not read handwriting — so reviewing the result matters even more here, and
+the [Modify Redaction](#adjusting-what-was-removed-modify-redaction) tools let you cover anything it
+missed. You can turn this off or fine-tune it on the [Settings → PDF](settings.md#pdf-tab) tab.
+
 ### Redacting email (and why `.msg` comes out as `.eml`)
 
 When Philter Desktop redacts an email, it cleans up the **subject line**, the **From / To / Cc**

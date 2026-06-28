@@ -150,7 +150,10 @@ namespace PhilterDesktop
             FilterService? filterService = null,
             bool highlight = false,
             IReadOnlyCollection<int>? fullyRedactedColumns = null,
-            WordScrubOptions wordScrub = WordScrubOptions.None)
+            WordScrubOptions wordScrub = WordScrubOptions.None,
+            bool ocrScannedPdfs = false,
+            double ocrTextCoverage = 0.01,
+            double ocrImageCoverage = 0.5)
         {
             filterService ??= new FilterService();
 
@@ -235,9 +238,20 @@ namespace PhilterDesktop
             {
                 PreparePdfPolicy(policy);
 
+                // SPIKE: in local-engine builds, when the OCR setting is on, use a hybrid extractor that
+                // OCRs scanned (text-layer-less) pages so their PII is detected. Normal builds pass null
+                // and use the default text-layer extractor unchanged.
+                Phileas.Services.Pdf.ITextExtractor? pdfExtractor = null;
+#if USE_LOCAL_PHILEAS
+                if (ocrScannedPdfs)
+                {
+                    pdfExtractor = new HybridTextExtractor(ocrTextCoverage, ocrImageCoverage);
+                }
+#endif
+
                 byte[] input = await File.ReadAllBytesAsync(inputPath);
                 BinaryDocumentFilterResult result = await Task.Run(() =>
-                    new PdfFilterService(filterService).Filter(policy, context, input, MimeType.ApplicationPdf));
+                    new PdfFilterService(filterService, pdfExtractor).Filter(policy, context, input, MimeType.ApplicationPdf));
                 await File.WriteAllBytesAsync(outputPath, result.Document);
                 return MapPdfSpans(result.Spans);
             }

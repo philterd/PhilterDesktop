@@ -211,7 +211,10 @@ namespace PhilterDesktop
 
                 _tempOutputPath ??= Path.Combine(Path.GetTempPath(), "philter-preview-" + Guid.NewGuid().ToString("N") + ".pdf");
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                _spans = await RedactionService.RedactFileAsync(_sourcePath, _tempOutputPath, policy, _contextCombo.Text, _filterService);
+                _spans = await RedactionService.RedactFileAsync(_sourcePath, _tempOutputPath, policy, _contextCombo.Text, _filterService,
+                    ocrScannedPdfs: _settings.OcrScannedPdfs,
+                    ocrTextCoverage: _settings.OcrTextCoverageThreshold,
+                    ocrImageCoverage: _settings.OcrImageCoverageThreshold);
                 _spans.AddRange(userAdded);
 
                 // RedactFileAsync wrote the temp with detected spans only; re-apply if there are added ones.

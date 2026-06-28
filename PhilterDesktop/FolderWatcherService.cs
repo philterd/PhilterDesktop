@@ -358,7 +358,10 @@ namespace PhilterDesktop
                 SettingsEntity watcherSettings = _settingsRepository?.GetSettings() ?? new SettingsEntity();
                 await RedactionService.RedactFileAsync(
                     fullPath, outputPath, policy, folder.Context, _filterService, folder.Highlight,
-                    wordScrub: DocumentMetadata.OptionsFor(watcherSettings)).ConfigureAwait(false);
+                    wordScrub: DocumentMetadata.OptionsFor(watcherSettings),
+                    ocrScannedPdfs: watcherSettings.OcrScannedPdfs,
+                    ocrTextCoverage: watcherSettings.OcrTextCoverageThreshold,
+                    ocrImageCoverage: watcherSettings.OcrImageCoverageThreshold).ConfigureAwait(false);
 
                 Log($"Redacted watched file '{fullPath}' -> '{outputPath}'.");
                 Activity(folder, "Info", $"Redacted: {fullPath} → {outputPath}");

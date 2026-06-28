@@ -95,6 +95,10 @@ namespace PhilterDesktop
             rdoVerifySamePolicy = new RadioButton();
             rdoVerifyBroadPolicy = new RadioButton();
             lblVerifyHint = new Label();
+            tabPdf = new TabPage();
+            chkOcrScannedPdfs = new CheckBox();
+            lblOcrInfo = new Label();
+            btnOcrAdvanced = new Button();
             groupBoxOutput.SuspendLayout();
             tabWord.SuspendLayout();
             groupBoxLogging.SuspendLayout();
@@ -103,6 +107,7 @@ namespace PhilterDesktop
             tabNotifications.SuspendLayout();
             tabWatched.SuspendLayout();
             tabSecurity.SuspendLayout();
+            tabPdf.SuspendLayout();
             SuspendLayout();
             // 
             // groupBoxOutput
@@ -318,6 +323,7 @@ namespace PhilterDesktop
             tabControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             tabControl.Controls.Add(tabGeneral);
             tabControl.Controls.Add(tabWord);
+            tabControl.Controls.Add(tabPdf);
             tabControl.Controls.Add(tabNotifications);
             tabControl.Controls.Add(tabWatched);
             tabControl.Controls.Add(tabSecurity);
@@ -644,9 +650,54 @@ namespace PhilterDesktop
             lblVerifyHint.Size = new Size(511, 45);
             lblVerifyHint.TabIndex = 7;
             lblVerifyHint.Text = resources.GetString("lblVerifyHint.Text");
-            // 
+            //
+            // tabPdf
+            //
+            tabPdf.Controls.Add(lblOcrInfo);
+            tabPdf.Controls.Add(chkOcrScannedPdfs);
+            tabPdf.Controls.Add(btnOcrAdvanced);
+            tabPdf.Location = new Point(4, 24);
+            tabPdf.Name = "tabPdf";
+            tabPdf.Padding = new Padding(3);
+            tabPdf.Size = new Size(565, 318);
+            tabPdf.TabIndex = 5;
+            tabPdf.Text = "PDF";
+            tabPdf.UseVisualStyleBackColor = true;
+            //
+            // chkOcrScannedPdfs
+            //
+            chkOcrScannedPdfs.AutoSize = true;
+            chkOcrScannedPdfs.Location = new Point(13, 18);
+            chkOcrScannedPdfs.Name = "chkOcrScannedPdfs";
+            chkOcrScannedPdfs.Size = new Size(372, 19);
+            chkOcrScannedPdfs.TabIndex = 0;
+            chkOcrScannedPdfs.Text = "Read scanned (image-only) PDF pages with on-device OCR";
+            chkOcrScannedPdfs.UseVisualStyleBackColor = true;
+            chkOcrScannedPdfs.CheckedChanged += ChkOcrScannedPdfs_CheckedChanged;
+            //
+            // lblOcrInfo
+            //
+            lblOcrInfo.AutoSize = true;
+            lblOcrInfo.ForeColor = SystemColors.GrayText;
+            lblOcrInfo.Location = new Point(30, 41);
+            lblOcrInfo.MaximumSize = new Size(520, 0);
+            lblOcrInfo.Name = "lblOcrInfo";
+            lblOcrInfo.Size = new Size(515, 60);
+            lblOcrInfo.TabIndex = 1;
+            lblOcrInfo.Text = "Scanned PDFs are images with no text to detect. When enabled, Philter Desktop recognizes the text on scanned pages on your own computer (nothing is uploaded) so PII can be found and redacted. OCR is slower and best-effort: it can miss low-quality scans and does not read handwriting, so always review the redacted file before sharing it.";
+            //
+            // btnOcrAdvanced
+            //
+            btnOcrAdvanced.Location = new Point(13, 165);
+            btnOcrAdvanced.Name = "btnOcrAdvanced";
+            btnOcrAdvanced.Size = new Size(160, 34);
+            btnOcrAdvanced.TabIndex = 2;
+            btnOcrAdvanced.Text = "Advanced…";
+            btnOcrAdvanced.UseVisualStyleBackColor = true;
+            btnOcrAdvanced.Click += BtnOcrAdvanced_Click;
+            //
             // SettingsForm
-            // 
+            //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(584, 396);
@@ -675,6 +726,8 @@ namespace PhilterDesktop
             tabWatched.PerformLayout();
             tabSecurity.ResumeLayout(false);
             tabSecurity.PerformLayout();
+            tabPdf.ResumeLayout(false);
+            tabPdf.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -730,5 +783,9 @@ namespace PhilterDesktop
         private Label lblStartupHint;
         private CheckBox chkContextMenu;
         private Label lblContextMenuHint;
+        private TabPage tabPdf;
+        private CheckBox chkOcrScannedPdfs;
+        private Label lblOcrInfo;
+        private Button btnOcrAdvanced;
     }
 }

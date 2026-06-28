@@ -1,8 +1,8 @@
 # Settings
 
 Open **Settings** from the main toolbar to control where your cleaned-up files are saved and how the
-program behaves. The Settings window is divided into three tabs: **General**, **Watched Folder**, and
-**Security**. This page walks through each of them.
+program behaves. The Settings window is divided into tabs: **General**, **Microsoft Word**, **PDF**,
+**Notifications**, **Watched Folder**, and **Security**. This page walks through each of them.
 
 ## General tab
 
@@ -86,6 +86,41 @@ each applies whenever Philter Desktop produces a redacted `.docx`:
 Leave these on unless you have a specific reason to keep that information. They affect only what's
 stored in the redacted copy — your original document is never changed, and you should still review the
 finished file.
+
+## PDF tab
+
+Some PDFs are **scanned** — each page is a *picture* of a document rather than real, selectable text. A
+file like that has no text for Philter Desktop to read, so on its own it would have nothing to detect
+and nothing to redact. The **PDF** tab controls whether Philter Desktop uses **OCR** (optical character
+recognition) to read those scanned pages.
+
+- **Read scanned (image-only) PDF pages with on-device OCR** (on by default). When on, Philter Desktop
+  recognizes the text on scanned pages **entirely on your own computer** — nothing is uploaded — so the
+  PII on them can be found and redacted like any other document. Pages that already contain real text
+  are read normally; OCR is used only where it's needed. A page that has *both* real text and a large
+  scanned image (for example, a scan beneath a typed letterhead) is read both ways, so nothing slips
+  through.
+
+OCR is **best-effort**: it is slower than reading normal text, and it can miss low-quality scans,
+unusual fonts, and **handwriting**. As always, review the redacted file before sharing it — and the
+[Modify Redaction](redacting-documents.md#adjusting-what-was-removed-modify-redaction) tools let you
+cover anything OCR didn't catch.
+
+### Advanced settings
+
+The **Advanced…** button (available when OCR is on) exposes two thresholds that decide *when* a page is
+read with OCR. **Most people should never change these.** The defaults suit virtually all documents, and
+the wrong value can make redaction slower or cause pages to be read the wrong way. Change them only if
+you have a specific problem and understand the trade-off.
+
+- **Treat a page as scanned when its text covers under … %** (default **1%**). If the real text on a
+  page fills less than this share of the page, the page is treated as scanned and read with OCR. Raise
+  it to OCR more pages (slower, but less likely to miss a mostly-scanned page); lower it to OCR fewer.
+- **Also OCR a text page when images cover at least … %** (default **50%**). Even when a page has real
+  text, if pictures cover at least this share of it, Philter Desktop also OCRs the page to catch any
+  text inside those pictures. Lower it to OCR more pages that contain large images.
+
+To return to normal behavior, set these back to **1%** and **50%**.
 
 ## Notifications tab
 
