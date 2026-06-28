@@ -20,16 +20,25 @@ namespace PhilterDesktop
 {
     /// <summary>
     /// Builds links to Philterd's other offerings — <b>Philter</b> (server/API, for pipeline/at-scale
-    /// redaction) and <b>policy consulting</b> — tagged with the in-app surface that produced the click
-    /// (<c>utm_medium</c>), so the team can see which touchpoints actually feed the funnel.
+    /// redaction), <b>Philter Scope</b> (policy scoring), <b>Philter Diffuse</b> (differential privacy),
+    /// and <b>policy consulting</b> — tagged with the in-app surface that produced the click
+    /// (<c>utm_medium</c>), so the team can see which touchpoints are used.
     /// </summary>
-    internal static class Upsell
+    internal static class Links
     {
         private const string PhilterBase = "https://www.philterd.ai/philter";
+        private const string ScopeBase = "https://www.philterd.ai/philter-scope";
+        private const string DiffuseBase = "https://www.philterd.ai/philter-diffuse";
         private const string ConsultingBase = "https://www.philterd.ai/consulting";
 
         /// <summary>Philter (server/API) landing page, tagged with the calling surface.</summary>
         public static string PhilterUrl(string medium) => Tag(PhilterBase, medium);
+
+        /// <summary>Philter Scope (policy scoring) landing page, tagged with the calling surface.</summary>
+        public static string ScopeUrl(string medium) => Tag(ScopeBase, medium);
+
+        /// <summary>Philter Diffuse (differential privacy) landing page, tagged with the calling surface.</summary>
+        public static string DiffuseUrl(string medium) => Tag(DiffuseBase, medium);
 
         /// <summary>Policy-consulting landing page, tagged with the calling surface.</summary>
         public static string ConsultingUrl(string medium) => Tag(ConsultingBase, medium);
@@ -41,7 +50,7 @@ namespace PhilterDesktop
         public static void Open(string url)
         {
             try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
-            catch { /* best effort — never disrupt the app over a marketing link */ }
+            catch { /* best effort — never disrupt the app over a link */ }
         }
 
         /// <summary>A consistent one-line link that opens the given (already-tagged) URL when clicked.</summary>

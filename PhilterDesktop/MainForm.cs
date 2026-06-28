@@ -318,6 +318,9 @@ namespace PhilterDesktop
             HelpToolStripButton.Click += OpenHelp;
             helpToolStripMenuItem1.Click += OpenHelp;
 
+            // --- "More from Philterd" submenu under Help (other Philterd offerings) ---
+            BuildMoreFromPhilterdMenu();
+
             // --- Modern monochrome toolbar icons + animated processing badges ---
             ApplyToolbarIcons();
 
@@ -1288,6 +1291,30 @@ namespace PhilterDesktop
             aboutForm.ShowDialog();
         }
 
+        // Adds a "More from Philterd" submenu to the Help menu, linking to the other Philterd offerings.
+        // Built in code (rather than the VS-regenerated designer) so the link set is easy to maintain.
+        // Each item opens a UTM-tagged URL (utm_medium=help-menu) so touchpoint use can be measured.
+        private void BuildMoreFromPhilterdMenu()
+        {
+            var more = new ToolStripMenuItem("More from Philterd");
+            more.DropDownItems.Add("Philter — redaction for servers, APIs & data pipelines",
+                null, (_, _) => Links.Open(Links.PhilterUrl("help-menu")));
+            more.DropDownItems.Add("Philter Scope — measure how well a policy performs",
+                null, (_, _) => Links.Open(Links.ScopeUrl("help-menu")));
+            more.DropDownItems.Add("Philter Diffuse — add differential privacy to data and statistics",
+                null, (_, _) => Links.Open(Links.DiffuseUrl("help-menu")));
+            more.DropDownItems.Add("Policy consulting — help building & validating policies",
+                null, (_, _) => Links.Open(Links.ConsultingUrl("help-menu")));
+
+            // Insert just before the separator that precedes "Check for Updates..." / "About...".
+            int index = helpToolStripMenuItem.DropDownItems.IndexOf(toolStripSeparator1);
+            if (index < 0)
+            {
+                index = helpToolStripMenuItem.DropDownItems.Count;
+            }
+            helpToolStripMenuItem.DropDownItems.Insert(index, more);
+        }
+
 
         private void policiesToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1741,7 +1768,15 @@ namespace PhilterDesktop
             // Offer the explanation export from the Details dialog too, but only when there's a
             // completed redaction to explain.
             Action<IWin32Window>? export = latest is not null ? owner => ExportExplanationFor(owner, id) : null;
-            using var details = new RedactionDetailsForm($"Details — {Path.GetFileName(source)}", rows, export);
+
+            // When a redaction actually ran, the dialog shows a count of removed items. That is the
+            // natural moment to mention Philter Diffuse (differential privacy for counts/statistics).
+            (string Text, string Url)? diffuse = latest is not null
+                ? ("Sharing counts or statistics about sensitive data? Philter Diffuse adds differential privacy →",
+                    Links.DiffuseUrl("details"))
+                : null;
+
+            using var details = new RedactionDetailsForm($"Details — {Path.GetFileName(source)}", rows, export, diffuse);
             details.ShowDialog(this);
         }
 

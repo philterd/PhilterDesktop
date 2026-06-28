@@ -282,9 +282,9 @@ namespace PhilterDesktop.PolicyEditing
                 Margin = new Padding(3, 4, 3, 4)
             });
 
-            LinkLabel consulting = Upsell.CreateLink(
+            LinkLabel consulting = Links.CreateLink(
                 "Want expert help tailoring or validating this policy? Philterd offers policy consulting →",
-                Upsell.ConsultingUrl("wizard"));
+                Links.ConsultingUrl("wizard"));
             consulting.Margin = new Padding(3, 10, 3, 4);
             col.Controls.Add(consulting);
 

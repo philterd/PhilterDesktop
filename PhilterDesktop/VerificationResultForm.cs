@@ -28,15 +28,32 @@ namespace PhilterDesktop
         private static readonly Color WarnColor = Color.FromArgb(0x8A, 0x1C, 0x1C);
         private static readonly Color OkColor = Color.FromArgb(0x1B, 0x5E, 0x20);
 
+        private readonly LinkLabel _scopeLink;
+
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public VerificationResultForm()
         {
             InitializeComponent();
             ModernTheme.Apply(this);
+
+            // This check runs the same policy against the output; it does not measure the policy's
+            // precision and recall against known data. Point users who want that to Philter Scope.
+            // Sits at the bottom-left next to Close; tagged utm_medium=verification.
+            _scopeLink = Links.CreateLink(
+                "Score this policy against known data with Philter Scope →",
+                Links.ScopeUrl("verification"));
+            _scopeLink.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            _scopeLink.Location = new Point(14, 460);
+            Controls.Add(_scopeLink);
+            _scopeLink.BringToFront();
         }
 
         internal VerificationResultForm(string fileName, VerificationOutcome outcome) : this()
         {
+            // Offer policy scoring whenever a verification actually ran (clean or residuals found),
+            // but not when the check itself failed.
+            _scopeLink.Visible = outcome.Status != VerificationStatus.Error;
+
             switch (outcome.Status)
             {
                 case VerificationStatus.Clean:

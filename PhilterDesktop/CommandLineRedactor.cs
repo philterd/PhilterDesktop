@@ -183,7 +183,7 @@ namespace PhilterDesktop
             Console.WriteLine("Supported file types: .txt, .docx, .pdf, .rtf, .xlsx, .csv, .eml, .msg (.msg is redacted to .eml).");
             Console.WriteLine();
             Console.WriteLine("Redacting in a data pipeline or at scale? Philter (server/API) is built for it:");
-            Console.WriteLine("  " + Upsell.PhilterUrl("cli"));
+            Console.WriteLine("  " + Links.PhilterUrl("cli"));
         }
 
         private const int AttachParentProcess = -1;

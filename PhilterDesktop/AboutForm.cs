@@ -78,12 +78,22 @@ namespace PhilterDesktop
 
         private void linkPhilter_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Open(Upsell.PhilterUrl("about"));
+            Open(Links.PhilterUrl("about"));
+        }
+
+        private void linkScope_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Open(Links.ScopeUrl("about"));
+        }
+
+        private void linkDiffuse_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Open(Links.DiffuseUrl("about"));
         }
 
         private void linkConsulting_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Open(Upsell.ConsultingUrl("about"));
+            Open(Links.ConsultingUrl("about"));
         }
     }
 }

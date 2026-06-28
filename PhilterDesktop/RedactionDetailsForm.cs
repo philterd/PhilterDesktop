@@ -89,8 +89,13 @@ namespace PhilterDesktop
         /// When supplied, an "Export Explanation (JSON)…" button is shown; the action is invoked with
         /// this dialog as the owner so its save/confirm dialogs are modal over it.
         /// </param>
+        /// <param name="relatedLink">
+        /// When supplied, a single quiet link line is shown above the buttons (used to point at a
+        /// related Philterd offering). The caller decides the text and the (already-tagged) URL.
+        /// </param>
         public RedactionDetailsForm(string title, IReadOnlyList<(string Label, string Value)> rows,
-            Action<IWin32Window>? exportExplanation = null)
+            Action<IWin32Window>? exportExplanation = null,
+            (string Text, string Url)? relatedLink = null)
             : this()
         {
             Text = title;
@@ -104,6 +109,29 @@ namespace PhilterDesktop
                 _list.Items.Add(item);
             }
             _list.EndUpdate();
+
+            if (relatedLink is { } rl)
+            {
+                AddRelatedLink(rl.Text, rl.Url);
+            }
+        }
+
+        // Adds a single link line on its own row above the button row, carving the space from the list
+        // (grow the form, then return the list to its height so a strip opens up below it). Anchored to
+        // the bottom-left so it tracks with the buttons when the dialog is resized.
+        private void AddRelatedLink(string text, string url)
+        {
+            var link = Links.CreateLink(text, url);
+            link.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+
+            SuspendLayout();
+            int strip = link.PreferredHeight + 12;
+            Height += strip;
+            _list.Height -= strip; // undo the growth the list's bottom anchor just absorbed
+            link.Location = new Point(12, _list.Bottom + 8);
+            Controls.Add(link);
+            link.BringToFront();
+            ResumeLayout();
         }
 
         protected override void OnLoad(EventArgs e)

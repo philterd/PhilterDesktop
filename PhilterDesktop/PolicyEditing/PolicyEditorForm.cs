@@ -141,7 +141,7 @@ namespace PhilterDesktop.PolicyEditing
             _import.Click += OnImport;
             _export.Click += OnExport;
             _description.TextChanged += (_, _) => { if (!_loading) { _dirty = true; } };
-            _consultingLink.Click += (_, _) => Upsell.Open(Upsell.ConsultingUrl("policy-editor"));
+            _consultingLink.Click += (_, _) => Links.Open(Links.ConsultingUrl("policy-editor"));
             _ignoreList.Click += OnIgnoredTerms;
             _alwaysRedact.Click += OnAlwaysRedact;
 
@@ -185,6 +185,19 @@ namespace PhilterDesktop.PolicyEditing
 
             _actions.Controls.Add(_ignoreList);
             _actions.Controls.Add(_alwaysRedact);
+
+            // A quiet "score this policy" link pinned to the bottom-right, pointing at Philter Scope.
+            // Sits in the empty right side of the bottom actions bar; anchored bottom-right so it stays
+            // put if the window is clamped to a smaller screen. Tagged utm_medium=policy-editor.
+            LinkLabel scoreLink = Links.CreateLink(
+                "Score this policy with Philter Scope →",
+                Links.ScopeUrl("policy-editor"));
+            scoreLink.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            scoreLink.Location = new Point(
+                ClientSize.Width - scoreLink.PreferredWidth - 14,
+                ClientSize.Height - scoreLink.PreferredHeight - 16);
+            Controls.Add(scoreLink);
+            scoreLink.BringToFront();
 
             _descPanel.Controls.Add(_description); // fill
             _descPanel.Controls.Add(_descLabel);   // left

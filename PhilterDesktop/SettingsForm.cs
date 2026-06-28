@@ -76,9 +76,9 @@ namespace PhilterDesktop
             else
             {
                 // Watching folders is hand-rolled automation — the moment to mention the real pipeline tool.
-                LinkLabel philterLink = Upsell.CreateLink(
+                LinkLabel philterLink = Links.CreateLink(
                     "Automating redaction across systems or at scale? Philter runs it in your data pipeline →",
-                    Upsell.PhilterUrl("watched-folders"));
+                    Links.PhilterUrl("watched-folders"));
                 philterLink.Location = new Point(6, 292);
                 tabWatched.Controls.Add(philterLink);
                 philterLink.BringToFront();

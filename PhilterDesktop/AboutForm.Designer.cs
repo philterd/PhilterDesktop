@@ -46,6 +46,8 @@ namespace PhilterDesktop
             lblCopyright = new Label();
             lblAlsoFrom = new Label();
             linkPhilter = new LinkLabel();
+            linkScope = new LinkLabel();
+            linkDiffuse = new LinkLabel();
             linkConsulting = new LinkLabel();
             btnOK = new Button();
             pictureBox1 = new PictureBox();
@@ -126,19 +128,19 @@ namespace PhilterDesktop
             linkLabelWebsite.TabStop = true;
             linkLabelWebsite.Text = "https://www.philterd.ai";
             linkLabelWebsite.LinkClicked += linkLabelWebsite_LinkClicked;
-            //
+            // 
             // linkEula
-            //
+            // 
             linkEula.AutoSize = true;
             linkEula.Location = new Point(264, 210);
             linkEula.Margin = new Padding(2, 0, 2, 0);
             linkEula.Name = "linkEula";
-            linkEula.Size = new Size(82, 15);
+            linkEula.Size = new Size(83, 15);
             linkEula.TabIndex = 7;
             linkEula.TabStop = true;
             linkEula.Text = "View the EULA";
             linkEula.LinkClicked += linkEula_LinkClicked;
-            //
+            // 
             // lblReview
             // 
             lblReview.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
@@ -148,52 +150,74 @@ namespace PhilterDesktop
             lblReview.Size = new Size(315, 36);
             lblReview.TabIndex = 7;
             lblReview.Text = "Automated redaction can miss things — always review each redacted document before sharing it.";
-            //
-            // lblAlsoFrom
-            //
-            lblAlsoFrom.AutoSize = true;
-            lblAlsoFrom.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblAlsoFrom.Location = new Point(105, 286);
-            lblAlsoFrom.Name = "lblAlsoFrom";
-            lblAlsoFrom.Size = new Size(110, 15);
-            lblAlsoFrom.TabIndex = 11;
-            lblAlsoFrom.Text = "Also from Philterd:";
-            //
-            // linkPhilter
-            //
-            linkPhilter.AutoSize = true;
-            linkPhilter.Location = new Point(105, 305);
-            linkPhilter.Name = "linkPhilter";
-            linkPhilter.Size = new Size(300, 15);
-            linkPhilter.TabIndex = 12;
-            linkPhilter.TabStop = true;
-            linkPhilter.Text = "Philter — PII redaction for servers, APIs & data pipelines";
-            linkPhilter.LinkClicked += linkPhilter_LinkClicked;
-            //
-            // linkConsulting
-            //
-            linkConsulting.AutoSize = true;
-            linkConsulting.Location = new Point(105, 324);
-            linkConsulting.Name = "linkConsulting";
-            linkConsulting.Size = new Size(300, 15);
-            linkConsulting.TabIndex = 13;
-            linkConsulting.TabStop = true;
-            linkConsulting.Text = "Policy consulting — help building & validating policies";
-            linkConsulting.LinkClicked += linkConsulting_LinkClicked;
-            //
+            // 
             // lblCopyright
-            //
+            // 
             lblCopyright.AutoSize = true;
-            lblCopyright.Location = new Point(105, 352);
+            lblCopyright.Location = new Point(105, 390);
             lblCopyright.Margin = new Padding(2, 0, 2, 0);
             lblCopyright.Name = "lblCopyright";
             lblCopyright.Size = new Size(186, 15);
             lblCopyright.TabIndex = 8;
             lblCopyright.Text = "Copyright 2024-2026 Philterd, LLC";
-            //
+            // 
+            // lblAlsoFrom
+            // 
+            lblAlsoFrom.AutoSize = true;
+            lblAlsoFrom.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblAlsoFrom.Location = new Point(105, 286);
+            lblAlsoFrom.Name = "lblAlsoFrom";
+            lblAlsoFrom.Size = new Size(111, 15);
+            lblAlsoFrom.TabIndex = 11;
+            lblAlsoFrom.Text = "Also from Philterd:";
+            // 
+            // linkPhilter
+            // 
+            linkPhilter.AutoSize = true;
+            linkPhilter.Location = new Point(105, 305);
+            linkPhilter.Name = "linkPhilter";
+            linkPhilter.Size = new Size(290, 15);
+            linkPhilter.TabIndex = 12;
+            linkPhilter.TabStop = true;
+            linkPhilter.Text = "Philter — PII redaction for servers, APIs & data pipelines";
+            linkPhilter.LinkClicked += linkPhilter_LinkClicked;
+            // 
+            // linkScope
+            // 
+            linkScope.AutoSize = true;
+            linkScope.Location = new Point(105, 324);
+            linkScope.Name = "linkScope";
+            linkScope.Size = new Size(284, 15);
+            linkScope.TabIndex = 13;
+            linkScope.TabStop = true;
+            linkScope.Text = "Philter Scope — measure how well a policy performs";
+            linkScope.LinkClicked += linkScope_LinkClicked;
+            // 
+            // linkDiffuse
+            // 
+            linkDiffuse.AutoSize = true;
+            linkDiffuse.Location = new Point(105, 343);
+            linkDiffuse.Name = "linkDiffuse";
+            linkDiffuse.Size = new Size(331, 15);
+            linkDiffuse.TabIndex = 14;
+            linkDiffuse.TabStop = true;
+            linkDiffuse.Text = "Philter Diffuse — add differential privacy to data and statistics";
+            linkDiffuse.LinkClicked += linkDiffuse_LinkClicked;
+            // 
+            // linkConsulting
+            // 
+            linkConsulting.AutoSize = true;
+            linkConsulting.Location = new Point(105, 362);
+            linkConsulting.Name = "linkConsulting";
+            linkConsulting.Size = new Size(287, 15);
+            linkConsulting.TabIndex = 15;
+            linkConsulting.TabStop = true;
+            linkConsulting.Text = "Policy consulting — help building & validating policies";
+            linkConsulting.LinkClicked += linkConsulting_LinkClicked;
+            // 
             // btnOK
             // 
-            btnOK.Location = new Point(343, 370);
+            btnOK.Location = new Point(343, 408);
             btnOK.Name = "btnOK";
             btnOK.Size = new Size(77, 20);
             btnOK.TabIndex = 9;
@@ -218,9 +242,11 @@ namespace PhilterDesktop
             AcceptButton = btnOK;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(434, 405);
+            ClientSize = new Size(452, 443);
             Controls.Add(lblAlsoFrom);
             Controls.Add(linkPhilter);
+            Controls.Add(linkScope);
+            Controls.Add(linkDiffuse);
             Controls.Add(linkConsulting);
             Controls.Add(pictureBox1);
             Controls.Add(btnOK);
@@ -260,6 +286,8 @@ namespace PhilterDesktop
         private Label lblCopyright;
         private Label lblAlsoFrom;
         private LinkLabel linkPhilter;
+        private LinkLabel linkScope;
+        private LinkLabel linkDiffuse;
         private LinkLabel linkConsulting;
         private Button btnOK;
         private PictureBox pictureBox1;
