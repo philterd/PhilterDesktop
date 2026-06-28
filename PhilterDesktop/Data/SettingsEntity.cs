@@ -99,6 +99,14 @@ namespace PhilterData
         public bool ScrubWordHiddenText { get; set; } = true;
 
         /// <summary>
+        /// Remove identifying technical headers from redacted email output (the originating IP, the
+        /// sending mail client, and the server-hop trail): <c>Received</c>, <c>Return-Path</c>,
+        /// <c>Message-Id</c>, <c>User-Agent</c>, <c>DKIM-Signature</c>, authentication results, and all
+        /// <c>X-</c>/<c>ARC-</c> headers. On by default.
+        /// </summary>
+        public bool ScrubEmailHeaders { get; set; } = true;
+
+        /// <summary>
         /// Read scanned (image-only) PDF pages with on-device OCR so their text can be detected and
         /// redacted. OCR runs entirely on this computer (nothing is uploaded). On by default; it is
         /// slower and best-effort (it can miss low-quality scans and handwriting), so the redacted

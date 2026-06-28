@@ -99,6 +99,9 @@ namespace PhilterDesktop
             chkOcrScannedPdfs = new CheckBox();
             lblOcrInfo = new Label();
             btnOcrAdvanced = new Button();
+            tabEmail = new TabPage();
+            chkScrubEmailHeaders = new CheckBox();
+            lblEmailInfo = new Label();
             groupBoxOutput.SuspendLayout();
             tabWord.SuspendLayout();
             groupBoxLogging.SuspendLayout();
@@ -107,6 +110,7 @@ namespace PhilterDesktop
             tabNotifications.SuspendLayout();
             tabWatched.SuspendLayout();
             tabSecurity.SuspendLayout();
+            tabEmail.SuspendLayout();
             tabPdf.SuspendLayout();
             SuspendLayout();
             // 
@@ -230,7 +234,7 @@ namespace PhilterDesktop
             lblWordInfo.Name = "lblWordInfo";
             lblWordInfo.Size = new Size(528, 30);
             lblWordInfo.TabIndex = 0;
-            lblWordInfo.Text = "When redacting Word (.docx) files, also strip these hidden information channels so a redacted copy doesn't leak through them. Applied to every redacted Word document.";
+            lblWordInfo.Text = "When redacting Microsoft Office files, strip the hidden information channels a redacted copy could otherwise leak through. \"Remove document metadata\" applies to both Word (.docx) and Excel (.xlsx); the comments, tracked-changes, and hidden-text options apply to Word documents.";
             // 
             // tabWord
             // 
@@ -244,7 +248,7 @@ namespace PhilterDesktop
             tabWord.Padding = new Padding(3);
             tabWord.Size = new Size(565, 318);
             tabWord.TabIndex = 4;
-            tabWord.Text = "Microsoft Word";
+            tabWord.Text = "Microsoft Office";
             tabWord.UseVisualStyleBackColor = true;
             // 
             // groupBoxLogging
@@ -324,6 +328,7 @@ namespace PhilterDesktop
             tabControl.Controls.Add(tabGeneral);
             tabControl.Controls.Add(tabWord);
             tabControl.Controls.Add(tabPdf);
+            tabControl.Controls.Add(tabEmail);
             tabControl.Controls.Add(tabNotifications);
             tabControl.Controls.Add(tabWatched);
             tabControl.Controls.Add(tabSecurity);
@@ -696,6 +701,39 @@ namespace PhilterDesktop
             btnOcrAdvanced.UseVisualStyleBackColor = true;
             btnOcrAdvanced.Click += BtnOcrAdvanced_Click;
             //
+            // tabEmail
+            //
+            tabEmail.Controls.Add(lblEmailInfo);
+            tabEmail.Controls.Add(chkScrubEmailHeaders);
+            tabEmail.Location = new Point(4, 24);
+            tabEmail.Name = "tabEmail";
+            tabEmail.Padding = new Padding(3);
+            tabEmail.Size = new Size(565, 318);
+            tabEmail.TabIndex = 6;
+            tabEmail.Text = "Email";
+            tabEmail.UseVisualStyleBackColor = true;
+            //
+            // chkScrubEmailHeaders
+            //
+            chkScrubEmailHeaders.AutoSize = true;
+            chkScrubEmailHeaders.Location = new Point(13, 18);
+            chkScrubEmailHeaders.Name = "chkScrubEmailHeaders";
+            chkScrubEmailHeaders.Size = new Size(360, 19);
+            chkScrubEmailHeaders.TabIndex = 0;
+            chkScrubEmailHeaders.Text = "Remove technical email headers from redacted email";
+            chkScrubEmailHeaders.UseVisualStyleBackColor = true;
+            //
+            // lblEmailInfo
+            //
+            lblEmailInfo.AutoSize = true;
+            lblEmailInfo.ForeColor = SystemColors.GrayText;
+            lblEmailInfo.Location = new Point(30, 41);
+            lblEmailInfo.MaximumSize = new Size(520, 0);
+            lblEmailInfo.Name = "lblEmailInfo";
+            lblEmailInfo.Size = new Size(515, 45);
+            lblEmailInfo.TabIndex = 1;
+            lblEmailInfo.Text = "A redacted email keeps technical headers that can identify the sender and route: the originating IP address, the mail program used, and the server-by-server delivery trail (Received, X-* / ARC-* headers, Message-ID, and similar). When on, these are stripped from the redacted .eml; the visible Subject, From, To, Cc, body, and Date are kept (and their PII is still redacted). On by default.";
+            //
             // SettingsForm
             //
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -728,6 +766,8 @@ namespace PhilterDesktop
             tabSecurity.PerformLayout();
             tabPdf.ResumeLayout(false);
             tabPdf.PerformLayout();
+            tabEmail.ResumeLayout(false);
+            tabEmail.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -787,5 +827,8 @@ namespace PhilterDesktop
         private CheckBox chkOcrScannedPdfs;
         private Label lblOcrInfo;
         private Button btnOcrAdvanced;
+        private TabPage tabEmail;
+        private CheckBox chkScrubEmailHeaders;
+        private Label lblEmailInfo;
     }
 }

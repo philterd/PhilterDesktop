@@ -1,8 +1,8 @@
 # Settings
 
 Open **Settings** from the main toolbar to control where your cleaned-up files are saved and how the
-program behaves. The Settings window is divided into tabs: **General**, **Microsoft Word**, **PDF**,
-**Notifications**, **Watched Folder**, and **Security**. This page walks through each of them.
+program behaves. The Settings window is divided into tabs: **General**, **Microsoft Office**, **PDF**,
+**Email**, **Notifications**, **Watched Folder**, and **Security**. This page walks through each of them.
 
 ## General tab
 
@@ -68,20 +68,22 @@ A few practical notes:
   the [command line](redacting-documents.md#for-advanced-users-and-it-redacting-from-a-command-line)
   directly.
 
-## Microsoft Word tab
+## Microsoft Office tab
 
-Word documents quietly carry information that has nothing to do with the visible text — and a
-"redacted" `.docx` that still includes it defeats the purpose. The **Microsoft Word** tab lets you
-strip these hidden channels from every redacted Word file. All four options are **on by default**, and
-each applies whenever Philter Desktop produces a redacted `.docx`:
+Office documents quietly carry information that has nothing to do with the visible text — and a
+"redacted" file that still includes it defeats the purpose. The **Microsoft Office** tab lets you
+strip these hidden channels. All four options are **on by default**:
 
 - **Remove document metadata (author, company, title, keywords, custom fields).** Clears the document's
-  properties so the redacted copy doesn't name who wrote it or where it came from.
+  properties so the redacted copy doesn't name who wrote it or where it came from. **Applies to both
+  Word (`.docx`) and Excel (`.xlsx`).**
 - **Remove reviewer comments.** Deletes all comments (and the reviewer names attached to them).
+  *(Word only.)*
 - **Accept and remove tracked changes (revisions).** Accepts every insertion and deletion and removes
   the revision history, so no record of who changed what — or what the earlier text was — remains.
+  *(Word only.)*
 - **Remove hidden text.** Deletes text that was marked hidden, which wouldn't show on screen but is
-  still present in the file.
+  still present in the file. *(Word only.)*
 
 Leave these on unless you have a specific reason to keep that information. They affect only what's
 stored in the redacted copy — your original document is never changed, and you should still review the
@@ -121,6 +123,22 @@ you have a specific problem and understand the trade-off.
   text inside those pictures. Lower it to OCR more pages that contain large images.
 
 To return to normal behavior, set these back to **1%** and **50%**.
+
+## Email tab
+
+A redacted email keeps more than the message you can see. Behind the scenes, email files carry
+**technical headers** that can identify the sender and how the message travelled: the **originating IP
+address**, the **mail program** that sent it, and the **server-by-server delivery trail** (the
+`Received`, `X-…`, and `ARC-…` headers, `Message-ID`, and similar). A "redacted" email that still
+includes these can leak who sent it and from where.
+
+- **Remove technical email headers from redacted email** (on by default). When on, those identifying
+  headers are stripped from the redacted `.eml`. The visible fields — **Subject, From, To, Cc, the body,
+  and the Date** — are kept (and their PII is still redacted as usual); only the hidden routing/technical
+  headers are removed.
+
+Leave this on unless you specifically need to preserve the original headers (for example, for an
+e-discovery chain-of-custody requirement).
 
 ## Notifications tab
 

@@ -361,7 +361,8 @@ namespace PhilterDesktop
                     wordScrub: DocumentMetadata.OptionsFor(watcherSettings),
                     ocrScannedPdfs: watcherSettings.OcrScannedPdfs,
                     ocrTextCoverage: watcherSettings.OcrTextCoverageThreshold,
-                    ocrImageCoverage: watcherSettings.OcrImageCoverageThreshold).ConfigureAwait(false);
+                    ocrImageCoverage: watcherSettings.OcrImageCoverageThreshold,
+                    scrubEmailHeaders: watcherSettings.ScrubEmailHeaders).ConfigureAwait(false);
 
                 Log($"Redacted watched file '{fullPath}' -> '{outputPath}'.");
                 Activity(folder, "Info", $"Redacted: {fullPath} → {outputPath}");

@@ -72,8 +72,8 @@ namespace PhilterDesktop
             if (options.HasFlag(WordScrubOptions.Metadata))
             {
                 ClearCoreProperties(document);
-                ClearExtendedProperties(document);
-                RemoveCustomProperties(document);
+                ClearExtendedProperties(document.ExtendedFilePropertiesPart);
+                RemoveCustomProperties(document, document.CustomFilePropertiesPart);
             }
             if (options.HasFlag(WordScrubOptions.TrackedChanges))
             {
@@ -86,6 +86,28 @@ namespace PhilterDesktop
             if (options.HasFlag(WordScrubOptions.HiddenText))
             {
                 RemoveHiddenText(document);
+            }
+        }
+
+        /// <summary>
+        /// Removes identifying document properties (core, extended, custom) from a redacted
+        /// <c>.xlsx</c> file in place, so a "redacted" spreadsheet doesn't leak author / company /
+        /// last-modified-by through its metadata. This is the spreadsheet counterpart to the metadata
+        /// step of <see cref="ScrubDocx(string, WordScrubOptions)" />; it is gated by the same
+        /// "Remove document metadata" setting at the call site.
+        /// </summary>
+        public static void ScrubXlsx(string path)
+        {
+            try
+            {
+                using SpreadsheetDocument document = SpreadsheetDocument.Open(path, isEditable: true);
+                ClearCoreProperties(document);
+                ClearExtendedProperties(document.ExtendedFilePropertiesPart);
+                RemoveCustomProperties(document, document.CustomFilePropertiesPart);
+            }
+            catch
+            {
+                // best effort — a metadata quirk must never fail the redaction
             }
         }
 
@@ -110,11 +132,11 @@ namespace PhilterDesktop
         // OOXML0001: PackageProperties is marked experimental in the SDK but is the supported way to edit
         // core document properties; suppress the diagnostic for this well-defined use.
 #pragma warning disable OOXML0001
-        private static void ClearCoreProperties(WordprocessingDocument document)
+        private static void ClearCoreProperties(OpenXmlPackage package)
         {
             try
             {
-                IPackageProperties p = document.PackageProperties;
+                IPackageProperties p = package.PackageProperties;
                 p.Creator = null;
                 p.Title = null;
                 p.Subject = null;
@@ -140,11 +162,10 @@ namespace PhilterDesktop
 
         // Extended (app.xml) properties: remove the identifying ones (company, manager). Structural
         // fields (application name, etc.) are left so the file stays well-formed.
-        private static void ClearExtendedProperties(WordprocessingDocument document)
+        private static void ClearExtendedProperties(ExtendedFilePropertiesPart? ext)
         {
             try
             {
-                ExtendedFilePropertiesPart? ext = document.ExtendedFilePropertiesPart;
                 if (ext?.Properties is null)
                 {
                     return;
@@ -160,13 +181,13 @@ namespace PhilterDesktop
         }
 
         // Custom properties (custom.xml): drop the whole part, since these are entirely user/org-defined.
-        private static void RemoveCustomProperties(WordprocessingDocument document)
+        private static void RemoveCustomProperties(OpenXmlPackage package, CustomFilePropertiesPart? custom)
         {
             try
             {
-                if (document.CustomFilePropertiesPart is { } custom)
+                if (custom is not null)
                 {
-                    document.DeletePart(custom);
+                    package.DeletePart(custom);
                 }
             }
             catch

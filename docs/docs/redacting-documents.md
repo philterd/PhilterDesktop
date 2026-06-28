@@ -18,7 +18,8 @@ Philter Desktop works with these document types:
 - **Microsoft Word** — files ending in `.docx`.
 - **PDF** — files ending in `.pdf`.
 - **Rich Text** — files ending in `.rtf` (a formatted-text format used by WordPad and many legal and
-  records systems).
+  records systems). A redacted `.rtf` is rebuilt from its visible content, so document metadata it
+  carried (such as the author or title) is dropped automatically.
 - **Spreadsheets** — Excel files ending in `.xlsx` and comma-separated files ending in `.csv`.
 - **Email** — files ending in `.eml` (the standard email format used by most mail programs) and
   `.msg` (the format Microsoft Outlook uses when you save or drag out a message).
@@ -53,7 +54,9 @@ missed. You can turn this off or fine-tune it on the [Settings → PDF](settings
 
 When Philter Desktop redacts an email, it cleans up the **subject line**, the **From / To / Cc**
 addresses, and the **message body** (both plain-text and HTML versions), according to your policy —
-the same way it handles any other document.
+the same way it handles any other document. It also (by default) strips the **technical headers** that
+would otherwise reveal the sender's IP, mail program, and the server delivery trail — see
+[Settings → Email](settings.md#email-tab).
 
 !!! warning "Attachments are not redacted"
     Philter Desktop redacts the email **message itself** — the subject, the addresses, and the body. It
@@ -163,7 +166,7 @@ For Word (`.docx`) files, Philter Desktop also cleans up hidden information in t
 default — the document's **metadata** (author, company, title, keywords, custom properties), reviewer
 **comments**, **tracked changes**, and **hidden text** — so a "redacted" file doesn't quietly leak
 through any of those channels. You can control each of these on the
-[Settings → Microsoft Word](settings.md#microsoft-word-tab) tab.
+[Settings → Microsoft Office](settings.md#microsoft-office-tab) tab.
 
 ## Redact a whole folder at once
 

@@ -452,6 +452,7 @@ namespace PhilterDesktop
             chkScrubHiddenText.Checked = _settings.ScrubWordHiddenText;
             chkOcrScannedPdfs.Checked = _settings.OcrScannedPdfs;
             btnOcrAdvanced.Enabled = _settings.OcrScannedPdfs;
+            chkScrubEmailHeaders.Checked = _settings.ScrubEmailHeaders;
             chkVerifyAfterRedaction.Checked = _settings.VerifyAfterRedaction;
             rdoVerifyBroadPolicy.Checked = _settings.VerificationUseBroadPolicy;
             rdoVerifySamePolicy.Checked = !_settings.VerificationUseBroadPolicy;
@@ -629,6 +630,7 @@ namespace PhilterDesktop
             _settings.ScrubWordTrackedChanges = chkScrubTrackedChanges.Checked;
             _settings.ScrubWordHiddenText = chkScrubHiddenText.Checked;
             _settings.OcrScannedPdfs = chkOcrScannedPdfs.Checked;
+            _settings.ScrubEmailHeaders = chkScrubEmailHeaders.Checked;
             _settings.VerifyAfterRedaction = chkVerifyAfterRedaction.Checked;
             _settings.VerificationUseBroadPolicy = rdoVerifyBroadPolicy.Checked;
             _settings.WatchedFolderMaxConcurrency = int.TryParse(cmbConcurrency.Text, out int n) ? Math.Clamp(n, 1, 4) : 1;

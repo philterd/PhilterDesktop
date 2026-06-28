@@ -320,7 +320,7 @@ namespace PhilterDesktop
             try
             {
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                EmailRedactor.ApplySpans(_sourcePath, output, _spans);
+                EmailRedactor.ApplySpans(_sourcePath, output, _spans, _settings.ScrubEmailHeaders);
                 stopwatch.Stop();
                 RedactionDurationMs = stopwatch.ElapsedMilliseconds;
             }

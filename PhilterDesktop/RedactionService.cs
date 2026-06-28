@@ -153,7 +153,8 @@ namespace PhilterDesktop
             WordScrubOptions wordScrub = WordScrubOptions.None,
             bool ocrScannedPdfs = false,
             double ocrTextCoverage = 0.01,
-            double ocrImageCoverage = 0.5)
+            double ocrImageCoverage = 0.5,
+            bool scrubEmailHeaders = false)
         {
             filterService ??= new FilterService();
 
@@ -202,7 +203,8 @@ namespace PhilterDesktop
                 return await Task.Run(() => EmailRedactor.Redact(
                     inputPath,
                     outputPath,
-                    text => filterService.Filter(policy, context, 0, text)));
+                    text => filterService.Filter(policy, context, 0, text),
+                    scrubEmailHeaders));
             }
 
             if (extension == ".rtf")
@@ -217,11 +219,18 @@ namespace PhilterDesktop
             if (extension == ".xlsx")
             {
                 // Spreadsheet: redact per cell; optionally fully redact selected columns.
-                return await Task.Run(() => XlsxRedactor.Redact(
+                List<RedactionSpanEntity> xlsxSpans = await Task.Run(() => XlsxRedactor.Redact(
                     inputPath,
                     outputPath,
                     text => filterService.Filter(policy, context, 0, text),
                     fullyRedactedColumns));
+                // Strip identifying document properties so the redacted spreadsheet doesn't leak them
+                // (same "Remove document metadata" setting that governs Word).
+                if (wordScrub.HasFlag(WordScrubOptions.Metadata))
+                {
+                    await Task.Run(() => DocumentMetadata.ScrubXlsx(outputPath));
+                }
+                return xlsxSpans;
             }
 
             if (extension == ".csv")
@@ -274,7 +283,8 @@ namespace PhilterDesktop
             IReadOnlyList<RedactionSpanEntity> spans,
             PhileasPolicy? policy = null,
             FilterService? filterService = null,
-            WordScrubOptions wordScrub = WordScrubOptions.None)
+            WordScrubOptions wordScrub = WordScrubOptions.None,
+            bool scrubEmailHeaders = false)
         {
             filterService ??= new FilterService();
             switch (fileType.ToLowerInvariant())
@@ -291,13 +301,17 @@ namespace PhilterDesktop
                     break;
                 case ".eml":
                 case ".msg":
-                    await Task.Run(() => EmailRedactor.ApplySpans(sourcePath, outputPath, spans));
+                    await Task.Run(() => EmailRedactor.ApplySpans(sourcePath, outputPath, spans, scrubEmailHeaders));
                     break;
                 case ".rtf":
                     await Task.Run(() => RtfRedactor.ApplySpans(sourcePath, outputPath, spans));
                     break;
                 case ".xlsx":
                     await Task.Run(() => XlsxRedactor.ApplySpans(sourcePath, outputPath, spans));
+                    if (wordScrub.HasFlag(WordScrubOptions.Metadata))
+                    {
+                        await Task.Run(() => DocumentMetadata.ScrubXlsx(outputPath));
+                    }
                     break;
                 case ".csv":
                     await Task.Run(() => CsvRedactor.ApplySpans(sourcePath, outputPath, spans));

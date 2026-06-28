@@ -81,7 +81,8 @@ namespace PhilterDesktop
                     wordScrub: DocumentMetadata.OptionsFor(settings),
                     ocrScannedPdfs: settings.OcrScannedPdfs,
                     ocrTextCoverage: settings.OcrTextCoverageThreshold,
-                    ocrImageCoverage: settings.OcrImageCoverageThreshold);
+                    ocrImageCoverage: settings.OcrImageCoverageThreshold,
+                    scrubEmailHeaders: settings.ScrubEmailHeaders);
 
                 // Self-check: re-scan the written output for residual PII (the false-negative case).
                 // Optionally with a broad "all detectors on" policy to catch types the redaction policy

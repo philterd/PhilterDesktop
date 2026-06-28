@@ -49,7 +49,7 @@ namespace PhilterDesktop
         /// writes the result as <c>.eml</c> to <paramref name="outputPath"/>, and returns the applied
         /// spans (field-indexed). The input file is left untouched.
         /// </summary>
-        public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter)
+        public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool scrubHeaders = false)
         {
             MimeMessage message = Load(inputPath);
 
@@ -89,6 +89,10 @@ namespace PhilterDesktop
                 fieldIndex++;
             }
 
+            if (scrubHeaders)
+            {
+                RemoveTechnicalHeaders(message);
+            }
             Save(message, outputPath);
             return captured;
         }
@@ -148,7 +152,7 @@ namespace PhilterDesktop
         /// <see cref="RedactionSpanEntity.ParagraphIndex"/> (the field index) plus character start/stop
         /// offsets within that field. Used by the Modify Redaction feature.
         /// </summary>
-        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans)
+        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, bool scrubHeaders = false)
         {
             MimeMessage message = Load(inputPath);
 
@@ -181,7 +185,43 @@ namespace PhilterDesktop
                 fieldIndex++;
             }
 
+            if (scrubHeaders)
+            {
+                RemoveTechnicalHeaders(message);
+            }
             Save(message, outputPath);
+        }
+
+        // Identifying technical headers removed when email-header scrubbing is on: the originating IP,
+        // the sending mail client, and the server-hop trail. From/To/Cc/Subject/Date and the structural
+        // MIME/Content headers are kept (they're needed to render, and the address fields are redacted
+        // for PII separately).
+        private static readonly HashSet<string> TechnicalHeaders = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Received", "Return-Path", "Message-Id", "User-Agent", "X-Mailer", "X-MimeOLE",
+            "DKIM-Signature", "Authentication-Results", "Received-SPF", "Autocrypt"
+        };
+
+        private static void RemoveTechnicalHeaders(MimeMessage message)
+        {
+            try
+            {
+                HeaderList headers = message.Headers;
+                for (int i = headers.Count - 1; i >= 0; i--)
+                {
+                    string field = headers[i].Field;
+                    if (TechnicalHeaders.Contains(field)
+                        || field.StartsWith("X-", StringComparison.OrdinalIgnoreCase)
+                        || field.StartsWith("ARC-", StringComparison.OrdinalIgnoreCase))
+                    {
+                        headers.RemoveAt(i);
+                    }
+                }
+            }
+            catch
+            {
+                // best effort — a header quirk must never fail the redaction
+            }
         }
 
         // Replaces the given (non-overlapping) ranges in the source text, working back-to-front so
