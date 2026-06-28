@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <!-- Measure only the application assembly. -->
+          <Include>[PhilterDesktop]*</Include>
+          <!-- What's excluded from the coverage metric and why:
+               - Auto-generated code: WinForms designers and *.g.cs (WinRT interop, app config).
+               - The presentation layer (*Form/*Dialog/*View, plus Contexts/RedactDocuments which are
+                 forms without the suffix, and ModernTheme UI theming). These are validated by the
+                 construction smoke tests (FormSmokeTests); their event-handler logic sits behind UI
+                 interaction and blocking dialogs that can't be driven headlessly, so it is covered by
+                 manual/UI QA rather than unit tests.
+               - OS-interop / entry-point shims (Program, AppInstance single-instance, ShellContextMenu
+                 Win32, the CLI entry CommandLineRedactor/CliBatch, and Logger file I/O), which require a
+                 running process/console/OS to exercise.
+               The metric therefore reflects the testable business-logic layer. -->
+          <ExcludeByFile>**/*.Designer.cs,**/*.g.cs,**/*Form.cs,**/*Dialog.cs,**/*View.cs,**/Program.cs,**/Contexts.cs,**/RedactDocuments.cs,**/ModernTheme.cs,**/AppInstance.cs,**/ShellContextMenu.cs,**/CommandLineRedactor.cs,**/CliBatch.cs,**/Logger.cs</ExcludeByFile>
+          <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+          <SkipAutoProps>true</SkipAutoProps>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

@@ -59,7 +59,12 @@ $ErrorActionPreference = 'Stop'
 
 $repo = Split-Path -Parent $PSScriptRoot
 $proj = Join-Path $repo "PhilterDesktop\PhilterDesktop.csproj"
-$publishDir = Join-Path $repo "PhilterDesktop\bin\Release\net10.0-windows\win-x64\publish"
+
+# Derive the target framework from the csproj so the publish path tracks TFM changes (e.g. the
+# Windows SDK version bump for WinRT OCR) instead of being hard-coded.
+$tfm = ([xml](Get-Content $proj)).Project.PropertyGroup.TargetFramework | Where-Object { $_ } | Select-Object -First 1
+if (-not $tfm) { throw "Could not read <TargetFramework> from $proj" }
+$publishDir = Join-Path $repo "PhilterDesktop\bin\Release\$tfm\win-x64\publish"
 
 # ----- Code-signing helpers ---------------------------------------------------------------------
 

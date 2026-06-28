@@ -63,5 +63,27 @@ namespace PhilterDesktop.Tests
             TermFileImporter.AppendNew(box, new[] { "One", "Two" });
             Assert.Equal(new[] { "One", "Two" }, box.Text.Replace("\r\n", "\n").Split('\n', StringSplitOptions.RemoveEmptyEntries));
         }
+
+        [Fact]
+        public void AppendNew_NothingNew_ReturnsZero()
+        {
+            using var box = new TextBox { Multiline = true, Text = "Acme" + Environment.NewLine + "Beta" };
+            Assert.Equal(0, TermFileImporter.AppendNew(box, new[] { "acme", "BETA" }));
+        }
+
+        [Fact]
+        public void ParseFile_ReadsTermsFromDisk()
+        {
+            string path = Path.Combine(Path.GetTempPath(), "philter-terms-" + Guid.NewGuid().ToString("N") + ".txt");
+            File.WriteAllText(path, "One\nTwo\nOne\n");
+            try
+            {
+                Assert.Equal(new[] { "One", "Two" }, TermFileImporter.ParseFile(path));
+            }
+            finally
+            {
+                File.Delete(path);
+            }
+        }
     }
 }

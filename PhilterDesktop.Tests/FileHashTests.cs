@@ -45,5 +45,20 @@ namespace PhilterDesktop.Tests
             Assert.Equal("(file not available)", FileHash.Sha256OrUnavailable(missing));
             Assert.Equal("(file not available)", FileHash.Sha256OrUnavailable(""));
         }
+
+        [Fact]
+        public void Sha256OrUnavailable_PresentFile_ReturnsHash()
+        {
+            string path = Path.Combine(Path.GetTempPath(), "philter-hash-" + Guid.NewGuid().ToString("N") + ".txt");
+            File.WriteAllBytes(path, Encoding.ASCII.GetBytes("abc"));
+            try
+            {
+                Assert.Equal(FileHash.Sha256(path), FileHash.Sha256OrUnavailable(path));
+            }
+            finally
+            {
+                File.Delete(path);
+            }
+        }
     }
 }
