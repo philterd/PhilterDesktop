@@ -92,7 +92,7 @@ namespace PhilterDesktop
         // touching the real one. The running app always uses the parameterless/bool constructors.
         internal MainForm(LiteDatabase database, bool startMinimized)
         {
-            InitializeComponent();
+            BuildUi();
             ModernTheme.Apply(this);
             InitializeQueueUi();
             InitializeTray();
@@ -159,6 +159,481 @@ namespace PhilterDesktop
             // Load the on-device name model in the background now, so the first redaction/preview that
             // uses it doesn't stall for tens of seconds loading it on demand.
             SharedFilterService.WarmUp();
+        }
+
+        // --- UI construction (hand-written; MainForm has no Windows Forms designer) -------------------
+        //
+        // The whole form is built in code, split into focused builders so each region is easy to find.
+        // BuildUi is the single entry point the constructor calls; it mirrors what a designer-generated
+        // InitializeComponent would do (suspend layout, create controls, add them, resume), but stays in
+        // one consistent style with the other Build* helpers (BuildFilterBar, BuildTrayMenu, etc.).
+        private void BuildUi()
+        {
+            components = new System.ComponentModel.Container();
+            SuspendLayout();
+
+            BuildSharedComponents();
+            BuildMenuBar();
+            BuildToolbar();
+            BuildQueueContextMenu();
+            BuildQueueList();
+            BuildStatusBar();
+            BuildFormShell();
+
+            // The form icon is applied by ModernTheme.Apply(this) right after construction, so it is not
+            // set here.
+            ResumeLayout(false);
+            PerformLayout();
+        }
+
+        // Container-owned, non-visual components (the auto-refresh timer and the list view's image list).
+        private void BuildSharedComponents()
+        {
+            imageList1 = new ImageList(components)
+            {
+                ColorDepth = ColorDepth.Depth32Bit,
+                ImageSize = new Size(16, 16),
+                TransparentColor = Color.Transparent
+            };
+
+            redactionQueueTimer = new System.Windows.Forms.Timer(components) { Interval = 15000 };
+            redactionQueueTimer.Tick += RedactionQueueTimer_Tick;
+        }
+
+        // The top menu bar: File (clear history, exit) and Help (help, updates, about). The "More from
+        // Philterd" submenu and the Help-item handler are wired separately in the constructor flow.
+        private void BuildMenuBar()
+        {
+            menuStrip1 = new MenuStrip();
+            fileToolStripMenuItem = new ToolStripMenuItem();
+            clearRedactionHistoryToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparatorFile = new ToolStripSeparator();
+            exitToolStripMenuItem = new ToolStripMenuItem();
+            helpToolStripMenuItem = new ToolStripMenuItem();
+            helpToolStripMenuItem1 = new ToolStripMenuItem();
+            toolStripSeparator1 = new ToolStripSeparator();
+            checkForUpdatesToolStripMenuItem = new ToolStripMenuItem();
+            aboutToolStripMenuItem = new ToolStripMenuItem();
+
+            menuStrip1.SuspendLayout();
+
+            menuStrip1.ImageScalingSize = new Size(24, 24);
+            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, helpToolStripMenuItem });
+            menuStrip1.Location = new Point(0, 0);
+            menuStrip1.Name = "menuStrip1";
+            menuStrip1.Padding = new Padding(4, 1, 0, 1);
+            menuStrip1.Size = new Size(866, 24);
+            menuStrip1.TabIndex = 1;
+            menuStrip1.Text = "menuStrip1";
+
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { clearRedactionHistoryToolStripMenuItem, toolStripSeparatorFile, exitToolStripMenuItem });
+            fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            fileToolStripMenuItem.Size = new Size(37, 22);
+            fileToolStripMenuItem.Text = "File";
+
+            clearRedactionHistoryToolStripMenuItem.Name = "clearRedactionHistoryToolStripMenuItem";
+            clearRedactionHistoryToolStripMenuItem.Size = new Size(207, 22);
+            clearRedactionHistoryToolStripMenuItem.Text = "Clear Redaction History...";
+            clearRedactionHistoryToolStripMenuItem.Click += clearRedactionHistoryToolStripMenuItem_Click;
+
+            toolStripSeparatorFile.Name = "toolStripSeparatorFile";
+            toolStripSeparatorFile.Size = new Size(204, 6);
+
+            exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            exitToolStripMenuItem.Size = new Size(207, 22);
+            exitToolStripMenuItem.Text = "Exit";
+            exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
+
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { helpToolStripMenuItem1, toolStripSeparator1, checkForUpdatesToolStripMenuItem, aboutToolStripMenuItem });
+            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            helpToolStripMenuItem.Size = new Size(44, 22);
+            helpToolStripMenuItem.Text = "Help";
+
+            helpToolStripMenuItem1.Name = "helpToolStripMenuItem1";
+            helpToolStripMenuItem1.Size = new Size(180, 22);
+            helpToolStripMenuItem1.Text = "Help";
+
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new Size(177, 6);
+
+            checkForUpdatesToolStripMenuItem.Name = "checkForUpdatesToolStripMenuItem";
+            checkForUpdatesToolStripMenuItem.Size = new Size(180, 22);
+            checkForUpdatesToolStripMenuItem.Text = "Check for Updates...";
+            checkForUpdatesToolStripMenuItem.Click += checkForUpdatesToolStripMenuItem_Click;
+
+            aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            aboutToolStripMenuItem.Size = new Size(180, 22);
+            aboutToolStripMenuItem.Text = "About...";
+            aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
+
+            menuStrip1.ResumeLayout(false);
+            menuStrip1.PerformLayout();
+        }
+
+        // The main toolbar: the Redact split button (with its dropdown), and the Policies/Contexts/Lists,
+        // Settings, Refresh, and Help buttons. Button glyphs are assigned later by ApplyToolbarIcons.
+        private void BuildToolbar()
+        {
+            toolStrip1 = new ToolStrip();
+            toolStripButtonRedact = new ToolStripSplitButton();
+            redactDropDownItem = new ToolStripMenuItem();
+            previewDropDownItem = new ToolStripMenuItem();
+            findRedactDropDownItem = new ToolStripMenuItem();
+            spreadsheetDropDownItem = new ToolStripMenuItem();
+            folderDropDownItem = new ToolStripMenuItem();
+            toolStripSeparator3 = new ToolStripSeparator();
+            policiesToolStripButton = new ToolStripButton();
+            contextsToolStripButton = new ToolStripButton();
+            listsToolStripButton = new ToolStripButton();
+            toolStripSeparator9 = new ToolStripSeparator();
+            settingsToolStripButton = new ToolStripButton();
+            toolStripSeparator6 = new ToolStripSeparator();
+            refreshToolStripButton = new ToolStripButton();
+            toolStripSeparator4 = new ToolStripSeparator();
+            HelpToolStripButton = new ToolStripButton();
+
+            toolStrip1.SuspendLayout();
+
+            toolStrip1.GripStyle = ToolStripGripStyle.Hidden;
+            toolStrip1.ImageScalingSize = new Size(24, 24);
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonRedact, toolStripSeparator3, policiesToolStripButton, contextsToolStripButton, listsToolStripButton, toolStripSeparator9, settingsToolStripButton, toolStripSeparator6, refreshToolStripButton, toolStripSeparator4, HelpToolStripButton });
+            toolStrip1.Location = new Point(0, 24);
+            toolStrip1.Name = "toolStrip1";
+            toolStrip1.Padding = new Padding(0, 0, 2, 0);
+            toolStrip1.Size = new Size(866, 25);
+            toolStrip1.TabIndex = 4;
+            toolStrip1.Text = "toolStrip1";
+
+            toolStripButtonRedact.AutoToolTip = false;
+            toolStripButtonRedact.DropDownItems.AddRange(new ToolStripItem[] { redactDropDownItem, previewDropDownItem, findRedactDropDownItem, spreadsheetDropDownItem, folderDropDownItem });
+            toolStripButtonRedact.ImageTransparentColor = Color.Magenta;
+            toolStripButtonRedact.Name = "toolStripButtonRedact";
+            toolStripButtonRedact.Size = new Size(59, 22);
+            toolStripButtonRedact.Text = "Redact";
+            toolStripButtonRedact.TextImageRelation = TextImageRelation.ImageAboveText;
+            toolStripButtonRedact.ToolTipText = "Add documents to the redaction queue (click the arrow for Preview and Find & Redact)";
+            toolStripButtonRedact.ButtonClick += toolStripButtonRedactDocuments_Click;
+
+            redactDropDownItem.Name = "redactDropDownItem";
+            redactDropDownItem.Size = new Size(189, 22);
+            redactDropDownItem.Text = "Redact...";
+            redactDropDownItem.ToolTipText = "Add documents to the redaction queue";
+            redactDropDownItem.Click += toolStripButtonRedactDocuments_Click;
+
+            previewDropDownItem.Name = "previewDropDownItem";
+            previewDropDownItem.Size = new Size(189, 22);
+            previewDropDownItem.Text = "Redact with Preview...";
+            previewDropDownItem.Click += redactPreviewToolStripMenuItem_Click;
+
+            findRedactDropDownItem.Name = "findRedactDropDownItem";
+            findRedactDropDownItem.Size = new Size(189, 22);
+            findRedactDropDownItem.Text = "Find && Redact...";
+            findRedactDropDownItem.Click += findAndRedactToolStripMenuItem_Click;
+
+            spreadsheetDropDownItem.Name = "spreadsheetDropDownItem";
+            spreadsheetDropDownItem.Size = new Size(189, 22);
+            spreadsheetDropDownItem.Text = "Redact Spreadsheet...";
+            spreadsheetDropDownItem.Click += redactSpreadsheetToolStripMenuItem_Click;
+
+            folderDropDownItem.Name = "folderDropDownItem";
+            folderDropDownItem.Size = new Size(189, 22);
+            folderDropDownItem.Text = "Redact Folder...";
+            folderDropDownItem.ToolTipText = "Add every supported file in a folder to the redaction queue";
+            folderDropDownItem.Click += redactFolderToolStripMenuItem_Click;
+
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new Size(6, 25);
+
+            policiesToolStripButton.AutoToolTip = false;
+            policiesToolStripButton.ImageTransparentColor = Color.Magenta;
+            policiesToolStripButton.Name = "policiesToolStripButton";
+            policiesToolStripButton.Size = new Size(51, 22);
+            policiesToolStripButton.Text = "Policies";
+            policiesToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
+            policiesToolStripButton.ToolTipText = "Create and edit redaction policies";
+            policiesToolStripButton.Click += policiesToolStripButton_Click;
+
+            contextsToolStripButton.AutoToolTip = false;
+            contextsToolStripButton.ImageTransparentColor = Color.Magenta;
+            contextsToolStripButton.Name = "contextsToolStripButton";
+            contextsToolStripButton.Size = new Size(57, 22);
+            contextsToolStripButton.Text = "Contexts";
+            contextsToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
+            contextsToolStripButton.ToolTipText = "Manage contexts for consistent replacements";
+            contextsToolStripButton.Click += contextsToolStripButton_Click;
+
+            listsToolStripButton.AutoToolTip = false;
+            listsToolStripButton.ImageTransparentColor = Color.Magenta;
+            listsToolStripButton.Name = "listsToolStripButton";
+            listsToolStripButton.Size = new Size(34, 22);
+            listsToolStripButton.Text = "Lists";
+            listsToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
+            listsToolStripButton.ToolTipText = "Edit global Always Redact / Always Ignore lists (apply to every policy)";
+            listsToolStripButton.Click += listsToolStripButton_Click;
+
+            toolStripSeparator9.Name = "toolStripSeparator9";
+            toolStripSeparator9.Size = new Size(6, 25);
+
+            settingsToolStripButton.AutoToolTip = false;
+            settingsToolStripButton.ImageTransparentColor = Color.Magenta;
+            settingsToolStripButton.Name = "settingsToolStripButton";
+            settingsToolStripButton.Size = new Size(53, 22);
+            settingsToolStripButton.Text = "Settings";
+            settingsToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
+            settingsToolStripButton.ToolTipText = "Open settings (output location, logging, watched folders, security)";
+            settingsToolStripButton.Click += settingsToolStripButton_Click;
+
+            toolStripSeparator6.Name = "toolStripSeparator6";
+            toolStripSeparator6.Size = new Size(6, 25);
+
+            refreshToolStripButton.AutoToolTip = false;
+            refreshToolStripButton.ImageTransparentColor = Color.Magenta;
+            refreshToolStripButton.Name = "refreshToolStripButton";
+            refreshToolStripButton.Size = new Size(50, 22);
+            refreshToolStripButton.Text = "Refresh";
+            refreshToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
+            refreshToolStripButton.ToolTipText = "Refresh the queue (F5)";
+            refreshToolStripButton.Click += refreshToolStripMenuItem_Click;
+
+            toolStripSeparator4.Name = "toolStripSeparator4";
+            toolStripSeparator4.Size = new Size(6, 25);
+
+            HelpToolStripButton.AutoToolTip = false;
+            HelpToolStripButton.ImageTransparentColor = Color.Magenta;
+            HelpToolStripButton.Name = "HelpToolStripButton";
+            HelpToolStripButton.Size = new Size(36, 22);
+            HelpToolStripButton.Text = "Help";
+            HelpToolStripButton.TextImageRelation = TextImageRelation.ImageAboveText;
+            HelpToolStripButton.ToolTipText = "Open the help documentation";
+
+            toolStrip1.ResumeLayout(false);
+            toolStrip1.PerformLayout();
+        }
+
+        // The right-click menu for the queue list (add/redact, remove, open, modify/verify/report,
+        // refresh). Item enable/disable is handled by ContextMenuStrip1_Opening, wired in InitializeQueueUi.
+        private void BuildQueueContextMenu()
+        {
+            contextMenuStrip1 = new ContextMenuStrip(components);
+            addFilesToRedactToolStripMenuItem = new ToolStripMenuItem();
+            redactPreviewToolStripMenuItem = new ToolStripMenuItem();
+            findAndRedactToolStripMenuItem = new ToolStripMenuItem();
+            redactSpreadsheetToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator2 = new ToolStripSeparator();
+            removeToolStripMenuItem = new ToolStripMenuItem();
+            removeAllToolStripMenuItem = new ToolStripMenuItem();
+            removeCompletedToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator5 = new ToolStripSeparator();
+            openRedactedFileToolStripMenuItem = new ToolStripMenuItem();
+            openOriginalFileToolStripMenuItem = new ToolStripMenuItem();
+            openContainingFolderToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator8 = new ToolStripSeparator();
+            modifyRedactionToolStripMenuItem = new ToolStripMenuItem();
+            viewDiffToolStripMenuItem = new ToolStripMenuItem();
+            viewDetailsToolStripMenuItem = new ToolStripMenuItem();
+            exportExplanationToolStripMenuItem = new ToolStripMenuItem();
+            verifyRedactionToolStripMenuItem = new ToolStripMenuItem();
+            verifyWithSamePolicyToolStripMenuItem = new ToolStripMenuItem();
+            verifyWithBroadPolicyToolStripMenuItem = new ToolStripMenuItem();
+            generateReportToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator7 = new ToolStripSeparator();
+            refreshToolStripMenuItem = new ToolStripMenuItem();
+
+            contextMenuStrip1.SuspendLayout();
+
+            contextMenuStrip1.ImageScalingSize = new Size(24, 24);
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { addFilesToRedactToolStripMenuItem, redactPreviewToolStripMenuItem, findAndRedactToolStripMenuItem, redactSpreadsheetToolStripMenuItem, toolStripSeparator2, removeToolStripMenuItem, removeAllToolStripMenuItem, removeCompletedToolStripMenuItem, toolStripSeparator5, openRedactedFileToolStripMenuItem, openOriginalFileToolStripMenuItem, openContainingFolderToolStripMenuItem, toolStripSeparator8, modifyRedactionToolStripMenuItem, viewDiffToolStripMenuItem, viewDetailsToolStripMenuItem, exportExplanationToolStripMenuItem, verifyRedactionToolStripMenuItem, generateReportToolStripMenuItem, toolStripSeparator7, refreshToolStripMenuItem });
+            contextMenuStrip1.Name = "contextMenuStrip1";
+            contextMenuStrip1.Size = new Size(278, 314);
+
+            addFilesToRedactToolStripMenuItem.Name = "addFilesToRedactToolStripMenuItem";
+            addFilesToRedactToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+O";
+            addFilesToRedactToolStripMenuItem.Size = new Size(277, 22);
+            addFilesToRedactToolStripMenuItem.Text = "Add Files to Redact...";
+            addFilesToRedactToolStripMenuItem.Click += addFilesToRedactToolStripMenuItem_Click;
+
+            redactPreviewToolStripMenuItem.Name = "redactPreviewToolStripMenuItem";
+            redactPreviewToolStripMenuItem.Size = new Size(277, 22);
+            redactPreviewToolStripMenuItem.Text = "Redact with Preview... (.txt, .docx, .pdf)";
+            redactPreviewToolStripMenuItem.Click += redactPreviewToolStripMenuItem_Click;
+
+            findAndRedactToolStripMenuItem.Name = "findAndRedactToolStripMenuItem";
+            findAndRedactToolStripMenuItem.Size = new Size(277, 22);
+            findAndRedactToolStripMenuItem.Text = "Find && Redact... (redact specific text)";
+            findAndRedactToolStripMenuItem.Click += findAndRedactToolStripMenuItem_Click;
+
+            redactSpreadsheetToolStripMenuItem.Name = "redactSpreadsheetToolStripMenuItem";
+            redactSpreadsheetToolStripMenuItem.Size = new Size(277, 22);
+            redactSpreadsheetToolStripMenuItem.Text = "Redact Spreadsheet... (.xlsx, .csv)";
+            redactSpreadsheetToolStripMenuItem.Click += redactSpreadsheetToolStripMenuItem_Click;
+
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new Size(274, 6);
+
+            removeToolStripMenuItem.Name = "removeToolStripMenuItem";
+            removeToolStripMenuItem.ShortcutKeyDisplayString = "Del";
+            removeToolStripMenuItem.Size = new Size(277, 22);
+            removeToolStripMenuItem.Text = "Remove...";
+            removeToolStripMenuItem.Click += removeToolStripMenuItem_Click;
+
+            removeAllToolStripMenuItem.Name = "removeAllToolStripMenuItem";
+            removeAllToolStripMenuItem.Size = new Size(277, 22);
+            removeAllToolStripMenuItem.Text = "Remove All...";
+            removeAllToolStripMenuItem.Click += removeAllToolStripMenuItem_Click;
+
+            removeCompletedToolStripMenuItem.Name = "removeCompletedToolStripMenuItem";
+            removeCompletedToolStripMenuItem.Size = new Size(277, 22);
+            removeCompletedToolStripMenuItem.Text = "Remove Completed...";
+            removeCompletedToolStripMenuItem.Click += removeCompletedToolStripMenuItem_Click;
+
+            toolStripSeparator5.Name = "toolStripSeparator5";
+            toolStripSeparator5.Size = new Size(274, 6);
+
+            openRedactedFileToolStripMenuItem.Name = "openRedactedFileToolStripMenuItem";
+            openRedactedFileToolStripMenuItem.ShortcutKeyDisplayString = "Enter";
+            openRedactedFileToolStripMenuItem.Size = new Size(277, 22);
+            openRedactedFileToolStripMenuItem.Text = "Open Redacted File...";
+            openRedactedFileToolStripMenuItem.Click += openRedactedFileToolStripMenuItem_Click;
+
+            openOriginalFileToolStripMenuItem.Name = "openOriginalFileToolStripMenuItem";
+            openOriginalFileToolStripMenuItem.Size = new Size(277, 22);
+            openOriginalFileToolStripMenuItem.Text = "Open Original File...";
+            openOriginalFileToolStripMenuItem.Click += openOriginalFileToolStripMenuItem_Click;
+
+            openContainingFolderToolStripMenuItem.Name = "openContainingFolderToolStripMenuItem";
+            openContainingFolderToolStripMenuItem.Size = new Size(277, 22);
+            openContainingFolderToolStripMenuItem.Text = "Open Containing Folder";
+            openContainingFolderToolStripMenuItem.Click += openContainingFolderToolStripMenuItem_Click;
+
+            toolStripSeparator8.Name = "toolStripSeparator8";
+            toolStripSeparator8.Size = new Size(274, 6);
+
+            modifyRedactionToolStripMenuItem.Name = "modifyRedactionToolStripMenuItem";
+            modifyRedactionToolStripMenuItem.Size = new Size(277, 22);
+            modifyRedactionToolStripMenuItem.Text = "Modify Redaction...";
+            modifyRedactionToolStripMenuItem.Click += modifyRedactionToolStripMenuItem_Click;
+
+            viewDiffToolStripMenuItem.Name = "viewDiffToolStripMenuItem";
+            viewDiffToolStripMenuItem.Size = new Size(277, 22);
+            viewDiffToolStripMenuItem.Text = "View Diff...";
+            viewDiffToolStripMenuItem.Click += viewDiffToolStripMenuItem_Click;
+
+            viewDetailsToolStripMenuItem.Name = "viewDetailsToolStripMenuItem";
+            viewDetailsToolStripMenuItem.Size = new Size(277, 22);
+            viewDetailsToolStripMenuItem.Text = "View Details...";
+            viewDetailsToolStripMenuItem.Click += viewDetailsToolStripMenuItem_Click;
+
+            exportExplanationToolStripMenuItem.Name = "exportExplanationToolStripMenuItem";
+            exportExplanationToolStripMenuItem.Size = new Size(277, 22);
+            exportExplanationToolStripMenuItem.Text = "Export Explanation (JSON)...";
+            exportExplanationToolStripMenuItem.Click += exportExplanationToolStripMenuItem_Click;
+
+            verifyRedactionToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { verifyWithSamePolicyToolStripMenuItem, verifyWithBroadPolicyToolStripMenuItem });
+            verifyRedactionToolStripMenuItem.Name = "verifyRedactionToolStripMenuItem";
+            verifyRedactionToolStripMenuItem.Size = new Size(277, 22);
+            verifyRedactionToolStripMenuItem.Text = "Verify Redaction";
+            verifyRedactionToolStripMenuItem.ToolTipText = "Re-scan the redacted output for any PII that may remain";
+
+            verifyWithSamePolicyToolStripMenuItem.Name = "verifyWithSamePolicyToolStripMenuItem";
+            verifyWithSamePolicyToolStripMenuItem.Size = new Size(220, 22);
+            verifyWithSamePolicyToolStripMenuItem.Text = "With same policy";
+            verifyWithSamePolicyToolStripMenuItem.ToolTipText = "Re-scan using the same policy that redacted this document";
+            verifyWithSamePolicyToolStripMenuItem.Click += verifyWithSamePolicyToolStripMenuItem_Click;
+
+            verifyWithBroadPolicyToolStripMenuItem.Name = "verifyWithBroadPolicyToolStripMenuItem";
+            verifyWithBroadPolicyToolStripMenuItem.Size = new Size(220, 22);
+            verifyWithBroadPolicyToolStripMenuItem.Text = "With broad policy";
+            verifyWithBroadPolicyToolStripMenuItem.ToolTipText = "Re-scan with every detector on (may flag items you chose not to redact)";
+            verifyWithBroadPolicyToolStripMenuItem.Click += verifyWithBroadPolicyToolStripMenuItem_Click;
+
+            generateReportToolStripMenuItem.Name = "generateReportToolStripMenuItem";
+            generateReportToolStripMenuItem.Size = new Size(277, 22);
+            generateReportToolStripMenuItem.Text = "Generate Report...";
+            generateReportToolStripMenuItem.ToolTipText = "Create a shareable PDF/HTML summary of this redaction (no original text)";
+            generateReportToolStripMenuItem.Click += generateReportToolStripMenuItem_Click;
+
+            toolStripSeparator7.Name = "toolStripSeparator7";
+            toolStripSeparator7.Size = new Size(274, 6);
+
+            refreshToolStripMenuItem.Name = "refreshToolStripMenuItem";
+            refreshToolStripMenuItem.ShortcutKeyDisplayString = "F5";
+            refreshToolStripMenuItem.Size = new Size(277, 22);
+            refreshToolStripMenuItem.Text = "Refresh";
+            refreshToolStripMenuItem.Click += refreshToolStripMenuItem_Click;
+
+            contextMenuStrip1.ResumeLayout(false);
+        }
+
+        // The redaction queue list (Details view, five columns). Owner-drawing, sorting, drag-and-drop,
+        // and the taller row height are configured later in InitializeQueueUi.
+        private void BuildQueueList()
+        {
+            listView1 = new ListView();
+            columnHeader1 = new ColumnHeader();
+            columnHeader2 = new ColumnHeader();
+            columnHeader4 = new ColumnHeader();
+            columnHeader3 = new ColumnHeader();
+            columnHeader5 = new ColumnHeader();
+
+            listView1.AccessibleDescription = "Documents to redact, with their status, policy, and context";
+            listView1.AccessibleName = "Redaction queue";
+            listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader2, columnHeader4, columnHeader3, columnHeader5 });
+            listView1.ContextMenuStrip = contextMenuStrip1;
+            listView1.Dock = DockStyle.Fill;
+            listView1.FullRowSelect = true;
+            listView1.GridLines = true;
+            listView1.LargeImageList = imageList1;
+            listView1.Location = new Point(0, 49);
+            listView1.Margin = new Padding(2);
+            listView1.Name = "listView1";
+            listView1.Size = new Size(866, 268);
+            listView1.SmallImageList = imageList1;
+            listView1.TabIndex = 3;
+            listView1.UseCompatibleStateImageBehavior = false;
+            listView1.View = View.Details;
+
+            columnHeader1.Text = "File Name";
+            columnHeader1.Width = 350;
+            columnHeader2.Text = "Status";
+            columnHeader2.Width = 180;
+            columnHeader4.Text = "Policy";
+            columnHeader4.Width = 120;
+            columnHeader3.Text = "Context";
+            columnHeader3.Width = 120;
+            columnHeader5.Text = "Verification";
+            columnHeader5.Width = 130;
+        }
+
+        // The bottom status strip. Its live labels (queue summary, review reminder) are added in the
+        // constructor flow.
+        private void BuildStatusBar()
+        {
+            statusStrip1 = new StatusStrip();
+            statusStrip1.ImageScalingSize = new Size(24, 24);
+            statusStrip1.Location = new Point(0, 317);
+            statusStrip1.Name = "statusStrip1";
+            statusStrip1.Size = new Size(866, 22);
+            statusStrip1.TabIndex = 3;
+            statusStrip1.Text = "statusStrip1";
+        }
+
+        // Form-level properties and the top-level control z-order (added list-first so it fills inside
+        // the docked status/tool/menu strips).
+        private void BuildFormShell()
+        {
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(866, 339);
+            Controls.Add(listView1);
+            Controls.Add(statusStrip1);
+            Controls.Add(toolStrip1);
+            Controls.Add(menuStrip1);
+            MainMenuStrip = menuStrip1;
+            MinimumSize = new Size(722, 364);
+            Name = "MainForm";
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "Philter Desktop";
+            Load += Form1_Load;
         }
 
         // Restore the remembered window size/position, sort, and column widths. Best-effort: a bad or
@@ -450,7 +925,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void Form1_Load(object? sender, EventArgs e)
         {
             EnsureStarted();
         }
@@ -1211,7 +1686,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exitToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (_loggingEnabled)
             {
@@ -1221,7 +1696,7 @@ namespace PhilterDesktop
             Application.Exit();
         }
 
-        private async void checkForUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void checkForUpdatesToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (_loggingEnabled)
             {
@@ -1280,7 +1755,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        private void aboutToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (_loggingEnabled)
             {
@@ -1316,7 +1791,7 @@ namespace PhilterDesktop
         }
 
 
-        private void policiesToolStripMenuItem_Click(object sender, EventArgs e)
+        private void policiesToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (_loggingEnabled)
             {
@@ -1327,7 +1802,7 @@ namespace PhilterDesktop
             f.ShowDialog();
         }
 
-        private void redactionContextsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void redactionContextsToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (_loggingEnabled)
             {
@@ -1338,22 +1813,22 @@ namespace PhilterDesktop
             redactionContextsForm.ShowDialog();
         }
 
-        private void settingsToolStripMenuItem_Click(object sender, EventArgs e) => OpenSettings();
+        private void settingsToolStripMenuItem_Click(object? sender, EventArgs e) => OpenSettings();
 
-        private void toolStripButtonRedactDocuments_Click(object sender, EventArgs e)
+        private void toolStripButtonRedactDocuments_Click(object? sender, EventArgs e)
         {
             var redactDocumentsForm = new RedactDocuments(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled, _settingsRepository);
             redactDocumentsForm.ShowDialog();
             LoadRedactionQueue();
         }
 
-        private void policiesToolStripButton_Click(object sender, EventArgs e)
+        private void policiesToolStripButton_Click(object? sender, EventArgs e)
         {
             var f = new PolicyEditorForm(_policyRepository);
             f.ShowDialog();
         }
 
-        private void contextsToolStripButton_Click(object sender, EventArgs e)
+        private void contextsToolStripButton_Click(object? sender, EventArgs e)
         {
             if (_loggingEnabled)
             {
@@ -1364,7 +1839,7 @@ namespace PhilterDesktop
             redactionContextsForm.ShowDialog();
         }
 
-        private void listsToolStripButton_Click(object sender, EventArgs e)
+        private void listsToolStripButton_Click(object? sender, EventArgs e)
         {
             SettingsEntity settings = _settingsRepository.GetSettings();
             using var form = new GlobalListsForm(settings.GlobalAlwaysRedact, settings.GlobalAlwaysIgnore);
@@ -1377,7 +1852,7 @@ namespace PhilterDesktop
             _settingsRepository.SaveSettings(settings);
         }
 
-        private void settingsToolStripButton_Click(object sender, EventArgs e) => OpenSettings();
+        private void settingsToolStripButton_Click(object? sender, EventArgs e) => OpenSettings();
 
         private void OpenSettings()
         {
@@ -1429,12 +1904,12 @@ namespace PhilterDesktop
             }
         }
 
-        private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
+        private void refreshToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             LoadRedactionQueue();
         }
 
-        private void modifyRedactionToolStripMenuItem_Click(object sender, EventArgs e)
+        private void modifyRedactionToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
             {
@@ -1487,7 +1962,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void clearRedactionHistoryToolStripMenuItem_Click(object sender, EventArgs e)
+        private void clearRedactionHistoryToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             int versionCount = _redactionVersionRepository.Count();
             int completed = listView1.Items.Cast<ListViewItem>()
@@ -1535,7 +2010,7 @@ namespace PhilterDesktop
             _redactionVersionRepository.DeleteForDocument(documentId);
         }
 
-        private void removeCompletedToolStripMenuItem_Click(object sender, EventArgs e)
+        private void removeCompletedToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             int completed = listView1.Items.Cast<ListViewItem>()
                 .Count(i => i.SubItems.Count > 1 && i.SubItems[1].Text == "Completed");
@@ -1646,7 +2121,7 @@ namespace PhilterDesktop
         private static bool IsCompleted(ListViewItem item) =>
             item.SubItems.Count > 1 && string.Equals(item.SubItems[1].Text, "Completed", StringComparison.OrdinalIgnoreCase);
 
-        private void viewDiffToolStripMenuItem_Click(object sender, EventArgs e)
+        private void viewDiffToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
             {
@@ -1715,7 +2190,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void viewDetailsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void viewDetailsToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
             {
@@ -1780,7 +2255,7 @@ namespace PhilterDesktop
             details.ShowDialog(this);
         }
 
-        private void exportExplanationToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exportExplanationToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
             {
@@ -1860,7 +2335,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void verifyWithSamePolicyToolStripMenuItem_Click(object sender, EventArgs e)
+        private void verifyWithSamePolicyToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
             {
@@ -1869,7 +2344,7 @@ namespace PhilterDesktop
             RunAndShowVerification(this, id, quietWhenClean: false, broadPolicy: false);
         }
 
-        private void verifyWithBroadPolicyToolStripMenuItem_Click(object sender, EventArgs e)
+        private void verifyWithBroadPolicyToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
             {
@@ -1957,7 +2432,7 @@ namespace PhilterDesktop
             return outcome;
         }
 
-        private void generateReportToolStripMenuItem_Click(object sender, EventArgs e)
+        private void generateReportToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
             {
@@ -2048,7 +2523,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void addFilesToRedactToolStripMenuItem_Click(object sender, EventArgs e)
+        private void addFilesToRedactToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var redactDocumentsForm = new RedactDocuments(_policyRepository, _contextRepository, _redactionQueueRepository, _loggingEnabled, _settingsRepository);
             redactDocumentsForm.ShowDialog();
@@ -2058,14 +2533,14 @@ namespace PhilterDesktop
         // Prototype preview-first flow for a single .txt or .pdf file: pick the file, preview the
         // redaction, and only write the output on Save. The result is recorded as a Completed queue
         // item (with version history) so View Diff / Modify Redaction work on it afterward.
-        private void findAndRedactToolStripMenuItem_Click(object sender, EventArgs e)
+        private void findAndRedactToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             // Pre-fill the source from the selected queue item, if any; otherwise the dialog's Browse.
             using var form = new FindAndRedactForm(_settingsRepository.GetSettings(), SelectedSourcePath());
             form.ShowDialog(this);
         }
 
-        private void redactSpreadsheetToolStripMenuItem_Click(object sender, EventArgs e)
+        private void redactSpreadsheetToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             // Spreadsheets/CSV with optional whole-column redaction; pre-fill a selected .xlsx/.csv.
             string? selected = SelectedSourcePath();
@@ -2086,7 +2561,7 @@ namespace PhilterDesktop
         // One-shot "Redact Folder": enqueue every supported file in a chosen folder (optionally
         // recursing) with one policy/context. The queue then redacts them like any other documents, so
         // per-file success/failure shows up in the queue. No persistent watcher is created.
-        private void redactFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        private void redactFolderToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             using var form = new FolderRedactForm(
                 _policyRepository, _contextRepository, _redactionQueueRepository, _settingsRepository);
@@ -2100,7 +2575,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void redactPreviewToolStripMenuItem_Click(object sender, EventArgs e)
+        private void redactPreviewToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             using var picker = new OpenFileDialog
             {
@@ -2193,7 +2668,7 @@ namespace PhilterDesktop
             }
         }
 
-        private async void RedactionQueueTimer_Tick(object sender, EventArgs e)
+        private async void RedactionQueueTimer_Tick(object? sender, EventArgs e)
         {
             redactionQueueTimer.Stop();
 
@@ -2363,7 +2838,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void openRedactedFileToolStripMenuItem_Click(object sender, EventArgs e)
+        private void openRedactedFileToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0)
             {
@@ -2402,7 +2877,7 @@ namespace PhilterDesktop
             });
         }
 
-        private void openOriginalFileToolStripMenuItem_Click(object sender, EventArgs e)
+        private void openOriginalFileToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0)
             {
@@ -2440,7 +2915,7 @@ namespace PhilterDesktop
         }
 
         // Opens the redacted file's folder in Explorer with the file selected.
-        private void openContainingFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        private void openContainingFolderToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
             {
@@ -2478,7 +2953,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void removeAllToolStripMenuItem_Click(object sender, EventArgs e)
+        private void removeAllToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.Items.Count == 0)
             {
@@ -2504,7 +2979,7 @@ namespace PhilterDesktop
             LoadRedactionQueue();
         }
 
-        private void removeToolStripMenuItem_Click(object sender, EventArgs e)
+        private void removeToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0)
             {
