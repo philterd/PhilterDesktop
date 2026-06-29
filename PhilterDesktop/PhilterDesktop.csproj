@@ -68,6 +68,12 @@
     <PhEyeModelName>ph-eye-pii-en-xsmall</PhEyeModelName>
     <PhEyeModelDir>$(MSBuildProjectDirectory)\Models\$(PhEyeModelName)</PhEyeModelDir>
     <PhEyeModelBaseUrl>https://huggingface.co/philterd/$(PhEyeModelName)/resolve/main/onnx</PhEyeModelBaseUrl>
+    <!-- Pinned SHA-256 of each model file (supply-chain integrity). The build verifies the downloaded
+         files against these and fails on a mismatch, so unexpected bytes can't be bundled. When you
+         intentionally update the model, recompute these (e.g. Get-FileHash) and update them here. -->
+    <PhEyeConfigSha256>6E973F9E2297A7429226AB1856395D92182ED504A133C9190A2F2DC00875064A</PhEyeConfigSha256>
+    <PhEyeSpmSha256>C679FBF93643D19AAB7EE10C0B99E460BDBC02FEDF34B92B05AF343B4AF586FD</PhEyeSpmSha256>
+    <PhEyeOnnxSha256>309F3CCDB8E5F5922E6377C8D26FE3BFCA406B2EF55D0317124F3772208B749F</PhEyeOnnxSha256>
   </PropertyGroup>
 
   <!-- Keep the model out of the default item globs; the target below includes it explicitly
@@ -92,6 +98,25 @@
     <DownloadFile Condition="'$(_PhEyeShouldDownload)' == 'true'" SourceUrl="$(PhEyeModelBaseUrl)/gliner_config.json" DestinationFolder="$(PhEyeModelDir)" DestinationFileName="gliner_config.json" SkipUnchangedFiles="true" Retries="3" />
     <DownloadFile Condition="'$(_PhEyeShouldDownload)' == 'true'" SourceUrl="$(PhEyeModelBaseUrl)/spm.model" DestinationFolder="$(PhEyeModelDir)" DestinationFileName="spm.model" SkipUnchangedFiles="true" Retries="3" />
     <DownloadFile Condition="'$(_PhEyeShouldDownload)' == 'true'" SourceUrl="$(PhEyeModelBaseUrl)/model.onnx" DestinationFolder="$(PhEyeModelDir)" DestinationFileName="model.onnx" SkipUnchangedFiles="true" Retries="3" />
+
+    <!-- Verify the model files against the pinned SHA-256 hashes before bundling. Gated on the model
+         existing (rather than only on a fresh download) so a corrupted or tampered file is also caught
+         on incremental builds, not just fresh ones. A mismatch fails the build. -->
+    <GetFileHash Condition="Exists('$(PhEyeModelDir)\model.onnx')" Files="$(PhEyeModelDir)\gliner_config.json" Algorithm="SHA256">
+      <Output TaskParameter="Hash" PropertyName="_PhEyeConfigHash" />
+    </GetFileHash>
+    <GetFileHash Condition="Exists('$(PhEyeModelDir)\model.onnx')" Files="$(PhEyeModelDir)\spm.model" Algorithm="SHA256">
+      <Output TaskParameter="Hash" PropertyName="_PhEyeSpmHash" />
+    </GetFileHash>
+    <GetFileHash Condition="Exists('$(PhEyeModelDir)\model.onnx')" Files="$(PhEyeModelDir)\model.onnx" Algorithm="SHA256">
+      <Output TaskParameter="Hash" PropertyName="_PhEyeOnnxHash" />
+    </GetFileHash>
+    <Error Condition="Exists('$(PhEyeModelDir)\model.onnx') And '$(_PhEyeConfigHash)' != '$(PhEyeConfigSha256)'"
+           Text="PhEye gliner_config.json SHA-256 mismatch (expected $(PhEyeConfigSha256), got $(_PhEyeConfigHash)). The model differs from the pinned version; review, then update PhEyeConfigSha256 if the change is intended." />
+    <Error Condition="Exists('$(PhEyeModelDir)\model.onnx') And '$(_PhEyeSpmHash)' != '$(PhEyeSpmSha256)'"
+           Text="PhEye spm.model SHA-256 mismatch (expected $(PhEyeSpmSha256), got $(_PhEyeSpmHash)). Review, then update PhEyeSpmSha256 if the change is intended." />
+    <Error Condition="Exists('$(PhEyeModelDir)\model.onnx') And '$(_PhEyeOnnxHash)' != '$(PhEyeOnnxSha256)'"
+           Text="PhEye model.onnx SHA-256 mismatch (expected $(PhEyeOnnxSha256), got $(_PhEyeOnnxHash)). Review, then update PhEyeOnnxSha256 if the change is intended." />
 
     <ItemGroup Condition="Exists('$(PhEyeModelDir)\model.onnx')">
       <None Include="$(PhEyeModelDir)\**\*" LinkBase="Models\$(PhEyeModelName)">
