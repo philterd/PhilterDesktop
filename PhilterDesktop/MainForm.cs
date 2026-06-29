@@ -39,6 +39,7 @@ namespace PhilterDesktop
         private readonly WatchedFolderLogRepository _watchedFolderLogRepository;
         private readonly FolderWatcherService _folderWatcher;
         private bool _loggingEnabled;
+        private bool _queueBusy; // guards the async Verify / View Diff background operations (#486)
 
         private NotifyIcon _trayIcon = null!;
         private ToolStripMenuItem _pauseResumeItem = null!;
@@ -2275,9 +2276,9 @@ namespace PhilterDesktop
         private static bool IsFailed(ListViewItem item) =>
             item.SubItems.Count > 1 && string.Equals(item.SubItems[1].Text, "Failed", StringComparison.OrdinalIgnoreCase);
 
-        private void viewDiffToolStripMenuItem_Click(object? sender, EventArgs e)
+        private async void viewDiffToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            if (_queueBusy || listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
             {
                 return;
             }
@@ -2311,12 +2312,17 @@ namespace PhilterDesktop
                 return;
             }
 
+            // Reading the files and (for .docx) extracting paragraphs can take a moment on a large file,
+            // so do it off the UI thread, then build and show the viewer on the UI thread (#486).
+            _queueBusy = true;
+            UseWaitCursor = true;
             try
             {
                 if (source.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                 {
-                    byte[] before = File.ReadAllBytes(source);
-                    byte[] after = File.ReadAllBytes(output);
+                    (byte[] before, byte[] after) = await Task.Run(
+                        () => (File.ReadAllBytes(source), File.ReadAllBytes(output)));
+                    UseWaitCursor = false;
                     using var compare = new PdfCompareForm(before, after, Path.GetFileName(source), Path.GetFileName(output));
                     compare.ShowDialog(this);
                 }
@@ -2324,15 +2330,18 @@ namespace PhilterDesktop
                 {
                     // Word documents have no plain-text form: compare the extracted body paragraphs
                     // (one per line), which is what the redactor operates on.
-                    string before = string.Join("\n", WordDocumentRedactor.ReadParagraphs(source));
-                    string after = string.Join("\n", WordDocumentRedactor.ReadParagraphs(output));
+                    (string before, string after) = await Task.Run(() => (
+                        string.Join("\n", WordDocumentRedactor.ReadParagraphs(source)),
+                        string.Join("\n", WordDocumentRedactor.ReadParagraphs(output))));
+                    UseWaitCursor = false;
                     using var diff = new DiffViewerForm(before, after, Path.GetFileName(source), Path.GetFileName(output));
                     diff.ShowDialog(this);
                 }
                 else
                 {
-                    string before = File.ReadAllText(source);
-                    string after = File.ReadAllText(output);
+                    (string before, string after) = await Task.Run(
+                        () => (File.ReadAllText(source), File.ReadAllText(output)));
+                    UseWaitCursor = false;
                     using var diff = new DiffViewerForm(before, after, Path.GetFileName(source), Path.GetFileName(output));
                     diff.ShowDialog(this);
                 }
@@ -2341,6 +2350,11 @@ namespace PhilterDesktop
             {
                 MessageBox.Show($"Could not show the diff: {ex.Message}", "View Diff",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                UseWaitCursor = false;
+                _queueBusy = false;
             }
         }
 
@@ -2489,22 +2503,22 @@ namespace PhilterDesktop
             }
         }
 
-        private void verifyWithSamePolicyToolStripMenuItem_Click(object? sender, EventArgs e)
+        private async void verifyWithSamePolicyToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
             {
                 return;
             }
-            RunAndShowVerification(this, id, quietWhenClean: false, broadPolicy: false);
+            await RunAndShowVerification(this, id, quietWhenClean: false, broadPolicy: false);
         }
 
-        private void verifyWithBroadPolicyToolStripMenuItem_Click(object? sender, EventArgs e)
+        private async void verifyWithBroadPolicyToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
             {
                 return;
             }
-            RunAndShowVerification(this, id, quietWhenClean: false, broadPolicy: true);
+            await RunAndShowVerification(this, id, quietWhenClean: false, broadPolicy: true);
         }
 
         // Copies a verification outcome onto the queue entity (does not persist; the caller saves).
@@ -2537,8 +2551,13 @@ namespace PhilterDesktop
         // the result and (unless clean and asked to stay quiet) showing it. Used on demand and after a
         // preview save. With broadPolicy, scans with every detector on (catches types the redaction
         // policy didn't cover); otherwise re-uses the redaction's own policy.
-        private VerificationOutcome? RunAndShowVerification(IWin32Window owner, ObjectId id, bool quietWhenClean, bool broadPolicy)
+        private async Task<VerificationOutcome?> RunAndShowVerification(IWin32Window owner, ObjectId id, bool quietWhenClean, bool broadPolicy)
         {
+            if (_queueBusy)
+            {
+                return null; // a background queue operation (verify/diff) is already running
+            }
+
             RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
             RedactionVersionEntity? latest = _redactionVersionRepository.GetForDocument(id).LastOrDefault();
             if (entity is null || latest is null)
@@ -2560,18 +2579,20 @@ namespace PhilterDesktop
             }
             GlobalLists.Apply(policy, _settingsRepository.GetSettings());
 
+            // Re-scanning a large output can take a moment; run it off the UI thread so the window stays
+            // responsive (#486). string/policy locals are captured so the worker touches no UI state.
+            string context = latest.Context;
             VerificationOutcome outcome;
-            Cursor? previous = Cursor.Current;
+            _queueBusy = true;
             UseWaitCursor = true;
-            Cursor.Current = Cursors.WaitCursor;
             try
             {
-                outcome = RedactionVerifier.Verify(output, policy, latest.Context, SharedFilterService.Instance);
+                outcome = await Task.Run(() => RedactionVerifier.Verify(output, policy, context, SharedFilterService.Instance));
             }
             finally
             {
-                Cursor.Current = previous;
                 UseWaitCursor = false;
+                _queueBusy = false;
             }
 
             ApplyVerificationFields(entity, outcome);
@@ -2798,7 +2819,7 @@ namespace PhilterDesktop
             SettingsEntity verifySettings = _settingsRepository.GetSettings();
             if (verifySettings.VerifyAfterRedaction)
             {
-                RunAndShowVerification(this, entity.Id, quietWhenClean: true, broadPolicy: verifySettings.VerificationUseBroadPolicy);
+                _ = RunAndShowVerification(this, entity.Id, quietWhenClean: true, broadPolicy: verifySettings.VerificationUseBroadPolicy);
             }
 
             // A report is available on demand by right-clicking the completed item; don't prompt here.

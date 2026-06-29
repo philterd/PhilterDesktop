@@ -50,6 +50,7 @@ namespace PhilterDesktop
         private string _originalText = string.Empty;
         private List<RedactionSpanEntity> _spans = new();
         private bool _loading;
+        private bool _busy; // guards against overlapping async detections
 
         // --- Results (read by the caller after DialogResult.OK) ---
         public string OutputPath { get; private set; } = string.Empty;
@@ -98,7 +99,7 @@ namespace PhilterDesktop
                 _loading = false;
             }
 
-            Detect();
+            _ = DetectAsync();
         }
 
         private static void LoadNames(ComboBox combo, IEnumerable<string> names, string? preferred)
@@ -111,67 +112,82 @@ namespace PhilterDesktop
             ComboSelection.Select(combo, preferred);
         }
 
-        private void Selection_Changed(object? sender, EventArgs e)
+        private async void Selection_Changed(object? sender, EventArgs e)
         {
             if (!_loading)
             {
-                Detect();
+                await DetectAsync();
             }
         }
 
         // Re-runs detection for the chosen policy/context, resetting the working redactions. Detection
-        // (and AI name detection in particular) is synchronous and can take a moment, so show a wait
-        // cursor until it (and the preview refresh) finishes.
-        private void Detect()
+        // (and AI name detection in particular) can take a moment on a large file, so it runs off the UI
+        // thread (awaited, not blocked) with the inputs disabled and a wait cursor, so the window never
+        // goes "Not Responding" (#486).
+        private async Task DetectAsync()
         {
-            Cursor? previousCursor = Cursor.Current;
+            if (_busy)
+            {
+                return;
+            }
+            if (_policyCombo.SelectedItem is null || _contextCombo.SelectedItem is null)
+            {
+                _spans = new List<RedactionSpanEntity>();
+                RefreshAll();
+                return;
+            }
+
+            _busy = true;
             UseWaitCursor = true;
-            Cursor.Current = Cursors.WaitCursor;
+            SetInputsEnabled(false);
             try
             {
-                if (_policyCombo.SelectedItem is null || _contextCombo.SelectedItem is null)
-                {
-                    _spans = new List<RedactionSpanEntity>();
-                    RefreshAll();
-                    return;
-                }
+                PolicyEntity? entity = _policies.FindByName(_policyCombo.Text);
+                PhileasPolicy policy = PolicySerializer.DeserializeFromJson(
+                    string.IsNullOrWhiteSpace(entity?.Json) ? "{}" : entity!.Json);
+                GlobalLists.Apply(policy, _settings); // global always-redact/ignore on top of every policy
+                PhEyeModel.Prepare(policy);
+                string context = _contextCombo.Text;
+                string text = _originalText;
 
-                try
-                {
-                    PolicyEntity? entity = _policies.FindByName(_policyCombo.Text);
-                    PhileasPolicy policy = PolicySerializer.DeserializeFromJson(
-                        string.IsNullOrWhiteSpace(entity?.Json) ? "{}" : entity!.Json);
-                    GlobalLists.Apply(policy, _settings); // global always-redact/ignore on top of every policy
-                    PhEyeModel.Prepare(policy);
-
-                    TextFilterResult result = _filterService.Filter(policy, _contextCombo.Text, 0, _originalText);
-                    _spans = result.Spans
-                        .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= _originalText.Length && s.CharacterEnd > s.CharacterStart)
-                        .OrderBy(s => s.CharacterStart)
-                        .Select(s => new RedactionSpanEntity
-                        {
-                            ParagraphIndex = -1,
-                            CharacterStart = s.CharacterStart,
-                            CharacterEnd = s.CharacterEnd,
-                            Text = s.Text ?? string.Empty,
-                            Replacement = s.Replacement ?? string.Empty,
-                            Classification = s.Classification ?? string.Empty
-                        })
-                        .ToList();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(this, $"Redaction failed: {ex.Message}", "Redact (Preview)",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    _spans = new List<RedactionSpanEntity>();
-                }
-
-                RefreshAll();
+                TextFilterResult result = await Task.Run(() => _filterService.Filter(policy, context, 0, text));
+                _spans = result.Spans
+                    .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= _originalText.Length && s.CharacterEnd > s.CharacterStart)
+                    .OrderBy(s => s.CharacterStart)
+                    .Select(s => new RedactionSpanEntity
+                    {
+                        ParagraphIndex = -1,
+                        CharacterStart = s.CharacterStart,
+                        CharacterEnd = s.CharacterEnd,
+                        Text = s.Text ?? string.Empty,
+                        Replacement = s.Replacement ?? string.Empty,
+                        Classification = s.Classification ?? string.Empty
+                    })
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"Redaction failed: {ex.Message}", "Redact (Preview)",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                _spans = new List<RedactionSpanEntity>();
             }
             finally
             {
-                Cursor.Current = previousCursor;
                 UseWaitCursor = false;
+                SetInputsEnabled(true);
+                RefreshAll();
+                _busy = false;
+            }
+        }
+
+        // Disables/re-enables the inputs that could start another detection or save mid-run.
+        private void SetInputsEnabled(bool enabled)
+        {
+            _policyCombo.Enabled = enabled;
+            _contextCombo.Enabled = enabled;
+            if (!enabled)
+            {
+                _save.Enabled = false; // re-enabled by RefreshAll once detection finishes
             }
         }
 

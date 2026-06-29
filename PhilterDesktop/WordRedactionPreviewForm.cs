@@ -46,6 +46,7 @@ namespace PhilterDesktop
         private string[] _paragraphs = Array.Empty<string>();
         private List<RedactionSpanEntity> _spans = new();
         private bool _loading;
+        private bool _busy; // guards against overlapping async detections
 
         public string OutputPath { get; private set; } = string.Empty;
         public string SelectedPolicy { get; private set; } = string.Empty;
@@ -93,7 +94,7 @@ namespace PhilterDesktop
                 _loading = false;
             }
 
-            Detect();
+            _ = DetectAsync();
         }
 
         private static void LoadNames(ComboBox combo, IEnumerable<string> names, string? preferred)
@@ -106,17 +107,22 @@ namespace PhilterDesktop
             ComboSelection.Select(combo, preferred);
         }
 
-        private void Selection_Changed(object? sender, EventArgs e)
+        private async void Selection_Changed(object? sender, EventArgs e)
         {
             if (!_loading)
             {
-                Detect();
+                await DetectAsync();
             }
         }
 
-        // Re-runs paragraph detection for the chosen policy/context (synchronous; wait cursor shown).
-        private void Detect()
+        // Re-runs paragraph detection for the chosen policy/context off the UI thread (awaited, with the
+        // inputs disabled and a wait cursor) so a large document never freezes the window (#486).
+        private async Task DetectAsync()
         {
+            if (_busy)
+            {
+                return;
+            }
             if (_policyCombo.SelectedItem is null || _contextCombo.SelectedItem is null)
             {
                 _spans = new List<RedactionSpanEntity>();
@@ -124,12 +130,14 @@ namespace PhilterDesktop
                 return;
             }
 
-            Cursor? previousCursor = Cursor.Current;
+            _busy = true;
             UseWaitCursor = true;
-            Cursor.Current = Cursors.WaitCursor;
+            SetInputsEnabled(false);
             try
             {
-                _spans = WordDocumentRedactor.Detect(_sourcePath, BuildFilter());
+                string sourcePath = _sourcePath;
+                Func<string, TextFilterResult> filter = BuildFilter();
+                _spans = await Task.Run(() => WordDocumentRedactor.Detect(sourcePath, filter));
             }
             catch (Exception ex)
             {
@@ -139,11 +147,22 @@ namespace PhilterDesktop
             }
             finally
             {
-                Cursor.Current = previousCursor;
                 UseWaitCursor = false;
+                SetInputsEnabled(true);
+                RefreshAll();
+                _busy = false;
             }
+        }
 
-            RefreshAll();
+        // Disables/re-enables the inputs that could start another detection or save mid-run.
+        private void SetInputsEnabled(bool enabled)
+        {
+            _policyCombo.Enabled = enabled;
+            _contextCombo.Enabled = enabled;
+            if (!enabled)
+            {
+                _save.Enabled = false; // re-enabled by RefreshAll once detection finishes
+            }
         }
 
         // Builds the filter for the selected policy/context (with global lists + on-device name model),
