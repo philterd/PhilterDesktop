@@ -148,6 +148,13 @@ namespace PhilterData
         /// </summary>
         public int MaxInputFileSizeMb { get; set; } = 500;
 
+        /// <summary>
+        /// Maximum time (in seconds) a single detection pattern may run before it is aborted, so a slow
+        /// or malformed custom-identifier regular expression can't hang redaction. Clamped to 5–15
+        /// seconds (see <see cref="RegexSafety"/>). Default 5.
+        /// </summary>
+        public int RegexMatchTimeoutSeconds { get; set; } = 5;
+
         /// <summary>Global "always redact" terms (one per line), applied on top of every policy.</summary>
         public string GlobalAlwaysRedact { get; set; } = string.Empty;
 

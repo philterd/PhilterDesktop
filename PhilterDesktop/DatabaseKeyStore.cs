@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+using System.Security.AccessControl;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 
@@ -277,6 +279,32 @@ namespace PhilterDesktop
             else
             {
                 File.Move(tmp, _keyPath);
+            }
+            RestrictToCurrentUser(_keyPath);
+        }
+
+        // Locks the key file down to the current user only: removes inherited permissions and grants
+        // full control to just this account. Defense-in-depth on top of the DPAPI/passphrase wrapping —
+        // even the wrapped key, salt, and KDF parameters shouldn't be readable or tamperable by other
+        // accounts on a shared machine. Best-effort: the wrapping is the real protection, so an ACL
+        // failure must never block writing the key.
+        private static void RestrictToCurrentUser(string path)
+        {
+            try
+            {
+                SecurityIdentifier? user = WindowsIdentity.GetCurrent().User;
+                if (user is null)
+                {
+                    return;
+                }
+                var security = new FileSecurity();
+                security.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+                security.AddAccessRule(new FileSystemAccessRule(user, FileSystemRights.FullControl, AccessControlType.Allow));
+                new FileInfo(path).SetAccessControl(security);
+            }
+            catch
+            {
+                // best effort — never let an ACL change prevent the key from being written
             }
         }
 

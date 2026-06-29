@@ -118,6 +118,10 @@ namespace PhilterDesktop
             var settings = _settingsRepository.GetSettings();
             _loggingEnabled = settings.LoggingEnabled;
 
+            // Apply the user's configured regex match timeout (over the startup default) before the engine
+            // warms up, so it governs every detection pattern, including custom-identifier regexes.
+            RegexSafety.InstallMatchTimeout(settings.RegexMatchTimeoutSeconds);
+
             if (_loggingEnabled)
             {
                 Logger.LogInfo("PhilterDesktop application started");

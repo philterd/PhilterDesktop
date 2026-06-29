@@ -100,6 +100,9 @@ namespace PhilterDesktop
             lblMaxFileSize = new Label();
             numMaxFileSize = new NumericUpDown();
             lblMaxFileSizeHint = new Label();
+            lblRegexTimeout = new Label();
+            numRegexTimeout = new NumericUpDown();
+            lblRegexTimeoutHint = new Label();
             tabSecurity = new TabPage();
             lblSecurityInfo = new Label();
             chkPassphrase = new CheckBox();
@@ -120,6 +123,7 @@ namespace PhilterDesktop
             tabWatched.SuspendLayout();
             tabLimits.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numMaxFileSize).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numRegexTimeout).BeginInit();
             tabSecurity.SuspendLayout();
             SuspendLayout();
             // 
@@ -197,7 +201,7 @@ namespace PhilterDesktop
             // chkScrubMetadata
             // 
             chkScrubMetadata.AutoSize = true;
-            chkScrubMetadata.Location = new Point(13, 65);
+            chkScrubMetadata.Location = new Point(13, 88);
             chkScrubMetadata.Name = "chkScrubMetadata";
             chkScrubMetadata.Size = new Size(441, 19);
             chkScrubMetadata.TabIndex = 1;
@@ -207,7 +211,7 @@ namespace PhilterDesktop
             // chkScrubComments
             // 
             chkScrubComments.AutoSize = true;
-            chkScrubComments.Location = new Point(13, 93);
+            chkScrubComments.Location = new Point(13, 116);
             chkScrubComments.Name = "chkScrubComments";
             chkScrubComments.Size = new Size(176, 19);
             chkScrubComments.TabIndex = 2;
@@ -217,7 +221,7 @@ namespace PhilterDesktop
             // chkScrubTrackedChanges
             // 
             chkScrubTrackedChanges.AutoSize = true;
-            chkScrubTrackedChanges.Location = new Point(13, 121);
+            chkScrubTrackedChanges.Location = new Point(13, 144);
             chkScrubTrackedChanges.Name = "chkScrubTrackedChanges";
             chkScrubTrackedChanges.Size = new Size(275, 19);
             chkScrubTrackedChanges.TabIndex = 3;
@@ -227,7 +231,7 @@ namespace PhilterDesktop
             // chkScrubHiddenText
             // 
             chkScrubHiddenText.AutoSize = true;
-            chkScrubHiddenText.Location = new Point(13, 149);
+            chkScrubHiddenText.Location = new Point(13, 172);
             chkScrubHiddenText.Name = "chkScrubHiddenText";
             chkScrubHiddenText.Size = new Size(131, 19);
             chkScrubHiddenText.TabIndex = 4;
@@ -255,7 +259,7 @@ namespace PhilterDesktop
             tabWord.Location = new Point(4, 24);
             tabWord.Name = "tabWord";
             tabWord.Padding = new Padding(3);
-            tabWord.Size = new Size(565, 318);
+            tabWord.Size = new Size(693, 318);
             tabWord.TabIndex = 4;
             tabWord.Text = "Microsoft Office";
             tabWord.UseVisualStyleBackColor = true;
@@ -312,7 +316,7 @@ namespace PhilterDesktop
             // btnSave
             // 
             btnSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnSave.Location = new Point(346, 356);
+            btnSave.Location = new Point(474, 356);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(110, 34);
             btnSave.TabIndex = 1;
@@ -323,7 +327,7 @@ namespace PhilterDesktop
             // btnCancel
             // 
             btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnCancel.Location = new Point(462, 356);
+            btnCancel.Location = new Point(590, 356);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(110, 34);
             btnCancel.TabIndex = 2;
@@ -346,7 +350,7 @@ namespace PhilterDesktop
             tabControl.Margin = new Padding(2);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(573, 346);
+            tabControl.Size = new Size(701, 346);
             tabControl.TabIndex = 0;
             // 
             // tabGeneral
@@ -360,7 +364,7 @@ namespace PhilterDesktop
             tabGeneral.Margin = new Padding(2);
             tabGeneral.Name = "tabGeneral";
             tabGeneral.Padding = new Padding(2);
-            tabGeneral.Size = new Size(565, 318);
+            tabGeneral.Size = new Size(693, 318);
             tabGeneral.TabIndex = 0;
             tabGeneral.Text = "General";
             tabGeneral.UseVisualStyleBackColor = true;
@@ -404,7 +408,7 @@ namespace PhilterDesktop
             tabPdf.Location = new Point(4, 24);
             tabPdf.Name = "tabPdf";
             tabPdf.Padding = new Padding(3);
-            tabPdf.Size = new Size(565, 318);
+            tabPdf.Size = new Size(693, 318);
             tabPdf.TabIndex = 5;
             tabPdf.Text = "PDF";
             tabPdf.UseVisualStyleBackColor = true;
@@ -450,7 +454,7 @@ namespace PhilterDesktop
             tabEmail.Location = new Point(4, 24);
             tabEmail.Name = "tabEmail";
             tabEmail.Padding = new Padding(3);
-            tabEmail.Size = new Size(565, 318);
+            tabEmail.Size = new Size(693, 318);
             tabEmail.TabIndex = 6;
             tabEmail.Text = "Email";
             tabEmail.UseVisualStyleBackColor = true;
@@ -505,7 +509,7 @@ namespace PhilterDesktop
             tabNotifications.Margin = new Padding(2);
             tabNotifications.Name = "tabNotifications";
             tabNotifications.Padding = new Padding(2);
-            tabNotifications.Size = new Size(565, 318);
+            tabNotifications.Size = new Size(693, 318);
             tabNotifications.TabIndex = 3;
             tabNotifications.Text = "Notifications";
             tabNotifications.UseVisualStyleBackColor = true;
@@ -545,7 +549,7 @@ namespace PhilterDesktop
             tabWatched.Margin = new Padding(2);
             tabWatched.Name = "tabWatched";
             tabWatched.Padding = new Padding(2);
-            tabWatched.Size = new Size(565, 318);
+            tabWatched.Size = new Size(693, 318);
             tabWatched.TabIndex = 1;
             tabWatched.Text = "Watched Folders";
             tabWatched.UseVisualStyleBackColor = true;
@@ -560,7 +564,7 @@ namespace PhilterDesktop
             listWatched.Margin = new Padding(2);
             listWatched.MultiSelect = false;
             listWatched.Name = "listWatched";
-            listWatched.Size = new Size(557, 182);
+            listWatched.Size = new Size(683, 182);
             listWatched.TabIndex = 0;
             listWatched.UseCompatibleStateImageBehavior = false;
             listWatched.View = View.Details;
@@ -673,11 +677,14 @@ namespace PhilterDesktop
             tabLimits.Controls.Add(lblMaxFileSize);
             tabLimits.Controls.Add(numMaxFileSize);
             tabLimits.Controls.Add(lblMaxFileSizeHint);
+            tabLimits.Controls.Add(lblRegexTimeout);
+            tabLimits.Controls.Add(numRegexTimeout);
+            tabLimits.Controls.Add(lblRegexTimeoutHint);
             tabLimits.Location = new Point(4, 24);
             tabLimits.Margin = new Padding(2);
             tabLimits.Name = "tabLimits";
             tabLimits.Padding = new Padding(2);
-            tabLimits.Size = new Size(565, 318);
+            tabLimits.Size = new Size(693, 318);
             tabLimits.TabIndex = 7;
             tabLimits.Text = "Limits";
             tabLimits.UseVisualStyleBackColor = true;
@@ -718,6 +725,36 @@ namespace PhilterDesktop
             lblMaxFileSizeHint.TabIndex = 3;
             lblMaxFileSizeHint.Text = resources.GetString("lblMaxFileSizeHint.Text");
             // 
+            // lblRegexTimeout
+            // 
+            lblRegexTimeout.AutoSize = true;
+            lblRegexTimeout.Location = new Point(12, 170);
+            lblRegexTimeout.Name = "lblRegexTimeout";
+            lblRegexTimeout.Size = new Size(280, 15);
+            lblRegexTimeout.TabIndex = 4;
+            lblRegexTimeout.Text = "Maximum time for one detection pattern (seconds):";
+            // 
+            // numRegexTimeout
+            // 
+            numRegexTimeout.Location = new Point(12, 192);
+            numRegexTimeout.Maximum = new decimal(new int[] { 15, 0, 0, 0 });
+            numRegexTimeout.Minimum = new decimal(new int[] { 5, 0, 0, 0 });
+            numRegexTimeout.Name = "numRegexTimeout";
+            numRegexTimeout.Size = new Size(90, 23);
+            numRegexTimeout.TabIndex = 5;
+            numRegexTimeout.Value = new decimal(new int[] { 5, 0, 0, 0 });
+            // 
+            // lblRegexTimeoutHint
+            // 
+            lblRegexTimeoutHint.AutoSize = true;
+            lblRegexTimeoutHint.ForeColor = SystemColors.GrayText;
+            lblRegexTimeoutHint.Location = new Point(12, 222);
+            lblRegexTimeoutHint.MaximumSize = new Size(540, 0);
+            lblRegexTimeoutHint.Name = "lblRegexTimeoutHint";
+            lblRegexTimeoutHint.Size = new Size(538, 30);
+            lblRegexTimeoutHint.TabIndex = 6;
+            lblRegexTimeoutHint.Text = "Aborts a custom-identifier pattern that runs too long (for example a malformed or inefficient regular expression) so it can't hang redaction. Raise it only if a very large document needs more time.";
+            // 
             // tabSecurity
             // 
             tabSecurity.Controls.Add(lblSecurityInfo);
@@ -731,7 +768,7 @@ namespace PhilterDesktop
             tabSecurity.Location = new Point(4, 24);
             tabSecurity.Name = "tabSecurity";
             tabSecurity.Padding = new Padding(3);
-            tabSecurity.Size = new Size(565, 318);
+            tabSecurity.Size = new Size(693, 318);
             tabSecurity.TabIndex = 2;
             tabSecurity.Text = "Security";
             tabSecurity.UseVisualStyleBackColor = true;
@@ -821,13 +858,13 @@ namespace PhilterDesktop
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(584, 396);
+            ClientSize = new Size(712, 396);
             Controls.Add(btnCancel);
             Controls.Add(btnSave);
             Controls.Add(tabControl);
             MaximizeBox = false;
             MinimizeBox = false;
-            MinimumSize = new Size(600, 405);
+            MinimumSize = new Size(728, 405);
             Name = "SettingsForm";
             StartPosition = FormStartPosition.CenterParent;
             Text = "Settings";
@@ -852,6 +889,7 @@ namespace PhilterDesktop
             tabLimits.ResumeLayout(false);
             tabLimits.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numMaxFileSize).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numRegexTimeout).EndInit();
             tabSecurity.ResumeLayout(false);
             tabSecurity.PerformLayout();
             ResumeLayout(false);
@@ -895,6 +933,9 @@ namespace PhilterDesktop
         private Label lblMaxFileSize;
         private NumericUpDown numMaxFileSize;
         private Label lblMaxFileSizeHint;
+        private Label lblRegexTimeout;
+        private NumericUpDown numRegexTimeout;
+        private Label lblRegexTimeoutHint;
         private TabPage tabSecurity;
         private Label lblSecurityInfo;
         private CheckBox chkPassphrase;

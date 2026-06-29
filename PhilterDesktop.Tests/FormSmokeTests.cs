@@ -128,6 +128,54 @@ namespace PhilterDesktop.Tests
                 new SettingsRepository(db), new PolicyRepository(db), new ContextRepository(db), new WatchedFolderRepository(db)));
 
         [Fact]
+        public void SettingsForm_AllTabsFitWithoutHorizontalScroll() =>
+            Sta(() =>
+            {
+                string path = Path.Combine(Path.GetTempPath(), "smoke-" + Guid.NewGuid().ToString("N") + ".db");
+                try
+                {
+                    using var db = new LiteDatabase(path);
+                    // Pass every dependency (including a key store) so all tabs are present — the same
+                    // worst case the real app shows: General, Microsoft Office, PDF, Email, Notifications,
+                    // Watched Folders, Limits, Security.
+                    using var form = new SettingsForm(
+                        new SettingsRepository(db), new PolicyRepository(db), new ContextRepository(db),
+                        new WatchedFolderRepository(db), new WatchedFolderLogRepository(db),
+                        DatabaseKeyStore.ForDatabase(path));
+                    form.CreateControl(); // realize child handles so tab rectangles are laid out
+
+                    var tabs = FindTabControl(form);
+                    Assert.NotNull(tabs);
+                    _ = tabs!.Handle;
+                    Assert.True(tabs.TabCount >= 8, $"expected all settings tabs, got {tabs.TabCount}");
+
+                    // If the tab strip needs scroll arrows, the last tab's right edge extends past the
+                    // control's client width. Require it to fit so the whole row is visible at once.
+                    System.Drawing.Rectangle last = tabs.GetTabRect(tabs.TabCount - 1);
+                    Assert.True(last.Right <= tabs.ClientSize.Width,
+                        $"tabs overflow the strip: last tab right={last.Right}, tab control width={tabs.ClientSize.Width}");
+                }
+                finally { try { File.Delete(path); } catch { /* best effort */ } }
+            });
+
+        private static TabControl? FindTabControl(Control parent)
+        {
+            foreach (Control child in parent.Controls)
+            {
+                if (child is TabControl tc)
+                {
+                    return tc;
+                }
+                TabControl? nested = FindTabControl(child);
+                if (nested is not null)
+                {
+                    return nested;
+                }
+            }
+            return null;
+        }
+
+        [Fact]
         public void WatchedFolderForm_Constructs() =>
             ConstructWithDb(db => new WatchedFolderForm(new PolicyRepository(db), new ContextRepository(db)));
 

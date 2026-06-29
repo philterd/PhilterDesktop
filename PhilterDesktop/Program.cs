@@ -24,6 +24,10 @@ namespace PhilterDesktop
         [STAThread]
         static int Main(string[] args)
         {
+            // Cap every regex match process-wide before any redaction runs, so a runaway custom-identifier
+            // pattern from a policy can't hang the app (GUI, watched folders, or the command line).
+            RegexSafety.InstallDefaultMatchTimeout();
+
             CommandLineOptions options = CommandLineOptions.Parse(args);
 
             // Explorer right-click menu: show the "Redact with Philter Desktop" dialog (pick policy +

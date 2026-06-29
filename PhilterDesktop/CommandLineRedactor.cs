@@ -80,6 +80,9 @@ namespace PhilterDesktop
                 Console.Error.WriteLine("Warning: " + PhEyeModel.UnavailableWarning);
             }
 
+            // Apply the configured regex match timeout (over the startup default) before redacting.
+            RegexSafety.InstallMatchTimeout(settings.RegexMatchTimeoutSeconds);
+
             var filterService = new FilterService();
             int failures = 0;
 

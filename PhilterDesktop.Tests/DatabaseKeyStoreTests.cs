@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+using System.Security.AccessControl;
+using System.Security.Principal;
 using Xunit;
 
 namespace PhilterDesktop.Tests
@@ -47,6 +49,31 @@ namespace PhilterDesktop.Tests
             var s2 = DatabaseKeyStore.ForDatabase(_dbPath);
             s2.UnlockWithDpapi();
             Assert.Equal(key, s2.DatabasePassword); // same key reused
+        }
+
+        [Fact]
+        public void KeyFile_IsRestrictedToCurrentUserOnly()
+        {
+            var store = DatabaseKeyStore.ForDatabase(_dbPath);
+            store.UnlockWithDpapi(); // creates and writes data.key
+
+            string keyPath = Path.Combine(_dir, "data.key");
+            Assert.True(File.Exists(keyPath));
+
+            FileSecurity security = new FileInfo(keyPath).GetAccessControl();
+            Assert.True(security.AreAccessRulesProtected); // inherited permissions removed
+
+            SecurityIdentifier me = WindowsIdentity.GetCurrent().User!;
+            List<SecurityIdentifier> allowed = security
+                .GetAccessRules(includeExplicit: true, includeInherited: true, typeof(SecurityIdentifier))
+                .Cast<FileSystemAccessRule>()
+                .Where(r => r.AccessControlType == AccessControlType.Allow)
+                .Select(r => (SecurityIdentifier)r.IdentityReference)
+                .Distinct()
+                .ToList();
+
+            Assert.Contains(me, allowed);                       // the current user has access
+            Assert.All(allowed, sid => Assert.Equal(me, sid));  // and no one else does
         }
 
         [Fact]

@@ -49,6 +49,10 @@ namespace PhilterDesktop
 
             return ex switch
             {
+                System.Text.RegularExpressions.RegexMatchTimeoutException =>
+                    $"A detection pattern took too long to run, so Philter Desktop could not finish {(verb == "save" ? "redacting" : "opening")} {name}. " +
+                    "A custom identifier pattern may be inefficient (it can backtrack badly on some text) — simplify the pattern and try again.",
+
                 UnauthorizedAccessException =>
                     $"Philter Desktop could not {verb} {name}. You may not have permission to use that " +
                     "location, or the file may be read-only. Try a different folder.",

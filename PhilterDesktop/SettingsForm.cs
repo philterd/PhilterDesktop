@@ -461,6 +461,7 @@ namespace PhilterDesktop
             UpdateVerifyPolicyEnabled();
             cmbConcurrency.SelectedItem = Math.Clamp(_settings.WatchedFolderMaxConcurrency, 1, 4).ToString();
             numMaxFileSize.Value = Math.Clamp(_settings.MaxInputFileSizeMb, (int)numMaxFileSize.Minimum, (int)numMaxFileSize.Maximum);
+            numRegexTimeout.Value = RegexSafety.ClampSeconds(_settings.RegexMatchTimeoutSeconds);
         }
 
         private void RadioOriginalLocation_CheckedChanged(object sender, EventArgs e)
@@ -639,8 +640,12 @@ namespace PhilterDesktop
             _settings.VerificationUseBroadPolicy = rdoVerifyBroadPolicy.Checked;
             _settings.WatchedFolderMaxConcurrency = int.TryParse(cmbConcurrency.Text, out int n) ? Math.Clamp(n, 1, 4) : 1;
             _settings.MaxInputFileSizeMb = (int)numMaxFileSize.Value;
+            _settings.RegexMatchTimeoutSeconds = (int)numRegexTimeout.Value;
 
             _settingsRepository.SaveSettings(_settings);
+
+            // Apply the new regex timeout immediately so it governs subsequent redactions without a restart.
+            RegexSafety.InstallMatchTimeout(_settings.RegexMatchTimeoutSeconds);
 
             DialogResult = DialogResult.OK;
             Close();

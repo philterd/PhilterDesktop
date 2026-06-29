@@ -193,6 +193,14 @@ namespace PhilterDesktop.PolicyEditing
 
             _ok.Click += (_, _) =>
             {
+                if (!RegexSafety.IsValidPattern(_pattern.Text, out string? error))
+                {
+                    MessageBox.Show(this,
+                        "That pattern isn't a valid regular expression:" + Environment.NewLine + Environment.NewLine + error,
+                        "Custom Identifier", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    DialogResult = DialogResult.None; // keep the dialog open so the pattern can be fixed
+                    return;
+                }
                 _identifier.Classification = _classification.Text;
                 _identifier.Pattern = _pattern.Text;
                 _identifier.CaseSensitive = _caseSensitive.Checked;

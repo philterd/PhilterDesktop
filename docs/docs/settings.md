@@ -216,6 +216,15 @@ computer's memory.
   command line — any file larger than this is **skipped** (and noted in the log) rather than processed.
   Set it to **0** for no limit. When you add files yourself (drag-and-drop, **Add Files**, or **Redact
   Spreadsheet**), Philter Desktop instead shows a heads-up above **50 MB** but still lets you proceed.
+- **Maximum time for one detection pattern (seconds)** (default **5**, adjustable from **5 to 15**).
+  Detection patterns can come from a [policy](policies.md) — including your own
+  [custom-identifier](policies.md#redacting-your-own-special-identifiers-custom-identifiers) regular
+  expressions, which may also arrive in a policy someone shared with you. A badly written or overly
+  complex pattern can take an extremely long time on certain text, which would otherwise make redaction
+  appear to hang. This limit aborts any single pattern that runs longer than the chosen number of
+  seconds: that document reports an error (so you know to fix the pattern) instead of freezing. The
+  default of 5 seconds is far more than a normal pattern ever needs — raise it only if a genuinely huge
+  document needs more time.
 
 ## Security tab — protecting your stored information
 
