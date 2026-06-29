@@ -137,6 +137,132 @@ namespace PhilterDesktop.Tests
             return part?.Comments?.Elements<Comment>().Any() == true;
         }
 
+        // --- Threaded comments (issue #507) --------------------------------------------------------
+
+        private const string ThreadedRelType = "http://schemas.microsoft.com/office/2018/08/relationships/threadedComment";
+        private const string ThreadedContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.threadedcomments+xml";
+
+        /// <summary>
+        /// Creates a .docx with a classic comment (<paramref name="classicText"/>) and the modern
+        /// threaded-comment duplicate store (<paramref name="threadedText"/> in word/threadedComments.xml).
+        /// </summary>
+        public static void CreateWithThreadedComment(string path, string threadedText, string classicText, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            main.Document = new Document(new Body());
+            Body body = main.Document.Body!;
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+
+            WordprocessingCommentsPart commentsPart = main.AddNewPart<WordprocessingCommentsPart>();
+            commentsPart.Comments = new Comments(
+                new Comment(Para(classicText)) { Id = "1", Author = "Reviewer", Initials = "R" });
+
+            ExtendedPart threaded = main.AddExtendedPart(ThreadedRelType, ThreadedContentType, "xml");
+            string xml =
+                "<w15:threadedComments xmlns:w15=\"http://schemas.microsoft.com/office/word/2015/wml\">" +
+                "<w15:threadedComment w15:id=\"1\" w15:paraId=\"00000001\" w15:dateUtc=\"2024-01-01T00:00:00Z\">" +
+                $"<w15:text>{Escape(threadedText)}</w15:text></w15:threadedComment></w15:threadedComments>";
+            using Stream s = threaded.GetStream(FileMode.Create, FileAccess.Write);
+            using var w = new StreamWriter(s, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            w.Write(xml);
+        }
+
+        /// <summary>
+        /// Creates a .docx that models a real Word comment thread: each message in
+        /// <paramref name="messages"/> becomes both a classic comment (word/comments.xml) and a
+        /// threaded comment (word/threadedComments.xml), with the companion commentsExtended part.
+        /// </summary>
+        public static void CreateWithThreadedThread(string path, string[] messages, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            main.Document = new Document(new Body());
+            Body body = main.Document.Body!;
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+
+            var comments = new Comments();
+            for (int i = 0; i < messages.Length; i++)
+            {
+                comments.AppendChild(new Comment(Para(messages[i])) { Id = (i + 1).ToString(), Author = "Reviewer", Initials = "R" });
+            }
+            main.AddNewPart<WordprocessingCommentsPart>().Comments = comments;
+
+            // commentsExtended (threading metadata, no text) — present in real threaded docs.
+            WordprocessingCommentsExPart exPart = main.AddNewPart<WordprocessingCommentsExPart>();
+            using (Stream es = exPart.GetStream(FileMode.Create, FileAccess.Write))
+            using (var ew = new StreamWriter(es, new UTF8Encoding(false)))
+            {
+                ew.Write("<w15:commentsEx xmlns:w15=\"http://schemas.microsoft.com/office/word/2015/wml\">" +
+                         string.Concat(Enumerable.Range(0, messages.Length).Select(i =>
+                             $"<w15:commentEx w15:paraId=\"{i + 1:00000000}\" w15:done=\"0\"/>")) +
+                         "</w15:commentsEx>");
+            }
+
+            // threadedComments duplicate (the PII copy this issue is about).
+            ExtendedPart threaded = main.AddExtendedPart(ThreadedRelType, ThreadedContentType, "xml");
+            string threads = string.Concat(Enumerable.Range(0, messages.Length).Select(i =>
+                $"<w15:threadedComment w15:id=\"{i + 1}\" w15:paraId=\"{i + 1:00000000}\" w15:dateUtc=\"2024-01-01T00:00:00Z\"" +
+                (i == 0 ? "" : " w15:parentId=\"1\"") + $"><w15:text>{Escape(messages[i])}</w15:text></w15:threadedComment>"));
+            using (Stream s = threaded.GetStream(FileMode.Create, FileAccess.Write))
+            using (var w = new StreamWriter(s, new UTF8Encoding(false)))
+            {
+                w.Write("<w15:threadedComments xmlns:w15=\"http://schemas.microsoft.com/office/word/2015/wml\">" + threads + "</w15:threadedComments>");
+            }
+        }
+
+        /// <summary>Whether the document still has a Word threaded-comments part.</summary>
+        public static bool HasThreadedComments(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            return ThreadedPart(doc.MainDocumentPart!) is not null;
+        }
+
+        /// <summary>Whether the document still has the commentsExtended / commentsIds companion parts.</summary>
+        public static bool HasCommentCompanionParts(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            MainDocumentPart main = doc.MainDocumentPart!;
+            return main.GetPartsOfType<WordprocessingCommentsExPart>().Any()
+                || main.GetPartsOfType<WordprocessingCommentsIdsPart>().Any();
+        }
+
+        /// <summary>True if any part in the package contains <paramref name="value"/> (strong leak check).</summary>
+        public static bool AnyPartContains(string path, string value)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            var seen = new HashSet<string>();
+            return AnyPartContains(doc.MainDocumentPart!, value, seen);
+        }
+
+        private static bool AnyPartContains(OpenXmlPart part, string value, HashSet<string> seen)
+        {
+            if (!seen.Add(part.Uri.OriginalString))
+            {
+                return false;
+            }
+            using (Stream s = part.GetStream(FileMode.Open, FileAccess.Read))
+            using (var r = new StreamReader(s))
+            {
+                if (r.ReadToEnd().Contains(value, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+            return part.Parts.Any(child => AnyPartContains(child.OpenXmlPart, value, seen));
+        }
+
+        private static OpenXmlPart? ThreadedPart(MainDocumentPart main) =>
+            main.Parts.Select(p => p.OpenXmlPart).FirstOrDefault(p =>
+                p.ContentType.Contains("threadedcomment", StringComparison.OrdinalIgnoreCase)
+                || p.Uri.OriginalString.EndsWith("threadedComments.xml", StringComparison.OrdinalIgnoreCase));
+
         // --- Raw-XML fixtures for drawings / text boxes (issue #481) -----------------------------
         //
         // Text boxes and drawings can't be authored conveniently through the strongly-typed DOM, so

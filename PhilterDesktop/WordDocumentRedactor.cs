@@ -147,6 +147,7 @@ namespace PhilterDesktop
                 paragraphIndex++;
             }
 
+            RemoveThreadedCommentDuplicate(document);
             document.Save(); // flush into the buffer
             SafeOutput.Write(outputPath, buffer.ToArray());
             return captured;
@@ -190,6 +191,7 @@ namespace PhilterDesktop
                 paragraphIndex++;
             }
 
+            RemoveThreadedCommentDuplicate(document);
             document.Save(); // flush into the buffer
             SafeOutput.Write(outputPath, buffer.ToArray());
         }
@@ -238,6 +240,43 @@ namespace PhilterDesktop
                 }
             }
         }
+
+        // Word 2019/365 mirrors comment text into word/threadedComments.xml (plus commentsExtended /
+        // commentsIds). We redact the canonical comments part (see EnumerateTargets), so drop the
+        // threaded duplicate and its companions to (a) stop the duplicate copy of the text from
+        // shipping and (b) leave a clean classic-comments document. The redacted comments part remains
+        // (or is deleted by the "remove comments" scrub). No PII lives in the companion parts (#507).
+        private static void RemoveThreadedCommentDuplicate(WordprocessingDocument document)
+        {
+            MainDocumentPart? main = document.MainDocumentPart;
+            if (main is null)
+            {
+                return;
+            }
+
+            List<OpenXmlPart> threaded = main.Parts.Select(p => p.OpenXmlPart).Where(IsThreadedCommentsPart).ToList();
+            if (threaded.Count == 0)
+            {
+                return; // nothing threaded to downgrade; leave older comment structures untouched
+            }
+
+            foreach (OpenXmlPart part in threaded)
+            {
+                main.DeletePart(part);
+            }
+            foreach (WordprocessingCommentsExPart part in main.GetPartsOfType<WordprocessingCommentsExPart>().ToList())
+            {
+                main.DeletePart(part);
+            }
+            foreach (WordprocessingCommentsIdsPart part in main.GetPartsOfType<WordprocessingCommentsIdsPart>().ToList())
+            {
+                main.DeletePart(part);
+            }
+        }
+
+        private static bool IsThreadedCommentsPart(OpenXmlPart part) =>
+            part.ContentType.Contains("threadedcomment", StringComparison.OrdinalIgnoreCase)
+            || part.Uri.OriginalString.EndsWith("threadedComments.xml", StringComparison.OrdinalIgnoreCase);
 
         // Resolves the document's header then footer parts via the section properties' references,
         // ordered First, Even, Default(Odd), de-duplicated (a part may be referenced by many sections).
