@@ -1001,7 +1001,7 @@ namespace PhilterDesktop
                     removeToolStripMenuItem_Click(this, EventArgs.Empty);
                     return true;
                 }
-                if (keyData == Keys.Enter && IsCompleted(listView1.SelectedItems[0]))
+                if (keyData == Keys.Enter && listView1.SelectedItems.Count == 1 && IsCompleted(listView1.SelectedItems[0]))
                 {
                     openRedactedFileToolStripMenuItem_Click(this, EventArgs.Empty);
                     return true;
@@ -2131,17 +2131,12 @@ namespace PhilterDesktop
         // "Pending" on its next tick and runs it through redaction again.
         private void retryToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            if (listView1.SelectedItems.Count == 0 || listView1.SelectedItems[0].Tag is not ObjectId id)
+            List<ObjectId> ids = listView1.SelectedItems.Cast<ListViewItem>()
+                .Select(i => i.Tag).OfType<ObjectId>().ToList();
+            if (QueueBulkActions.RetryManyFailed(_redactionQueueRepository, ids) > 0)
             {
-                return;
+                LoadRedactionQueue();
             }
-            RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
-            if (entity is null || !string.Equals(entity.Status, "Failed", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-            RequeueForRetry(entity);
-            LoadRedactionQueue();
         }
 
         // Requeues every failed item at once (e.g. after fixing a shared cause such as a full disk).
@@ -2187,8 +2182,9 @@ namespace PhilterDesktop
         private void ContextMenuStrip1_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             bool hasSelection = listView1.SelectedItems.Count > 0;
+            bool single = listView1.SelectedItems.Count == 1; // single-document actions need exactly one row
             bool hasItems = listView1.Items.Count > 0;
-            bool selectedCompleted = hasSelection && IsCompleted(listView1.SelectedItems[0]);
+            bool singleCompleted = single && IsCompleted(listView1.SelectedItems[0]);
 
             bool anyCompleted = false;
             bool anyFailed = false;
@@ -2203,32 +2199,35 @@ namespace PhilterDesktop
                     anyFailed = true;
                 }
             }
-            bool selectedFailed = hasSelection && IsFailed(listView1.SelectedItems[0]);
+            bool anySelectedFailed = listView1.SelectedItems.Cast<ListViewItem>().Any(IsFailed);
 
-            // "Add Files…" and "Refresh" don't depend on the queue and stay enabled.
+            // Bulk actions operate on every selected row. ("Add Files…"/"Refresh" stay always enabled.)
             removeToolStripMenuItem.Enabled = hasSelection;
             removeAllToolStripMenuItem.Enabled = hasItems;
             removeCompletedToolStripMenuItem.Enabled = anyCompleted;
-            retryToolStripMenuItem.Enabled = selectedFailed;       // requeue this failed item
+            retryToolStripMenuItem.Enabled = anySelectedFailed;    // requeue the selected failed item(s)
             retryAllFailedToolStripMenuItem.Enabled = anyFailed;   // requeue every failed item
-            openRedactedFileToolStripMenuItem.Enabled = selectedCompleted; // exists only once redacted
-            openOriginalFileToolStripMenuItem.Enabled = hasSelection;
-            openContainingFolderToolStripMenuItem.Enabled = selectedCompleted; // redacted file exists once completed
-            modifyRedactionToolStripMenuItem.Enabled = selectedCompleted; // versions exist once redacted
 
-            // Enable for a completed, diffable type. Text-based types (.txt/.docx/.csv/.eml) use the
+            // Single-document actions open a viewer/file/dialog for one item, so they're enabled only
+            // when exactly one row is selected — never silently acting on just the first of several (#487).
+            openRedactedFileToolStripMenuItem.Enabled = singleCompleted; // exists only once redacted
+            openOriginalFileToolStripMenuItem.Enabled = single;
+            openContainingFolderToolStripMenuItem.Enabled = singleCompleted; // redacted file exists once completed
+            modifyRedactionToolStripMenuItem.Enabled = singleCompleted; // versions exist once redacted
+
+            // Enable for a single completed, diffable type. Text-based types (.txt/.docx/.csv/.eml) use the
             // text diff; .pdf uses the side-by-side page comparison. Very large files are excluded
             // because the text diff loads both files and renders a row per line — see MaxDiffFileBytes.
-            ObjectId? selectedId = hasSelection && listView1.SelectedItems[0].Tag is ObjectId oid ? oid : null;
-            bool diffableType = selectedCompleted && SelectedSourcePath() is { } src && IsDiffableType(src);
+            ObjectId? selectedId = single && listView1.SelectedItems[0].Tag is ObjectId oid ? oid : null;
+            bool diffableType = singleCompleted && SelectedSourcePath() is { } src && IsDiffableType(src);
             bool diffTooLarge = diffableType && selectedId is { } did && !DiffWithinSizeLimit(did, SelectedSourcePath()!);
             viewDiffToolStripMenuItem.Enabled = diffableType && !diffTooLarge;
             viewDiffToolStripMenuItem.Text = diffTooLarge ? "View Diff... (file too large)" : "View Diff...";
 
-            viewDetailsToolStripMenuItem.Enabled = hasSelection;
-            exportExplanationToolStripMenuItem.Enabled = selectedCompleted; // needs captured spans
-            verifyRedactionToolStripMenuItem.Enabled = selectedCompleted;   // re-scans a finished output
-            generateReportToolStripMenuItem.Enabled = selectedCompleted;    // summarizes a finished redaction
+            viewDetailsToolStripMenuItem.Enabled = single;
+            exportExplanationToolStripMenuItem.Enabled = singleCompleted; // needs captured spans
+            verifyRedactionToolStripMenuItem.Enabled = singleCompleted;   // re-scans a finished output
+            generateReportToolStripMenuItem.Enabled = singleCompleted;    // summarizes a finished redaction
         }
 
         /// <summary>The source file path of the selected queue item, or null.</summary>
@@ -3136,37 +3135,25 @@ namespace PhilterDesktop
 
         private void removeToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            if (listView1.SelectedItems.Count == 0)
+            List<ObjectId> ids = listView1.SelectedItems.Cast<ListViewItem>()
+                .Select(i => i.Tag).OfType<ObjectId>().ToList();
+            if (ids.Count == 0)
             {
                 return;
             }
 
-            ListViewItem selected = listView1.SelectedItems[0];
+            // Remove every selected item (skipping any still processing), then refresh from the database.
+            List<string> skipped = QueueBulkActions.RemoveMany(_redactionQueueRepository, ids, DeleteRedactionHistory);
+            LoadRedactionQueue();
 
-            if (selected.Tag is not ObjectId id)
+            if (skipped.Count > 0)
             {
-                return;
-            }
-
-            RedactionQueueEntity? entity = _redactionQueueRepository.GetById(id);
-            if (entity == null)
-            {
-                return;
-            }
-
-            if (entity.Status == "Processing")
-            {
+                string names = string.Join(Environment.NewLine, skipped.Select(n => "• " + n));
                 MessageBox.Show(
-                    $"'{Path.GetFileName(entity.Name)}' cannot be removed because it is currently being processed.",
-                    "Cannot Remove",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                return;
+                    $"{skipped.Count} item(s) could not be removed because they are currently being processed:" +
+                    Environment.NewLine + Environment.NewLine + names,
+                    "Cannot Remove", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-
-            _redactionQueueRepository.Delete(id);
-            DeleteRedactionHistory(id);
-            listView1.Items.Remove(selected);
         }
     }
 }
