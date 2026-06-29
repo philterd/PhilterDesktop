@@ -1,23 +1,24 @@
-# Watched Folders (Automatic, Hands-Off Redaction)
+# Watched Folders
 
 A **watched folder** is a folder that Philter Desktop keeps an eye on for you. Whenever a new
 `.txt`, `.docx`, `.pdf`, `.rtf`, `.xlsx`, `.csv`, `.eml`, or `.msg` file shows up in that folder, Philter Desktop notices it,
 redacts it automatically, and saves the cleaned-up copy to an output folder you've chosen — all without
 you having to add anything to the queue by hand. (As elsewhere, a redacted `.msg` is saved as an
-`.eml` — see [Redacting email](redacting-documents.md#redacting-email-and-why-msg-comes-out-as-eml).)
+`.eml` — see [Email](redacting-email.md).)
 
 This turns redaction into a "drop box" that runs itself. For example, you could point a watched folder
 at the place where your scanner saves documents, at your Downloads folder, or at a shared network
 folder where colleagues drop files — and from then on, **everything that lands there gets cleaned up
 automatically**. It's ideal for a steady stream of documents that all need the same treatment.
 
-## Setting up a watched folder
+## Creating a watched folder
 
 Open **Settings** from the main toolbar, go to the **Watched Folder** tab, and click **Add…**. You'll
 be asked to fill in a few things:
 
 ![The Add Watched Folder dialog: a folder to watch, a policy and context, file-type checkboxes, and an output folder](img/watched-folder.png)
-*Setting up a watched folder: choose the folder, its policy and context, which file types to redact, and where the cleaned-up copies go.*
+
+*Creating a watched folder: choose the folder, its policy and context, which file types to redact, and where the cleaned-up copies go.*
 
 - **Folder to watch** — the folder you want Philter Desktop to monitor for new files.
 - **Policy** — the [policy](policies.md) (set of rules) that decides what to remove and how, for
@@ -55,7 +56,7 @@ To change a watched folder's settings later, select it and click **Edit…**. To
 select it and click **Remove**. Any changes you make to the watched-folder list take effect right
 away.
 
-## How the automatic redaction behaves
+## How the automatic redaction works
 
 A few details worth knowing about how watching works:
 

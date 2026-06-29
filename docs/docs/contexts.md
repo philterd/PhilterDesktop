@@ -1,4 +1,4 @@
-# Contexts (Keeping Replacements Consistent)
+# Contexts
 
 A **context** is the feature that keeps your replacements **consistent across a set of related
 documents**. It's easiest to understand with an example.
@@ -19,11 +19,34 @@ contexts and choose which one to use when you add documents to the queue — for
 per case or per matter, so that each matter's documents stay consistent within themselves but don't
 get mixed up with another matter's.
 
+## When would I use contexts?
+
+Contexts matter most when you replace sensitive information with **realistic stand-in values** (rather
+than blacking it out) and you are redacting **more than one related document**. A few common
+situations:
+
+- **A set of documents in one case or matter.** Use a single context for all of them so that the same
+  person, account, or identifier is replaced with the same stand-in everywhere, and the documents
+  still line up with one another.
+- **Documents that reference each other.** When an email thread, a contract, and its exhibits all
+  mention the same parties, a shared context keeps those references pointing to the same stand-in
+  values, so the relationships between people remain clear after redaction.
+- **Keeping separate matters apart.** Use a **different** context for each case or client so one
+  matter's replacements never mix with another's. Redacting a new, unrelated batch under its own
+  context keeps its stand-ins independent.
+- **Starting fresh.** If you want to reuse a context but no longer want its remembered replacements,
+  use **Empty** to clear the memory while keeping the context.
+
+If you are simply **blacking out** information (the **Redact** strategy) or redacting a **single**
+document, consistency across documents doesn't come into play, so the **default** context is all you
+need.
+
 ## Managing your contexts
 
 Open the **Contexts** window from the main toolbar. From there you can:
 
 ![The Contexts window in Philter Desktop, listing the available contexts](img/contexts.png)
+
 *The Contexts window: create per-case or per-matter contexts so related documents stay consistent.*
 
 - **New Context** — create a new context (for instance, one for a new case).

@@ -6,6 +6,7 @@ program behaves. The Settings window is divided into tabs: **General**, **Micros
 each of them.
 
 ![The Settings window showing the output location, logging, and Windows Explorer integration options](img/settings.png)
+
 *The Settings window, where you choose the output location and tune how Philter Desktop behaves.*
 
 ## General tab

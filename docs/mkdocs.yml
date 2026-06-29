@@ -32,11 +32,19 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
-  - Redacting Documents: redacting-documents.md
+  - Redacting Documents:
+    - redacting-documents.md
+    - Plain Text and Rich Text: redacting-text.md
+    - Microsoft Word: redacting-word.md
+    - PDF: redacting-pdf.md
+    - Spreadsheets: redacting-spreadsheets.md
+    - Email: redacting-email.md
   - Watched Folders: watched-folders.md
-  - Policies: policies.md
-  - Filter Strategies: filter-strategies.md
-  - Supported Filters: supported-filters.md
+  - Redaction Policies:
+    - policies.md
+    - Filter Strategies: filter-strategies.md
+    - Supported Filters: supported-filters.md
   - Contexts: contexts.md
   - Settings: settings.md
+  - FAQ: faq.md
   - Licensing & Support: licensing.md

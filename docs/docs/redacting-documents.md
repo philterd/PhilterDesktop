@@ -12,126 +12,18 @@ them, or fine-tune them later.
 
 ## Which kinds of documents you can redact
 
-Philter Desktop works with these document types:
+Philter Desktop works with the document types below. Each has its own page covering how that type is
+redacted and anything specific to it:
 
-- **Plain text** — files ending in `.txt` (simple, unformatted text, like a Notepad file).
-- **Microsoft Word** — files ending in `.docx`.
-- **PDF** — files ending in `.pdf`.
-- **Rich Text** — files ending in `.rtf` (a formatted-text format used by WordPad and many legal and
-  records systems). A redacted `.rtf` is rebuilt from its visible content, so document metadata it
-  carried (such as the author or title) is dropped automatically, and any embedded objects (such as an
-  attached spreadsheet or Word file) are removed so they can't carry unredacted content into the output.
-- **Spreadsheets** — Excel files ending in `.xlsx` and comma-separated files ending in `.csv`.
-- **Email** — files ending in `.eml` (the standard email format used by most mail programs) and
-  `.msg` (the format Microsoft Outlook uses when you save or drag out a message).
+- **[Plain Text and Rich Text](redacting-text.md)** — `.txt` and `.rtf` files.
+- **[Microsoft Word](redacting-word.md)** — `.docx` files.
+- **[PDF](redacting-pdf.md)** — `.pdf` files, including scanned PDFs read with OCR.
+- **[Spreadsheets](redacting-spreadsheets.md)** — Excel `.xlsx` and comma-separated `.csv` files.
+- **[Email](redacting-email.md)** — `.eml` and `.msg` files.
 
-!!! note "Password-protected Word and Excel files"
-    A Word or Excel file that has been **protected with a password** (encrypted) cannot be opened for
-    redaction. If you try, Philter Desktop tells you so clearly. To redact one, open it in Word or
-    Excel, remove the password (**File → Info → Protect Document / Protect Workbook**), save it, and
-    then redact the unprotected copy.
-
-> **One important thing about PDFs.** When Philter Desktop redacts a PDF, it does something
-> deliberately thorough: it turns each page into a flattened **picture** of the page with the
-> sensitive information painted over. The benefit is that the removed information is *truly gone* —
-> there is no hidden text layer left behind that someone could copy, search, or recover. (You may
-> have heard stories of "redacted" PDFs where the black boxes could be copied off to reveal the text
-> underneath; that cannot happen here.) The trade-off is that the cleaned-up PDF behaves like a
-> scanned document: you can read it and print it, but you can no longer select or search its text.
-> For most legal and confidentiality purposes, this is exactly what you want. One consequence: because
-> each item is simply painted over with a solid box, your [filter strategy](filter-strategies.md) choice
-> (the replacement text) does **not** change how a redacted PDF looks — PDFs always get solid boxes.
-
-**Scanned PDFs.** Some PDFs are just *pictures* of pages (for example, a document that was scanned),
-with no real text inside — so on their own there's nothing for Philter Desktop to detect. Philter
-Desktop can still handle these: when the **Read scanned PDF pages with OCR** option is on (it is by
-default), it recognizes the text on scanned pages **on your own computer** (nothing is uploaded) so the
-sensitive information can be found and removed. OCR is slower and is best-effort — it can miss
-low-quality scans and does not read handwriting — so reviewing the result matters even more here, and
-the [Modify Redaction](#adjusting-what-was-removed-modify-redaction) tools let you cover anything it
-missed. You can turn this off or fine-tune it on the [Settings → PDF](settings.md#pdf-tab) tab.
-
-### Redacting email (and why `.msg` comes out as `.eml`)
-
-When Philter Desktop redacts an email, it cleans up the **subject line**, the **From / To / Cc**
-addresses, and the **message body** (both plain-text and HTML versions), according to your policy —
-the same way it handles any other document. It also (by default) strips the **technical headers** that
-would otherwise reveal the sender's IP, mail program, and the server delivery trail, and the **common
-identity headers** — **Bcc** (blind-copy recipients), **Reply-To**, **Sender**, and **Resent-…** — that
-aren't part of the visible From / To / Cc fields and so wouldn't otherwise be redacted. Both are
-on by default and can be turned off in [Settings → Email](settings.md#email-tab).
-
-!!! warning "Attachments are not redacted"
-    Philter Desktop redacts the email **message itself** — the subject, the addresses, and the body. It
-    does **not** open, inspect, or redact **attachments** (a PDF, Word file, spreadsheet, image, or
-    anything else carried along with the email). Those are copied through **unchanged**, so any
-    sensitive information inside an attachment is left exactly as it was. If an email has attachments
-    that need redacting, **save each one out as its own file and redact it separately** (a `.pdf`,
-    `.docx`, or `.txt` attachment can go straight through Philter Desktop). Always review the finished
-    email **and** its attachments before sharing it.
-
-There's one thing to know about Outlook `.msg` files: **a redacted `.msg` is saved as an `.eml` file.**
-So redacting `message.msg` produces `message_redacted-draft.eml`, not a `.msg`.
-
-Why the change in file type? `.msg` is Microsoft's own private, undocumented Outlook format. Philter
-Desktop can reliably **read** a `.msg` and pull out everything it needs to redact, but rebuilding a
-brand-new `.msg` file faithfully — without quietly dropping or corrupting parts of the message — is not
-something it can guarantee. Rather than hand you a `.msg` that *might* be subtly broken, it writes the
-redacted result as **`.eml`**, the universal email format. An `.eml` file is a complete, standalone
-copy of the email that **opens in Outlook** (just double-click it) as well as in Apple Mail,
-Thunderbird, Gmail's import, and essentially every other mail program. Nothing is lost in the
-redaction itself — only the container file type changes, in exchange for a result you can trust.
-
-> `.eml` files redact to `.eml`, and everything else keeps its original file type as usual — only
-> `.msg` changes.
-
-### Redacting spreadsheets (`.xlsx`, `.csv`)
-
-Spreadsheets are redacted **cell by cell**: Philter Desktop looks at each cell on its own and removes
-the sensitive information it finds there, leaving the rest of the table — the layout, the columns, the
-numbers, the formulas — intact. An Excel file stays `.xlsx` and a CSV stays `.csv`. (For Excel,
-**formulas** are left alone, since their value is calculated rather than stored.)
-
-!!! note "Redacted CSVs are safe to open in a spreadsheet"
-    A `.csv` is just text, so a spreadsheet program will treat any cell that begins with `=`, `+`, `-`,
-    or `@` as a **formula** and run it when the file is opened — a trick (called "CSV injection") that a
-    malicious source file could use to attack whoever you share the redacted copy with. Philter Desktop
-    neutralizes this automatically: in a redacted `.csv`, any such cell is written so that spreadsheets
-    open it as **plain text** instead of running it (you may notice a leading apostrophe on those few
-    cells). Excel `.xlsx` files aren't affected by this — their cells are explicitly typed, so a text
-    value is never mistaken for a formula.
-
-There's an important thing to understand about spreadsheets. Philter Desktop recognizes sensitive
-information partly from the **words around it** — and a cell often holds a value all by itself, with no
-surrounding sentence for context. Patterns with a fixed shape (Social Security numbers, email
-addresses, account numbers) are still caught reliably. But something like a lone first name in a cell
-— "April" — has nothing around it to signal that it's a name, so automatic name detection is **much
-weaker** on bare cells than on ordinary paragraphs of writing.
-
-There's also a point about **numbers**: a value a spreadsheet stores as a *number* — say an account
-number or an ID typed as plain digits — is **not scanned** for sensitive information, because Philter
-Desktop leaves numbers exactly as they are (so totals and calculations aren't disturbed). Sensitive
-values that look like text, such as an SSN written with dashes (`123-45-6789`), are still detected. If
-a column holds sensitive **numeric** IDs, remove it with whole-column redaction, described next.
-
-That's why spreadsheets have an extra tool: **whole-column redaction**. Use the **Redact
-Spreadsheet…** action — on the **Redact** button's arrow menu, or by right-clicking a spreadsheet in
-the queue. It opens a small window where you choose the **policy** and **context** as usual, and also
-see a **list of the file's columns** (with their headers). Tick any column whose contents should be
-removed **entirely** — for example a "Name" column, a "Patient ID" column, or an "Account" column —
-and every **data cell** in that column is cleared, regardless of whether the detector would have
-flagged it. The column's **header label is kept** (so the table stays readable — only the values below
-it are removed). Columns you don't tick are still cleaned the normal way (detected sensitive values
-removed). This is the dependable way to handle columns of names and identifiers.
-
-When you click **Redact**, the spreadsheet is **added to the queue** with your choices and the window
-closes; it's then redacted in the background like any other document, and you'll see it appear in the
-main list with its status.
-
-> When you redact a spreadsheet through the ordinary queue, drag-and-drop, a [watched
-> folder](watched-folders.md), or the command line, Philter Desktop runs **detection on every cell**
-> (no column is fully cleared, because those routes don't ask you any questions). To pick whole columns
-> to remove, use **Redact Spreadsheet…**.
+The rest of this page describes the parts of redaction that are the **same for every document type**:
+adding files, watching what happens, previewing and adjusting the result, and checking what was
+removed.
 
 ## Adding documents to the queue
 
@@ -143,13 +35,15 @@ There are two ways to add files:
   The **Redact** button also has a small **arrow** beside it; clicking the arrow opens a short menu
   with alternatives — **Redact with Preview…** (see the result before saving), **Find & Redact…**
   (remove specific words from one file), **Redact Spreadsheet…** (redact an `.xlsx`/`.csv` with
-  optional whole-column removal), and **Redact Folder…** (add every supported file in a folder at
-  once). These are described later on this page.
+  optional whole-column removal, covered under [Spreadsheets](redacting-spreadsheets.md)), and
+  **Redact Folder…** (add every supported file in a folder at once). The others are described later on
+  this page.
 - **Drag and drop.** Drag one or more files from a Windows folder and drop them straight onto the
   Philter Desktop window. Files added this way use the **default** policy and the **default** context.
   This is the quickest way when the standard rules are fine.
 
 ![The Redact Documents dialog: choose the files, a policy, and a context, then start redacting](img/redact-documents.png)
+
 *Adding files with the Redact button: pick a policy and a context, then add your documents.*
 
 ## What happens after you add a document
@@ -194,11 +88,8 @@ by default the label is `_redacted-draft`, so `report.docx` becomes `report_reda
 and it's saved to the location you've chosen in [Settings](settings.md). The word "draft" in that
 name is a gentle reminder that you should still review the file before relying on it.
 
-For Word (`.docx`) files, Philter Desktop also cleans up hidden information in the redacted copy by
-default — the document's **metadata** (author, company, title, keywords, custom properties), reviewer
-**comments**, **tracked changes**, and **hidden text** — so a "redacted" file doesn't quietly leak
-through any of those channels. You can control each of these on the
-[Settings → Microsoft Office](settings.md#microsoft-office-tab) tab.
+For Word (`.docx`) files, the redacted copy also has hidden information (metadata, comments, tracked
+changes, and hidden text) cleaned out by default; see [Microsoft Word](redacting-word.md).
 
 ## Redact a whole folder at once
 
@@ -585,7 +476,7 @@ PhilterDesktop.exe /p mypolicy /c mycontext file1.pdf file2.pdf file3.pdf
 Each file is cleaned up into a copy with the usual `_redacted-draft` label (and saved according to
 your output-location [setting](settings.md)); originals are never changed. The supported types are the
 same as always: `.txt`, `.docx`, `.pdf`, `.rtf`, `.xlsx`, `.csv`, `.eml`, and `.msg` (an `.msg` is
-redacted to an `.eml`, as described above). When it finishes, it reports a result code: **0** means
+redacted to an `.eml`; see [Email](redacting-email.md)). When it finishes, it reports a result code: **0** means
 everything succeeded, **1** means at least one file failed, and **2** means there was a mistake in
 how the command was typed or an unknown policy was named.
 

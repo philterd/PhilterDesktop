@@ -7,6 +7,7 @@ addresses, and account numbers blacked out or replaced. Your original file is ne
 Desktop always works on a separate copy, so nothing is ever lost.
 
 ![Philter Desktop main window with a queue of documents, each showing its redaction status, policy, and context](img/main-form.png)
+
 *The main window: add documents and Philter Desktop redacts them in the background, showing each file's status.*
 
 If you have ever sat with a printed page and a black marker, crossing out a client's name or a Social
@@ -93,9 +94,11 @@ personal information, and detection is configurable — always review the result
 documents.)
 
 ![A law firm letter showing a client's name, address, date of birth, Social Security number, phone, email, and account numbers in plain text](img/example-original.png)
+
 *Before: the original document.*
 
 ![The same letter after redaction, with the personal details blacked out](img/example-redacted.png)
+
 *After: the redacted copy.*
 
 ## Where to go next
