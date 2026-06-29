@@ -1,8 +1,7 @@
 # Redacting Documents
 
-This is the page you'll come back to most often. It explains how to add documents, how Philter
-Desktop cleans them up, how to look at exactly what was removed, and how to make adjustments if the
-program removed too much or too little.
+This page explains how to add documents, how Philter Desktop cleans them up, how to look at exactly
+what was removed, and how to make adjustments if the program removed too much or too little.
 
 The heart of the program is the **redaction queue** — the list that fills most of the main window.
 Think of it as your worklist: every document you hand to [Philter Desktop](https://philterd.ai/philter-desktop/) appears here as a row, along

@@ -30,7 +30,7 @@ their contents.
 
 ## Is it open source?
 
-Yes. Philter Desktop is released under the **Apache License 2.0**, so you can audit the
+Philter Desktop is released under the **Apache License 2.0**, so you can audit the
 [source code](https://github.com/philterd/PhilterDesktop) and build it yourself at no cost. The
 subscription is for the official signed build, support, and maintained releases. See
 [Licensing & Support](licensing.md).
@@ -43,22 +43,23 @@ PDF (`.pdf`), Microsoft Word (`.docx`), plain text (`.txt`), rich text (`.rtf`),
 
 ## Can it redact scanned PDFs?
 
-Yes. Scanned PDFs are read with **on-device OCR** that runs entirely on your computer. OCR is
-best-effort: its accuracy depends on scan quality, and it does not read handwriting, so reviewing the
-result matters even more. See [PDF](redacting-pdf.md).
+Scanned PDFs are read with **on-device OCR** that runs entirely on your computer, so the text in them
+can be detected and redacted. OCR is best-effort: its accuracy depends on scan quality, and it does not
+read handwriting, so reviewing the result matters even more here. See [PDF](redacting-pdf.md).
 
 ## Can I control what gets redacted?
 
-Yes. Philter Desktop uses a configurable **policy** engine: you choose which kinds of information to
-detect, add your own terms and [custom identifiers](policies.md#redacting-your-own-special-identifiers-custom-identifiers),
+Philter Desktop uses a configurable **policy** engine: you choose which kinds of information to detect,
+add your own terms and [custom identifiers](policies.md#redacting-your-own-special-identifiers-custom-identifiers),
 and decide how matches are replaced with [filter strategies](filter-strategies.md). See
 [Redaction Policies](policies.md).
 
 ## Does it remove hidden data and metadata?
 
-Yes. For Word documents it can also clean up **metadata** (author, company, title, and so on),
-**comments**, **tracked changes**, and **hidden text**, and for email it can strip identifying
-**headers**. See [Microsoft Word](redacting-word.md) and [Email](redacting-email.md).
+For Word documents, Philter Desktop can also clean up **metadata** (author, company, title, and so
+on), **comments**, **tracked changes**, and **hidden text**, and for email it can strip identifying
+**headers**. These cleanups are on by default and can be turned off in Settings. See
+[Microsoft Word](redacting-word.md) and [Email](redacting-email.md).
 
 ## How do I know the redaction worked?
 
@@ -70,21 +71,23 @@ probabilistic, so always give an important document a **human review** as well. 
 
 ## Is the redaction permanent?
 
-Yes. A redacted **PDF is flattened to an image**, so the removed text leaves no hidden layer behind;
-for other formats the sensitive content is **replaced** rather than merely covered. Your original file
-is never changed: the result is always written to a new copy. See [PDF](redacting-pdf.md).
+What Philter Desktop redacts is genuinely removed, not merely hidden from view: a redacted **PDF is
+flattened to an image**, so no recoverable text layer remains, and in other formats the content is
+**replaced** rather than just covered over. (This concerns what was redacted; whether everything
+sensitive was caught is a separate question, so still review the result.) Your original file is never
+changed: the result is always written to a new copy. See [PDF](redacting-pdf.md).
 
 ## Can I automate redaction?
 
-Yes. You can use [watched folders](watched-folders.md), the
+You can use [watched folders](watched-folders.md), the
 [command line](redacting-documents.md#for-advanced-users-and-it-redacting-from-a-command-line), or the
 [Windows Explorer right-click menu](settings.md#explorer-right-click-menu) for batch or individual
 processing.
 
 ## Is my data stored securely on my computer?
 
-Yes. Philter Desktop's local data is **encrypted at rest** and tied to your Windows account on that
-machine, with optional passphrase protection. See
+Philter Desktop's local data is **encrypted at rest** and tied to your Windows account on that
+machine, with optional passphrase protection for stronger control. See
 [Settings → Security](settings.md#security-tab-protecting-your-stored-information).
 
 ## What are the system requirements?
