@@ -197,9 +197,10 @@ namespace PhilterDesktop
         }
 
         /// <summary>
-        /// Canonical, stable order of redactable paragraphs: body (including tables), then header
-        /// parts and footer parts in First, Even, Default(Odd) order. The order must match between
-        /// <see cref="Redact"/> and <see cref="ApplySpans"/> so a stored paragraph index re-applies.
+        /// Canonical, stable order of redactable paragraphs: body (including tables), then header and
+        /// footer parts in First, Even, Default(Odd) order, then footnotes, endnotes, and comments. The
+        /// order must match between <see cref="Redact"/> and <see cref="ApplySpans"/> so a stored
+        /// paragraph index re-applies.
         /// </summary>
         private static IEnumerable<Paragraph> EnumerateTargets(WordprocessingDocument document)
         {
@@ -226,6 +227,23 @@ namespace PhilterDesktop
                     {
                         yield return p;
                     }
+                }
+            }
+
+            // Footnotes then endnotes: their paragraphs carry body-like text, so they must be filtered
+            // like any other paragraph — otherwise PII in a note ships in the output (#477).
+            if (main.FootnotesPart?.Footnotes is Footnotes footnotes)
+            {
+                foreach (Paragraph p in footnotes.Descendants<Paragraph>())
+                {
+                    yield return p;
+                }
+            }
+            if (main.EndnotesPart?.Endnotes is Endnotes endnotes)
+            {
+                foreach (Paragraph p in endnotes.Descendants<Paragraph>())
+                {
+                    yield return p;
                 }
             }
 

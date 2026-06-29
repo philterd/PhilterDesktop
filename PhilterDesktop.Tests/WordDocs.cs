@@ -137,6 +137,159 @@ namespace PhilterDesktop.Tests
             return part?.Comments?.Elements<Comment>().Any() == true;
         }
 
+        // --- Footnotes / endnotes (issue #477) -----------------------------------------------------
+
+        /// <summary>Creates a .docx with one footnote (and optional endnote) plus body paragraphs.</summary>
+        public static void CreateWithNotes(string path, string? footnoteText, string? endnoteText, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            main.Document = new Document(new Body());
+            Body body = main.Document.Body!;
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+
+            if (footnoteText is not null)
+            {
+                FootnotesPart part = main.AddNewPart<FootnotesPart>();
+                part.Footnotes = new Footnotes(
+                    new Footnote(new Paragraph()) { Type = FootnoteEndnoteValues.Separator, Id = -1 },
+                    new Footnote(Para(footnoteText)) { Id = 1 });
+            }
+
+            if (endnoteText is not null)
+            {
+                EndnotesPart part = main.AddNewPart<EndnotesPart>();
+                part.Endnotes = new Endnotes(
+                    new Endnote(new Paragraph()) { Type = FootnoteEndnoteValues.Separator, Id = -1 },
+                    new Endnote(Para(endnoteText)) { Id = 1 });
+            }
+        }
+
+        /// <summary>Creates a .docx with several footnotes and/or endnotes (one paragraph each).</summary>
+        public static void CreateWithMultipleNotes(string path, string[]? footnotes, string[]? endnotes, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            main.Document = new Document(new Body());
+            Body body = main.Document.Body!;
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+
+            if (footnotes is { Length: > 0 })
+            {
+                var elems = new List<OpenXmlElement> { new Footnote(new Paragraph()) { Type = FootnoteEndnoteValues.Separator, Id = -1 } };
+                for (int i = 0; i < footnotes.Length; i++)
+                {
+                    elems.Add(new Footnote(Para(footnotes[i])) { Id = i + 1 });
+                }
+                main.AddNewPart<FootnotesPart>().Footnotes = new Footnotes(elems.ToArray());
+            }
+
+            if (endnotes is { Length: > 0 })
+            {
+                var elems = new List<OpenXmlElement> { new Endnote(new Paragraph()) { Type = FootnoteEndnoteValues.Separator, Id = -1 } };
+                for (int i = 0; i < endnotes.Length; i++)
+                {
+                    elems.Add(new Endnote(Para(endnotes[i])) { Id = i + 1 });
+                }
+                main.AddNewPart<EndnotesPart>().Endnotes = new Endnotes(elems.ToArray());
+            }
+        }
+
+        /// <summary>Creates a .docx with a single footnote that has multiple paragraphs.</summary>
+        public static void CreateWithMultiParagraphFootnote(string path, string[] footnoteParagraphs, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            main.Document = new Document(new Body());
+            Body body = main.Document.Body!;
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+
+            var footnote = new Footnote { Id = 1 };
+            foreach (string p in footnoteParagraphs)
+            {
+                footnote.AppendChild(Para(p));
+            }
+            main.AddNewPart<FootnotesPart>().Footnotes = new Footnotes(
+                new Footnote(new Paragraph()) { Type = FootnoteEndnoteValues.Separator, Id = -1 }, footnote);
+        }
+
+        /// <summary>Creates a .docx whose footnote #1 is built from raw WordprocessingML (for drawings/text boxes).</summary>
+        public static void CreateWithRawFootnote(string path, string footnoteInnerXml, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            main.Document = new Document(new Body());
+            Body body = main.Document.Body!;
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+
+            FootnotesPart part = main.AddNewPart<FootnotesPart>();
+            string xml = $"<w:footnotes {DocNamespaces}>" +
+                         "<w:footnote w:type=\"separator\" w:id=\"-1\"><w:p/></w:footnote>" +
+                         $"<w:footnote w:id=\"1\">{footnoteInnerXml}</w:footnote></w:footnotes>";
+            using Stream s = part.GetStream(FileMode.Create, FileAccess.Write);
+            using var w = new StreamWriter(s, new UTF8Encoding(false));
+            w.Write(xml);
+        }
+
+        /// <summary>Creates a .docx with a header, footer, one footnote, and one endnote — the full part set.</summary>
+        public static void CreateWithHeaderFooterAndNotes(string path, string headerText, string footerText, string footnoteText, string endnoteText, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            main.Document = new Document(new Body());
+            Body body = main.Document.Body!;
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+
+            HeaderPart headerPart = main.AddNewPart<HeaderPart>();
+            headerPart.Header = new Header(Para(headerText));
+            FooterPart footerPart = main.AddNewPart<FooterPart>();
+            footerPart.Footer = new Footer(Para(footerText));
+
+            main.AddNewPart<FootnotesPart>().Footnotes = new Footnotes(
+                new Footnote(new Paragraph()) { Type = FootnoteEndnoteValues.Separator, Id = -1 },
+                new Footnote(Para(footnoteText)) { Id = 1 });
+            main.AddNewPart<EndnotesPart>().Endnotes = new Endnotes(
+                new Endnote(new Paragraph()) { Type = FootnoteEndnoteValues.Separator, Id = -1 },
+                new Endnote(Para(endnoteText)) { Id = 1 });
+
+            body.AppendChild(new SectionProperties(
+                new HeaderReference { Type = HeaderFooterValues.Default, Id = main.GetIdOfPart(headerPart) },
+                new FooterReference { Type = HeaderFooterValues.Default, Id = main.GetIdOfPart(footerPart) }));
+        }
+
+        /// <summary>Text of each footnote (non-empty), in order.</summary>
+        public static string[] FootnoteTexts(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            return doc.MainDocumentPart!.FootnotesPart?.Footnotes?
+                .Elements<Footnote>().Select(f => f.InnerText).Where(t => t.Length > 0).ToArray()
+                ?? Array.Empty<string>();
+        }
+
+        /// <summary>Text of each endnote (non-empty), in order.</summary>
+        public static string[] EndnoteTexts(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            return doc.MainDocumentPart!.EndnotesPart?.Endnotes?
+                .Elements<Endnote>().Select(e => e.InnerText).Where(t => t.Length > 0).ToArray()
+                ?? Array.Empty<string>();
+        }
+
         // --- Comment authors / people.xml (issue #508) ---------------------------------------------
 
         /// <summary>
