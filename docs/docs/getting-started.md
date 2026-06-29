@@ -138,16 +138,24 @@ When you uninstall, Philter Desktop tidies up after itself. It automatically rem
 - the **start-at-sign-in** entry, if you had it turned on; and
 - the **"Redact with Philter Desktop"** right-click command, if you had turned that on in Settings.
 
-Two things are **deliberately left in place**, so you don't lose anything by accident:
+**Your saved data is your choice.** Near the end, the uninstaller asks:
 
-- **Your saved data** — your policies, contexts, settings, and redaction history. This is kept in a
-  private folder under your user account so that if you reinstall later, everything is still there. If
-  you want to erase this data too, first use **File → Clear Redaction History…** inside the program
-  *before* uninstalling (this is the safest way to wipe the saved history, including any sensitive
-  text it captured), and you can then delete the program's data folder at
-  `%LocalAppData%\PhilterDesktop\` if you wish.
-- **The cleaned-up files you already saved** — every redacted copy you created stays right where you
-  saved it. Uninstalling the program never touches your documents.
+> *Also remove your saved Philter Desktop data for this account?*
+
+This is your **policies, contexts, settings, and redaction history** (including any sensitive text the
+history captured), kept in a private folder under your user account.
+
+- **Choose No (the default)** to keep it — so if you reinstall later, everything is still there. This is
+  also what happens during an upgrade or a silent/automated uninstall, so you never lose your setup by
+  accident.
+- **Choose Yes** to permanently delete that data for your account — a clean wipe in one step, with no
+  need to hunt down files by hand. (You can also wipe just the history at any time from inside the
+  program with **File → Clear Redaction History…**, or, if you prefer to do it manually, delete the
+  folder at `%LocalAppData%\PhilterDesktop\`.)
+
+**The cleaned-up files you already saved are never touched** — every redacted copy you created stays
+right where you saved it, whichever choice you make. Uninstalling the program never deletes your
+documents.
 
 ## Where to go from here
 
