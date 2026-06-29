@@ -808,8 +808,13 @@ namespace PhilterDesktop
                 ForeColor = ModernTheme.SubtleText,
                 BackColor = ModernTheme.Surface,
                 Font = new Font(ModernTheme.UiFont.FontFamily, 11f, FontStyle.Regular),
-                Visible = false
+                Visible = false,
+                // The overlay sits on top of the (empty) list, so dropping onto the hint must work too —
+                // forward to the same handlers as the list (#488).
+                AllowDrop = true
             };
+            _emptyStateLabel.DragEnter += QueueList_DragEnter;
+            _emptyStateLabel.DragDrop += QueueList_DragDrop;
             Controls.Add(_emptyStateLabel);
 
             // --- Status-bar summary ---

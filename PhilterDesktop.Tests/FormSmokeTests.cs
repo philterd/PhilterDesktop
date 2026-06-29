@@ -73,6 +73,26 @@ namespace PhilterDesktop.Tests
         public void MainForm_Constructs() =>
             ConstructWithDb(db => new MainForm(db, startMinimized: false));
 
+        // #488: the empty-queue hint overlay must accept dropped files (it had no AllowDrop, so dropping
+        // onto the hint — the exact onboarding gesture it invites — silently failed).
+        [Fact]
+        public void MainForm_EmptyStateOverlay_AcceptsDrops() => Sta(() =>
+        {
+            string path = Path.Combine(Path.GetTempPath(), "smoke-" + Guid.NewGuid().ToString("N") + ".db");
+            try
+            {
+                using var db = new LiteDatabase(path);
+                using var form = new MainForm(db, startMinimized: false);
+
+                var field = typeof(MainForm).GetField("_emptyStateLabel",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                Assert.NotNull(field);
+                var label = (Label)field!.GetValue(form)!;
+                Assert.True(label.AllowDrop, "the empty-state hint must accept dropped files (#488)");
+            }
+            finally { try { File.Delete(path); } catch { /* best effort */ } }
+        });
+
         [Fact]
         public void PolicyEditorForm_Constructs() =>
             ConstructWithDb(db => new PolicyEditorForm(new PolicyRepository(db)));
