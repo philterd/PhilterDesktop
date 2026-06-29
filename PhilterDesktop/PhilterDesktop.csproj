@@ -16,6 +16,9 @@
          the right-click "Redact with Philter Desktop" menu, which points its Icon at the exe) shows
          it instead of a generic icon. -->
     <ApplicationIcon>..\images\PhilterDesktop.ico</ApplicationIcon>
+    <!-- Win32 application manifest: declares Windows 10/11 supportedOS and opts into long-path support.
+         DPI awareness is set at runtime via ApplicationConfiguration.Initialize, not here. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Declaring the x64 RID makes the self-contained publish lay out the native PDF
          dependencies (PDFium, SkiaSharp, ONNX Runtime) deterministically for the installer. -->
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
