@@ -77,6 +77,7 @@ namespace PhilterDesktop
                 ClearCoreProperties(document);
                 ClearExtendedProperties(document.ExtendedFilePropertiesPart);
                 RemoveCustomProperties(document, document.CustomFilePropertiesPart);
+                AnonymizeCommentAuthors(document);
             }
             if (options.HasFlag(WordScrubOptions.TrackedChanges))
             {
@@ -215,6 +216,49 @@ namespace PhilterDesktop
         private static bool Is(OpenXmlElement e, string localName) => e.LocalName == localName && e.NamespaceUri == W;
 
         // --- Comments ---------------------------------------------------------
+
+        // Comments that are KEPT still carry the reviewer's identity: the w:author / w:initials on each
+        // comment and the display names in word/people.xml. Replace authors with consistent per-author
+        // pseudonyms ("Reviewer 1", "Reviewer 2", …) so the conversation stays readable without real
+        // names, and drop the people part outright (it only stores reviewer identities). Gated by the
+        // "remove document metadata" option, the same class of identifying metadata (#508).
+        private static void AnonymizeCommentAuthors(WordprocessingDocument document)
+        {
+            try
+            {
+                MainDocumentPart? main = document.MainDocumentPart;
+                if (main is null)
+                {
+                    return;
+                }
+
+                if (main.WordprocessingCommentsPart?.Comments is { } comments)
+                {
+                    var aliases = new Dictionary<string, int>(StringComparer.Ordinal);
+                    foreach (Comment comment in comments.Elements<Comment>())
+                    {
+                        string original = comment.Author?.Value ?? string.Empty;
+                        if (!aliases.TryGetValue(original, out int number))
+                        {
+                            number = aliases.Count + 1;
+                            aliases[original] = number;
+                        }
+                        comment.Author = "Reviewer " + number;
+                        comment.Initials = "R" + number;
+                    }
+                }
+
+                // people.xml holds reviewer display names / presence for @mentions — remove it entirely.
+                foreach (WordprocessingPeoplePart part in main.GetPartsOfType<WordprocessingPeoplePart>().ToList())
+                {
+                    main.DeletePart(part);
+                }
+            }
+            catch
+            {
+                // best effort — never let a comment-author quirk fail the redaction
+            }
+        }
 
         private static void RemoveComments(WordprocessingDocument document)
         {

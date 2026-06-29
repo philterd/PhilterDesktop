@@ -137,6 +137,69 @@ namespace PhilterDesktop.Tests
             return part?.Comments?.Elements<Comment>().Any() == true;
         }
 
+        // --- Comment authors / people.xml (issue #508) ---------------------------------------------
+
+        /// <summary>
+        /// Creates a .docx with comments carrying the given (author, text) pairs and a matching
+        /// word/people.xml listing each distinct author — i.e. the reviewer-identity metadata.
+        /// </summary>
+        public static void CreateWithAuthoredComments(string path, (string Author, string Text)[] comments, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            main.Document = new Document(new Body());
+            Body body = main.Document.Body!;
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+
+            var root = new Comments();
+            for (int i = 0; i < comments.Length; i++)
+            {
+                (string author, string text) = comments[i];
+                string initials = author.Length > 0 ? author[..1] : "X";
+                root.AppendChild(new Comment(Para(text)) { Id = (i + 1).ToString(), Author = author, Initials = initials });
+            }
+            main.AddNewPart<WordprocessingCommentsPart>().Comments = root;
+
+            WordprocessingPeoplePart people = main.AddNewPart<WordprocessingPeoplePart>();
+            string persons = string.Concat(comments.Select(c => c.Author).Distinct().Select(a =>
+                $"<w15:person w15:author=\"{Escape(a)}\"><w15:presenceInfo w15:providerId=\"None\" w15:userId=\"{Escape(a)}\"/></w15:person>"));
+            using (Stream s = people.GetStream(FileMode.Create, FileAccess.Write))
+            using (var w = new StreamWriter(s, new UTF8Encoding(false)))
+            {
+                w.Write("<w15:people xmlns:w15=\"http://schemas.microsoft.com/office/word/2015/wml\">" + persons + "</w15:people>");
+            }
+        }
+
+        /// <summary>The w:author value of each comment, in order.</summary>
+        public static string[] CommentAuthors(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            WordprocessingCommentsPart? part = doc.MainDocumentPart!.WordprocessingCommentsPart;
+            return part?.Comments is null
+                ? Array.Empty<string>()
+                : part.Comments.Elements<Comment>().Select(c => c.Author?.Value ?? string.Empty).ToArray();
+        }
+
+        /// <summary>The w:initials value of each comment, in order.</summary>
+        public static string[] CommentInitials(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            WordprocessingCommentsPart? part = doc.MainDocumentPart!.WordprocessingCommentsPart;
+            return part?.Comments is null
+                ? Array.Empty<string>()
+                : part.Comments.Elements<Comment>().Select(c => c.Initials?.Value ?? string.Empty).ToArray();
+        }
+
+        /// <summary>Whether the document still has a word/people.xml part.</summary>
+        public static bool HasPeoplePart(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            return doc.MainDocumentPart!.GetPartsOfType<WordprocessingPeoplePart>().Any();
+        }
+
         // --- Threaded comments (issue #507) --------------------------------------------------------
 
         private const string ThreadedRelType = "http://schemas.microsoft.com/office/2018/08/relationships/threadedComment";

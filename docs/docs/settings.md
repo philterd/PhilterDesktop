@@ -88,10 +88,13 @@ that still includes it defeats the purpose. The **Microsoft Office** tab lets yo
 channels. All four options are **on by default**:
 
 - **Remove document metadata (author, company, title, keywords, custom fields).** Clears the document's
-  properties so the redacted copy doesn't name who wrote it or where it came from. **Applies to both
-  Word (`.docx`) and Excel (`.xlsx`).**
-- **Remove reviewer comments.** Deletes all comments (and the reviewer names attached to them).
-  *(Word only.)*
+  properties so the redacted copy doesn't name who wrote it or where it came from. For Word, this also
+  **anonymizes the reviewer names on any comments you keep** — each author becomes a neutral label such
+  as "Reviewer 1" (kept consistent so a back-and-forth still reads as separate people) — and removes the
+  stored list of reviewer identities. **Applies to both Word (`.docx`) and Excel (`.xlsx`).**
+- **Remove reviewer comments.** Deletes all comments (and the reviewer names attached to them). When
+  this is **off**, comments are kept but their text is still redacted, and their author names are
+  anonymized if **Remove document metadata** is on (above). *(Word only.)*
 - **Accept and remove tracked changes (revisions).** Accepts every insertion and deletion and removes
   the revision history, so no record of who changed what (or what the earlier text was) remains.
   *(Word only.)*

@@ -11,6 +11,11 @@ default: the document's **metadata** (author, company, title, keywords, custom p
 of those channels. You can control each of these on the
 [Settings → Microsoft Office](settings.md#microsoft-office-tab) tab.
 
+If you choose to **keep** comments rather than remove them, their text is still redacted like the rest
+of the document, and — when **Remove document metadata** is on — the reviewer names on them are
+anonymized (for example, to "Reviewer 1"). Either way, a comment can't ship the sensitive text or the
+reviewer's identity.
+
 ## Highlighting redactions
 
 When you redact Word documents (for example, with **Redact Folder…** or in **Redact with Preview**),
