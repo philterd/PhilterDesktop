@@ -1,6 +1,6 @@
 # Getting Started
 
-This page walks you through installing Philter Desktop, redacting your first document, and (should you
+This page walks you through installing [Philter Desktop](https://philterd.ai/philter-desktop/), redacting your first document, and (should you
 ever need to) removing the program again. You do not need any technical background to follow it — if
 you can install an ordinary Windows program and open a file, you can do everything here.
 

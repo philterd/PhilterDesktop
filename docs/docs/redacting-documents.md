@@ -5,7 +5,7 @@ Desktop cleans them up, how to look at exactly what was removed, and how to make
 program removed too much or too little.
 
 The heart of the program is the **redaction queue** — the list that fills most of the main window.
-Think of it as your worklist: every document you hand to Philter Desktop appears here as a row, along
+Think of it as your worklist: every document you hand to [Philter Desktop](https://philterd.ai/philter-desktop/) appears here as a row, along
 with its current status, the policy (set of rules) being used, and the context (the consistency
 setting). Documents you've already finished stay in the list too, so you can re-open them, compare
 them, or fine-tune them later.
