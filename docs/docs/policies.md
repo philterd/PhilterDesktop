@@ -1,4 +1,4 @@
-# Policies
+# Redaction Policies
 
 A **policy** is simply a **saved set of rules** that tells Philter Desktop two things: *which kinds of
 sensitive information to look for*, and *how to replace each kind* when it's found. You can think of a
@@ -21,6 +21,7 @@ The editor has a toolbar across the top and, below it, the kinds of information 
 Desktop can detect, organized into **tabs** (one category per tab, so the window stays compact):
 
 ![The Policy Editor showing detector categories organized into tabs, with checkboxes for each kind of information](img/policy-editor.png)
+
 *The Policy Editor: turn on the kinds of information to remove, organized into category tabs.*
 
 - **Policy selector** — a drop-down for choosing which policy you want to look at or change.
@@ -85,6 +86,7 @@ If you're not sure where to start, click **New** and choose **From Wizard…**. 
 through a few short questions and builds a policy for you:
 
 ![The New Policy Wizard asking what kind of documents you are redacting](img/policy-wizard.png)
+
 *The wizard builds a sensible policy for common document types in a few clicks.*
 
 1. **What kind of documents are you redacting?** — pick a use case (general office, healthcare, legal,
@@ -198,15 +200,11 @@ of your document is uploaded or sent over the internet. Nothing leaves your mach
 There's nothing to configure — just check the box and save the policy. The first document you redact
 after turning it on takes a moment longer while the program loads the model; after that, it's quick.
 
-> Installed copies of Philter Desktop already include this names model, so it just works. (If you are
-> a technical user running the program from source code, the model is downloaded automatically when
-> you make a Release build, or you can run the included `scripts/download-pheye-model.ps1`.)
-
 !!! warning "If name detection is unavailable"
     If the names model is missing for any reason (an unusual or damaged installation, or antivirus
-    quarantining it), Philter Desktop will **not** quietly pretend to redact names. It shows a clear
-    warning — an amber banner across the top of the main window and of every **Redact with Preview**
-    window (and a message on the command line) — telling you that **person names will not be redacted**
+    quarantining it), Philter Desktop will **not** quietly pretend to redact names. It shows a yellow
+    warning banner across the top of the main window and of every **Redact with Preview**
+    window (and a message on the command line), telling you that **person names will not be redacted**
     by policies that look for them. Pattern-based detection (Social Security numbers, email, phone, and
     so on) still works. If you see this warning, **reinstall Philter Desktop** to restore name
     detection, and re-redact anything that was processed while it was unavailable.
@@ -224,3 +222,23 @@ expression**, which is a compact way of saying "match text that looks like *this
 expressions are a technical skill; if you're not comfortable writing one, ask a technical colleague,
 or use the **Always Redact** list above for specific words and phrases, which needs no special
 syntax.
+
+Here are some example identifiers and the regular expressions that match them, to give you a starting
+point:
+
+| Example identifier | Regular expression |
+|--------------------|--------------------|
+| Case number (`CASE-2024-00123`) | `\bCASE-\d{4}-\d{5}\b` |
+| Medical record number (`MRN-1234567`) | `\bMRN-\d{7}\b` |
+| Client matter ID (`12345-001`) | `\b\d{5}-\d{3}\b` |
+| Internal account number (`ACCT-US123456`) | `\bACCT-[A-Z]{2}\d{6}\b` |
+| Employee ID (`EMP000123`) | `\bEMP\d{6}\b` |
+| Invoice number (`INV-2024-000123`) | `\bINV-\d{4}-\d{6}\b` |
+| Insurance policy number (`POL-A1B2C3D4`) | `\bPOL-[A-Z0-9]{8}\b` |
+| Patient ID (`PT-00123456`) | `\bPT-\d{8}\b` |
+| Vehicle Identification Number (`1HGCM82633A004352`) | `\b[A-HJ-NPR-Z0-9]{17}\b` |
+| Claim number (`CLM0123456789`) | `\bCLM\d{10}\b` |
+
+Adjust these to match your organization's exact format. After redacting, use
+[Verification](redacting-documents.md#checking-the-result-for-anything-missed-verification) to confirm
+the pattern caught what you expected.

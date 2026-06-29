@@ -1,4 +1,4 @@
-# Filter Strategies (How Information Gets Replaced)
+# Filter Strategies
 
 When Philter Desktop finds a piece of sensitive information, it has to put **something** in its place.
 A **filter strategy** is simply your choice of *what* that something is. (Remember that a "filter" is
@@ -34,7 +34,7 @@ When you add or edit a strategy, you choose one of these three approaches:
 > **A note about PDFs.** These strategies control the replacement **text**, which appears in the
 > redacted output for Word (`.docx`), text (`.txt`), rich text (`.rtf`), spreadsheet (`.xlsx`, `.csv`),
 > and email (`.eml`, `.msg`) files. **PDFs work differently:** a redacted PDF is flattened to an image
-> with every detected item painted over by a solid box (see [Redacting Documents](redacting-documents.md)).
+> with every detected item painted over by a solid box (see [PDF](redacting-pdf.md)).
 > So for PDFs the choice of strategy does **not** change how the result looks — you get a solid box in
 > every case, whether you picked Redact, Static replacement, or Random replacement.
 
@@ -66,6 +66,19 @@ To use it, turn on **Only apply when** and fill in the simple builder — you pi
 As you choose, Philter Desktop shows the exact condition it will use (for example,
 `confidence is greater than 0.8`). Building it this way means the condition is always valid — you can't
 accidentally mistype one.
+
+These examples show the kind of fine-tuning conditions make possible:
+
+| Scenario | Condition |
+|----------|-----------|
+| Black out a match only when the detector is highly confident | `confidence is greater than 0.8` |
+| Use a gentler strategy on low-confidence guesses | `confidence is less than 0.4` |
+| Redact your internal IDs but leave a sample value used in templates | `matched text does not equal "CASE-0000-00000"` |
+| Apply a strategy only to IDs that use your prefix | `matched text starts with "CASE-"` |
+| Redact names only in records that mention a patient | `context starts with "Patient"` |
+| Handle one detected type differently from the rest | `detected type equals "Phone Number"` |
+| Apply a strategy only to a particular data set | `population equals "EU"` |
+| Leave your own organization's name unredacted | `matched text does not equal "Acme Corporation"` |
 
 ## A few helpful tips
 

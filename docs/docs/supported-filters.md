@@ -1,4 +1,4 @@
-# Supported Filters (What Philter Desktop Can Detect)
+# Supported Filters
 
 This page lists every kind of sensitive information Philter Desktop knows how to find. Each one is a
 **filter** — a detector you can switch on or off. You turn on the ones you need in the
