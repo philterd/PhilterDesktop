@@ -307,10 +307,36 @@ namespace PhilterDesktop.PolicyEditing
             UpdateConditionPreview();
         }
 
+        /// <summary>
+        /// Validates a "Replace with a static value" entry. Returns an error message to show the
+        /// user, or <c>null</c> if the value is acceptable. An empty or whitespace-only value is
+        /// rejected because it would silently delete the matched text with no visible marker.
+        /// </summary>
+        internal static string? ValidateStaticReplacement(string? value) =>
+            string.IsNullOrWhiteSpace(value)
+                ? "Enter a value to replace matches with.\r\n\r\n" +
+                  "An empty static value would delete the matched text with no marker. " +
+                  "To insert a placeholder, use a value such as \"REDACTED\"; to use a " +
+                  "redaction format instead, choose \"Redact\"."
+                : null;
+
         private void OnOk(object? sender, EventArgs e)
         {
             if (_staticRadio.Checked)
             {
+                // Reject an empty/whitespace static value: it would silently delete the matched PII
+                // with no visible marker, which the user almost never intends (and can leave the
+                // surrounding text reading incorrectly). Require a real replacement instead.
+                string? staticError = ValidateStaticReplacement(_staticValue.Text);
+                if (staticError is not null)
+                {
+                    MessageBox.Show(this, staticError, "Static value",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    DialogResult = DialogResult.None; // keep the dialog open
+                    _staticValue.Focus();
+                    return;
+                }
+
                 _strategy.Strategy = AbstractFilterStrategy.StaticReplace;
                 _strategy.StaticReplacement = _staticValue.Text;
             }
