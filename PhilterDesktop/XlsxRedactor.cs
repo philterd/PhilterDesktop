@@ -27,7 +27,8 @@ namespace PhilterDesktop
     /// an independent unit (so values in different cells are never mis-joined): the cell's text is run
     /// through the filter and, when changed, written back as an <em>inline string</em> — which detaches
     /// it from the shared-string table so redacting one cell can't alter an unrelated cell that happened
-    /// to share the same string.
+    /// to share the same string. After redaction, any shared-string entry no longer referenced by a cell
+    /// is blanked, so an original value can't be recovered from <c>xl/sharedStrings.xml</c>.
     ///
     /// Cells are enumerated in a stable canonical order — workbook sheet order, then rows, then cells —
     /// and the cell's ordinal is stored in <see cref="RedactionSpanEntity.ParagraphIndex"/> (exactly as
@@ -139,6 +140,9 @@ namespace PhilterDesktop
                 }
             }
 
+            // Redacted cells were converted to inline strings; blank any shared-string entries they left
+            // orphaned so the original text can't be recovered from xl/sharedStrings.xml.
+            PruneUnusedSharedStrings(workbookPart);
             return captured;
         }
 
@@ -242,6 +246,8 @@ namespace PhilterDesktop
                     SetCellText(cell, ApplyRanges(original, resolved));
                 }
             }
+
+            PruneUnusedSharedStrings(workbookPart);
         }
 
         /// <summary>
@@ -365,6 +371,43 @@ namespace PhilterDesktop
             cell.RemoveAllChildren();
             cell.DataType = new EnumValue<CellValues>(CellValues.InlineString);
             cell.AppendChild(new InlineString(new Text(value) { Space = SpaceProcessingModeValues.Preserve }));
+        }
+
+        // Blanks shared-string entries that no cell references anymore. Redacting a shared-string cell
+        // detaches it (it becomes an inline string), but the original text stays in the shared-string
+        // table and is recoverable by unzipping the workbook. We clear the text of every now-orphaned
+        // entry, blanking in place (rather than removing items) so the indices that surviving cells still
+        // reference don't shift.
+        private static void PruneUnusedSharedStrings(WorkbookPart workbookPart)
+        {
+            SharedStringTable? table = workbookPart.SharedStringTablePart?.SharedStringTable;
+            if (table is null)
+            {
+                return;
+            }
+
+            var referenced = new HashSet<int>();
+            foreach ((Cell cell, bool _) in EnumerateCells(workbookPart))
+            {
+                if (cell.DataType?.Value == CellValues.SharedString &&
+                    int.TryParse(cell.CellValue?.InnerText, out int index))
+                {
+                    referenced.Add(index);
+                }
+            }
+
+            int i = 0;
+            foreach (SharedStringItem item in table.Elements<SharedStringItem>())
+            {
+                if (!referenced.Contains(i))
+                {
+                    // No cell points here anymore — drop any residual (possibly sensitive) text, leaving
+                    // an empty placeholder so later entries keep their indices.
+                    item.RemoveAllChildren();
+                    item.AppendChild(new Text(string.Empty));
+                }
+                i++;
+            }
         }
 
         private static string ApplyRanges(string original, IEnumerable<ReplacementRange> ranges)

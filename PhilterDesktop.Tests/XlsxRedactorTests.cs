@@ -174,6 +174,56 @@ namespace PhilterDesktop.Tests
             Assert.DoesNotContain("alice@example.com", SpreadsheetTestHelper.AllText(reapplied));
         }
 
+        // Reads the raw shared-string table text (what survives in xl/sharedStrings.xml), independent of
+        // which cells still reference it — so an orphaned, "invisible" entry is caught.
+        private static string SharedStringXml(string path)
+        {
+            using var doc = DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Open(path, isEditable: false);
+            return doc.WorkbookPart?.SharedStringTablePart?.SharedStringTable?.InnerText ?? string.Empty;
+        }
+
+        [Fact]
+        public async Task RedactFileAsync_Xlsx_RemovesOriginalFromSharedStringTable()
+        {
+            // CreateXlsx stores cells as shared strings, so the original text lives in the shared-string
+            // table. Redacting a cell detaches it (inline string) but must not leave the original behind
+            // in xl/sharedStrings.xml, where it would be recoverable by unzipping the workbook.
+            string input = Make(new[]
+            {
+                new string?[] { "Email", "Notes" },
+                new string?[] { "alice@example.com", "VIP client" }
+            });
+            string output = Path.Combine(_tempDir, "out.xlsx");
+
+            await RedactionService.RedactFileAsync(input, output, EmailAndSsnPolicy(), "ctx");
+
+            string sst = SharedStringXml(output);
+            Assert.DoesNotContain("alice@example.com", sst); // the orphaned original must be gone
+            Assert.Contains("VIP client", sst);              // a still-referenced entry is preserved
+        }
+
+        [Fact]
+        public void ApplySpans_Xlsx_RemovesOriginalFromSharedStringTable()
+        {
+            string input = Make(new[]
+            {
+                new string?[] { "Email", "Notes" },
+                new string?[] { "alice@example.com", "VIP client" }
+            });
+            var fs = new Phileas.Services.FilterService();
+            var policy = EmailAndSsnPolicy();
+            List<RedactionSpanEntity> spans = XlsxRedactor.Redact(
+                input, Path.Combine(_tempDir, "first.xlsx"), text => fs.Filter(policy, "ctx", 0, text));
+            Assert.NotEmpty(spans);
+
+            string reapplied = Path.Combine(_tempDir, "reapplied.xlsx");
+            XlsxRedactor.ApplySpans(input, reapplied, spans);
+
+            string sst = SharedStringXml(reapplied);
+            Assert.DoesNotContain("alice@example.com", sst);
+            Assert.Contains("VIP client", sst);
+        }
+
         [Fact]
         public void ReadColumns_ReturnsLetterAndHeader()
         {
