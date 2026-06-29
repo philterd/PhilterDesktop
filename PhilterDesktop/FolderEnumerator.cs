@@ -107,10 +107,27 @@ namespace PhilterDesktop
 
             foreach (string directory in subdirectories)
             {
+                if (IsReparsePoint(directory))
+                {
+                    continue; // don't follow junctions/symlinks out of the selected folder
+                }
                 foreach (string file in SafeEnumerateFiles(directory, recursive: true))
                 {
                     yield return file;
                 }
+            }
+        }
+
+        // A directory junction or symbolic link — following it could pull in files outside the folder.
+        private static bool IsReparsePoint(string path)
+        {
+            try
+            {
+                return File.GetAttributes(path).HasFlag(FileAttributes.ReparsePoint);
+            }
+            catch
+            {
+                return false;
             }
         }
     }

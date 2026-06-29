@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using System.Diagnostics;
 using PhilterDesktop;
 using Xunit;
 
@@ -162,6 +163,68 @@ namespace PhilterDesktop.Tests
         public void LooksLikeRedactionOutput_MatchesSuffixBeforeExtension(string name, string suffix, bool expected)
         {
             Assert.Equal(expected, FolderEnumerator.LooksLikeRedactionOutput(name, suffix));
+        }
+
+        [SkippableFact]
+        public void Recursive_DoesNotFollowDirectoryJunctions()
+        {
+            Touch("a.txt");
+            Touch("sub/b.txt");
+
+            // A file reachable only by following a junction out of the tree.
+            string outside = Path.Combine(Path.GetTempPath(), "philter-fe-out-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(outside);
+            File.WriteAllText(Path.Combine(outside, "secret.txt"), "x");
+
+            string link = Path.Combine(_root, "link");
+            Skip.IfNot(TryCreateJunction(link, outside), "could not create a directory junction in this environment");
+
+            try
+            {
+                // "Redact Folder" walk
+                List<string> redactable = FolderEnumerator.EnumerateRedactable(_root, recursive: true);
+                Assert.Contains(redactable, f => f.EndsWith("a.txt", StringComparison.OrdinalIgnoreCase));
+                Assert.Contains(redactable, f => f.EndsWith("b.txt", StringComparison.OrdinalIgnoreCase));
+                Assert.DoesNotContain(redactable, f => f.EndsWith("secret.txt", StringComparison.OrdinalIgnoreCase));
+
+                // Watched-folder recursive walk (the security-cited path)
+                List<string> watched = FolderWatcherService.EnumerateRecursive(_root).ToList();
+                Assert.Contains(watched, f => f.EndsWith("a.txt", StringComparison.OrdinalIgnoreCase));
+                Assert.Contains(watched, f => f.EndsWith("b.txt", StringComparison.OrdinalIgnoreCase));
+                Assert.DoesNotContain(watched, f => f.EndsWith("secret.txt", StringComparison.OrdinalIgnoreCase));
+            }
+            finally
+            {
+                try { Directory.Delete(link); } catch { /* remove the junction itself, not its target */ }
+                try { Directory.Delete(outside, recursive: true); } catch { /* best effort */ }
+            }
+        }
+
+        // Creates a directory junction (mklink /J) — works without elevation, unlike symbolic links.
+        // Returns false if the environment won't allow it, so the test can skip rather than fail.
+        private static bool TryCreateJunction(string link, string target)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{link}\" \"{target}\"")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+                using Process? p = Process.Start(psi);
+                if (p is null)
+                {
+                    return false;
+                }
+                p.WaitForExit(5000);
+                return p.ExitCode == 0 && Directory.Exists(link);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         // Mirror of RedactionService.IsSupported used as a local assertion helper to avoid coupling the

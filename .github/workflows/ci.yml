@@ -26,6 +26,21 @@ jobs:
       - name: Restore
         run: dotnet restore PhilterDesktop.Tests/PhilterDesktop.Tests.csproj
 
+      # Fail the build if any dependency (direct or transitive) has a known security advisory.
+      # `dotnet list package --vulnerable` only prints and always exits 0, so its output is parsed
+      # here to turn it into a gate. Auditing the test project covers the app project (and its
+      # packages) transitively, since the test project references it.
+      - name: Audit dependencies for known vulnerabilities
+        shell: pwsh
+        run: |
+          $out = dotnet list PhilterDesktop.Tests/PhilterDesktop.Tests.csproj package --vulnerable --include-transitive 2>&1 | Out-String
+          Write-Host $out
+          if ($out -match 'has the following vulnerable packages') {
+            Write-Error 'Vulnerable NuGet packages detected (see the report above). Update or pin the affected package(s).'
+            exit 1
+          }
+          Write-Host 'No known-vulnerable packages found.'
+
       - name: Build
         run: dotnet build PhilterDesktop.Tests/PhilterDesktop.Tests.csproj -c Release --no-restore
 

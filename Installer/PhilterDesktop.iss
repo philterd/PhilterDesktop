@@ -82,6 +82,8 @@ Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags
 
 [Code]
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  DataDir: string;
 begin
   if CurUninstallStep = usUninstall then
   begin
@@ -97,5 +99,26 @@ begin
       'Software\Classes\SystemFileAssociations\.docx\shell\PhilterDesktop');
     RegDeleteKeyIncludingSubkeys(HKEY_CURRENT_USER,
       'Software\Classes\SystemFileAssociations\.txt\shell\PhilterDesktop');
+  end;
+
+  // After the program files are gone, offer to also delete the saved data for this account
+  // (policies, contexts, settings, and redaction history — including any sensitive text it
+  // captured). Default is No, so an upgrade/reinstall keeps everything; a silent uninstall keeps
+  // it too. The redacted output files the user already saved live elsewhere and are never touched.
+  if CurUninstallStep = usPostUninstall then
+  begin
+    DataDir := ExpandConstant('{localappdata}\PhilterDesktop');
+    if DirExists(DataDir) then
+    begin
+      if MsgBox('Also remove your saved Philter Desktop data for this account?' + #13#10 + #13#10 +
+                'This permanently deletes your policies, contexts, settings, and redaction history ' +
+                '(including any sensitive text it captured).' + #13#10 + #13#10 +
+                'Choose No to keep it, so reinstalling restores everything. Either way, the redacted ' +
+                'files you already saved are not affected.',
+                mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then
+      begin
+        DelTree(DataDir, True, True, True);
+      end;
+    end;
   end;
 end;

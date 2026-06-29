@@ -197,7 +197,9 @@ namespace PhilterDesktop
             return EnumerateRecursive(folder.FolderPath);
         }
 
-        private static IEnumerable<string> EnumerateRecursive(string root)
+        // Internal for direct testing. Skips reparse-point directories (junctions/symlinks) so the walk
+        // can't be redirected to read files outside the watched tree.
+        internal static IEnumerable<string> EnumerateRecursive(string root)
         {
             var stack = new Stack<string>();
             stack.Push(root);
@@ -218,7 +220,7 @@ namespace PhilterDesktop
                 catch { continue; }
                 foreach (string sub in subDirs)
                 {
-                    if (IsHiddenOrSystem(sub))
+                    if (IsHiddenOrSystem(sub) || IsReparsePoint(sub))
                     {
                         continue;
                     }
@@ -233,6 +235,19 @@ namespace PhilterDesktop
             {
                 var attributes = File.GetAttributes(path);
                 return attributes.HasFlag(FileAttributes.Hidden) || attributes.HasFlag(FileAttributes.System);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // A directory junction or symbolic link — following it could walk outside the watched tree.
+        private static bool IsReparsePoint(string path)
+        {
+            try
+            {
+                return File.GetAttributes(path).HasFlag(FileAttributes.ReparsePoint);
             }
             catch
             {
