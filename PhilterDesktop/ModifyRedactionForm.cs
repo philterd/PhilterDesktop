@@ -332,6 +332,25 @@ namespace PhilterDesktop
             RefreshSpanList();
         }
 
+        // Enables/disables all interactive controls around the async re-redaction. On finishing, the
+        // per-control enabled states are restored via UpdateButtons() (which respects the selection).
+        private void SetBusy(bool busy)
+        {
+            UseWaitCursor = busy;
+            _versionTree.Enabled = !busy;
+            _spanList.Enabled = !busy;
+            _newVersion.Enabled = !busy;
+            _close.Enabled = !busy;
+            if (busy)
+            {
+                _add.Enabled = _edit.Enabled = _remove.Enabled = _redact.Enabled = _deleteVersion.Enabled = false;
+            }
+            else
+            {
+                UpdateButtons();
+            }
+        }
+
         private async void OnRedact(object? sender, EventArgs e)
         {
             if (_selectedVersion is null)
@@ -357,7 +376,9 @@ namespace PhilterDesktop
 
             PhileasPolicy? policy = LoadPolicy(version.Policy);
 
-            _redact.Enabled = false;
+            // Lock the form while the re-redaction runs so the user can't edit spans, switch versions,
+            // or close mid-write (which would race the async output) (#489).
+            SetBusy(true);
             try
             {
                 await RedactionService.ApplySpansAsync(version.SourcePath, output, version.FileType, version.Highlight, _working, policy,
@@ -372,7 +393,7 @@ namespace PhilterDesktop
             }
             finally
             {
-                _redact.Enabled = true;
+                SetBusy(false);
             }
 
             version.OutputPath = output;

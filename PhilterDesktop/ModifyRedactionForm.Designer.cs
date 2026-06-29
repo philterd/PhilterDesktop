@@ -285,10 +285,11 @@ namespace PhilterDesktop
             _redact.Text = "Redact";
             _redact.UseVisualStyleBackColor = true;
             _redact.Click += OnRedact;
-            // 
+            //
             // ModifyRedactionForm
-            // 
-            AcceptButton = _redact;
+            //
+            // No AcceptButton: "Redact" re-writes the output (destructive), so it must be an explicit
+            // click — Enter must not trigger it (#489).
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = _close;

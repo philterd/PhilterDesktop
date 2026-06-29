@@ -1,0 +1,119 @@
+/*
+ * Copyright 2026 Philterd, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+using System.Reflection;
+using System.Runtime.ExceptionServices;
+using LiteDB;
+using PhilterData;
+using Xunit;
+
+namespace PhilterDesktop.Tests
+{
+    /// <summary>
+    /// Modify Redaction's "Redact" re-writes the output (destructive), so pressing Enter must not
+    /// trigger it, and the form must lock while the async re-redaction runs (philterd-website #489).
+    /// </summary>
+    public sealed class ModifyRedactionFormTests
+    {
+        private static void OnForm(Action<ModifyRedactionForm> body)
+        {
+            ExceptionDispatchInfo? captured = null;
+            var thread = new Thread(() =>
+            {
+                string dbPath = Path.Combine(Path.GetTempPath(), "mrf-" + Guid.NewGuid().ToString("N") + ".db");
+                try
+                {
+                    using var db = new LiteDatabase(dbPath);
+                    using var form = new ModifyRedactionForm(
+                        ObjectId.NewObjectId(),
+                        new RedactionVersionRepository(db),
+                        new RedactionSpanRepository(db),
+                        new PolicyRepository(db));
+                    form.CreateControl();
+                    body(form);
+                }
+                catch (Exception ex) { captured = ExceptionDispatchInfo.Capture(ex); }
+                finally { try { File.Delete(dbPath); } catch { /* best effort */ } }
+            })
+            { IsBackground = true };
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+            captured?.Throw();
+        }
+
+        private static bool ControlEnabled(ModifyRedactionForm form, string fieldName)
+        {
+            FieldInfo field = typeof(ModifyRedactionForm).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic)
+                ?? throw new InvalidOperationException($"field {fieldName} not found");
+            return ((Control)field.GetValue(form)!).Enabled;
+        }
+
+        private static void InvokeSetBusy(ModifyRedactionForm form, bool busy)
+        {
+            MethodInfo m = typeof(ModifyRedactionForm).GetMethod("SetBusy", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            m.Invoke(form, new object[] { busy });
+        }
+
+        [Fact]
+        public void HasNoAcceptButton_SoEnterCannotTriggerRedact()
+        {
+            OnForm(form => Assert.Null(form.AcceptButton));
+        }
+
+        [Fact]
+        public void CancelButtonIsClose_SoEscClosesSafely()
+        {
+            OnForm(form =>
+            {
+                var closeField = typeof(ModifyRedactionForm).GetField("_close", BindingFlags.Instance | BindingFlags.NonPublic)!;
+                Assert.Same(closeField.GetValue(form), form.CancelButton);
+            });
+        }
+
+        [Fact]
+        public void SetBusy_True_DisablesInteractiveControls()
+        {
+            OnForm(form =>
+            {
+                InvokeSetBusy(form, true);
+
+                Assert.True(form.UseWaitCursor);
+                foreach (string control in new[] { "_versionTree", "_spanList", "_newVersion", "_close", "_redact", "_add", "_edit", "_remove", "_deleteVersion" })
+                {
+                    Assert.False(ControlEnabled(form, control), $"{control} must be disabled while busy");
+                }
+            });
+        }
+
+        [Fact]
+        public void SetBusy_False_RestoresAlwaysAvailableControls()
+        {
+            OnForm(form =>
+            {
+                InvokeSetBusy(form, true);
+                InvokeSetBusy(form, false);
+
+                Assert.False(form.UseWaitCursor);
+                // These are always usable again once the run finishes (independent of selection).
+                foreach (string control in new[] { "_versionTree", "_spanList", "_newVersion", "_close" })
+                {
+                    Assert.True(ControlEnabled(form, control), $"{control} must be re-enabled after busy");
+                }
+            });
+        }
+    }
+}
