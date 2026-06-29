@@ -16,6 +16,9 @@ automatically**. It's ideal for a steady stream of documents that all need the s
 Open **Settings** from the main toolbar, go to the **Watched Folder** tab, and click **Add…**. You'll
 be asked to fill in a few things:
 
+![The Add Watched Folder dialog: a folder to watch, a policy and context, file-type checkboxes, and an output folder](img/watched-folder.png)
+*Setting up a watched folder: choose the folder, its policy and context, which file types to redact, and where the cleaned-up copies go.*
+
 - **Folder to watch** — the folder you want Philter Desktop to monitor for new files.
 - **Policy** — the [policy](policies.md) (set of rules) that decides what to remove and how, for
   files in this folder.

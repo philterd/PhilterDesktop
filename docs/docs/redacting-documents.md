@@ -138,6 +138,9 @@ There are two ways to add files:
   Philter Desktop window. Files added this way use the **default** policy and the **default** context.
   This is the quickest way when the standard rules are fine.
 
+![The Redact Documents dialog: choose the files, a policy, and a context, then start redacting](img/redact-documents.png)
+*Adding files with the Redact button: pick a policy and a context, then add your documents.*
+
 ## What happens after you add a document
 
 Philter Desktop redacts documents automatically, on its own, in the background — you don't have to

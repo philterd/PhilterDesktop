@@ -5,6 +5,9 @@ program behaves. The Settings window is divided into tabs: **General**, **Micros
 **Email**, **Notifications**, **Watched Folder**, **Limits**, and **Security**. This page walks through
 each of them.
 
+![The Settings window showing the output location, logging, and Windows Explorer integration options](img/settings.png)
+*The Settings window, where you choose the output location and tune how Philter Desktop behaves.*
+
 ## General tab
 
 The **General** tab is where you set the output location (where cleaned-up files go), turn logging on

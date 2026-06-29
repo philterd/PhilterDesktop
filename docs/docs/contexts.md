@@ -23,6 +23,9 @@ get mixed up with another matter's.
 
 Open the **Contexts** window from the main toolbar. From there you can:
 
+![The Contexts window in Philter Desktop, listing the available contexts](img/contexts.png)
+*The Contexts window: create per-case or per-matter contexts so related documents stay consistent.*
+
 - **New Context** — create a new context (for instance, one for a new case).
 - **Delete** — remove a context you no longer need.
 - **Empty** — clear out the remembered replacements for a context **without** deleting the context

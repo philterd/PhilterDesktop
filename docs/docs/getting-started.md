@@ -70,6 +70,9 @@ After that, you'll see its main window. The top of the window has a row of butto
 documents you've asked it to clean up. The first time you open the program, this list is empty,
 because you haven't given it anything to do yet.
 
+![Philter Desktop main window: a toolbar across the top and a queue of documents below, each showing its status, policy, and context](img/main-form.png)
+*The main window — the toolbar along the top and the redaction queue filling the rest.*
+
 The toolbar buttons are:
 
 - **Redact** — add one or more documents to be redacted. Click the small **arrow** on this button for

@@ -20,6 +20,9 @@ Editor**.
 The editor has a toolbar across the top and, below it, the kinds of information Philter
 Desktop can detect, organized into **tabs** (one category per tab, so the window stays compact):
 
+![The Policy Editor showing detector categories organized into tabs, with checkboxes for each kind of information](img/policy-editor.png)
+*The Policy Editor: turn on the kinds of information to remove, organized into category tabs.*
+
 - **Policy selector** — a drop-down for choosing which policy you want to look at or change.
 - **New / Save / Save As / Delete** — the buttons for managing your policies (covered below).
   **New** is a small menu: choose **Blank Policy** to start from scratch, **From Template…** to
@@ -80,6 +83,9 @@ Pick one, give your new policy a name, and it's created ready to fine-tune like 
 
 If you're not sure where to start, click **New** and choose **From Wizard…**. The wizard walks you
 through a few short questions and builds a policy for you:
+
+![The New Policy Wizard asking what kind of documents you are redacting](img/policy-wizard.png)
+*The wizard builds a sensible policy for common document types in a few clicks.*
 
 1. **What kind of documents are you redacting?** — pick a use case (general office, healthcare, legal,
    financial, or start from scratch). This just sets a sensible starting point; you can change
