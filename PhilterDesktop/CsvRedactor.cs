@@ -208,7 +208,11 @@ namespace PhilterDesktop
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 HasHeaderRecord = false,
-                Delimiter = delimiter
+                Delimiter = delimiter,
+                // Guard against CSV/formula injection: a field beginning with = + - @ (or a tab/CR) is
+                // executable when the redacted file is opened in Excel/Sheets. Escape prefixes such a
+                // field with an apostrophe so the recipient's spreadsheet treats it as plain text.
+                InjectionOptions = InjectionOptions.Escape
             };
 
             using var writer = new StreamWriter(outputPath, append: false, encoding);

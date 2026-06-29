@@ -92,6 +92,15 @@ the sensitive information it finds there, leaving the rest of the table — the 
 numbers, the formulas — intact. An Excel file stays `.xlsx` and a CSV stays `.csv`. (For Excel,
 **formulas** are left alone, since their value is calculated rather than stored.)
 
+!!! note "Redacted CSVs are safe to open in a spreadsheet"
+    A `.csv` is just text, so a spreadsheet program will treat any cell that begins with `=`, `+`, `-`,
+    or `@` as a **formula** and run it when the file is opened — a trick (called "CSV injection") that a
+    malicious source file could use to attack whoever you share the redacted copy with. Philter Desktop
+    neutralizes this automatically: in a redacted `.csv`, any such cell is written so that spreadsheets
+    open it as **plain text** instead of running it (you may notice a leading apostrophe on those few
+    cells). Excel `.xlsx` files aren't affected by this — their cells are explicitly typed, so a text
+    value is never mistaken for a formula.
+
 There's an important thing to understand about spreadsheets. Philter Desktop recognizes sensitive
 information partly from the **words around it** — and a cell often holds a value all by itself, with no
 surrounding sentence for context. Patterns with a fixed shape (Social Security numbers, email

@@ -175,6 +175,27 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public async Task RedactFileAsync_Csv_EscapesFormulaInjection()
+        {
+            // Non-PII cells that begin with a formula character must be neutralized so they can't execute
+            // when the redacted CSV is opened in Excel/Sheets (CSV/formula injection).
+            string input = Write(
+                "Name,Note\r\n" +
+                "Alice,=1+2\r\n" +
+                "Bob,@SUM(A1)\r\n");
+            string output = Path.Combine(_tempDir, "out.csv");
+
+            await RedactionService.RedactFileAsync(input, output, EmailAndSsnPolicy(), "ctx");
+
+            string result = await File.ReadAllTextAsync(output);
+            // Each risky field is prefixed with an apostrophe (escaped), not left as a raw leading = / @.
+            Assert.Contains("'=1+2", result);
+            Assert.Contains("'@SUM(A1)", result);
+            Assert.DoesNotContain(",=1+2", result);     // not a bare, executable leading formula
+            Assert.DoesNotContain(",@SUM(A1)", result);
+        }
+
+        [Fact]
         public void ReadColumns_ReturnsHeaderRow()
         {
             string input = Write("Name,Email,Notes\r\nAlice,a@example.com,x\r\n");
