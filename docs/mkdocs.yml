@@ -24,6 +24,11 @@ extra:
     - icon: fontawesome/brands/github
       link: https://www.github.com/philterd/
 
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
