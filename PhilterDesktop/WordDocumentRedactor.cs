@@ -119,9 +119,13 @@ namespace PhilterDesktop
                             .OrderBy(s => s.CharacterStart)
                             .ToList();
 
-                        RebuildParagraph(paragraph, original,
-                            spans.Select(s => new ReplacementRange(s.CharacterStart, s.CharacterEnd, s.Replacement ?? string.Empty)),
-                            highlight);
+                        // Resolve overlaps before rebuilding (parity with ApplySpans): an unresolved
+                        // overlapping range would be silently skipped while rebuilding, which could leave
+                        // original text behind. The engine doesn't emit overlaps today; this is defensive.
+                        List<ReplacementRange> ranges = RedactionSpanMath.ResolveNonOverlapping(
+                            spans.Select(s => new ReplacementRange(s.CharacterStart, s.CharacterEnd, s.Replacement ?? string.Empty)));
+
+                        RebuildParagraph(paragraph, original, ranges, highlight);
 
                         foreach (Span s in spans)
                         {
