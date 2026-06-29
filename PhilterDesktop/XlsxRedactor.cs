@@ -111,9 +111,9 @@ namespace PhilterDesktop
                     continue;
                 }
 
-                if (!IsTextCell(cell))
+                if (!IsScannableCell(cell))
                 {
-                    continue; // numbers/dates left as-is unless their column is fully redacted
+                    continue; // boolean/error cells carry no free-text PII
                 }
 
                 TextFilterResult result = filter(original);
@@ -172,7 +172,7 @@ namespace PhilterDesktop
             foreach ((Cell cell, bool _) in EnumerateCells(workbookPart))
             {
                 int currentIndex = cellIndex++;
-                if (cell.CellFormula is not null || !IsTextCell(cell))
+                if (cell.CellFormula is not null || !IsScannableCell(cell))
                 {
                     continue;
                 }
@@ -349,10 +349,21 @@ namespace PhilterDesktop
             }
         }
 
-        private static bool IsTextCell(Cell cell)
+        // Cells whose stored value should be run through the detector. This includes numeric- and
+        // date-typed cells: PII such as an SSN, phone, or account number is commonly typed as a bare
+        // number (e.g. 123456789 with a custom "000-00-0000" display format), and that raw value is the
+        // sensitive data actually stored in the file (#478). A cell with no DataType defaults to number.
+        // Boolean and error cells are skipped (no free-text PII, and they shouldn't become strings);
+        // formula cells are skipped by the callers (their value is computed).
+        private static bool IsScannableCell(Cell cell)
         {
             CellValues? type = cell.DataType?.Value;
-            return type == CellValues.SharedString || type == CellValues.InlineString || type == CellValues.String;
+            return type is null
+                || type == CellValues.Number
+                || type == CellValues.SharedString
+                || type == CellValues.InlineString
+                || type == CellValues.String
+                || type == CellValues.Date;
         }
 
         private static string GetCellText(Cell cell, WorkbookPart workbookPart)

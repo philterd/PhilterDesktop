@@ -25,8 +25,9 @@ Open **Settings** from the main toolbar, go to the **Watched Folder** tab, and c
 - **File types**: which of **PDF (.pdf)**, **Word (.docx)**, **Text (.txt)**, **Rich Text (.rtf)**,
   **Spreadsheet (.xlsx, .csv)**, and **Email (.eml, .msg)** to redact in this folder. Pick at least
   one; other file types are ignored. (An `.msg` dropped here becomes a redacted `.eml` in the output
-  folder. Spreadsheets are redacted cell-by-cell with detection only. To remove whole columns, use
-  **Redact Spreadsheet…** in the main window instead.)
+  folder. Spreadsheets are redacted cell-by-cell with detection (including numeric cells such as an SSN
+  or phone typed as plain digits). To remove whole columns, use **Redact Spreadsheet…** in the main
+  window instead.)
 - **Highlight redactions in Word (.docx) documents**: when checked, replacements in redacted
   Word documents are highlighted so they are easy to spot during review.
 - **Show a notification when a file is redacted**: when checked, a small pop-up appears near the

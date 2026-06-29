@@ -27,11 +27,14 @@ Security numbers, email addresses, account numbers) are still caught reliably. B
 lone first name in a cell (for example, "April") has nothing around it to signal that it is a name, so
 automatic name detection is **much weaker** on bare cells than on ordinary paragraphs of writing.
 
-Numbers are also handled differently. A value a spreadsheet stores as a *number*, such as an account
-number or an ID typed as plain digits, is **not scanned** for sensitive information, because Philter
-Desktop leaves numbers exactly as they are (so totals and calculations are not disturbed). Sensitive
-values that look like text, such as an SSN written with dashes (`123-45-6789`), are still detected. If
-a column holds sensitive **numeric** IDs, remove it with whole-column redaction, described next.
+Numbers are scanned too. A value a spreadsheet stores as a *number* — such as a Social Security number,
+phone number, or account number typed as plain digits (for example `123456789`) — is run through
+detection just like text and removed when it matches. A redacted number becomes text in the cleaned-up
+copy (so the replacement is visible), while ordinary numbers that aren't sensitive (quantities, totals,
+IDs that match nothing) are left exactly as they are, so calculations aren't disturbed. One caveat:
+detection sees the value a cell *stores*, which can differ from what a cell's format *displays* — for
+example a date kept as an internal serial number, or digits shown through a custom format. For columns
+of identifiers, **whole-column redaction** (described next) remains the most dependable option.
 
 ## Whole-column redaction
 

@@ -74,8 +74,10 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
-        public async Task RedactFileAsync_Xlsx_LeavesNumberCellsAlone()
+        public async Task RedactFileAsync_Xlsx_KeepsNonPiiNumberCells()
         {
+            // Number cells are scanned now (see XlsxNumericCellRedactionTests), but a non-PII number
+            // like 12345 matches no detector, so it is left intact.
             string input = Make(new[]
             {
                 new string?[] { "Account", "Balance" },
@@ -87,7 +89,7 @@ namespace PhilterDesktop.Tests
 
             string text = SpreadsheetTestHelper.AllText(output);
             Assert.DoesNotContain("alice@example.com", text);
-            Assert.Contains("12345", text); // numeric cell preserved (not a selected full column)
+            Assert.Contains("12345", text); // non-PII numeric cell preserved
         }
 
         [Fact]

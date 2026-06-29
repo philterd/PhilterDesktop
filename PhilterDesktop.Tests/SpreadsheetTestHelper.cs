@@ -90,6 +90,63 @@ namespace PhilterDesktop.Tests
             wbPart.Workbook.Save();
         }
 
+        internal enum CellKind { Auto, Number, Text, Boolean, Date, Formula, Error }
+
+        internal readonly record struct CellSpec(string Value, CellKind Kind = CellKind.Auto, string? Formula = null)
+        {
+            public static implicit operator CellSpec(string value) => new(value);
+        }
+
+        /// <summary>Creates a single-sheet workbook with explicitly-typed cells (numbers, booleans, dates, formulas).</summary>
+        public static void CreateTyped(string path, IReadOnlyList<CellSpec?[]> rows, string sheetName = "Sheet1")
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Create(path, SpreadsheetDocumentType.Workbook);
+            WorkbookPart wbPart = doc.AddWorkbookPart();
+            wbPart.Workbook = new Workbook();
+            WorksheetPart wsPart = wbPart.AddNewPart<WorksheetPart>();
+
+            var sheetData = new SheetData();
+            for (int r = 0; r < rows.Count; r++)
+            {
+                var rowElement = new Row { RowIndex = (uint)(r + 1) };
+                CellSpec?[] row = rows[r];
+                for (int c = 0; c < row.Length; c++)
+                {
+                    if (row[c] is not CellSpec spec)
+                    {
+                        continue;
+                    }
+                    string reference = SpreadsheetColumn.IndexToLetter(c + 1) + (r + 1);
+                    rowElement.AppendChild(BuildCell(reference, spec));
+                }
+                sheetData.AppendChild(rowElement);
+            }
+
+            wsPart.Worksheet = new Worksheet(sheetData);
+            Sheets sheets = wbPart.Workbook.AppendChild(new Sheets());
+            sheets.AppendChild(new Sheet { Id = wbPart.GetIdOfPart(wsPart), SheetId = 1, Name = sheetName });
+            wbPart.Workbook.Save();
+        }
+
+        private static Cell BuildCell(string reference, CellSpec spec)
+        {
+            CellKind kind = spec.Kind;
+            if (kind == CellKind.Auto)
+            {
+                kind = double.TryParse(spec.Value, out _) ? CellKind.Number : CellKind.Text;
+            }
+
+            return kind switch
+            {
+                CellKind.Number => new Cell { CellReference = reference, CellValue = new CellValue(spec.Value) },
+                CellKind.Boolean => new Cell { CellReference = reference, DataType = new EnumValue<CellValues>(CellValues.Boolean), CellValue = new CellValue(spec.Value) },
+                CellKind.Date => new Cell { CellReference = reference, DataType = new EnumValue<CellValues>(CellValues.Date), CellValue = new CellValue(spec.Value) },
+                CellKind.Error => new Cell { CellReference = reference, DataType = new EnumValue<CellValues>(CellValues.Error), CellValue = new CellValue(spec.Value) },
+                CellKind.Formula => new Cell { CellReference = reference, CellFormula = new CellFormula(spec.Formula ?? "1+1"), CellValue = new CellValue(spec.Value) },
+                _ => new Cell { CellReference = reference, DataType = new EnumValue<CellValues>(CellValues.InlineString), InlineString = new InlineString(new Text(spec.Value) { Space = SpaceProcessingModeValues.Preserve }) }
+            };
+        }
+
         /// <summary>Adds a second sheet to an existing workbook (text values as inline strings).</summary>
         public static void AppendSheet(string path, IReadOnlyList<string?[]> rows, string sheetName)
         {
@@ -145,6 +202,43 @@ namespace PhilterDesktop.Tests
                 }
             }
             return string.Join("\n", lines);
+        }
+
+        /// <summary>True if the given cell reference is a genuine numeric cell (no DataType) in the workbook.</summary>
+        public static bool IsNumberCell(string path, string cellReference)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            Cell? cell = doc.WorkbookPart!.WorksheetParts
+                .SelectMany(w => w.Worksheet?.Descendants<Cell>() ?? Enumerable.Empty<Cell>())
+                .FirstOrDefault(c => c.CellReference?.Value == cellReference);
+            return cell is not null && cell.CellFormula is null && cell.DataType is null;
+        }
+
+        /// <summary>True if the given cell is still a boolean-typed cell.</summary>
+        public static bool IsBooleanCell(string path, string cellReference)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            Cell? cell = doc.WorkbookPart!.WorksheetParts
+                .SelectMany(w => w.Worksheet?.Descendants<Cell>() ?? Enumerable.Empty<Cell>())
+                .FirstOrDefault(c => c.CellReference?.Value == cellReference);
+            return cell?.DataType is not null && cell.DataType.Value == CellValues.Boolean;
+        }
+
+        /// <summary>The concatenated raw XML of every worksheet part (for residue checks).</summary>
+        public static string WorksheetXml(string path)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            return string.Concat(doc.WorkbookPart!.WorksheetParts.Select(w => w.Worksheet?.OuterXml ?? string.Empty));
+        }
+
+        /// <summary>True if the given cell is stored as an inline string (what a redacted cell becomes).</summary>
+        public static bool IsInlineStringCell(string path, string cellReference)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            Cell? cell = doc.WorkbookPart!.WorksheetParts
+                .SelectMany(w => w.Worksheet?.Descendants<Cell>() ?? Enumerable.Empty<Cell>())
+                .FirstOrDefault(c => c.CellReference?.Value == cellReference);
+            return cell?.DataType is not null && cell.DataType.Value == CellValues.InlineString;
         }
 
         private static string ReadCell(Cell cell, WorkbookPart wbPart)
