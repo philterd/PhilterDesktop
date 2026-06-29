@@ -92,5 +92,5 @@ machine, with optional passphrase protection for stronger control. See
 
 ## What are the system requirements?
 
-Windows 10 (version 2004, build 19041) or later, or Windows 11, 64-bit. Optional language packs enable
-multilingual OCR. See [Getting Started](getting-started.md).
+Windows 10 (version 2004, build 19041) or later, or Windows 11, 64-bit. See
+[Getting Started](getting-started.md).
