@@ -43,7 +43,10 @@ be asked to fill in a few things:
 - **Include subfolders** — when checked, files inside folders *within* the watched folder are
   monitored too, and the cleaned-up output mirrors that folder structure (so two files with the same
   name in different subfolders don't overwrite each other). If you turn this on, the output folder
-  must be **outside** the watched folder. Hidden and system files and folders are skipped.
+  must be **outside** the watched folder. Hidden and system files and folders are skipped, and
+  **folders that are shortcuts to another location** (junctions or symbolic links) are **not followed**,
+  so watching can never reach outside the folder you chose. (If you want another folder watched, add it
+  as its own watched folder.)
 - **Output folder** — where the cleaned-up copies are saved. This must be a **different** folder from
   the one being watched (otherwise the cleaned-up files would themselves look like new files to
   redact).
