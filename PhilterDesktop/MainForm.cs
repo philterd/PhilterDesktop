@@ -2016,7 +2016,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void clearRedactionHistoryToolStripMenuItem_Click(object? sender, EventArgs e)
+        private async void clearRedactionHistoryToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             int versionCount = _redactionVersionRepository.Count();
             int completed = listView1.Items.Cast<ListViewItem>()
@@ -2043,6 +2043,35 @@ namespace PhilterDesktop
             }
 
             RedactionHistory.ClearAll(_redactionSpanRepository, _redactionVersionRepository, _redactionQueueRepository);
+
+            // Physically reclaim the freed pages so the deleted detected text can't linger in the
+            // database file. Runs off the UI thread; the queue timer is paused so it doesn't issue a DB
+            // operation that would block on LiteDB's mutex while the rebuild holds it.
+            string? password = EncryptedDatabase.CurrentKeyStore?.DatabasePassword;
+            if (!string.IsNullOrEmpty(password))
+            {
+                redactionQueueTimer.Stop();
+                UseWaitCursor = true;
+                try
+                {
+                    await Task.Run(() => RedactionHistory.Compact(_database, password));
+                }
+                catch (Exception ex)
+                {
+                    // The rows are already deleted; compaction is the bonus physical reclaim, so a failure
+                    // here must not fail the clear.
+                    if (_loggingEnabled)
+                    {
+                        Logger.LogError("Database compaction after clearing redaction history failed", ex);
+                    }
+                }
+                finally
+                {
+                    UseWaitCursor = false;
+                    redactionQueueTimer.Start();
+                }
+            }
+
             LoadRedactionQueue();
 
             if (_loggingEnabled)

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+using LiteDB;
+using LiteDB.Engine;
 using PhilterData;
 
 namespace PhilterDesktop
@@ -36,6 +38,21 @@ namespace PhilterDesktop
             spans.DeleteAll();
             versions.DeleteAll();
             queue.DeleteWhere(x => x.Status == "Completed");
+        }
+
+        /// <summary>
+        /// Compacts the database after a clear so the pages freed by the deletes are physically reclaimed.
+        /// LiteDB only marks deleted pages free (it doesn't zero them or shrink the file), so the original
+        /// detected text can otherwise linger in free space until those pages are reused. Pass the current
+        /// encryption <paramref name="password"/> so the rebuilt file stays encrypted with the same key —
+        /// omitting it would rewrite the database as plaintext. Safe under LiteDB Shared mode: Rebuild runs
+        /// inside the cross-process mutex, so concurrent callers block until it completes rather than
+        /// seeing a half-written file.
+        /// </summary>
+        public static void Compact(LiteDatabase database, string password)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(password);
+            database.Rebuild(new RebuildOptions { Password = password });
         }
     }
 }
