@@ -56,8 +56,10 @@ missed. You can turn this off or fine-tune it on the [Settings → PDF](settings
 When Philter Desktop redacts an email, it cleans up the **subject line**, the **From / To / Cc**
 addresses, and the **message body** (both plain-text and HTML versions), according to your policy —
 the same way it handles any other document. It also (by default) strips the **technical headers** that
-would otherwise reveal the sender's IP, mail program, and the server delivery trail — see
-[Settings → Email](settings.md#email-tab).
+would otherwise reveal the sender's IP, mail program, and the server delivery trail, and the **common
+identity headers** — **Bcc** (blind-copy recipients), **Reply-To**, **Sender**, and **Resent-…** — that
+aren't part of the visible From / To / Cc fields and so wouldn't otherwise be redacted. Both are
+on by default and can be turned off in [Settings → Email](settings.md#email-tab).
 
 !!! warning "Attachments are not redacted"
     Philter Desktop redacts the email **message itself** — the subject, the addresses, and the body. It

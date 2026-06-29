@@ -1968,7 +1968,8 @@ namespace PhilterDesktop
             SettingsEntity modifySettings = _settingsRepository.GetSettings();
             using var form = new ModifyRedactionForm(
                 id, _redactionVersionRepository, _redactionSpanRepository, _policyRepository,
-                modifySettings.RedactedSuffix, DocumentMetadata.OptionsFor(modifySettings));
+                modifySettings.RedactedSuffix, DocumentMetadata.OptionsFor(modifySettings),
+                modifySettings.ScrubEmailHeaders, modifySettings.RemoveCommonEmailHeaders);
             form.ShowDialog(this);
         }
 

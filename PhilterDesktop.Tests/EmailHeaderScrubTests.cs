@@ -102,5 +102,65 @@ namespace PhilterDesktop.Tests
             Assert.Contains("203.0.113.7", eml);
             Assert.DoesNotContain("123-45-6789", eml); // PII still redacted regardless
         }
+
+        // An .eml carrying the common identity/delivery headers that aren't part of the scanned
+        // From/To/Cc field set — these would otherwise pass through unredacted.
+        private const string SampleEmlWithIdentityHeaders =
+            "Sender: Secretary <secretary@example.com>\r\n" +
+            "Reply-To: replies@example.com\r\n" +
+            "From: Alice <alice@example.com>\r\n" +
+            "To: Bob <bob@example.com>\r\n" +
+            "Cc: Carol <carol@example.com>\r\n" +
+            "Bcc: Hidden Person <hidden@example.com>\r\n" +
+            "Resent-To: resent@example.com\r\n" +
+            "Subject: Case notes\r\n" +
+            "Date: Tue, 01 Apr 2025 10:00:00 +0000\r\n" +
+            "Content-Type: text/plain; charset=utf-8\r\n" +
+            "\r\n" +
+            "Patient SSN 123-45-6789.\r\n";
+
+        private string WriteIdentityEml()
+        {
+            string path = Path.Combine(_dir, "identity.eml");
+            File.WriteAllText(path, SampleEmlWithIdentityHeaders);
+            return path;
+        }
+
+        [Fact]
+        public async Task RemoveCommonHeadersEnabled_StripsBccReplyToSenderResent_KeepsToCcFrom()
+        {
+            string output = Path.Combine(_dir, "out-common.eml");
+            await RedactionService.RedactFileAsync(WriteIdentityEml(), output, SsnPolicy(), "ctx",
+                removeCommonEmailHeaders: true);
+
+            string eml = await File.ReadAllTextAsync(output);
+
+            // The blind-copy recipient and the other identity headers must be gone.
+            Assert.DoesNotContain("hidden@example.com", eml);
+            Assert.DoesNotContain("Bcc:", eml);
+            Assert.DoesNotContain("replies@example.com", eml);
+            Assert.DoesNotContain("Reply-To:", eml);
+            Assert.DoesNotContain("secretary@example.com", eml);
+            Assert.DoesNotContain("Sender:", eml);
+            Assert.DoesNotContain("resent@example.com", eml);
+            Assert.DoesNotContain("Resent-To", eml);
+
+            // The visible recipient fields stay, and body PII is still redacted.
+            Assert.Contains("bob@example.com", eml);   // To
+            Assert.Contains("carol@example.com", eml); // Cc
+            Assert.Contains("alice@example.com", eml); // From
+            Assert.DoesNotContain("123-45-6789", eml);
+        }
+
+        [Fact]
+        public async Task RemoveCommonHeadersDisabled_KeepsBcc()
+        {
+            string output = Path.Combine(_dir, "out-common-keep.eml");
+            await RedactionService.RedactFileAsync(WriteIdentityEml(), output, SsnPolicy(), "ctx",
+                removeCommonEmailHeaders: false);
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.Contains("hidden@example.com", eml); // gated by the setting
+        }
     }
 }

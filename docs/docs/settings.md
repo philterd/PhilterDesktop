@@ -156,8 +156,14 @@ includes these can leak who sent it and from where.
   headers are stripped from the redacted `.eml`. The visible fields — **Subject, From, To, Cc, the body,
   and the Date** — are kept (and their PII is still redacted as usual); only the hidden routing/technical
   headers are removed.
+- **Remove Bcc and other identity headers (Reply-To, Sender, Resent)** (on by default). These headers
+  carry recipient or sender addresses that **aren't** part of the visible **From / To / Cc** fields, so
+  they wouldn't otherwise be redacted. **Bcc** is the most important: it names blind-copy recipients and
+  is carried over when an Outlook `.msg` is converted, so without this it would survive into the
+  redacted email. When on, these headers are **removed entirely** (not just scanned) — both their value
+  and the fact that they were present are gone. Turn it off only if you specifically need to keep them.
 
-Leave this on unless you specifically need to preserve the original headers (for example, for an
+Leave these on unless you specifically need to preserve the original headers (for example, for an
 e-discovery chain-of-custody requirement).
 
 ## Notifications tab

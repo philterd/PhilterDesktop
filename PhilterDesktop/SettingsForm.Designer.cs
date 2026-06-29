@@ -66,6 +66,7 @@ namespace PhilterDesktop
             btnCancel = new Button();
             tabControl = new TabControl();
             tabGeneral = new TabPage();
+            chkStartWithWindows = new CheckBox();
             chkContextMenu = new CheckBox();
             lblContextMenuHint = new Label();
             tabPdf = new TabPage();
@@ -75,6 +76,8 @@ namespace PhilterDesktop
             tabEmail = new TabPage();
             lblEmailInfo = new Label();
             chkScrubEmailHeaders = new CheckBox();
+            chkRemoveCommonHeaders = new CheckBox();
+            lblCommonHeadersInfo = new Label();
             tabNotifications = new TabPage();
             chkShowNotifications = new CheckBox();
             lblNotificationsHint = new Label();
@@ -106,7 +109,6 @@ namespace PhilterDesktop
             rdoVerifySamePolicy = new RadioButton();
             rdoVerifyBroadPolicy = new RadioButton();
             lblVerifyHint = new Label();
-            chkStartWithWindows = new CheckBox();
             groupBoxOutput.SuspendLayout();
             tabWord.SuspendLayout();
             groupBoxLogging.SuspendLayout();
@@ -363,6 +365,17 @@ namespace PhilterDesktop
             tabGeneral.Text = "General";
             tabGeneral.UseVisualStyleBackColor = true;
             // 
+            // chkStartWithWindows
+            // 
+            chkStartWithWindows.AutoSize = true;
+            chkStartWithWindows.Location = new Point(12, 280);
+            chkStartWithWindows.Margin = new Padding(2);
+            chkStartWithWindows.Name = "chkStartWithWindows";
+            chkStartWithWindows.Size = new Size(444, 19);
+            chkStartWithWindows.TabIndex = 6;
+            chkStartWithWindows.Text = "Start Philter Desktop at sign-in (runs minimized to the tray and keeps watching)";
+            chkStartWithWindows.UseVisualStyleBackColor = true;
+            // 
             // chkContextMenu
             // 
             chkContextMenu.AutoSize = true;
@@ -432,6 +445,8 @@ namespace PhilterDesktop
             // 
             tabEmail.Controls.Add(lblEmailInfo);
             tabEmail.Controls.Add(chkScrubEmailHeaders);
+            tabEmail.Controls.Add(chkRemoveCommonHeaders);
+            tabEmail.Controls.Add(lblCommonHeadersInfo);
             tabEmail.Location = new Point(4, 24);
             tabEmail.Name = "tabEmail";
             tabEmail.Padding = new Padding(3);
@@ -460,6 +475,27 @@ namespace PhilterDesktop
             chkScrubEmailHeaders.TabIndex = 0;
             chkScrubEmailHeaders.Text = "Remove technical email headers from redacted email";
             chkScrubEmailHeaders.UseVisualStyleBackColor = true;
+            // 
+            // chkRemoveCommonHeaders
+            // 
+            chkRemoveCommonHeaders.AutoSize = true;
+            chkRemoveCommonHeaders.Location = new Point(13, 130);
+            chkRemoveCommonHeaders.Name = "chkRemoveCommonHeaders";
+            chkRemoveCommonHeaders.Size = new Size(373, 19);
+            chkRemoveCommonHeaders.TabIndex = 2;
+            chkRemoveCommonHeaders.Text = "Remove Bcc and other identity headers (Reply-To, Sender, Resent)";
+            chkRemoveCommonHeaders.UseVisualStyleBackColor = true;
+            // 
+            // lblCommonHeadersInfo
+            // 
+            lblCommonHeadersInfo.AutoSize = true;
+            lblCommonHeadersInfo.ForeColor = SystemColors.GrayText;
+            lblCommonHeadersInfo.Location = new Point(30, 153);
+            lblCommonHeadersInfo.MaximumSize = new Size(520, 0);
+            lblCommonHeadersInfo.Name = "lblCommonHeadersInfo";
+            lblCommonHeadersInfo.Size = new Size(519, 45);
+            lblCommonHeadersInfo.TabIndex = 3;
+            lblCommonHeadersInfo.Text = resources.GetString("lblCommonHeadersInfo.Text");
             // 
             // tabNotifications
             // 
@@ -781,17 +817,6 @@ namespace PhilterDesktop
             lblVerifyHint.TabIndex = 7;
             lblVerifyHint.Text = resources.GetString("lblVerifyHint.Text");
             // 
-            // chkStartWithWindows
-            // 
-            chkStartWithWindows.AutoSize = true;
-            chkStartWithWindows.Location = new Point(12, 280);
-            chkStartWithWindows.Margin = new Padding(2);
-            chkStartWithWindows.Name = "chkStartWithWindows";
-            chkStartWithWindows.Size = new Size(444, 19);
-            chkStartWithWindows.TabIndex = 6;
-            chkStartWithWindows.Text = "Start Philter Desktop at sign-in (runs minimized to the tray and keeps watching)";
-            chkStartWithWindows.UseVisualStyleBackColor = true;
-            // 
             // SettingsForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -895,6 +920,8 @@ namespace PhilterDesktop
         private TabPage tabEmail;
         private CheckBox chkScrubEmailHeaders;
         private Label lblEmailInfo;
+        private CheckBox chkRemoveCommonHeaders;
+        private Label lblCommonHeadersInfo;
         private CheckBox chkStartWithWindows;
     }
 }

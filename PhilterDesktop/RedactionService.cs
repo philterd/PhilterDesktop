@@ -155,7 +155,8 @@ namespace PhilterDesktop
             double ocrTextCoverage = 0.01,
             double ocrImageCoverage = 0.5,
             int ocrMaxPages = 0,
-            bool scrubEmailHeaders = false)
+            bool scrubEmailHeaders = false,
+            bool removeCommonEmailHeaders = false)
         {
             filterService ??= new FilterService();
 
@@ -205,7 +206,8 @@ namespace PhilterDesktop
                     inputPath,
                     outputPath,
                     text => filterService.Filter(policy, context, 0, text),
-                    scrubEmailHeaders));
+                    scrubEmailHeaders,
+                    removeCommonEmailHeaders));
             }
 
             if (extension == ".rtf")
@@ -275,7 +277,8 @@ namespace PhilterDesktop
             PhileasPolicy? policy = null,
             FilterService? filterService = null,
             WordScrubOptions wordScrub = WordScrubOptions.None,
-            bool scrubEmailHeaders = false)
+            bool scrubEmailHeaders = false,
+            bool removeCommonEmailHeaders = false)
         {
             filterService ??= new FilterService();
             switch (fileType.ToLowerInvariant())
@@ -292,7 +295,7 @@ namespace PhilterDesktop
                     break;
                 case ".eml":
                 case ".msg":
-                    await Task.Run(() => EmailRedactor.ApplySpans(sourcePath, outputPath, spans, scrubEmailHeaders));
+                    await Task.Run(() => EmailRedactor.ApplySpans(sourcePath, outputPath, spans, scrubEmailHeaders, removeCommonEmailHeaders));
                     break;
                 case ".rtf":
                     await Task.Run(() => RtfRedactor.ApplySpans(sourcePath, outputPath, spans));

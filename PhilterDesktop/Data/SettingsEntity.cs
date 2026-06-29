@@ -107,6 +107,14 @@ namespace PhilterData
         public bool ScrubEmailHeaders { get; set; } = true;
 
         /// <summary>
+        /// Remove common identity/delivery headers from redacted email output: <c>Bcc</c>,
+        /// <c>Reply-To</c>, <c>Sender</c>, and the <c>Resent-*</c> headers. These carry recipient/sender
+        /// addresses that aren't part of the scanned From/To/Cc fields (notably <c>Bcc</c>, which names
+        /// blind-copy recipients and is carried through from <c>.msg</c> input). On by default.
+        /// </summary>
+        public bool RemoveCommonEmailHeaders { get; set; } = true;
+
+        /// <summary>
         /// Read scanned (image-only) PDF pages with on-device OCR so their text can be detected and
         /// redacted. OCR runs entirely on this computer (nothing is uploaded). On by default; it is
         /// slower and best-effort (it can miss low-quality scans and handwriting), so the redacted

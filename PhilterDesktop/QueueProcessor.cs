@@ -83,7 +83,8 @@ namespace PhilterDesktop
                     ocrTextCoverage: settings.OcrTextCoverageThreshold,
                     ocrImageCoverage: settings.OcrImageCoverageThreshold,
                     ocrMaxPages: settings.OcrMaxPages,
-                    scrubEmailHeaders: settings.ScrubEmailHeaders);
+                    scrubEmailHeaders: settings.ScrubEmailHeaders,
+                    removeCommonEmailHeaders: settings.RemoveCommonEmailHeaders);
 
                 // Self-check: re-scan the written output for residual PII (the false-negative case).
                 // Optionally with a broad "all detectors on" policy to catch types the redaction policy

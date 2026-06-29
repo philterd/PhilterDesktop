@@ -40,6 +40,8 @@ namespace PhilterDesktop
         private RedactionVersionEntity? _selectedVersion;
         private readonly string _redactedSuffix = RedactionService.DefaultSuffix;
         private readonly WordScrubOptions _wordScrub = WordScrubOptions.None;
+        private readonly bool _scrubEmailHeaders;
+        private readonly bool _removeCommonEmailHeaders;
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public ModifyRedactionForm()
@@ -55,7 +57,9 @@ namespace PhilterDesktop
             RedactionSpanRepository spans,
             PolicyRepository policies,
             string? redactedSuffix = null,
-            WordScrubOptions wordScrub = WordScrubOptions.None)
+            WordScrubOptions wordScrub = WordScrubOptions.None,
+            bool scrubEmailHeaders = false,
+            bool removeCommonEmailHeaders = false)
             : this()
         {
             _documentId = documentId;
@@ -64,6 +68,8 @@ namespace PhilterDesktop
             _policies = policies;
             _redactedSuffix = RedactionService.NormalizeSuffix(redactedSuffix);
             _wordScrub = wordScrub;
+            _scrubEmailHeaders = scrubEmailHeaders;
+            _removeCommonEmailHeaders = removeCommonEmailHeaders;
 
             ReloadVersions(selectLatest: true);
         }
@@ -355,7 +361,9 @@ namespace PhilterDesktop
             try
             {
                 await RedactionService.ApplySpansAsync(version.SourcePath, output, version.FileType, version.Highlight, _working, policy,
-                    wordScrub: _wordScrub);
+                    wordScrub: _wordScrub,
+                    scrubEmailHeaders: _scrubEmailHeaders,
+                    removeCommonEmailHeaders: _removeCommonEmailHeaders);
             }
             catch (Exception ex)
             {

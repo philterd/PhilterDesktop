@@ -49,7 +49,7 @@ namespace PhilterDesktop
         /// writes the result as <c>.eml</c> to <paramref name="outputPath"/>, and returns the applied
         /// spans (field-indexed). The input file is left untouched.
         /// </summary>
-        public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool scrubHeaders = false)
+        public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool scrubHeaders = false, bool removeCommonHeaders = false)
         {
             MimeMessage message = Load(inputPath);
 
@@ -92,6 +92,10 @@ namespace PhilterDesktop
             if (scrubHeaders)
             {
                 RemoveTechnicalHeaders(message);
+            }
+            if (removeCommonHeaders)
+            {
+                RemoveCommonHeaders(message);
             }
             Save(message, outputPath);
             return captured;
@@ -152,7 +156,7 @@ namespace PhilterDesktop
         /// <see cref="RedactionSpanEntity.ParagraphIndex"/> (the field index) plus character start/stop
         /// offsets within that field. Used by the Modify Redaction feature.
         /// </summary>
-        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, bool scrubHeaders = false)
+        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, bool scrubHeaders = false, bool removeCommonHeaders = false)
         {
             MimeMessage message = Load(inputPath);
 
@@ -189,6 +193,10 @@ namespace PhilterDesktop
             {
                 RemoveTechnicalHeaders(message);
             }
+            if (removeCommonHeaders)
+            {
+                RemoveCommonHeaders(message);
+            }
             Save(message, outputPath);
         }
 
@@ -213,6 +221,47 @@ namespace PhilterDesktop
                     if (TechnicalHeaders.Contains(field)
                         || field.StartsWith("X-", StringComparison.OrdinalIgnoreCase)
                         || field.StartsWith("ARC-", StringComparison.OrdinalIgnoreCase))
+                    {
+                        headers.RemoveAt(i);
+                    }
+                }
+            }
+            catch
+            {
+                // best effort — a header quirk must never fail the redaction
+            }
+        }
+
+        // Common identity/delivery headers that carry recipient or sender PII but aren't part of the
+        // redacted field set (unlike From/To/Cc, which are scanned). Bcc is the most sensitive — it names
+        // blind-copy recipients — and .msg input copies Bcc through, so without this it would survive into
+        // the redacted .eml. We clear MimeKit's typed address properties (the reliable way to drop these)
+        // and then sweep any remaining raw headers defensively.
+        private static readonly HashSet<string> CommonIdentityHeaders = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Bcc", "Reply-To", "Sender"
+        };
+
+        private static void RemoveCommonHeaders(MimeMessage message)
+        {
+            try
+            {
+                message.Bcc.Clear();
+                message.ReplyTo.Clear();
+                message.Sender = null;
+                message.ResentFrom.Clear();
+                message.ResentReplyTo.Clear();
+                message.ResentTo.Clear();
+                message.ResentCc.Clear();
+                message.ResentBcc.Clear();
+                message.ResentSender = null;
+
+                HeaderList headers = message.Headers;
+                for (int i = headers.Count - 1; i >= 0; i--)
+                {
+                    string field = headers[i].Field;
+                    if (CommonIdentityHeaders.Contains(field)
+                        || field.StartsWith("Resent-", StringComparison.OrdinalIgnoreCase))
                     {
                         headers.RemoveAt(i);
                     }

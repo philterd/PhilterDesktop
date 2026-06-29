@@ -374,7 +374,8 @@ namespace PhilterDesktop
                     ocrTextCoverage: watcherSettings.OcrTextCoverageThreshold,
                     ocrImageCoverage: watcherSettings.OcrImageCoverageThreshold,
                     ocrMaxPages: watcherSettings.OcrMaxPages,
-                    scrubEmailHeaders: watcherSettings.ScrubEmailHeaders).ConfigureAwait(false);
+                    scrubEmailHeaders: watcherSettings.ScrubEmailHeaders,
+                    removeCommonEmailHeaders: watcherSettings.RemoveCommonEmailHeaders).ConfigureAwait(false);
 
                 Log($"Redacted watched file '{fullPath}' -> '{outputPath}'.");
                 Activity(folder, "Info", $"Redacted: {fullPath} → {outputPath}");

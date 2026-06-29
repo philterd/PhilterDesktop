@@ -126,6 +126,9 @@
   <data name="lblEmailInfo.Text" xml:space="preserve">
     <value>A redacted email keeps technical headers that can identify the sender and route: the originating IP address, the mail program used, and the server-by-server delivery trail (Received, X-* / ARC-* headers, Message-ID, and similar). When on, these are stripped from the redacted .eml; the visible Subject, From, To, Cc, body, and Date are kept (and their PII is still redacted). On by default.</value>
   </data>
+  <data name="lblCommonHeadersInfo.Text" xml:space="preserve">
+    <value>These headers carry recipient or sender addresses that aren't part of the visible From/To/Cc fields. Bcc names blind-copy recipients and is kept when an Outlook .msg is converted, so removing it keeps that information out of the redacted email.</value>
+  </data>
   <data name="lblMaxFileSizeHint.Text" xml:space="preserve">
     <value>Larger files are skipped (and logged) on the automatic paths, since redaction loads a document into memory. 0 = no limit. Default 500 MB. When you add files yourself, Philter Desktop still warns above 50 MB but lets you proceed.</value>
   </data>
