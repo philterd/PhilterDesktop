@@ -35,9 +35,10 @@ namespace PhilterDesktop
     internal static class RtfSanitizer
     {
         /// <summary>
-        /// Removes every top-level <c>{\object …}</c> group (including its nested <c>\objdata</c>,
-        /// <c>\objclass</c>, and <c>\result</c> destinations) from <paramref name="rtf"/>, returning
-        /// valid RTF. Input without embedded objects is returned effectively unchanged.
+        /// Removes every <c>{\object …}</c> group — including the ignorable-destination form
+        /// <c>{\*\object …}</c>, and its nested <c>\objdata</c>, <c>\objclass</c>, and <c>\result</c>
+        /// destinations — from <paramref name="rtf"/>, returning valid RTF. Input without embedded objects
+        /// is returned effectively unchanged.
         /// </summary>
         public static string RemoveEmbeddedObjects(string rtf)
         {
@@ -62,9 +63,9 @@ namespace PhilterDesktop
                     continue;
                 }
 
-                if (c == '{' && IsControlWordAt(rtf, i + 1, "object"))
+                if (c == '{' && IsObjectGroupAt(rtf, i))
                 {
-                    i = SkipGroup(rtf, i); // drop the whole {\object …} group
+                    i = SkipGroup(rtf, i); // drop the whole {\object …} (or {\*\object …}) group
                     continue;
                 }
 
@@ -72,6 +73,19 @@ namespace PhilterDesktop
                 i++;
             }
             return sb.ToString();
+        }
+
+        // True if the '{' at <paramref name="openBrace"/> begins an embedded-object group: an optional
+        // ignorable-destination marker (\*) followed by the \object control word — i.e. "{\object" or
+        // "{\*\object".
+        private static bool IsObjectGroupAt(string rtf, int openBrace)
+        {
+            int pos = openBrace + 1; // just past '{'
+            if (pos + 1 < rtf.Length && rtf[pos] == '\\' && rtf[pos + 1] == '*')
+            {
+                pos += 2; // skip the "\*" ignorable-destination marker
+            }
+            return IsControlWordAt(rtf, pos, "object");
         }
 
         // True if, starting at index pos, the text is a backslash control word exactly equal to

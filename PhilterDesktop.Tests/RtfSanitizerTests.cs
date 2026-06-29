@@ -92,6 +92,70 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void RemoveEmbeddedObjects_StripsIgnorableDestinationObjectGroup()
+        {
+            // The "{\*\object …}" form (ignorable destination) must be stripped just like "{\object …}".
+            const string rtf = @"{\rtf1 Before {\*\object\objemb{\*\objdata 0102deadbeef}} After}";
+            string cleaned = RtfSanitizer.RemoveEmbeddedObjects(rtf);
+
+            Assert.DoesNotContain("\\object", cleaned);
+            Assert.DoesNotContain("deadbeef", cleaned);
+            Assert.Contains("Before", cleaned);
+            Assert.Contains("After", cleaned);
+        }
+
+        [Fact]
+        public void RemoveEmbeddedObjects_StripsNestedObjectGroups()
+        {
+            const string rtf = @"{\rtf1 {\object x {\object y}} keep}";
+            string cleaned = RtfSanitizer.RemoveEmbeddedObjects(rtf);
+
+            Assert.DoesNotContain("\\object", cleaned);
+            Assert.Contains("keep", cleaned);
+        }
+
+        [Fact]
+        public void RemoveEmbeddedObjects_PreservesEscapedBraces_WhileStrippingObject()
+        {
+            const string rtf = @"{\rtf1 lit \{x\} {\object data} end}";
+            string cleaned = RtfSanitizer.RemoveEmbeddedObjects(rtf);
+
+            Assert.DoesNotContain("\\object", cleaned);
+            Assert.Contains(@"\{x\}", cleaned); // escaped literal braces are not group delimiters
+            Assert.Contains("end", cleaned);
+        }
+
+        [Fact]
+        public void RemoveEmbeddedObjects_MalformedUnbalanced_DoesNotThrow_AndStripsToEnd()
+        {
+            const string rtf = @"{\rtf1 a {\object {\*\objdata 0102"; // unterminated object group
+            string cleaned = RtfSanitizer.RemoveEmbeddedObjects(rtf);
+
+            Assert.DoesNotContain("\\objdata", cleaned);
+            Assert.DoesNotContain("\\object", cleaned);
+            Assert.StartsWith(@"{\rtf1 a ", cleaned); // text before the object survives
+        }
+
+        [Fact]
+        public void RemoveEmbeddedObjects_Fuzz_NeverThrowsAndNeverGrows()
+        {
+            var rng = new Random(12345);
+            char[] alphabet = @"{}\*objectdar result 0123abz".ToCharArray();
+            for (int n = 0; n < 2000; n++)
+            {
+                var chars = new char[rng.Next(0, 200)];
+                for (int k = 0; k < chars.Length; k++)
+                {
+                    chars[k] = alphabet[rng.Next(alphabet.Length)];
+                }
+                string input = new string(chars);
+
+                string result = RtfSanitizer.RemoveEmbeddedObjects(input); // must not throw or hang
+                Assert.True(result.Length <= input.Length, "sanitizer should only ever remove characters");
+            }
+        }
+
+        [Fact]
         public async Task RtfRedactor_DoesNotLeakEmbeddedObjectContent()
         {
             string input = Path.Combine(_tempDir, "embedded.rtf");
