@@ -226,6 +226,17 @@ namespace PhilterDesktop
                     }
                 }
             }
+
+            // Comment text: redact it too, so PII in a comment isn't shipped when the user keeps
+            // comments (they're only deleted separately, by the "remove comments" scrub). Appended last
+            // so body/header/footer paragraph indices stay stable for stored-span re-apply (#480).
+            if (main.WordprocessingCommentsPart?.Comments is Comments comments)
+            {
+                foreach (Paragraph p in comments.Descendants<Paragraph>())
+                {
+                    yield return p;
+                }
+            }
         }
 
         // Resolves the document's header then footer parts via the section properties' references,

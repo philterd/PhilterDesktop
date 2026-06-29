@@ -100,6 +100,43 @@ namespace PhilterDesktop.Tests
         private static Paragraph Para(string text) =>
             new(new Run(new Text(text) { Space = SpaceProcessingModeValues.Preserve }));
 
+        // --- Comments (issue #480) -----------------------------------------------------------------
+
+        /// <summary>Creates a .docx with one Word comment (one paragraph) plus the given body paragraphs.</summary>
+        public static void CreateWithComment(string path, string commentText, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            main.Document = new Document(new Body());
+            Body body = main.Document.Body!;
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+
+            WordprocessingCommentsPart commentsPart = main.AddNewPart<WordprocessingCommentsPart>();
+            commentsPart.Comments = new Comments(
+                new Comment(Para(commentText)) { Id = "1", Author = "Reviewer", Initials = "R" });
+        }
+
+        /// <summary>The text of each Word comment, in order (empty if there is no comments part).</summary>
+        public static string[] CommentTexts(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            WordprocessingCommentsPart? part = doc.MainDocumentPart!.WordprocessingCommentsPart;
+            return part?.Comments is null
+                ? Array.Empty<string>()
+                : part.Comments.Elements<Comment>().Select(c => c.InnerText).ToArray();
+        }
+
+        /// <summary>Whether the document still has a comments part with at least one comment.</summary>
+        public static bool HasComments(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            WordprocessingCommentsPart? part = doc.MainDocumentPart!.WordprocessingCommentsPart;
+            return part?.Comments?.Elements<Comment>().Any() == true;
+        }
+
         // --- Raw-XML fixtures for drawings / text boxes (issue #481) -----------------------------
         //
         // Text boxes and drawings can't be authored conveniently through the strongly-typed DOM, so
