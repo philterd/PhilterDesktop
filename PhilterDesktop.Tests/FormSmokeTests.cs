@@ -78,6 +78,10 @@ namespace PhilterDesktop.Tests
             ConstructWithDb(db => new PolicyEditorForm(new PolicyRepository(db)));
 
         [Fact]
+        public void PolicyEditorForm_WithWatchedFolders_Constructs() =>
+            ConstructWithDb(db => new PolicyEditorForm(new PolicyRepository(db), new WatchedFolderRepository(db)));
+
+        [Fact]
         public void PolicyWizardForm_Constructs() =>
             Sta(() =>
             {

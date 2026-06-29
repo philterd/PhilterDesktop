@@ -207,6 +207,49 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void Redact_MultipleDrawingParagraphsInOnePart_AllRedacted()
+        {
+            // A single part (chart) with several <a:p> blocks — every paragraph must be filtered.
+            string input = NewPath("manyp.docx");
+            string output = NewPath("manyp_out.docx");
+            string title = WordDocs.AParagraph("first p1@example.com") + WordDocs.AParagraph("second p2@example.com");
+            WordDocs.CreateWithChart(input, title, "body");
+
+            WordDocumentRedactor.Redact(input, output, Filter);
+
+            Assert.False(WordDocs.AnyPartContains(output, "@example.com"));
+        }
+
+        [Fact]
+        public void Redact_TwiceIsIdempotent_StillCleanAndValid()
+        {
+            string input = NewPath("idem.docx");
+            string once = NewPath("idem1.docx");
+            string twice = NewPath("idem2.docx");
+            WordDocs.CreateWithChart(input, WordDocs.AParagraph("chart c@example.com"), "body");
+
+            WordDocumentRedactor.Redact(input, once, Filter);
+            WordDocumentRedactor.Redact(once, twice, Filter);
+
+            Assert.False(WordDocs.AnyPartContains(twice, "@example.com"));
+            using var doc = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Open(twice, false);
+            Assert.NotNull(doc.MainDocumentPart?.Document?.Body);
+        }
+
+        [Fact]
+        public void Redact_WithHighlight_StillRedactsDrawingText()
+        {
+            // Highlight has no DrawingML equivalent, but redaction must still happen (just not highlighted).
+            string input = NewPath("hl.docx");
+            string output = NewPath("hl_out.docx");
+            WordDocs.CreateWithChart(input, WordDocs.AParagraph("chart c@example.com"), "body");
+
+            WordDocumentRedactor.Redact(input, output, Filter, highlight: true);
+
+            Assert.False(WordDocs.AnyPartContains(output, "@example.com"));
+        }
+
+        [Fact]
         public void Redact_DrawingDocument_StaysValid()
         {
             string input = NewPath("valid.docx");
