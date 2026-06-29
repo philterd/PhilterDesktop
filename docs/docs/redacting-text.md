@@ -2,14 +2,14 @@
 
 Philter Desktop redacts two kinds of plain and lightly formatted text documents:
 
-- **Plain text (`.txt`)** — simple, unformatted text, like a Notepad file.
-- **Rich Text (`.rtf`)** — a formatted-text format used by WordPad and many legal and records systems.
+- **Plain text (`.txt`)**: simple, unformatted text, like a Notepad file.
+- **Rich Text (`.rtf`)**: a formatted-text format used by WordPad and many legal and records systems.
 
 ## Plain text (`.txt`)
 
 A `.txt` file is redacted directly: the sensitive information is removed from the text and the
-cleaned-up copy is saved as a new `.txt` file. Because there is no formatting, metadata, or hidden
-content to consider, this is the most straightforward type to redact.
+cleaned-up copy is saved as a new `.txt` file. There is no formatting, metadata, or hidden content to
+consider.
 
 ## Rich Text (`.rtf`)
 

@@ -7,8 +7,8 @@ removed from the text and the cleaned-up copy is saved as a new `.docx` file.
 
 For Word (`.docx`) files, Philter Desktop also cleans up hidden information in the redacted copy by
 default: the document's **metadata** (author, company, title, keywords, custom properties), reviewer
-**comments**, **tracked changes**, and **hidden text**, so a "redacted" file doesn't quietly leak
-through any of those channels. You can control each of these on the
+**comments**, **tracked changes**, and **hidden text**, so a "redacted" file doesn't leak through any
+of those channels. You can control each of these on the
 [Settings → Microsoft Office](settings.md#microsoft-office-tab) tab.
 
 ## Highlighting redactions

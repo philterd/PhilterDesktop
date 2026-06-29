@@ -46,8 +46,8 @@ Columns you don't tick are still cleaned the normal way (detected sensitive valu
 dependable way to handle columns of names and identifiers.
 
 When you click **Redact**, the spreadsheet is **added to the queue** with your choices and the window
-closes; it's then redacted in the background like any other document, and you'll see it appear in the
-main list with its status.
+closes; it's then redacted in the background like any other document and appears in the main list with
+its status.
 
 !!! note "Whole-column removal is only offered by Redact Spreadsheet…"
     When you redact a spreadsheet through the ordinary queue, drag-and-drop, a

@@ -53,9 +53,8 @@ deployment or support questions, contact Philterd through **[philterd.ai](https:
 
 ## Important reminder about redacted documents
 
-Whatever your arrangement, please keep in mind the most important point about the product itself:
-automated redaction uses statistical and machine-learning methods, and **no automated tool can be
-guaranteed to catch everything.** Every redacted document should be **reviewed by a person** before it
-is shared or relied upon. This is exactly why Philter Desktop names its output files with the word
-*draft* by default. Support from Philterd can help you configure the tool well, but the final review
-is always yours.
+Whatever your arrangement, keep the most important point in mind: automated redaction uses statistical
+and machine-learning methods, and **no automated tool can be guaranteed to catch everything.** Every
+redacted document should be **reviewed by a person** before it is shared or relied upon. This is why
+Philter Desktop names its output files with the word *draft* by default. Support from Philterd can help
+you configure the tool well, but the final review is always yours.
