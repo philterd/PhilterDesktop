@@ -215,16 +215,22 @@ namespace PhilterDesktop
                 InjectionOptions = InjectionOptions.Escape
             };
 
-            using var writer = new StreamWriter(outputPath, append: false, encoding);
-            using var csv = new CsvWriter(writer, config);
-            foreach (string[] row in rows)
+            // Build in memory, then write once so a failure never leaves the original or a partial file (issue #483).
+            using var buffer = new MemoryStream();
+            using (var writer = new StreamWriter(buffer, encoding, leaveOpen: true))
+            using (var csv = new CsvWriter(writer, config))
             {
-                foreach (string field in row)
+                foreach (string[] row in rows)
                 {
-                    csv.WriteField(field);
+                    foreach (string field in row)
+                    {
+                        csv.WriteField(field);
+                    }
+                    csv.NextRecord();
                 }
-                csv.NextRecord();
             }
+
+            SafeOutput.Write(outputPath, buffer.ToArray());
         }
 
         // Chooses the output encoding to match the source so the redacted CSV keeps the same byte-order

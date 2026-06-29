@@ -54,8 +54,6 @@ namespace PhilterDesktop
             Func<string, TextFilterResult> filter,
             IReadOnlyCollection<int>? fullyRedactedColumns = null)
         {
-            File.Copy(inputPath, outputPath, overwrite: true);
-
             var fullColumns = fullyRedactedColumns is { Count: > 0 }
                 ? new HashSet<int>(fullyRedactedColumns)
                 : new HashSet<int>();
@@ -64,10 +62,14 @@ namespace PhilterDesktop
             int order = 0;
             int cellIndex = 0;
 
-            using SpreadsheetDocument document = SpreadsheetDocument.Open(outputPath, isEditable: true);
+            // Redact in memory, then write once so a failure never leaves the original or a partial file (issue #483).
+            using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
+            using SpreadsheetDocument document = SpreadsheetDocument.Open(buffer, isEditable: true);
             WorkbookPart? workbookPart = document.WorkbookPart;
             if (workbookPart is null)
             {
+                document.Save();
+                SafeOutput.Write(outputPath, buffer.ToArray());
                 return captured;
             }
 
@@ -143,6 +145,9 @@ namespace PhilterDesktop
             // Redacted cells were converted to inline strings; blank any shared-string entries they left
             // orphaned so the original text can't be recovered from xl/sharedStrings.xml.
             PruneUnusedSharedStrings(workbookPart);
+
+            document.Save(); // flush into the buffer
+            SafeOutput.Write(outputPath, buffer.ToArray());
             return captured;
         }
 
@@ -202,16 +207,18 @@ namespace PhilterDesktop
 
         public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans)
         {
-            File.Copy(inputPath, outputPath, overwrite: true);
-
             Dictionary<int, List<RedactionSpanEntity>> byCell = spans
                 .GroupBy(s => s.ParagraphIndex)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            using SpreadsheetDocument document = SpreadsheetDocument.Open(outputPath, isEditable: true);
+            // Apply in memory, then write once (see Redact — issue #483).
+            using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
+            using SpreadsheetDocument document = SpreadsheetDocument.Open(buffer, isEditable: true);
             WorkbookPart? workbookPart = document.WorkbookPart;
             if (workbookPart is null)
             {
+                document.Save();
+                SafeOutput.Write(outputPath, buffer.ToArray());
                 return;
             }
 
@@ -248,6 +255,9 @@ namespace PhilterDesktop
             }
 
             PruneUnusedSharedStrings(workbookPart);
+
+            document.Save(); // flush into the buffer
+            SafeOutput.Write(outputPath, buffer.ToArray());
         }
 
         /// <summary>

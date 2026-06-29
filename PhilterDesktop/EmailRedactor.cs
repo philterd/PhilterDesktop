@@ -446,8 +446,10 @@ namespace PhilterDesktop
 
         private static void Save(MimeMessage message, string outputPath)
         {
-            using FileStream stream = File.Create(outputPath);
-            message.WriteTo(stream);
+            // Serialize in memory, then write once so a failure never leaves the original or a partial file (issue #483).
+            using var buffer = new MemoryStream();
+            message.WriteTo(buffer);
+            SafeOutput.Write(outputPath, buffer.ToArray());
         }
     }
 }

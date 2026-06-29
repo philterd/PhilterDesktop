@@ -94,10 +94,7 @@ namespace PhilterDesktop
             try
             {
                 List<RedactionSpanEntity> spans =
-                    await RedactionService.RedactFileAsync(source, output, policy, string.Empty, _filterService,
-                        wordScrub: DocumentMetadata.OptionsFor(_settings),
-                        scrubEmailHeaders: _settings.ScrubEmailHeaders,
-                        removeCommonEmailHeaders: _settings.RemoveCommonEmailHeaders);
+                    await RedactionService.RedactFileAsync(source, output, policy, string.Empty, _settings, _filterService);
 
                 Cursor = Cursors.Default;
                 string summary = $"Redacted {spans.Count} item{(spans.Count == 1 ? "" : "s")}." +

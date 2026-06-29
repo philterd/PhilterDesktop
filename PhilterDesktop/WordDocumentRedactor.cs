@@ -97,14 +97,14 @@ namespace PhilterDesktop
         /// </summary>
         public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool highlight = false)
         {
-            // Work on a copy so the original is never modified; all other document parts are preserved.
-            File.Copy(inputPath, outputPath, overwrite: true);
-
+            // Redact in memory, then write the output once so a failure never leaves the original or a
+            // partial file (issue #483).
             var captured = new List<RedactionSpanEntity>();
             int order = 0;
             int paragraphIndex = 0;
 
-            using WordprocessingDocument document = WordprocessingDocument.Open(outputPath, isEditable: true);
+            using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
+            using WordprocessingDocument document = WordprocessingDocument.Open(buffer, isEditable: true);
 
             foreach (Paragraph paragraph in EnumerateTargets(document).ToList())
             {
@@ -147,7 +147,8 @@ namespace PhilterDesktop
                 paragraphIndex++;
             }
 
-            // Changes flush on dispose (AutoSave is on by default for the editable package).
+            document.Save(); // flush into the buffer
+            SafeOutput.Write(outputPath, buffer.ToArray());
             return captured;
         }
 
@@ -159,13 +160,13 @@ namespace PhilterDesktop
         /// </summary>
         public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, bool highlight)
         {
-            File.Copy(inputPath, outputPath, overwrite: true);
-
             Dictionary<int, List<RedactionSpanEntity>> byParagraph = spans
                 .GroupBy(s => s.ParagraphIndex)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            using WordprocessingDocument document = WordprocessingDocument.Open(outputPath, isEditable: true);
+            // Apply in memory, then write once (see Redact — issue #483).
+            using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
+            using WordprocessingDocument document = WordprocessingDocument.Open(buffer, isEditable: true);
 
             int paragraphIndex = 0;
             foreach (Paragraph paragraph in EnumerateTargets(document).ToList())
@@ -191,6 +192,9 @@ namespace PhilterDesktop
                 }
                 paragraphIndex++;
             }
+
+            document.Save(); // flush into the buffer
+            SafeOutput.Write(outputPath, buffer.ToArray());
         }
 
         /// <summary>

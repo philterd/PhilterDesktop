@@ -67,7 +67,10 @@ namespace PhilterDesktop
                 return;
             }
 
-            using WordprocessingDocument document = WordprocessingDocument.Open(path, isEditable: true);
+            // Scrub in memory, then overwrite once. Plain write (not SafeOutput): a failure must keep the
+            // already-redacted file, not delete it (issue #483).
+            using MemoryStream buffer = SafeOutput.ReadToEditableStream(path);
+            using WordprocessingDocument document = WordprocessingDocument.Open(buffer, isEditable: true);
 
             if (options.HasFlag(WordScrubOptions.Metadata))
             {
@@ -87,6 +90,9 @@ namespace PhilterDesktop
             {
                 RemoveHiddenText(document);
             }
+
+            document.Save(); // flush into the buffer
+            File.WriteAllBytes(path, buffer.ToArray());
         }
 
         /// <summary>
@@ -100,10 +106,16 @@ namespace PhilterDesktop
         {
             try
             {
-                using SpreadsheetDocument document = SpreadsheetDocument.Open(path, isEditable: true);
-                ClearCoreProperties(document);
-                ClearExtendedProperties(document.ExtendedFilePropertiesPart);
-                RemoveCustomProperties(document, document.CustomFilePropertiesPart);
+                // Scrub in memory, then overwrite once (see ScrubDocx — issue #483).
+                using MemoryStream buffer = SafeOutput.ReadToEditableStream(path);
+                using (SpreadsheetDocument document = SpreadsheetDocument.Open(buffer, isEditable: true))
+                {
+                    ClearCoreProperties(document);
+                    ClearExtendedProperties(document.ExtendedFilePropertiesPart);
+                    RemoveCustomProperties(document, document.CustomFilePropertiesPart);
+                    document.Save();
+                }
+                File.WriteAllBytes(path, buffer.ToArray());
             }
             catch
             {

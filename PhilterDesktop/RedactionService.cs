@@ -138,6 +138,31 @@ namespace PhilterDesktop
         }
 
         /// <summary>
+        /// Redacts using all the per-run options carried by <paramref name="settings"/> (OCR, Word/Excel
+        /// metadata scrubbing, email-header handling). Every entry point (queue, watched folders, CLI,
+        /// Find &amp; Redact) goes through here so they redact identically — no call site can forget an
+        /// option (the cause of issue #482).
+        /// </summary>
+        public static Task<List<RedactionSpanEntity>> RedactFileAsync(
+            string inputPath,
+            string outputPath,
+            PhileasPolicy policy,
+            string context,
+            SettingsEntity settings,
+            FilterService? filterService = null,
+            bool highlight = false,
+            IReadOnlyCollection<int>? fullyRedactedColumns = null) =>
+            RedactFileAsync(
+                inputPath, outputPath, policy, context, filterService, highlight, fullyRedactedColumns,
+                wordScrub: DocumentMetadata.OptionsFor(settings),
+                ocrScannedPdfs: settings.OcrScannedPdfs,
+                ocrTextCoverage: settings.OcrTextCoverageThreshold,
+                ocrImageCoverage: settings.OcrImageCoverageThreshold,
+                ocrMaxPages: settings.OcrMaxPages,
+                scrubEmailHeaders: settings.ScrubEmailHeaders,
+                removeCommonEmailHeaders: settings.RemoveCommonEmailHeaders);
+
+        /// <summary>
         /// Redacts <paramref name="inputPath"/> to <paramref name="outputPath"/> using
         /// <paramref name="policy"/>, dispatching by file type, and returns the spans it applied
         /// (so they can be stored and later edited / re-applied).
@@ -251,7 +276,7 @@ namespace PhilterDesktop
                 byte[] input = await File.ReadAllBytesAsync(inputPath);
                 (byte[] document, List<RedactionSpanEntity> pdfSpans) = await RedactPdfBytesAsync(
                     input, policy, context, filterService, ocrScannedPdfs, ocrTextCoverage, ocrImageCoverage, ocrMaxPages);
-                await File.WriteAllBytesAsync(outputPath, document);
+                await SafeOutput.WriteAsync(outputPath, document);
                 return pdfSpans;
             }
 
@@ -260,7 +285,7 @@ namespace PhilterDesktop
             // UI thread that drives the queue/preview.
             string text = await File.ReadAllTextAsync(inputPath);
             TextFilterResult textResult = await Task.Run(() => filterService.Filter(policy, context, 0, text));
-            await File.WriteAllTextAsync(outputPath, textResult.FilteredText);
+            await SafeOutput.WriteTextAsync(outputPath, textResult.FilteredText);
             return MapTextSpans(textResult.Spans);
         }
 
@@ -388,7 +413,7 @@ namespace PhilterDesktop
                 sb.Remove(r.Start, r.End - r.Start);
                 sb.Insert(r.Start, r.Replacement ?? string.Empty);
             }
-            await File.WriteAllTextAsync(outputPath, sb.ToString());
+            await SafeOutput.WriteTextAsync(outputPath, sb.ToString());
         }
 
         private static async Task ApplyPdfSpansAsync(
@@ -397,7 +422,7 @@ namespace PhilterDesktop
         {
             byte[] bytes = await File.ReadAllBytesAsync(sourcePath);
             byte[] outBytes = await ApplyPdfSpansToBytesAsync(bytes, spans, policy, filterService);
-            await File.WriteAllBytesAsync(outputPath, outBytes);
+            await SafeOutput.WriteAsync(outputPath, outBytes);
         }
 
         /// <summary>

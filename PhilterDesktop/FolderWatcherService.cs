@@ -383,14 +383,8 @@ namespace PhilterDesktop
                 }
 
                 await RedactionService.RedactFileAsync(
-                    fullPath, outputPath, policy, folder.Context, _filterService, folder.Highlight,
-                    wordScrub: DocumentMetadata.OptionsFor(watcherSettings),
-                    ocrScannedPdfs: watcherSettings.OcrScannedPdfs,
-                    ocrTextCoverage: watcherSettings.OcrTextCoverageThreshold,
-                    ocrImageCoverage: watcherSettings.OcrImageCoverageThreshold,
-                    ocrMaxPages: watcherSettings.OcrMaxPages,
-                    scrubEmailHeaders: watcherSettings.ScrubEmailHeaders,
-                    removeCommonEmailHeaders: watcherSettings.RemoveCommonEmailHeaders).ConfigureAwait(false);
+                    fullPath, outputPath, policy, folder.Context, watcherSettings, _filterService, folder.Highlight)
+                    .ConfigureAwait(false);
 
                 Log($"Redacted watched file '{fullPath}' -> '{outputPath}'.");
                 Activity(folder, "Info", $"Redacted: {fullPath} → {outputPath}");

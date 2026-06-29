@@ -95,7 +95,7 @@ namespace PhilterDesktop
                     box.SelectedText = s.Replacement ?? string.Empty;
                 }
 
-                box.SaveFile(outputPath, RichTextBoxStreamType.RichText);
+                WriteRtf(box, outputPath);
                 return captured;
             });
         }
@@ -128,7 +128,7 @@ namespace PhilterDesktop
                     box.SelectedText = r.Replacement ?? string.Empty;
                 }
 
-                box.SaveFile(outputPath, RichTextBoxStreamType.RichText);
+                WriteRtf(box, outputPath);
                 return null;
             });
         }
@@ -143,6 +143,14 @@ namespace PhilterDesktop
             byte[] bytes = File.ReadAllBytes(inputPath);
             string rtf = Encoding.Latin1.GetString(bytes);
             box.Rtf = RtfSanitizer.RemoveEmbeddedObjects(rtf);
+        }
+
+        // Serialize to RTF in memory, then write once so a failure never leaves the original or a partial file (issue #483).
+        private static void WriteRtf(RichTextBox box, string outputPath)
+        {
+            using var buffer = new MemoryStream();
+            box.SaveFile(buffer, RichTextBoxStreamType.RichText);
+            SafeOutput.Write(outputPath, buffer.ToArray());
         }
 
         // RichTextBox requires an STA thread; the pipeline runs on MTA background threads, so do the

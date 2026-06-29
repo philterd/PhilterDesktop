@@ -139,6 +139,22 @@ namespace PhilterDesktop.Tests
             Assert.Contains(WordDocs.BodyParagraphs(input), p => p.Contains("@example.com"));
         }
 
+        // Issue #483: a failure mid-redaction must never leave the original (unredacted) — or a partial —
+        // file at the output path. With the in-memory build, the output is written only on full success,
+        // so a throwing filter leaves no output file at all.
+        [Fact]
+        public void Redact_FailureMidway_LeavesNoOutputFile()
+        {
+            string input = CreateDocx("keep one", "boom secret@example.com here");
+            string output = NewPath("out.docx");
+
+            Func<string, TextFilterResult> throwingFilter = t =>
+                t.Contains("boom") ? throw new InvalidOperationException("simulated redaction failure") : Filter(t);
+
+            Assert.Throws<InvalidOperationException>(() => WordDocumentRedactor.Redact(input, output, throwingFilter));
+            Assert.False(File.Exists(output), "no output file should be left when redaction fails");
+        }
+
         [Fact]
         public void Redact_WithHighlight_HighlightsTheReplacement()
         {
