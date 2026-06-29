@@ -86,7 +86,7 @@ namespace PhilterDesktop
                 return;
             }
 
-            string output = RedactionService.GetOutputPath(source, _settings);
+            string output = RedactionService.GetUniqueOutputPath(RedactionService.GetOutputPath(source, _settings));
             PhileasPolicy policy = FindAndRedact.BuildPolicy(terms);
 
             _redact.Enabled = _browse.Enabled = _import.Enabled = false;

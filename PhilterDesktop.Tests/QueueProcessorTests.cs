@@ -222,6 +222,49 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public async Task ProcessAsync_SameNamedSources_CustomOutputFolder_DoNotOverwrite()
+        {
+            // Two files named "invoice.txt" from different folders, redacted into one shared output
+            // folder, must not clobber each other (#490): the second gets a "(2)" name.
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{\"identifiers\":{\"emailAddress\":{}}}" });
+
+            string folderA = Path.Combine(_tempDir, "A");
+            string folderB = Path.Combine(_tempDir, "B");
+            string outputFolder = Path.Combine(_tempDir, "out");
+            Directory.CreateDirectory(folderA);
+            Directory.CreateDirectory(folderB);
+            Directory.CreateDirectory(outputFolder);
+
+            string inputA = Path.Combine(folderA, "invoice.txt");
+            string inputB = Path.Combine(folderB, "invoice.txt");
+            await File.WriteAllTextAsync(inputA, "From alice@example.com (folder A)");
+            await File.WriteAllTextAsync(inputB, "From bob@example.com (folder B)");
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = false, CustomOutputFolder = outputFolder };
+
+            QueueRedactionResult a = await QueueProcessor.ProcessAsync(
+                new RedactionQueueEntity { Name = inputA, Policy = "p", Context = "ctx" }, _policies, settings, _filterService);
+            QueueRedactionResult b = await QueueProcessor.ProcessAsync(
+                new RedactionQueueEntity { Name = inputB, Policy = "p", Context = "ctx" }, _policies, settings, _filterService);
+
+            Assert.True(a.Success);
+            Assert.True(b.Success);
+            Assert.NotEqual(a.OutputPath, b.OutputPath);          // distinct files, no overwrite
+            Assert.True(File.Exists(a.OutputPath!));
+            Assert.True(File.Exists(b.OutputPath!));
+            Assert.EndsWith("invoice_redacted-draft.txt", a.OutputPath);
+            Assert.EndsWith("invoice_redacted-draft (2).txt", b.OutputPath);
+
+            // Each output keeps its own (redacted) content — neither was overwritten by the other.
+            string redactedA = await File.ReadAllTextAsync(a.OutputPath!);
+            string redactedB = await File.ReadAllTextAsync(b.OutputPath!);
+            Assert.Contains("folder A", redactedA);
+            Assert.Contains("folder B", redactedB);
+            Assert.DoesNotContain("@example.com", redactedA);
+            Assert.DoesNotContain("@example.com", redactedB);
+        }
+
+        [Fact]
         public void DescribeFailure_NonExceptionResult_UsesItsMessage()
         {
             var result = QueueRedactionResult.Failed("Policy 'nope' was not found");

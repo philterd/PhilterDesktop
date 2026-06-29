@@ -108,6 +108,37 @@ namespace PhilterDesktop
         }
 
         /// <summary>
+        /// Returns <paramref name="desiredPath"/> if no file is already there, otherwise the next free
+        /// name with a counter suffix — <c>name (2).ext</c>, <c>name (3).ext</c>, … — so two source
+        /// files with the same name (from different folders) don't silently overwrite each other in a
+        /// shared output folder (#490). Used by the direct-write paths (queue, CLI, Find &amp; Redact);
+        /// the preview forms' Save dialog handles overwrites itself.
+        /// </summary>
+        public static string GetUniqueOutputPath(string desiredPath)
+        {
+            if (!File.Exists(desiredPath))
+            {
+                return desiredPath;
+            }
+
+            string dir = Path.GetDirectoryName(desiredPath) ?? string.Empty;
+            string name = Path.GetFileNameWithoutExtension(desiredPath);
+            string ext = Path.GetExtension(desiredPath); // includes the leading dot (or empty)
+
+            for (int counter = 2; counter < 100_000; counter++)
+            {
+                string candidate = Path.Combine(dir, $"{name} ({counter}){ext}");
+                if (!File.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            // Pathological fallback (should never happen): a name that can't collide.
+            return Path.Combine(dir, $"{name} ({Guid.NewGuid():N}){ext}");
+        }
+
+        /// <summary>
         /// The actual redacted-output path for a document: the latest version whose stored output
         /// still exists on disk (honoring a custom Save-As location or a later Modify-Redaction
         /// output), falling back to <paramref name="defaultPath"/>.

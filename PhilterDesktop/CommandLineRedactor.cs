@@ -114,7 +114,7 @@ namespace PhilterDesktop
                     // Deserialize per file: redaction mutates the policy (PhEye model path, PDF scale).
                     PhileasPolicy policy = DeserializePolicy(policyJson);
                     GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
-                    string outputPath = RedactionService.GetOutputPath(path, settings);
+                    string outputPath = RedactionService.GetUniqueOutputPath(RedactionService.GetOutputPath(path, settings));
                     RedactionService.RedactFileAsync(path, outputPath, policy, contextName, settings, filterService)
                         .GetAwaiter().GetResult();
                     Console.WriteLine($"Redacted: {path} -> {outputPath}");

@@ -74,7 +74,9 @@ namespace PhilterDesktop
 
                 var policy = PolicySerializer.DeserializeFromJson(policyEntity.Json);
                 GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
-                string outputPath = RedactionService.GetOutputPath(entity.Name, settings);
+                // Don't overwrite an existing output (e.g. another source with the same file name from a
+                // different folder, written into a shared output folder) — pick a free "name (n)" instead.
+                string outputPath = RedactionService.GetUniqueOutputPath(RedactionService.GetOutputPath(entity.Name, settings));
                 List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(
                     entity.Name, outputPath, policy, entity.Context, settings, filterService, entity.Highlight,
                     fullyRedactedColumns: entity.FullyRedactedColumns);

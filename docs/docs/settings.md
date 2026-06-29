@@ -25,6 +25,14 @@ You choose where Philter Desktop puts the cleaned-up copies it creates:
 
 Either way, the cleaned-up file is always a **new copy**: your original document is never changed.
 
+**Duplicate file names are never overwritten.** If a cleaned-up copy would have the same name as a file
+already in the output folder — for example, two documents called `invoice.pdf` from different folders,
+both sent to one custom output folder — Philter Desktop adds a number so nothing is clobbered:
+`invoice_redacted-draft.pdf`, then `invoice_redacted-draft (2).pdf`, then `(3)`, and so on. (This also
+means redacting the same document again produces a new numbered copy rather than replacing the previous
+one.) When you use **Redact with Preview** and save with the **Save** dialog, Windows asks before
+overwriting instead.
+
 You can also set the **Redacted file name suffix**, the label that's added to the end of each
 cleaned-up file's name (just before the file extension). By default it is **`_redacted-draft`**, so
 `report.docx` becomes `report_redacted-draft.docx`.
