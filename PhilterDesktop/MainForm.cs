@@ -1851,7 +1851,7 @@ namespace PhilterDesktop
                 Logger.LogInfo("Opening Policy Editor");
             }
 
-            var f = new PolicyEditorForm(_policyRepository);
+            var f = new PolicyEditorForm(_policyRepository, _watchedFolderRepository);
             f.ShowDialog();
         }
 
@@ -1877,7 +1877,7 @@ namespace PhilterDesktop
 
         private void policiesToolStripButton_Click(object? sender, EventArgs e)
         {
-            var f = new PolicyEditorForm(_policyRepository);
+            var f = new PolicyEditorForm(_policyRepository, _watchedFolderRepository);
             f.ShowDialog();
         }
 

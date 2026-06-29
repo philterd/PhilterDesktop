@@ -309,7 +309,10 @@ namespace PhilterDesktop
             switch (fileType.ToLowerInvariant())
             {
                 case ".docx":
-                    await Task.Run(() => WordDocumentRedactor.ApplySpans(sourcePath, outputPath, spans, highlight));
+                    Func<string, TextFilterResult>? docxDrawingFilter = policy is null
+                        ? null
+                        : text => filterService.Filter(policy, string.Empty, 0, text);
+                    await Task.Run(() => WordDocumentRedactor.ApplySpans(sourcePath, outputPath, spans, highlight, docxDrawingFilter));
                     if (wordScrub != WordScrubOptions.None)
                     {
                         await Task.Run(() => DocumentMetadata.ScrubDocx(outputPath, wordScrub));

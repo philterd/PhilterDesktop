@@ -17,6 +17,7 @@
 using System.Text;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
+using Phileas.Model;
 using Phileas.Policy;
 using Phileas.Services;
 using PhilterData;
@@ -128,14 +129,7 @@ namespace PhilterDesktop
             Cursor.Current = Cursors.WaitCursor;
             try
             {
-                PolicyEntity? entity = _policies.FindByName(_policyCombo.Text);
-                PhileasPolicy policy = PolicySerializer.DeserializeFromJson(
-                    string.IsNullOrWhiteSpace(entity?.Json) ? "{}" : entity!.Json);
-                GlobalLists.Apply(policy, _settings); // global always-redact/ignore on top of every policy
-                PhEyeModel.Prepare(policy);
-
-                string context = _contextCombo.Text;
-                _spans = WordDocumentRedactor.Detect(_sourcePath, text => _filterService.Filter(policy, context, 0, text));
+                _spans = WordDocumentRedactor.Detect(_sourcePath, BuildFilter());
             }
             catch (Exception ex)
             {
@@ -150,6 +144,19 @@ namespace PhilterDesktop
             }
 
             RefreshAll();
+        }
+
+        // Builds the filter for the selected policy/context (with global lists + on-device name model),
+        // used for both detection and redacting DrawingML (shape/SmartArt/chart) text on save.
+        private Func<string, TextFilterResult> BuildFilter()
+        {
+            PolicyEntity? entity = _policies.FindByName(_policyCombo.Text);
+            PhileasPolicy policy = PolicySerializer.DeserializeFromJson(
+                string.IsNullOrWhiteSpace(entity?.Json) ? "{}" : entity!.Json);
+            GlobalLists.Apply(policy, _settings); // global always-redact/ignore on top of every policy
+            PhEyeModel.Prepare(policy);
+            string context = _contextCombo.Text;
+            return text => _filterService.Filter(policy, context, 0, text);
         }
 
         // A policy and context must both be selected before the redacted file can be written.
@@ -329,7 +336,7 @@ namespace PhilterDesktop
             try
             {
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                WordDocumentRedactor.ApplySpans(_sourcePath, output, _spans, _highlight.Checked);
+                WordDocumentRedactor.ApplySpans(_sourcePath, output, _spans, _highlight.Checked, BuildFilter());
                 WordScrubOptions scrub = DocumentMetadata.OptionsFor(_settings);
                 if (scrub != WordScrubOptions.None)
                 {

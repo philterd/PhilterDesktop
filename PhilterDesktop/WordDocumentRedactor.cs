@@ -19,6 +19,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Phileas.Model;
 using PhilterData;
+using A = DocumentFormat.OpenXml.Drawing;
 
 namespace PhilterDesktop
 {
@@ -147,6 +148,7 @@ namespace PhilterDesktop
                 paragraphIndex++;
             }
 
+            RedactDrawingText(document, filter);
             RemoveThreadedCommentDuplicate(document);
             document.Save(); // flush into the buffer
             SafeOutput.Write(outputPath, buffer.ToArray());
@@ -159,7 +161,8 @@ namespace PhilterDesktop
         /// <b>position</b>: its <see cref="RedactionSpanEntity.ParagraphIndex"/> plus character
         /// start/stop offsets within that paragraph.
         /// </summary>
-        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, bool highlight)
+        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, bool highlight,
+            Func<string, TextFilterResult>? drawingFilter = null)
         {
             Dictionary<int, List<RedactionSpanEntity>> byParagraph = spans
                 .GroupBy(s => s.ParagraphIndex)
@@ -191,6 +194,10 @@ namespace PhilterDesktop
                 paragraphIndex++;
             }
 
+            if (drawingFilter is not null)
+            {
+                RedactDrawingText(document, drawingFilter);
+            }
             RemoveThreadedCommentDuplicate(document);
             document.Save(); // flush into the buffer
             SafeOutput.Write(outputPath, buffer.ToArray());
@@ -255,6 +262,92 @@ namespace PhilterDesktop
                 foreach (Paragraph p in comments.Descendants<Paragraph>())
                 {
                     yield return p;
+                }
+            }
+        }
+
+        // Redacts DrawingML text (<a:t> runs in shapes, SmartArt, and charts) — which is not made of
+        // WordprocessingML <w:p> paragraphs and so is missed by the body/notes enumeration. Each DrawingML
+        // paragraph's runs are concatenated, filtered, and (when changed) flattened into its first run so
+        // PII in a shape/SmartArt/chart label doesn't survive (#479). Walks every part of the package so
+        // text in the main document, headers/footers, notes, chart parts, and SmartArt data is covered.
+        private static void RedactDrawingText(WordprocessingDocument document, Func<string, TextFilterResult> filter)
+        {
+            MainDocumentPart? main = document.MainDocumentPart;
+            if (main is null)
+            {
+                return;
+            }
+
+            foreach (OpenXmlPart part in AllParts(main))
+            {
+                OpenXmlElement? root;
+                try
+                {
+                    // Accessing RootElement parses the part; some parts (binary, VML, or a version the
+                    // SDK can't type) throw — skip them rather than fail the whole redaction.
+                    root = part.RootElement;
+                }
+                catch
+                {
+                    continue;
+                }
+                if (root is null)
+                {
+                    continue;
+                }
+                foreach (A.Paragraph paragraph in root.Descendants<A.Paragraph>().ToList())
+                {
+                    RedactDrawingParagraph(paragraph, filter);
+                }
+            }
+        }
+
+        private static void RedactDrawingParagraph(A.Paragraph paragraph, Func<string, TextFilterResult> filter)
+        {
+            List<A.Text> texts = paragraph.Descendants<A.Text>().ToList();
+            if (texts.Count == 0)
+            {
+                return;
+            }
+
+            string original = string.Concat(texts.Select(t => t.Text));
+            if (string.IsNullOrEmpty(original))
+            {
+                return;
+            }
+
+            TextFilterResult result = filter(original);
+            if (string.Equals(result.FilteredText, original, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            // Flatten the (possibly multi-run) text into the first run, clearing the rest — the same
+            // approach the WordprocessingML rebuild uses; the run structure (and the drawing) is preserved.
+            texts[0].Text = result.FilteredText;
+            for (int i = 1; i < texts.Count; i++)
+            {
+                texts[i].Text = string.Empty;
+            }
+        }
+
+        // Every distinct part reachable from the main document part (itself included), breadth-first.
+        private static IEnumerable<OpenXmlPart> AllParts(MainDocumentPart main)
+        {
+            var seen = new HashSet<OpenXmlPart> { main };
+            var queue = new Queue<OpenXmlPart>();
+            queue.Enqueue(main);
+            while (queue.Count > 0)
+            {
+                OpenXmlPart part = queue.Dequeue();
+                yield return part;
+                foreach (IdPartPair child in part.Parts)
+                {
+                    if (seen.Add(child.OpenXmlPart))
+                    {
+                        queue.Enqueue(child.OpenXmlPart);
+                    }
                 }
             }
         }

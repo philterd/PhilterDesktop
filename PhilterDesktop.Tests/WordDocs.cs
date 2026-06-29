@@ -18,6 +18,7 @@ using System.Text;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
+using A = DocumentFormat.OpenXml.Drawing;
 
 namespace PhilterDesktop.Tests
 {
@@ -135,6 +136,92 @@ namespace PhilterDesktop.Tests
             using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
             WordprocessingCommentsPart? part = doc.MainDocumentPart!.WordprocessingCommentsPart;
             return part?.Comments?.Elements<Comment>().Any() == true;
+        }
+
+        // --- DrawingML text: shapes / SmartArt / charts (issue #479) -------------------------------
+
+        /// <summary>A DrawingML paragraph (&lt;a:p&gt;) with one run per supplied string.</summary>
+        public static string AParagraph(params string[] runs) =>
+            "<a:p>" + string.Concat(runs.Select(r => $"<a:r><a:t xml:space=\"preserve\">{Escape(r)}</a:t></a:r>")) + "</a:p>";
+
+        /// <summary>Creates a .docx with a chart part whose title rich-text is the supplied &lt;a:p&gt; XML.</summary>
+        public static void CreateWithChart(string path, string titleAParagraphXml, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            main.Document = new Document(new Body());
+            Body body = main.Document.Body!;
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+
+            ChartPart part = main.AddNewPart<ChartPart>();
+            string xml =
+                "<c:chartSpace xmlns:c=\"http://schemas.openxmlformats.org/drawingml/2006/chart\" " +
+                "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" +
+                $"<c:chart><c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/>{titleAParagraphXml}</c:rich></c:tx></c:title>" +
+                "<c:plotArea><c:layout/></c:plotArea></c:chart></c:chartSpace>";
+            WritePart(part, xml);
+        }
+
+        /// <summary>Creates a .docx with a SmartArt data part whose first node text is the supplied &lt;a:p&gt; XML.</summary>
+        public static void CreateWithSmartArt(string path, string nodeAParagraphXml, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            main.Document = new Document(new Body());
+            Body body = main.Document.Body!;
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+
+            DiagramDataPart part = main.AddNewPart<DiagramDataPart>();
+            string xml =
+                "<dgm:dataModel xmlns:dgm=\"http://schemas.openxmlformats.org/drawingml/2006/diagram\" " +
+                "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" +
+                $"<dgm:ptLst><dgm:pt dgm:modelId=\"1\"><dgm:t><a:bodyPr/><a:lstStyle/>{nodeAParagraphXml}</dgm:t></dgm:pt></dgm:ptLst>" +
+                "</dgm:dataModel>";
+            WritePart(part, xml);
+        }
+
+        /// <summary>All DrawingML text (&lt;a:t&gt;) across every part of the package, concatenated.</summary>
+        public static string AllDrawingText(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            var seen = new HashSet<string>();
+            var sb = new StringBuilder();
+            CollectDrawingText(doc.MainDocumentPart!, seen, sb);
+            return sb.ToString();
+        }
+
+        private static void CollectDrawingText(OpenXmlPart part, HashSet<string> seen, StringBuilder sb)
+        {
+            if (!seen.Add(part.Uri.OriginalString))
+            {
+                return;
+            }
+            OpenXmlElement? root = null;
+            try { root = part.RootElement; } catch { /* unparseable part — skip */ }
+            if (root is not null)
+            {
+                foreach (A.Text t in root.Descendants<A.Text>())
+                {
+                    sb.Append(t.Text).Append('\n');
+                }
+            }
+            foreach (IdPartPair child in part.Parts)
+            {
+                CollectDrawingText(child.OpenXmlPart, seen, sb);
+            }
+        }
+
+        private static void WritePart(OpenXmlPart part, string xml)
+        {
+            using Stream s = part.GetStream(FileMode.Create, FileAccess.Write);
+            using var w = new StreamWriter(s, new UTF8Encoding(false));
+            w.Write(xml);
         }
 
         // --- Footnotes / endnotes (issue #477) -----------------------------------------------------

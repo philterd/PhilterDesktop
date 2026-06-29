@@ -40,6 +40,7 @@ namespace PhilterDesktop.PolicyEditing
         }
 
         private readonly PolicyRepository _repo;
+        private readonly WatchedFolderRepository? _watchedFolders;
         private PhileasPolicy? _policy;
         private bool _loading;
         private bool _dirty;
@@ -111,9 +112,10 @@ namespace PhilterDesktop.PolicyEditing
         private readonly List<Action> _loaders = new();
         private readonly List<FilterRow> _rows = new();
 
-        public PolicyEditorForm(PolicyRepository repo)
+        public PolicyEditorForm(PolicyRepository repo, WatchedFolderRepository? watchedFolders = null)
         {
             _repo = repo;
+            _watchedFolders = watchedFolders;
 
             Text = "Policy Editor";
             StartPosition = FormStartPosition.CenterScreen;
@@ -908,10 +910,32 @@ namespace PhilterDesktop.PolicyEditing
                 MessageBox.Show("The 'default' policy cannot be deleted.", "Cannot Delete", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            if (MessageBox.Show($"Delete the policy '{name}'?", "Delete Policy", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+
+            // Guard against orphaning a watched folder: if any folder uses this policy, deleting it would
+            // leave the folder pointing at an unknown policy (it would then silently fail every file).
+            // Offer to delete anyway and switch those folders to the 'default' policy (#491).
+            List<WatchedFolderEntity> inUse = _watchedFolders is null
+                ? new List<WatchedFolderEntity>()
+                : WatchedFolderPolicyGuard.FoldersUsing(_watchedFolders, name);
+
+            if (inUse.Count > 0)
+            {
+                string folders = string.Join(Environment.NewLine, inUse.Select(f => "• " + f.FolderPath));
+                string message =
+                    $"The policy '{name}' is used by {inUse.Count} watched folder(s):" + Environment.NewLine + Environment.NewLine +
+                    folders + Environment.NewLine + Environment.NewLine +
+                    "Delete it anyway? Those folders will be switched to the 'default' policy.";
+                if (MessageBox.Show(this, message, "Policy In Use", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                {
+                    return;
+                }
+                WatchedFolderPolicyGuard.ReassignToDefault(_watchedFolders!, inUse);
+            }
+            else if (MessageBox.Show($"Delete the policy '{name}'?", "Delete Policy", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
             {
                 return;
             }
+
             PolicyEntity? entity = _repo.FindByName(name);
             if (entity is not null)
             {

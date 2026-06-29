@@ -3,6 +3,11 @@
 Philter Desktop redacts Microsoft Word documents that end in **`.docx`**. The sensitive information is
 removed from the text and the cleaned-up copy is saved as a new `.docx` file.
 
+Redaction covers the document body and tables, headers and footers, footnotes and endnotes, comments,
+and the text inside **shapes, text boxes, SmartArt, and chart labels**. (One narrow exception: a chart's
+underlying *data values* — the numbers and category names a chart is built from — aren't scanned; if a
+chart is plotted directly from sensitive values, review or remove it by hand.)
+
 ## Hidden information is cleaned up too
 
 For Word (`.docx`) files, Philter Desktop also cleans up hidden information in the redacted copy by
