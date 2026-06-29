@@ -47,7 +47,7 @@ namespace PhilterDesktop
         public static List<string> ReadParagraphs(string inputPath)
         {
             using WordprocessingDocument document = WordprocessingDocument.Open(inputPath, isEditable: false);
-            return EnumerateTargets(document).Select(p => p.InnerText).ToList();
+            return EnumerateTargets(document).Select(OwnText).ToList();
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace PhilterDesktop
             int paragraphIndex = 0;
             foreach (Paragraph paragraph in EnumerateTargets(document))
             {
-                string original = paragraph.InnerText;
+                string original = OwnText(paragraph);
                 if (!string.IsNullOrEmpty(original))
                 {
                     foreach (Span s in filter(original).Spans
@@ -108,7 +108,7 @@ namespace PhilterDesktop
 
             foreach (Paragraph paragraph in EnumerateTargets(document).ToList())
             {
-                string original = paragraph.InnerText;
+                string original = OwnText(paragraph);
                 if (!string.IsNullOrEmpty(original))
                 {
                     TextFilterResult result = filter(original);
@@ -125,7 +125,7 @@ namespace PhilterDesktop
                         List<ReplacementRange> ranges = RedactionSpanMath.ResolveNonOverlapping(
                             spans.Select(s => new ReplacementRange(s.CharacterStart, s.CharacterEnd, s.Replacement ?? string.Empty)));
 
-                        RebuildParagraph(paragraph, original, ranges, highlight);
+                        ApplyRangesToParagraph(paragraph, original, ranges, highlight);
 
                         foreach (Span s in spans)
                         {
@@ -171,7 +171,7 @@ namespace PhilterDesktop
             int paragraphIndex = 0;
             foreach (Paragraph paragraph in EnumerateTargets(document).ToList())
             {
-                string original = paragraph.InnerText;
+                string original = OwnText(paragraph);
                 if (!string.IsNullOrEmpty(original) && byParagraph.TryGetValue(paragraphIndex, out List<RedactionSpanEntity>? paragraphSpans))
                 {
                     var ranges = new List<ReplacementRange>();
@@ -185,10 +185,7 @@ namespace PhilterDesktop
                     }
 
                     List<ReplacementRange> resolved = RedactionSpanMath.ResolveNonOverlapping(ranges);
-                    if (resolved.Count > 0)
-                    {
-                        RebuildParagraph(paragraph, original, resolved, highlight);
-                    }
+                    ApplyRangesToParagraph(paragraph, original, resolved, highlight);
                 }
                 paragraphIndex++;
             }
@@ -283,8 +280,55 @@ namespace PhilterDesktop
             }
         }
 
+        // The paragraph's own visible text, excluding any text inside a nested text box (which is a
+        // separate redaction unit). For a simple paragraph this equals InnerText.
+        private static string OwnText(Paragraph paragraph) =>
+            string.Concat(OwnTexts(paragraph).Select(t => t.Text));
+
+        private static IEnumerable<Text> OwnTexts(Paragraph paragraph) =>
+            paragraph.Descendants<Text>().Where(t => BelongsDirectlyTo(paragraph, t));
+
+        // Runs holding the paragraph's own text (a direct <w:t>), excluding drawing runs and any run
+        // inside a nested text box.
+        private static List<Run> OwnTextRuns(Paragraph paragraph) =>
+            paragraph.Descendants<Run>()
+                .Where(r => BelongsDirectlyTo(paragraph, r)
+                            && r.Elements<Text>().Any()
+                            && !r.Descendants<Drawing>().Any()
+                            && !r.Descendants<Picture>().Any())
+                .ToList();
+
+        // True when <paramref name="element"/>'s nearest ancestor paragraph is <paramref name="owner"/>
+        // — i.e. the element is part of this paragraph's own content, not a nested text-box paragraph.
+        // (Ancestors() yields nearest-first, so the first paragraph ancestor is the immediate one.)
+        private static bool BelongsDirectlyTo(Paragraph owner, OpenXmlElement element) =>
+            ReferenceEquals(element.Ancestors<Paragraph>().FirstOrDefault(), owner);
+
+        // A paragraph that contains a drawing, picture, or text box must not be wiped and rebuilt:
+        // doing so would delete the drawing. Such paragraphs are redacted run-by-run instead (#481).
+        private static bool ContainsDrawing(Paragraph paragraph) =>
+            paragraph.Descendants<Drawing>().Any()
+            || paragraph.Descendants<Picture>().Any()
+            || paragraph.Descendants<Paragraph>().Any(); // a nested paragraph means text-box content
+
+        private static void ApplyRangesToParagraph(Paragraph paragraph, string ownText, IReadOnlyCollection<ReplacementRange> ranges, bool highlight)
+        {
+            if (ranges.Count == 0)
+            {
+                return;
+            }
+            if (ContainsDrawing(paragraph))
+            {
+                RebuildComplexParagraph(paragraph, ownText, ranges, highlight);
+            }
+            else
+            {
+                RebuildParagraph(paragraph, ownText, ranges, highlight);
+            }
+        }
+
         // Empties the paragraph (keeping its properties), then refills it: plain runs for the kept
-        // text and a highlighted run for each replacement.
+        // text and a highlighted run for each replacement. Only used for simple paragraphs (no drawing).
         private static void RebuildParagraph(Paragraph paragraph, string original, IEnumerable<ReplacementRange> ranges, bool highlight)
         {
             ParagraphProperties? properties = paragraph.GetFirstChild<ParagraphProperties>();
@@ -293,25 +337,58 @@ namespace PhilterDesktop
             {
                 paragraph.AppendChild(properties); // must precede the runs
             }
+            foreach (Run run in BuildRuns(original, ranges, highlight))
+            {
+                paragraph.AppendChild(run);
+            }
+        }
 
+        // Redacts a paragraph that contains a drawing / text box / picture without destroying it: only
+        // the paragraph's own text runs are replaced; the drawing and any text-box content are left in
+        // place (the text-box's inner paragraphs are redacted as their own units).
+        private static void RebuildComplexParagraph(Paragraph paragraph, string ownText, IEnumerable<ReplacementRange> ranges, bool highlight)
+        {
+            List<Run> ownRuns = OwnTextRuns(paragraph);
+            if (ownRuns.Count == 0)
+            {
+                return; // nothing of the paragraph's own to redact (e.g. a drawing-only paragraph)
+            }
+
+            Run anchor = ownRuns[0];
+            OpenXmlElement parent = anchor.Parent!;
+            foreach (Run run in BuildRuns(ownText, ranges, highlight))
+            {
+                parent.InsertBefore(run, anchor);
+            }
+            foreach (Run run in ownRuns)
+            {
+                run.Remove();
+            }
+        }
+
+        // Splits text into plain runs for kept spans and a (optionally highlighted) run per replacement.
+        private static IEnumerable<Run> BuildRuns(string text, IEnumerable<ReplacementRange> ranges, bool highlight)
+        {
+            var runs = new List<Run>();
             int last = 0;
             foreach (ReplacementRange range in ranges.OrderBy(r => r.Start))
             {
-                if (range.Start < last || range.End > original.Length)
+                if (range.Start < last || range.End > text.Length)
                 {
                     continue;
                 }
                 if (range.Start > last)
                 {
-                    paragraph.AppendChild(MakeRun(original.Substring(last, range.Start - last), highlight: false));
+                    runs.Add(MakeRun(text.Substring(last, range.Start - last), highlight: false));
                 }
-                paragraph.AppendChild(MakeRun(range.Replacement ?? string.Empty, highlight));
+                runs.Add(MakeRun(range.Replacement ?? string.Empty, highlight));
                 last = range.End;
             }
-            if (last < original.Length)
+            if (last < text.Length)
             {
-                paragraph.AppendChild(MakeRun(original.Substring(last), highlight: false));
+                runs.Add(MakeRun(text.Substring(last), highlight: false));
             }
+            return runs;
         }
 
         private static Run MakeRun(string text, bool highlight)
