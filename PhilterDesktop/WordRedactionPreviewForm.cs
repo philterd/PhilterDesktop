@@ -152,11 +152,16 @@ namespace PhilterDesktop
             RefreshAll();
         }
 
+        // A policy and context must both be selected before the redacted file can be written.
+        // Without them no detection has run, so saving would write an unredacted copy that merely
+        // looks like a redacted draft (philterd-website issue #484).
+        private bool PolicyChosen => _policyCombo.SelectedItem is not null && _contextCombo.SelectedItem is not null;
+
         private void RefreshAll()
         {
             RefreshList();
             RefreshPreview();
-            _save.Enabled = _paragraphs.Length > 0;
+            _save.Enabled = PolicyChosen && _paragraphs.Length > 0;
         }
 
         private string[] RedactedParagraphs()
@@ -292,6 +297,15 @@ namespace PhilterDesktop
 
         private void OnSave(object? sender, EventArgs e)
         {
+            // Defense in depth: the Save button is disabled until a policy/context is chosen, but
+            // guard here too so the redacted file is never written without a detection pass.
+            if (!PolicyChosen)
+            {
+                MessageBox.Show(this, "Choose a policy and a context before saving.", "Redact (Preview)",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             string suggested = RedactionService.GetOutputPath(_sourcePath, _settings);
             using var dialog = new SaveFileDialog
             {
