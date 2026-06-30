@@ -29,6 +29,11 @@ namespace PhilterDesktop
     /// back. Parsing and writing go through CsvHelper, which is quote- and delimiter-aware, so embedded
     /// commas, quotes, and newlines round-trip correctly (and the detected delimiter is preserved).
     ///
+    /// Processing is fully streamed — each row is read, redacted, written, and discarded — so the whole
+    /// table is never materialized in memory, regardless of how many rows the file has. The output is
+    /// written to a temporary file and moved into place only after the whole file is written, so the
+    /// destination is never left as a partial file on failure.
+    ///
     /// Fields are enumerated in a stable canonical order — row by row, then field by field — and the
     /// field's ordinal is stored in <see cref="RedactionSpanEntity.ParagraphIndex"/>, so spans can be
     /// re-applied via <see cref="ApplySpans"/>. Columns in <c>fullyRedactedColumns</c> have every
@@ -48,15 +53,15 @@ namespace PhilterDesktop
                 ? new HashSet<int>(fullyRedactedColumns)
                 : new HashSet<int>();
 
-            List<string[]> rows = ReadRows(inputPath, out string delimiter);
-
             var captured = new List<RedactionSpanEntity>();
             int order = 0;
             int fieldIndex = 0;
 
-            for (int rowNumber = 0; rowNumber < rows.Count; rowNumber++)
+            // Stream the table: read a row, redact it in place, write it, discard it. Whole-column
+            // redaction only needs the (per-field) column index and the header check only needs the row
+            // number — both are available in a single forward pass, so no second pass is required.
+            StreamTransform(inputPath, outputPath, (row, rowNumber) =>
             {
-                string[] row = rows[rowNumber];
                 for (int column = 0; column < row.Length; column++)
                 {
                     int currentIndex = fieldIndex++;
@@ -111,9 +116,10 @@ namespace PhilterDesktop
                         captured.Add(entity);
                     }
                 }
-            }
 
-            WriteRows(outputPath, rows, delimiter, DetectEncoding(inputPath));
+                return row;
+            });
+
             return captured;
         }
 
@@ -123,10 +129,8 @@ namespace PhilterDesktop
                 .GroupBy(s => s.ParagraphIndex)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            List<string[]> rows = ReadRows(inputPath, out string delimiter);
-
             int fieldIndex = 0;
-            foreach (string[] row in rows)
+            StreamTransform(inputPath, outputPath, (row, _) =>
             {
                 for (int column = 0; column < row.Length; column++)
                 {
@@ -153,23 +157,40 @@ namespace PhilterDesktop
                         row[column] = ApplyRanges(original, resolved);
                     }
                 }
-            }
 
-            WriteRows(outputPath, rows, delimiter, DetectEncoding(inputPath));
+                return row;
+            });
         }
 
         /// <summary>Reads the header (first) row as the column list for the "redact entire column" picker.</summary>
         public static List<SpreadsheetColumn> ReadColumns(string inputPath)
         {
-            List<string[]> rows = ReadRows(inputPath, out _);
             var columns = new List<SpreadsheetColumn>();
-            if (rows.Count == 0)
+
+            string[]? header = null;
+            int maxColumns = 0;
+
+            // Stream the file once, keeping only the header row and the widest row's column count — never
+            // the whole table.
+            using (var reader = new StreamReader(inputPath))
+            using (var parser = new CsvParser(reader, ReadConfig()))
+            {
+                while (parser.Read())
+                {
+                    string[] record = parser.Record ?? Array.Empty<string>();
+                    header ??= record;
+                    if (record.Length > maxColumns)
+                    {
+                        maxColumns = record.Length;
+                    }
+                }
+            }
+
+            if (header is null)
             {
                 return columns;
             }
 
-            int maxColumns = rows.Max(r => r.Length);
-            string[] header = rows[0];
             for (int column = 0; column < maxColumns; column++)
             {
                 string headerText = column < header.Length ? header[column] : string.Empty;
@@ -178,59 +199,88 @@ namespace PhilterDesktop
             return columns;
         }
 
-        // --- CsvHelper round-trip --------------------------------------------
+        // --- CsvHelper streaming round-trip ----------------------------------
 
-        private static List<string[]> ReadRows(string inputPath, out string delimiter)
+        private static CsvConfiguration ReadConfig() => new(CultureInfo.InvariantCulture)
         {
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                HasHeaderRecord = false,    // treat every row as data; the first row is just row 0
-                DetectDelimiter = true,
-                BadDataFound = null         // tolerate quirky quoting rather than throwing
-            };
+            HasHeaderRecord = false,    // treat every row as data; the first row is just row 0
+            DetectDelimiter = true,
+            BadDataFound = null         // tolerate quirky quoting rather than throwing
+        };
 
-            using var reader = new StreamReader(inputPath);
-            using var parser = new CsvParser(reader, config);
-
-            var rows = new List<string[]>();
-            string detected = ",";
-            while (parser.Read())
-            {
-                detected = parser.Delimiter;
-                rows.Add(parser.Record ?? Array.Empty<string>());
-            }
-            delimiter = string.IsNullOrEmpty(detected) ? "," : detected;
-            return rows;
-        }
-
-        private static void WriteRows(string outputPath, List<string[]> rows, string delimiter, Encoding encoding)
+        /// <summary>
+        /// Reads each record, hands it to <paramref name="transform"/> (which may edit the field array
+        /// in place and returns the row to write), writes it, then discards it — so only one row is held
+        /// at a time. The result is written to a temporary file and moved into place only once the whole
+        /// file is written, so a mid-stream failure never leaves a partial or corrupt file at
+        /// <paramref name="outputPath"/> (and never touches the original).
+        /// </summary>
+        private static void StreamTransform(
+            string inputPath,
+            string outputPath,
+            Func<string[], int, string[]> transform)
         {
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                HasHeaderRecord = false,
-                Delimiter = delimiter,
-                // Guard against CSV/formula injection: a field beginning with = + - @ (or a tab/CR) is
-                // executable when the redacted file is opened in Excel/Sheets. Escape prefixes such a
-                // field with an apostrophe so the recipient's spreadsheet treats it as plain text.
-                InjectionOptions = InjectionOptions.Escape
-            };
+            Encoding encoding = DetectEncoding(inputPath);
+            string tempPath = outputPath + ".redacting-" + Guid.NewGuid().ToString("N") + ".tmp";
+            bool committed = false;
 
-            // Build in memory, then write once so a failure never leaves the original or a partial file.
-            using var buffer = new MemoryStream();
-            using (var writer = new StreamWriter(buffer, encoding, leaveOpen: true))
-            using (var csv = new CsvWriter(writer, config))
+            try
             {
-                foreach (string[] row in rows)
+                using (var reader = new StreamReader(inputPath))
+                using (var parser = new CsvParser(reader, ReadConfig()))
                 {
-                    foreach (string field in row)
+                    if (!parser.Read())
                     {
-                        csv.WriteField(field);
+                        // Empty input -> empty output (matches writing an empty set of rows).
+                        using (File.Create(tempPath)) { }
                     }
-                    csv.NextRecord();
+                    else
+                    {
+                        // The delimiter is detected on the first read; reuse it so the output keeps the
+                        // same delimiter as the source.
+                        string delimiter = string.IsNullOrEmpty(parser.Delimiter) ? "," : parser.Delimiter;
+                        var writeConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
+                        {
+                            HasHeaderRecord = false,
+                            Delimiter = delimiter,
+                            // Guard against CSV/formula injection: a field beginning with = + - @ (or a
+                            // tab/CR) is executable when the redacted file is opened in Excel/Sheets.
+                            // Escape prefixes such a field with an apostrophe so it's treated as text.
+                            InjectionOptions = InjectionOptions.Escape
+                        };
+
+                        using var output = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                        using var writer = new StreamWriter(output, encoding);
+                        using var csv = new CsvWriter(writer, writeConfig);
+
+                        int rowNumber = 0;
+                        do
+                        {
+                            string[] row = parser.Record ?? Array.Empty<string>();
+                            string[] outRow = transform(row, rowNumber);
+                            foreach (string field in outRow)
+                            {
+                                csv.WriteField(field);
+                            }
+                            csv.NextRecord();
+                            rowNumber++;
+                        }
+                        while (parser.Read());
+                    }
+                }
+
+                // Atomically swap the completed file into place. Done only after every row is written and
+                // all writers are flushed/closed, so the destination only ever appears complete.
+                File.Move(tempPath, outputPath, overwrite: true);
+                committed = true;
+            }
+            finally
+            {
+                if (!committed)
+                {
+                    TryDelete(tempPath);
                 }
             }
-
-            SafeOutput.Write(outputPath, buffer.ToArray());
         }
 
         // Chooses the output encoding to match the source so the redacted CSV keeps the same byte-order
@@ -276,6 +326,21 @@ namespace PhilterDesktop
                 sb.Insert(r.Start, r.Replacement ?? string.Empty);
             }
             return sb.ToString();
+        }
+
+        private static void TryDelete(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch
+            {
+                // best effort
+            }
         }
     }
 }

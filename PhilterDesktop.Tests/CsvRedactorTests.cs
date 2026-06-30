@@ -207,5 +207,133 @@ namespace PhilterDesktop.Tests
             Assert.Equal("Email", columns[1].Header);
             Assert.Equal("Notes", columns[2].Header);
         }
+
+        // --- Streaming refactor (#476) ---------------------------------------
+
+        // Byte-level guard: with a no-op filter the streamed writer must emit canonical CSV exactly,
+        // proving the streaming write path produces the same bytes as before.
+        [Fact]
+        public void Redact_NoOpFilter_ProducesCanonicalCsvExactly()
+        {
+            string input = Write("a,b\r\nc,d\r\n", "plain.csv");
+            string output = Path.Combine(_tempDir, "plain-out.csv");
+
+            CsvRedactor.Redact(input, output,
+                text => new Phileas.Model.TextFilterResult(text, new List<Phileas.Model.Span>()));
+
+            Assert.Equal("a,b\r\nc,d\r\n", File.ReadAllText(output));
+        }
+
+        // The detected (non-comma) delimiter is preserved across the streamed read -> write.
+        [Fact]
+        public async Task RedactFileAsync_Csv_PreservesSemicolonDelimiter()
+        {
+            string input = Write("Name;Email\r\nAlice;alice@example.com\r\nBob;bob@example.com\r\n", "semi.csv");
+            string output = Path.Combine(_tempDir, "semi-out.csv");
+
+            await RedactionService.RedactFileAsync(input, output, EmailAndSsnPolicy(), "ctx");
+
+            string result = await File.ReadAllTextAsync(output);
+            Assert.Contains("Name;Email", result);            // delimiter preserved, not switched to comma
+            Assert.DoesNotContain("alice@example.com", result);
+            Assert.DoesNotContain("bob@example.com", result);
+        }
+
+        // Captured spans are unchanged by streaming: one span per email, with row-major field ordinals
+        // (header=0,1; row1=2,3; row2=4,5 -> emails at 3 and 5) and sequential Order values.
+        [Fact]
+        public void Redact_MultiRow_CapturesSpansWithRowMajorFieldOrdinals()
+        {
+            string input = Write("Name,Email\r\nAlice,a@example.com\r\nBob,b@example.com\r\n", "ords.csv");
+            string output = Path.Combine(_tempDir, "ords-out.csv");
+            var fs = new Phileas.Services.FilterService();
+            var policy = EmailAndSsnPolicy();
+
+            List<RedactionSpanEntity> spans = CsvRedactor.Redact(
+                input, output, text => fs.Filter(policy, "ctx", 0, text));
+
+            Assert.Equal(2, spans.Count);
+            Assert.All(spans, s => Assert.Equal("EmailAddress", s.FilterType));
+            Assert.Equal(new[] { 3, 5 }, spans.Select(s => s.ParagraphIndex).OrderBy(x => x).ToArray());
+            Assert.Equal(new[] { 0, 1 }, spans.Select(s => s.Order).OrderBy(x => x).ToArray());
+        }
+
+        // Whole-column redaction still works through the single streaming pass: the header label is kept
+        // and every data cell in the column is cleared, with one captured span per cleared cell.
+        [Fact]
+        public void Redact_FullColumn_Streamed_KeepsHeaderAndClearsDataCells()
+        {
+            string input = Write("Name,Email\r\nAlice,a@example.com\r\nBob,b@example.com\r\n", "col.csv");
+            string output = Path.Combine(_tempDir, "col-out.csv");
+            var fs = new Phileas.Services.FilterService();
+            var policy = EmailAndSsnPolicy();
+
+            List<RedactionSpanEntity> spans = CsvRedactor.Redact(
+                input, output, text => fs.Filter(policy, "ctx", 0, text), fullyRedactedColumns: new[] { 1 });
+
+            string result = File.ReadAllText(output);
+            Assert.Contains("Name", result);     // header label preserved
+            Assert.DoesNotContain("Alice", result);
+            Assert.DoesNotContain("Bob", result);
+            // Two data cells cleared in column 1 -> two column-redaction spans captured.
+            Assert.Equal(2, spans.Count(s => s.Classification == XlsxRedactor.ColumnClassification));
+        }
+
+        // A failure mid-stream must not leave a partial or corrupt file at the destination (the streamed
+        // writer writes to a temp file and only moves it into place on success).
+        [Fact]
+        public void Redact_FilterThrowsMidStream_LeavesNoOutputFile()
+        {
+            string input = Write("Email\r\nfirst@example.com\r\nboom@example.com\r\n", "fail.csv");
+            string output = Path.Combine(_tempDir, "fail-out.csv");
+
+            Assert.Throws<InvalidOperationException>(() =>
+                CsvRedactor.Redact(input, output, text =>
+                    text.Contains("boom")
+                        ? throw new InvalidOperationException("simulated failure")
+                        : new Phileas.Model.TextFilterResult(text, new List<Phileas.Model.Span>())));
+
+            Assert.False(File.Exists(output), "no output file should remain after a mid-stream failure");
+            // And no leftover temp files in the output directory.
+            Assert.Empty(Directory.GetFiles(_tempDir, "*.tmp"));
+            Assert.Empty(Directory.GetFiles(_tempDir, "*.redacting-*"));
+        }
+
+        // The streaming pipeline must not hold the whole table in memory. Redacting a large CSV with no
+        // PII (so the captured-spans list stays empty) should retain only a tiny amount of managed memory
+        // afterward — far less than a materialized List<string[]> of the file would require.
+        [Fact]
+        public void Redact_LargeCsv_DoesNotMaterializeAllRowsInMemory()
+        {
+            const int rows = 150_000;
+            string input = Path.Combine(_tempDir, "large.csv");
+            using (var w = new StreamWriter(input, append: false, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)))
+            {
+                w.Write("Col1,Col2,Col3\r\n");
+                for (int i = 0; i < rows; i++)
+                {
+                    w.Write($"value-{i}-aaaaaaaaaa,value-{i}-bbbbbbbbbb,value-{i}-cccccccccc\r\n");
+                }
+            }
+            long fileSize = new FileInfo(input).Length;
+            string output = Path.Combine(_tempDir, "large-out.csv");
+
+            // No-op filter: never matches, so no spans are captured and nothing per-row is retained.
+            static Phileas.Model.TextFilterResult NoOp(string text) =>
+                new(text, new List<Phileas.Model.Span>());
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            long before = GC.GetTotalMemory(forceFullCollection: true);
+
+            List<RedactionSpanEntity> spans = CsvRedactor.Redact(input, output, NoOp);
+
+            long retained = GC.GetTotalMemory(forceFullCollection: true) - before;
+
+            Assert.Empty(spans);
+            Assert.Equal(rows + 1, File.ReadLines(output).Count()); // every row written
+            Assert.True(retained < fileSize / 4,
+                $"retained {retained:N0} bytes after streaming a {fileSize:N0}-byte CSV; the table appears to be materialized in memory");
+        }
     }
 }
