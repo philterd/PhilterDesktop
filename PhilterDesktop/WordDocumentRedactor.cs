@@ -99,7 +99,7 @@ namespace PhilterDesktop
         public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool highlight = false)
         {
             // Redact in memory, then write the output once so a failure never leaves the original or a
-            // partial file (issue #483).
+            // partial file.
             var captured = new List<RedactionSpanEntity>();
             int order = 0;
             int paragraphIndex = 0;
@@ -168,7 +168,7 @@ namespace PhilterDesktop
                 .GroupBy(s => s.ParagraphIndex)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            // Apply in memory, then write once (see Redact — issue #483).
+            // Apply in memory, then write once (see Redact).
             using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
             using WordprocessingDocument document = WordprocessingDocument.Open(buffer, isEditable: true);
 
@@ -238,7 +238,7 @@ namespace PhilterDesktop
             }
 
             // Footnotes then endnotes: their paragraphs carry body-like text, so they must be filtered
-            // like any other paragraph — otherwise PII in a note ships in the output (#477).
+            // like any other paragraph — otherwise PII in a note ships in the output.
             if (main.FootnotesPart?.Footnotes is Footnotes footnotes)
             {
                 foreach (Paragraph p in footnotes.Descendants<Paragraph>())
@@ -256,7 +256,7 @@ namespace PhilterDesktop
 
             // Comment text: redact it too, so PII in a comment isn't shipped when the user keeps
             // comments (they're only deleted separately, by the "remove comments" scrub). Appended last
-            // so body/header/footer paragraph indices stay stable for stored-span re-apply (#480).
+            // so body/header/footer paragraph indices stay stable for stored-span re-apply.
             if (main.WordprocessingCommentsPart?.Comments is Comments comments)
             {
                 foreach (Paragraph p in comments.Descendants<Paragraph>())
@@ -269,7 +269,7 @@ namespace PhilterDesktop
         // Redacts DrawingML text (<a:t> runs in shapes, SmartArt, and charts) — which is not made of
         // WordprocessingML <w:p> paragraphs and so is missed by the body/notes enumeration. Each DrawingML
         // paragraph's runs are concatenated, filtered, and (when changed) flattened into its first run so
-        // PII in a shape/SmartArt/chart label doesn't survive (#479). Walks every part of the package so
+        // PII in a shape/SmartArt/chart label doesn't survive. Walks every part of the package so
         // text in the main document, headers/footers, notes, chart parts, and SmartArt data is covered.
         private static void RedactDrawingText(WordprocessingDocument document, Func<string, TextFilterResult> filter)
         {
@@ -356,7 +356,7 @@ namespace PhilterDesktop
         // commentsIds). We redact the canonical comments part (see EnumerateTargets), so drop the
         // threaded duplicate and its companions to (a) stop the duplicate copy of the text from
         // shipping and (b) leave a clean classic-comments document. The redacted comments part remains
-        // (or is deleted by the "remove comments" scrub). No PII lives in the companion parts (#507).
+        // (or is deleted by the "remove comments" scrub). No PII lives in the companion parts.
         private static void RemoveThreadedCommentDuplicate(WordprocessingDocument document)
         {
             MainDocumentPart? main = document.MainDocumentPart;
@@ -466,7 +466,7 @@ namespace PhilterDesktop
             ReferenceEquals(element.Ancestors<Paragraph>().FirstOrDefault(), owner);
 
         // A paragraph that contains a drawing, picture, or text box must not be wiped and rebuilt:
-        // doing so would delete the drawing. Such paragraphs are redacted run-by-run instead (#481).
+        // doing so would delete the drawing. Such paragraphs are redacted run-by-run instead.
         private static bool ContainsDrawing(Paragraph paragraph) =>
             paragraph.Descendants<Drawing>().Any()
             || paragraph.Descendants<Picture>().Any()

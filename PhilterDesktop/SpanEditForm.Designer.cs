@@ -292,7 +292,7 @@ namespace PhilterDesktop
             _ok.DialogResult = DialogResult.OK;
             _ok.Name = "_ok";
             _ok.Size = new Size(110, 34);
-            _ok.Text = "OK";
+            _ok.Text = "&OK";
             _ok.Click += OnOk;
             //
             // _cancel
@@ -301,7 +301,7 @@ namespace PhilterDesktop
             _cancel.Margin = new Padding(8, 3, 3, 3);
             _cancel.Name = "_cancel";
             _cancel.Size = new Size(110, 34);
-            _cancel.Text = "Cancel";
+            _cancel.Text = "&Cancel";
             //
             // SpanEditForm
             //

@@ -22,7 +22,7 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// The queue's Remove and Retry context-menu actions must act on <b>every</b> selected row, not
-    /// just the first (philterd-website issue #487). These exercise the extracted bulk logic against a
+    /// just the first. These exercise the extracted bulk logic against a
     /// real LiteDB.
     /// </summary>
     public sealed class QueueBulkActionsTests : IDisposable
@@ -118,6 +118,28 @@ namespace PhilterDesktop.Tests
 
             Assert.Empty(skipped);
             Assert.Single(_repo.GetAll());
+        }
+
+        // --- RemoveConfirmationMessage -----------------------------------------------------
+
+        [Fact]
+        public void RemoveConfirmationMessage_SingleItem_NamesTheFile()
+        {
+            string message = QueueBulkActions.RemoveConfirmationMessage(1, "invoice.pdf");
+
+            Assert.Contains("invoice.pdf", message);
+            Assert.Contains("are not deleted", message);
+            Assert.Contains("history for the removed item.", message); // singular
+        }
+
+        [Fact]
+        public void RemoveConfirmationMessage_MultipleItems_UsesCountAndPlural()
+        {
+            string message = QueueBulkActions.RemoveConfirmationMessage(3, null);
+
+            Assert.Contains("Remove 3 items", message);
+            Assert.Contains("removed items", message); // plural
+            Assert.Contains("are not deleted", message);
         }
 
         // --- RetryManyFailed ----------------------------------------------------------------------

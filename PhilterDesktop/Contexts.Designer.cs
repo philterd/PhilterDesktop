@@ -85,7 +85,7 @@ namespace PhilterDesktop
             btnCreate.Name = "btnCreate";
             btnCreate.Size = new Size(110, 34);
             btnCreate.TabIndex = 1;
-            btnCreate.Text = "New Context";
+            btnCreate.Text = "&New Context";
             btnCreate.UseVisualStyleBackColor = true;
             btnCreate.Click += BtnCreate_Click;
             // 
@@ -96,7 +96,7 @@ namespace PhilterDesktop
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(110, 34);
             btnDelete.TabIndex = 2;
-            btnDelete.Text = "Delete";
+            btnDelete.Text = "&Delete";
             btnDelete.UseVisualStyleBackColor = true;
             btnDelete.Click += BtnDelete_Click;
             // 
@@ -107,7 +107,7 @@ namespace PhilterDesktop
             btnEmpty.Name = "btnEmpty";
             btnEmpty.Size = new Size(110, 34);
             btnEmpty.TabIndex = 3;
-            btnEmpty.Text = "Empty";
+            btnEmpty.Text = "&Empty";
             btnEmpty.UseVisualStyleBackColor = true;
             btnEmpty.Click += BtnEmpty_Click;
             // 
@@ -117,7 +117,7 @@ namespace PhilterDesktop
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(110, 34);
             btnClose.TabIndex = 4;
-            btnClose.Text = "Close";
+            btnClose.Text = "&Close";
             btnClose.UseVisualStyleBackColor = true;
             btnClose.Click += BtnClose_Click;
             // 
@@ -136,7 +136,7 @@ namespace PhilterDesktop
             helpButton.Name = "helpButton";
             helpButton.Size = new Size(110, 34);
             helpButton.TabIndex = 6;
-            helpButton.Text = "Help";
+            helpButton.Text = "&Help";
             helpButton.UseVisualStyleBackColor = true;
             // 
             // Contexts

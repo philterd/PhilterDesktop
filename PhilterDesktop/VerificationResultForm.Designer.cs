@@ -97,7 +97,7 @@ namespace PhilterDesktop
             _close.Name = "_close";
             _close.Size = new Size(110, 34);
             _close.TabIndex = 3;
-            _close.Text = "Close";
+            _close.Text = "&Close";
             _close.UseVisualStyleBackColor = true;
             //
             // VerificationResultForm

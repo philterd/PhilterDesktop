@@ -73,10 +73,9 @@ namespace PhilterDesktop
                 {
                     return 0;
                 }
-                if (welcome.DoNotShowAgain)
-                {
-                    WelcomeForm.RememberAccepted();
-                }
+                // Once the user agrees, persist acceptance so the dialog is never shown again. (There is
+                // no opt-out checkbox to leave unchecked, which previously caused it to re-prompt forever.)
+                WelcomeForm.RememberAccepted();
             }
 
             // Unlock the database key. If it's passphrase-protected, prompt now (cancel = exit);

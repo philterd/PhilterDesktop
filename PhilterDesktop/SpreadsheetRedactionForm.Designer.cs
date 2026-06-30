@@ -75,7 +75,7 @@ namespace PhilterDesktop
             _browse.Name = "_browse";
             _browse.Size = new Size(90, 26);
             _browse.TabIndex = 2;
-            _browse.Text = "Browse…";
+            _browse.Text = "&Browse…";
             _browse.UseVisualStyleBackColor = true;
             _browse.Click += OnBrowse;
             // 
@@ -130,7 +130,7 @@ namespace PhilterDesktop
             _selectAll.Name = "_selectAll";
             _selectAll.TabIndex = 8;
             _selectAll.TabStop = true;
-            _selectAll.Text = "Select all";
+            _selectAll.Text = "&Select all";
             //
             // _clearAll
             //
@@ -140,7 +140,7 @@ namespace PhilterDesktop
             _clearAll.Name = "_clearAll";
             _clearAll.TabIndex = 9;
             _clearAll.TabStop = true;
-            _clearAll.Text = "Clear";
+            _clearAll.Text = "C&lear";
             //
             // _selectedCount
             //
@@ -174,7 +174,7 @@ namespace PhilterDesktop
             _redact.Name = "_redact";
             _redact.Size = new Size(100, 26);
             _redact.TabIndex = 12;
-            _redact.Text = "Add to Queue";
+            _redact.Text = "&Add to Queue";
             _redact.UseVisualStyleBackColor = true;
             _redact.Click += OnRedact;
             // 
@@ -186,7 +186,7 @@ namespace PhilterDesktop
             _close.Name = "_close";
             _close.Size = new Size(80, 26);
             _close.TabIndex = 13;
-            _close.Text = "Close";
+            _close.Text = "&Cancel";
             _close.UseVisualStyleBackColor = true;
             // 
             // SpreadsheetRedactionForm

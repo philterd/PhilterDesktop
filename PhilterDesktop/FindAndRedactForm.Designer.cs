@@ -69,7 +69,7 @@ namespace PhilterDesktop
             _browse.Name = "_browse";
             _browse.Size = new Size(90, 26);
             _browse.TabIndex = 2;
-            _browse.Text = "Browse…";
+            _browse.Text = "&Browse…";
             _browse.UseVisualStyleBackColor = true;
             _browse.Click += OnBrowse;
             //
@@ -104,7 +104,7 @@ namespace PhilterDesktop
             _import.Name = "_import";
             _import.Padding = new Padding(10, 0, 10, 0);
             _import.TabIndex = 5;
-            _import.Text = "Import from file…";
+            _import.Text = "&Import from file…";
             _import.UseVisualStyleBackColor = true;
             _import.Click += OnImport;
             //
@@ -115,7 +115,7 @@ namespace PhilterDesktop
             _redact.Name = "_redact";
             _redact.Size = new Size(80, 26);
             _redact.TabIndex = 6;
-            _redact.Text = "Redact";
+            _redact.Text = "&Redact";
             _redact.UseVisualStyleBackColor = true;
             _redact.Click += OnRedact;
             //
@@ -127,7 +127,7 @@ namespace PhilterDesktop
             _close.Name = "_close";
             _close.Size = new Size(80, 26);
             _close.TabIndex = 7;
-            _close.Text = "Close";
+            _close.Text = "&Close";
             _close.UseVisualStyleBackColor = true;
             //
             // FindAndRedactForm

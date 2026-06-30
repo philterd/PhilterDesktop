@@ -147,6 +147,43 @@ namespace PhilterDesktop.Tests
             };
         }
 
+        /// <summary>
+        /// Creates a single-sheet workbook whose cells have <b>no</b> CellReference (some generators omit
+        /// it). Column identity then depends purely on document order — used to test.
+        /// </summary>
+        public static void CreateXlsxWithoutCellReferences(string path, IReadOnlyList<string?[]> rows, string sheetName = "Sheet1")
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Create(path, SpreadsheetDocumentType.Workbook);
+            WorkbookPart wbPart = doc.AddWorkbookPart();
+            wbPart.Workbook = new Workbook();
+            WorksheetPart wsPart = wbPart.AddNewPart<WorksheetPart>();
+
+            var sheetData = new SheetData();
+            for (int r = 0; r < rows.Count; r++)
+            {
+                var rowElement = new Row { RowIndex = (uint)(r + 1) };
+                foreach (string? value in rows[r])
+                {
+                    if (value is null)
+                    {
+                        continue;
+                    }
+                    // No CellReference is set on purpose.
+                    rowElement.AppendChild(new Cell
+                    {
+                        DataType = new EnumValue<CellValues>(CellValues.InlineString),
+                        InlineString = new InlineString(new Text(value))
+                    });
+                }
+                sheetData.AppendChild(rowElement);
+            }
+
+            wsPart.Worksheet = new Worksheet(sheetData);
+            Sheets sheets = wbPart.Workbook.AppendChild(new Sheets());
+            sheets.AppendChild(new Sheet { Id = wbPart.GetIdOfPart(wsPart), SheetId = 1, Name = sheetName });
+            wbPart.Workbook.Save();
+        }
+
         /// <summary>Adds a second sheet to an existing workbook (text values as inline strings).</summary>
         public static void AppendSheet(string path, IReadOnlyList<string?[]> rows, string sheetName)
         {

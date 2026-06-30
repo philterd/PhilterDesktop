@@ -225,7 +225,7 @@ namespace PhilterDesktop.Tests
         public async Task ProcessAsync_SameNamedSources_CustomOutputFolder_DoNotOverwrite()
         {
             // Two files named "invoice.txt" from different folders, redacted into one shared output
-            // folder, must not clobber each other (#490): the second gets a "(2)" name.
+            // folder, must not clobber each other: the second gets a "(2)" name.
             _policies.Insert(new PolicyEntity { Name = "p", Json = "{\"identifiers\":{\"emailAddress\":{}}}" });
 
             string folderA = Path.Combine(_tempDir, "A");

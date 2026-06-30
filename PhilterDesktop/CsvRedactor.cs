@@ -215,7 +215,7 @@ namespace PhilterDesktop
                 InjectionOptions = InjectionOptions.Escape
             };
 
-            // Build in memory, then write once so a failure never leaves the original or a partial file (issue #483).
+            // Build in memory, then write once so a failure never leaves the original or a partial file.
             using var buffer = new MemoryStream();
             using (var writer = new StreamWriter(buffer, encoding, leaveOpen: true))
             using (var csv = new CsvWriter(writer, config))

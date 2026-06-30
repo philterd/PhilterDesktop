@@ -24,9 +24,18 @@ namespace PhilterData
     /// </summary>
     public sealed class ContextEntryRepository : LiteDbRepository<ContextEntryEntity>
     {
-        public ContextEntryRepository(LiteDatabase database) 
+        private readonly Func<DateTime> _utcNow;
+
+        public ContextEntryRepository(LiteDatabase database)
+            : this(database, () => DateTime.UtcNow)
+        {
+        }
+
+        // Test seam: lets tests supply a deterministic clock so timestamp behavior can be asserted exactly.
+        internal ContextEntryRepository(LiteDatabase database, Func<DateTime> utcNow)
             : base(database, "contextentries")
         {
+            _utcNow = utcNow;
         }
 
         protected override void ConfigureIndexes()
@@ -65,6 +74,47 @@ namespace PhilterData
         {
             ArgumentException.ThrowIfNullOrEmpty(contextName);
             return Find(x => x.Context == contextName).Count();
+        }
+
+        /// <summary>The entry for a (context, token) pair, or null if none is stored yet.</summary>
+        public ContextEntryEntity? FindEntry(string contextName, string token)
+        {
+            ContextEntryEntity? entry = FindOne(x => x.Context == contextName && x.Token == token);
+            if (entry is not null)
+            {
+                // LiteDB stores DateTimes in UTC but returns them as Local kind; normalize back to UTC so
+                // the CreatedAtUtc/UpdatedAtUtc contract holds for callers (same instant, correct Kind).
+                entry.CreatedAtUtc = entry.CreatedAtUtc.ToUniversalTime();
+                entry.UpdatedAtUtc = entry.UpdatedAtUtc.ToUniversalTime();
+            }
+            return entry;
+        }
+
+        /// <summary>
+        /// Stores (or updates) the replacement for a (context, token) pair, so the same token maps to
+        /// the same replacement across documents and app restarts.
+        /// </summary>
+        public void UpsertEntry(string contextName, string token, string replacement)
+        {
+            DateTime now = _utcNow();
+            ContextEntryEntity? existing = FindEntry(contextName, token);
+            if (existing is null)
+            {
+                Insert(new ContextEntryEntity
+                {
+                    Context = contextName,
+                    Token = token,
+                    Replacement = replacement,
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                });
+            }
+            else
+            {
+                existing.Replacement = replacement;
+                existing.UpdatedAtUtc = now; // CreatedAtUtc is preserved across updates
+                Update(existing);
+            }
         }
     }
 }

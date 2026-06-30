@@ -42,7 +42,6 @@ namespace PhilterDesktop
             _heading = new Label();
             _body = new TextBox();
             _eulaLink = new LinkLabel();
-            _doNotShowAgain = new CheckBox();
             _agree = new Button();
             _disagree = new Button();
             SuspendLayout();
@@ -81,19 +80,6 @@ namespace PhilterDesktop
             _eulaLink.Text = "View the Philterd Commercial License Agreement";
             _eulaLink.LinkClicked += OnEulaLinkClicked;
             //
-            // _doNotShowAgain
-            //
-            _doNotShowAgain.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            _doNotShowAgain.AutoSize = true;
-            _doNotShowAgain.Checked = true;
-            _doNotShowAgain.CheckState = CheckState.Checked;
-            _doNotShowAgain.Location = new Point(14, 444);
-            _doNotShowAgain.Name = "_doNotShowAgain";
-            _doNotShowAgain.Size = new Size(146, 19);
-            _doNotShowAgain.TabIndex = 3;
-            _doNotShowAgain.Text = "Don't show this again";
-            _doNotShowAgain.UseVisualStyleBackColor = true;
-            //
             // _agree
             //
             _agree.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
@@ -102,7 +88,7 @@ namespace PhilterDesktop
             _agree.Name = "_agree";
             _agree.Size = new Size(110, 34);
             _agree.TabIndex = 4;
-            _agree.Text = "I Agree";
+            _agree.Text = "I &Agree";
             _agree.UseVisualStyleBackColor = true;
             //
             // _disagree
@@ -113,7 +99,7 @@ namespace PhilterDesktop
             _disagree.Name = "_disagree";
             _disagree.Size = new Size(110, 34);
             _disagree.TabIndex = 5;
-            _disagree.Text = "I Disagree";
+            _disagree.Text = "I &Disagree";
             _disagree.UseVisualStyleBackColor = true;
             //
             // WelcomeForm
@@ -126,7 +112,6 @@ namespace PhilterDesktop
             Controls.Add(_heading);
             Controls.Add(_body);
             Controls.Add(_eulaLink);
-            Controls.Add(_doNotShowAgain);
             Controls.Add(_agree);
             Controls.Add(_disagree);
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -145,7 +130,6 @@ namespace PhilterDesktop
         private Label _heading;
         private TextBox _body;
         private LinkLabel _eulaLink;
-        private CheckBox _doNotShowAgain;
         private Button _agree;
         private Button _disagree;
     }

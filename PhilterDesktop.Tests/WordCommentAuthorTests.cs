@@ -26,7 +26,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// A kept comment still carried the reviewer's identity (the <c>w:author</c>/<c>w:initials</c>
     /// attributes and word/people.xml display names), which only the delete path removed
-    /// (philterd-website issue #508). These pin that the "remove document metadata" scrub anonymizes
+    ///. These pin that the "remove document metadata" scrub anonymizes
     /// comment authors with consistent pseudonyms and drops the people part, while comment text
     /// redaction is unaffected.
     /// </summary>

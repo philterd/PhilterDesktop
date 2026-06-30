@@ -101,7 +101,7 @@ namespace PhilterDesktop.Tests
         private static Paragraph Para(string text) =>
             new(new Run(new Text(text) { Space = SpaceProcessingModeValues.Preserve }));
 
-        // --- Comments (issue #480) -----------------------------------------------------------------
+        // --- Comments -----------------------------------------------------------------
 
         /// <summary>Creates a .docx with one Word comment (one paragraph) plus the given body paragraphs.</summary>
         public static void CreateWithComment(string path, string commentText, params string[] bodyParagraphs)
@@ -138,7 +138,7 @@ namespace PhilterDesktop.Tests
             return part?.Comments?.Elements<Comment>().Any() == true;
         }
 
-        // --- DrawingML text: shapes / SmartArt / charts (issue #479) -------------------------------
+        // --- DrawingML text: shapes / SmartArt / charts -------------------------------
 
         /// <summary>A DrawingML paragraph (&lt;a:p&gt;) with one run per supplied string.</summary>
         public static string AParagraph(params string[] runs) =>
@@ -224,7 +224,7 @@ namespace PhilterDesktop.Tests
             w.Write(xml);
         }
 
-        // --- Footnotes / endnotes (issue #477) -----------------------------------------------------
+        // --- Footnotes / endnotes -----------------------------------------------------
 
         /// <summary>Creates a .docx with one footnote (and optional endnote) plus body paragraphs.</summary>
         public static void CreateWithNotes(string path, string? footnoteText, string? endnoteText, params string[] bodyParagraphs)
@@ -377,7 +377,7 @@ namespace PhilterDesktop.Tests
                 ?? Array.Empty<string>();
         }
 
-        // --- Comment authors / people.xml (issue #508) ---------------------------------------------
+        // --- Comment authors / people.xml ---------------------------------------------
 
         /// <summary>
         /// Creates a .docx with comments carrying the given (author, text) pairs and a matching
@@ -440,7 +440,7 @@ namespace PhilterDesktop.Tests
             return doc.MainDocumentPart!.GetPartsOfType<WordprocessingPeoplePart>().Any();
         }
 
-        // --- Threaded comments (issue #507) --------------------------------------------------------
+        // --- Threaded comments --------------------------------------------------------
 
         private const string ThreadedRelType = "http://schemas.microsoft.com/office/2018/08/relationships/threadedComment";
         private const string ThreadedContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.threadedcomments+xml";
@@ -566,7 +566,7 @@ namespace PhilterDesktop.Tests
                 p.ContentType.Contains("threadedcomment", StringComparison.OrdinalIgnoreCase)
                 || p.Uri.OriginalString.EndsWith("threadedComments.xml", StringComparison.OrdinalIgnoreCase));
 
-        // --- Raw-XML fixtures for drawings / text boxes (issue #481) -----------------------------
+        // --- Raw-XML fixtures for drawings / text boxes -----------------------------
         //
         // Text boxes and drawings can't be authored conveniently through the strongly-typed DOM, so
         // these write document.xml directly with every namespace declared at the root.

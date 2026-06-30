@@ -322,7 +322,7 @@ namespace PhilterDesktop
             _add.Name = "_add";
             _add.Size = new Size(72, 30);
             _add.TabIndex = 1;
-            _add.Text = "Add…";
+            _add.Text = "&Add…";
             _add.UseVisualStyleBackColor = true;
             _add.Click += OnAdd;
             //
@@ -344,7 +344,7 @@ namespace PhilterDesktop
             _remove.Name = "_remove";
             _remove.Size = new Size(80, 30);
             _remove.TabIndex = 3;
-            _remove.Text = "Remove";
+            _remove.Text = "&Remove";
             _remove.UseVisualStyleBackColor = true;
             _remove.Click += OnRemove;
             //
@@ -377,7 +377,7 @@ namespace PhilterDesktop
             _save.Name = "_save";
             _save.Size = new Size(160, 34);
             _save.TabIndex = 0;
-            _save.Text = "Save Redacted File";
+            _save.Text = "&Save Redacted File";
             _save.UseVisualStyleBackColor = true;
             _save.Click += OnSave;
             //
@@ -388,7 +388,7 @@ namespace PhilterDesktop
             _cancel.Location = new Point(930, 9);
             _cancel.Name = "_cancel";
             _cancel.Size = new Size(58, 34);
-            _cancel.Text = "Cancel";
+            _cancel.Text = "&Cancel";
             _cancel.UseVisualStyleBackColor = true;
             //
             // WordRedactionPreviewForm

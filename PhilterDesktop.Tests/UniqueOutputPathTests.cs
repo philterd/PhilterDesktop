@@ -21,7 +21,7 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// <see cref="RedactionService.GetUniqueOutputPath"/> prevents two same-named source files (from
-    /// different folders) silently overwriting each other in a shared output folder (#490).
+    /// different folders) silently overwriting each other in a shared output folder.
     /// </summary>
     public sealed class UniqueOutputPathTests : IDisposable
     {

@@ -19,7 +19,7 @@ namespace PhilterDesktop
     /// <summary>
     /// Writes a redacted output file from an in-memory buffer, deleting any partial output on failure
     /// (no temp files). Callers build the whole document first, so the destination is never created
-    /// until correct, complete bytes exist — never the original or a half-written file (issue #483).
+    /// until correct, complete bytes exist — never the original or a half-written file.
     /// </summary>
     internal static class SafeOutput
     {

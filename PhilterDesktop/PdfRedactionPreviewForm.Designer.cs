@@ -146,7 +146,7 @@ namespace PhilterDesktop
             _save.Name = "_save";
             _save.Size = new Size(160, 34);
             _save.TabIndex = 0;
-            _save.Text = "Save Redacted File";
+            _save.Text = "&Save Redacted File";
             _save.UseVisualStyleBackColor = true;
             _save.Click += OnSave;
             // 
@@ -158,7 +158,7 @@ namespace PhilterDesktop
             _cancel.Name = "_cancel";
             _cancel.Size = new Size(58, 34);
             _cancel.TabIndex = 1;
-            _cancel.Text = "Cancel";
+            _cancel.Text = "&Cancel";
             _cancel.UseVisualStyleBackColor = true;
             // 
             // PdfRedactionPreviewForm

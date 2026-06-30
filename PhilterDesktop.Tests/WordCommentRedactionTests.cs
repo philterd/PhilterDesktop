@@ -24,7 +24,7 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// Comments were only ever <em>deleted</em> (when "remove comments" was on) and never filtered, so
-    /// a kept comment shipped its PII (philterd-website issue #480). These pin that comment text is now
+    /// a kept comment shipped its PII. These pin that comment text is now
     /// redacted like any other text, while the comment itself is preserved when not being deleted.
     /// </summary>
     public sealed class WordCommentRedactionTests : IDisposable

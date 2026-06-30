@@ -20,7 +20,7 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// <see cref="SafeOutput"/> backs the "build the redacted file in memory, write once" guarantee
-    /// (philterd-website issue #483): a managed failure during the final write must never leave a
+    ///: a managed failure during the final write must never leave a
     /// partial output file behind.
     /// </summary>
     public sealed class SafeOutputTests : IDisposable

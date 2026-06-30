@@ -133,7 +133,7 @@ namespace PhilterDesktop
             btnOk.Name = "btnOk";
             btnOk.Size = new Size(80, 26);
             btnOk.TabIndex = 1;
-            btnOk.Text = "OK";
+            btnOk.Text = "&OK";
             btnOk.UseVisualStyleBackColor = true;
             //
             // btnCancel
@@ -144,7 +144,7 @@ namespace PhilterDesktop
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(80, 26);
             btnCancel.TabIndex = 2;
-            btnCancel.Text = "Cancel";
+            btnCancel.Text = "&Cancel";
             btnCancel.UseVisualStyleBackColor = true;
             //
             // btnImport
@@ -157,7 +157,7 @@ namespace PhilterDesktop
             btnImport.Name = "btnImport";
             btnImport.Padding = new Padding(10, 0, 10, 0);
             btnImport.TabIndex = 3;
-            btnImport.Text = "Import from file…";
+            btnImport.Text = "&Import from file…";
             btnImport.UseVisualStyleBackColor = true;
             btnImport.Click += btnImport_Click;
             //

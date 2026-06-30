@@ -22,7 +22,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// Guards the static-value validation in the filter-strategy editor: an empty (or
     /// whitespace-only) "Replace with a static value" must be rejected, because it would silently
-    /// delete matched PII with no visible marker (philterd-website issue #485).
+    /// delete matched PII with no visible marker.
     /// </summary>
     public sealed class AddFilterStrategyFormTests
     {

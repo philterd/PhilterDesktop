@@ -145,7 +145,7 @@ namespace PhilterDesktop
             box.Rtf = RtfSanitizer.RemoveEmbeddedObjects(rtf);
         }
 
-        // Serialize to RTF in memory, then write once so a failure never leaves the original or a partial file (issue #483).
+        // Serialize to RTF in memory, then write once so a failure never leaves the original or a partial file.
         private static void WriteRtf(RichTextBox box, string outputPath)
         {
             using var buffer = new MemoryStream();

@@ -157,7 +157,7 @@ namespace PhilterDesktop
             _add.Name = "_add";
             _add.Size = new Size(110, 34);
             _add.TabIndex = 0;
-            _add.Text = "Add…";
+            _add.Text = "&Add…";
             _add.UseVisualStyleBackColor = true;
             _add.Click += OnAdd;
             // 
@@ -179,7 +179,7 @@ namespace PhilterDesktop
             _remove.Name = "_remove";
             _remove.Size = new Size(110, 34);
             _remove.TabIndex = 2;
-            _remove.Text = "Remove";
+            _remove.Text = "&Remove";
             _remove.UseVisualStyleBackColor = true;
             _remove.Click += OnRemove;
             // 
@@ -238,7 +238,7 @@ namespace PhilterDesktop
             _deleteVersion.Name = "_deleteVersion";
             _deleteVersion.Size = new Size(110, 34);
             _deleteVersion.TabIndex = 1;
-            _deleteVersion.Text = "Delete";
+            _deleteVersion.Text = "&Delete";
             _deleteVersion.UseVisualStyleBackColor = true;
             _deleteVersion.Click += OnDeleteVersion;
             // 
@@ -272,7 +272,7 @@ namespace PhilterDesktop
             _close.Name = "_close";
             _close.Size = new Size(110, 34);
             _close.TabIndex = 0;
-            _close.Text = "Close";
+            _close.Text = "&Close";
             _close.UseVisualStyleBackColor = true;
             // 
             // _redact
@@ -282,14 +282,14 @@ namespace PhilterDesktop
             _redact.Name = "_redact";
             _redact.Size = new Size(110, 34);
             _redact.TabIndex = 1;
-            _redact.Text = "Redact";
+            _redact.Text = "Reda&ct";
             _redact.UseVisualStyleBackColor = true;
             _redact.Click += OnRedact;
             //
             // ModifyRedactionForm
             //
             // No AcceptButton: "Redact" re-writes the output (destructive), so it must be an explicit
-            // click — Enter must not trigger it (#489).
+            // click — Enter must not trigger it.
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = _close;

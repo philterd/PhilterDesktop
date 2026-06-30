@@ -56,89 +56,101 @@ namespace PhilterDesktop
             string policyName = options.Policy ?? DefaultName;
             string contextName = options.Context ?? DefaultName;
 
-            if (!TryResolvePolicy(policyName, out string policyJson, out SettingsEntity settings, out string? error))
+            if (!TryResolvePolicy(policyName, out string policyJson, out SettingsEntity settings, out LiteDatabase? database, out string? error))
             {
                 Console.Error.WriteLine(error);
                 return 2;
             }
 
-            // Validate the policy once up front so a bad policy fails fast.
-            try
+            // Keep the database open for the whole run so consistent (RANDOM_REPLACE) replacements use
+            // the same durable, database-backed context service the GUI uses (shared data.db). When the
+            // database is unavailable, fall back to the engine's default (in-memory) context service.
+            using (database)
             {
-                _ = DeserializePolicy(policyJson);
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Failed to load policy '{policyName}': {ex.Message}");
-                return 2;
-            }
-
-            // Warn loudly if the policy expects on-device name detection but the model is missing: names
-            // would silently be left in. (Checked on the resolved policy before redaction strips it.)
-            if (PhEyeModel.RequestedButUnavailable(DeserializePolicy(policyJson)))
-            {
-                Console.Error.WriteLine("Warning: " + PhEyeModel.UnavailableWarning);
-            }
-
-            // Apply the configured regex match timeout (over the startup default) before redacting.
-            RegexSafety.InstallMatchTimeout(settings.RegexMatchTimeoutSeconds);
-
-            var filterService = new FilterService();
-            int failures = 0;
-
-            foreach (string file in files)
-            {
-                string path = Path.GetFullPath(file);
-
-                if (!File.Exists(path))
-                {
-                    Console.Error.WriteLine($"Not found: {file}");
-                    failures++;
-                    continue;
-                }
-                if (!RedactionService.IsSupported(path))
-                {
-                    Console.Error.WriteLine($"Unsupported file type (expected .txt, .docx, .pdf, .rtf, .xlsx, .csv, .eml, or .msg): {file}");
-                    failures++;
-                    continue;
-                }
-                if (LargeFileWarning.ExceedsHardLimit(path, settings.MaxInputFileSizeMb))
-                {
-                    Console.Error.WriteLine($"Skipped (exceeds the {settings.MaxInputFileSizeMb} MB size limit): {file}");
-                    failures++;
-                    continue;
-                }
-
+                // Validate the policy once up front so a bad policy fails fast.
                 try
                 {
-                    // Deserialize per file: redaction mutates the policy (PhEye model path, PDF scale).
-                    PhileasPolicy policy = DeserializePolicy(policyJson);
-                    GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
-                    string outputPath = RedactionService.GetUniqueOutputPath(RedactionService.GetOutputPath(path, settings));
-                    RedactionService.RedactFileAsync(path, outputPath, policy, contextName, settings, filterService)
-                        .GetAwaiter().GetResult();
-                    Console.WriteLine($"Redacted: {path} -> {outputPath}");
+                    _ = DeserializePolicy(policyJson);
                 }
                 catch (Exception ex)
                 {
-                    Console.Error.WriteLine($"Failed: {file}: {ex.Message}");
-                    failures++;
+                    Console.Error.WriteLine($"Failed to load policy '{policyName}': {ex.Message}");
+                    return 2;
                 }
-            }
 
-            return failures == 0 ? 0 : 1;
+                // Warn loudly if the policy expects on-device name detection but the model is missing: names
+                // would silently be left in. (Checked on the resolved policy before redaction strips it.)
+                if (PhEyeModel.RequestedButUnavailable(DeserializePolicy(policyJson)))
+                {
+                    Console.Error.WriteLine("Warning: " + PhEyeModel.UnavailableWarning);
+                }
+
+                // Apply the configured regex match timeout (over the startup default) before redacting.
+                RegexSafety.InstallMatchTimeout(settings.RegexMatchTimeoutSeconds);
+
+                FilterService filterService = database is not null
+                    ? new FilterService(new LiteDbContextService(new ContextEntryRepository(database)))
+                    : new FilterService();
+                int failures = 0;
+
+                foreach (string file in files)
+                {
+                    string path = Path.GetFullPath(file);
+
+                    if (!File.Exists(path))
+                    {
+                        Console.Error.WriteLine($"Not found: {file}");
+                        failures++;
+                        continue;
+                    }
+                    if (!RedactionService.IsSupported(path))
+                    {
+                        Console.Error.WriteLine($"Unsupported file type (expected .txt, .docx, .pdf, .rtf, .xlsx, .csv, .eml, or .msg): {file}");
+                        failures++;
+                        continue;
+                    }
+                    if (LargeFileWarning.ExceedsHardLimit(path, settings.MaxInputFileSizeMb))
+                    {
+                        Console.Error.WriteLine($"Skipped (exceeds the {settings.MaxInputFileSizeMb} MB size limit): {file}");
+                        failures++;
+                        continue;
+                    }
+
+                    try
+                    {
+                        // Deserialize per file: redaction mutates the policy (PhEye model path, PDF scale).
+                        PhileasPolicy policy = DeserializePolicy(policyJson);
+                        GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
+                        string outputPath = RedactionService.GetUniqueOutputPath(RedactionService.GetOutputPath(path, settings));
+                        RedactionService.RedactFileAsync(path, outputPath, policy, contextName, settings, filterService)
+                            .GetAwaiter().GetResult();
+                        Console.WriteLine($"Redacted: {path} -> {outputPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"Failed: {file}: {ex.Message}");
+                        failures++;
+                    }
+                }
+
+                return failures == 0 ? 0 : 1;
+            }
         }
 
         // Resolves the policy JSON + output settings, preferring the application database. Falls back
         // to a built-in empty policy + original-location output when the DB is unavailable (e.g. the
         // GUI has it open) — but only for the default policy; a named policy then fails clearly.
-        private static bool TryResolvePolicy(string policyName, out string policyJson, out SettingsEntity settings, out string? error)
+        // Resolves the policy/settings and, on success, hands back the OPEN database so the caller can
+        // back the redaction with a durable context service. The caller owns disposing it. The database
+        // is null (and the default policy is used) when it can't be opened.
+        private static bool TryResolvePolicy(string policyName, out string policyJson, out SettingsEntity settings,
+            out LiteDatabase? database, out string? error)
         {
             policyJson = DefaultPolicy.Json();
             settings = new SettingsEntity { OutputToOriginalLocation = true };
             error = null;
 
-            LiteDatabase? database = TryOpenDatabase(out string? dbError);
+            database = TryOpenDatabase(out string? dbError);
             if (database is null)
             {
                 if (!IsDefault(policyName))
@@ -151,18 +163,17 @@ namespace PhilterDesktop
                 return true;
             }
 
-            using (database)
+            PolicyEntity? entity = new PolicyRepository(database).FindByName(policyName);
+            if (entity is null && !IsDefault(policyName))
             {
-                PolicyEntity? entity = new PolicyRepository(database).FindByName(policyName);
-                if (entity is null && !IsDefault(policyName))
-                {
-                    error = $"Policy '{policyName}' not found.";
-                    return false;
-                }
-                policyJson = string.IsNullOrWhiteSpace(entity?.Json) ? DefaultPolicy.Json() : entity!.Json;
-                settings = new SettingsRepository(database).GetSettings();
-                return true;
+                error = $"Policy '{policyName}' not found.";
+                database.Dispose();
+                database = null;
+                return false;
             }
+            policyJson = string.IsNullOrWhiteSpace(entity?.Json) ? DefaultPolicy.Json() : entity!.Json;
+            settings = new SettingsRepository(database).GetSettings();
+            return true;
         }
 
         private static LiteDatabase? TryOpenDatabase(out string? error)

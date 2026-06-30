@@ -22,14 +22,33 @@ using PhileasPolicy = Phileas.Policy.Policy;
 namespace PhilterDesktop
 {
     /// <summary>
-    /// A single, app-wide <see cref="FilterService"/>. The service is stateless and thread-safe, so
-    /// sharing one instance is safe — and it lets the on-device name-detection model (PhEye/GLiNER,
-    /// ~90&#160;MB) load <b>once</b> for the whole app instead of being reloaded for every redaction or
-    /// preview, which was making PDF previews with name detection take tens of seconds each time.
+    /// A single, app-wide <see cref="FilterService"/>, shared so the on-device name-detection model
+    /// (PhEye/GLiNER, ~90&#160;MB) loads <b>once</b> for the whole app instead of being reloaded for every
+    /// redaction or preview (which made PDF previews with name detection take tens of seconds each time).
+    ///
+    /// The service is <b>not</b> stateless: it keeps RANDOM_REPLACE replacements consistent within a
+    /// context. Call <see cref="UseContextService"/> at startup to back that with the durable
+    /// (database) context service so the mappings persist across documents/restarts rather than
+    /// accumulating in memory. Concurrent use is safe (the context service is thread-safe).
     /// </summary>
     internal static class SharedFilterService
     {
-        public static FilterService Instance { get; } = new();
+        private static IContextService? _contextService;
+        private static FilterService? _instance;
+
+        /// <summary>
+        /// Sets the (durable) context service the shared <see cref="FilterService"/> uses for consistent
+        /// replacements. Call once at startup, before the first redaction; rebuilds the instance so every
+        /// later redaction uses it.
+        /// </summary>
+        public static void UseContextService(IContextService contextService)
+        {
+            _contextService = contextService;
+            _instance = null;
+        }
+
+        public static FilterService Instance =>
+            _instance ??= _contextService is null ? new FilterService() : new FilterService(_contextService);
 
         private static int _warmedUp;
 

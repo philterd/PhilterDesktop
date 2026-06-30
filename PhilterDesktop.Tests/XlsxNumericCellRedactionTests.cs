@@ -26,7 +26,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// PII is commonly typed into Excel as a bare number (SSN 123456789, phone 5551234567, account /
     /// card numbers), which is stored as a numeric cell. Those were skipped by detection
-    /// (philterd-website issue #478). These pin that numeric-typed cells are now scanned and redacted,
+    ///. These pin that numeric-typed cells are now scanned and redacted,
     /// while genuine non-PII numbers are left alone.
     /// </summary>
     public sealed class XlsxNumericCellRedactionTests : IDisposable

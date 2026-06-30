@@ -38,6 +38,7 @@ namespace PhilterDesktop
     public partial class SpanEditForm : Form
     {
         private SpanPositionKind _kind;
+        private int _maxOffset; // document/paragraph length for bounds checking text offsets (0 = unknown)
 
         // The paragraph field is shown 1-based (to match the list's "¶ N"); ParagraphIndex is 0-based.
         public int Paragraph => (int)_paragraph.Value - 1;
@@ -61,11 +62,22 @@ namespace PhilterDesktop
         /// When false the location fields are shown read-only (used when editing a detected span,
         /// whose position is anchored); only the replacement can change.
         /// </param>
-        public SpanEditForm(string title, SpanPositionKind kind, RedactionSpanEntity span, bool positionEditable)
+        /// <param name="maxOffset">
+        /// The length of the text the offsets index into (the document for plain text). When &gt; 0, the
+        /// start/stop fields are capped at it and validated so a manual span can't run past the end.
+        /// </param>
+        public SpanEditForm(string title, SpanPositionKind kind, RedactionSpanEntity span, bool positionEditable, int maxOffset = 0)
             : this()
         {
             _kind = kind;
+            _maxOffset = maxOffset;
             Text = title;
+
+            if (maxOffset > 0)
+            {
+                _start.Maximum = maxOffset;
+                _stop.Maximum = maxOffset;
+            }
 
             // Seed the fields from the span being added/edited (clamped to each control's range).
             Set(_paragraph, span.ParagraphIndex < 0 ? 1 : span.ParagraphIndex + 1);
@@ -131,10 +143,35 @@ namespace PhilterDesktop
                     Warn("The upper-right corner must be above and to the right of the lower-left corner.");
                 }
             }
-            else if (_start.Enabled && Stop <= Start)
+            else if (_start.Enabled)
             {
-                Warn("The stop character must be greater than the start character.");
+                string? error = ValidateTextOffsets(Start, Stop, _maxOffset);
+                if (error is not null)
+                {
+                    Warn(error);
+                }
             }
+        }
+
+        /// <summary>
+        /// Validates manual text-offset spans: non-negative, start before stop, and (when
+        /// <paramref name="maxOffset"/> &gt; 0) within the document length. Returns an error message or null.
+        /// </summary>
+        internal static string? ValidateTextOffsets(int start, int stop, int maxOffset)
+        {
+            if (start < 0 || stop < 0)
+            {
+                return "Character offsets can't be negative.";
+            }
+            if (stop <= start)
+            {
+                return "The stop character must be greater than the start character.";
+            }
+            if (maxOffset > 0 && stop > maxOffset)
+            {
+                return $"The stop character can't be past the end of the document (length {maxOffset}).";
+            }
+            return null;
         }
 
         private void Warn(string message)

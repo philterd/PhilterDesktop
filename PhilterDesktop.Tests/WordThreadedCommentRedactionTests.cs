@@ -26,7 +26,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// Word 2019/365 mirrors comment text into word/threadedComments.xml, which neither the redaction
     /// nor the delete path touched — so that duplicate could ship a comment's PII (philterd-website
-    /// issue #507). The fix drops the threaded duplicate during redaction, leaving the redacted classic
+    ///). The fix drops the threaded duplicate during redaction, leaving the redacted classic
     /// comments. These pin that the duplicate is gone and no copy of the PII survives.
     /// </summary>
     public sealed class WordThreadedCommentRedactionTests : IDisposable

@@ -44,9 +44,24 @@ Open the **Contexts** window from the main toolbar. From there you can:
 *The Contexts window: create per-case or per-matter contexts so related documents stay consistent.*
 
 - **New Context**: create a new context (for instance, one for a new case).
-- **Delete**: remove a context you no longer need.
+- **Delete**: remove a context you no longer need. Its remembered replacements are deleted along
+  with it.
 - **Empty**: clear the remembered replacements for a context **without** deleting the context
   itself, to start the consistency "memory" fresh while keeping the context.
+
+## Where the consistency memory is stored
+
+A context's remembered replacements are saved **durably** in Philter Desktop's encrypted local
+database, not just held in memory while the app is running. This means a context stays consistent
+**across application restarts**: if you redact some documents today and more under the same context
+next week, the same original still becomes the same stand-in value. The same stored memory is shared
+by every redaction path — the queue, [watched folders](watched-folders.md), and the
+[command line](getting-started.md) — so they all stay consistent with one another.
+
+Because the memory is durable, it does not expire or get evicted on its own and there is no size
+limit to configure. It grows as you redact more unique values; use **Empty** to clear a context's
+memory, or **Delete** to remove the context and its memory entirely. The database is encrypted at
+rest, so the stored originals and their stand-in values are protected like the rest of your data.
 
 ## How contexts come into play
 

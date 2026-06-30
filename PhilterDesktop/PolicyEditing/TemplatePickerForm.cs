@@ -39,10 +39,5 @@ namespace PhilterDesktop.PolicyEditing
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_ok);
         }
-
-        private void TemplatePickerForm_Load(object sender, EventArgs e)
-        {
-
-        }
     }
 }

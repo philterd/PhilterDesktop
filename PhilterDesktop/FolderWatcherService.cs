@@ -39,11 +39,13 @@ namespace PhilterDesktop
         private readonly PolicyRepository _policyRepository;
         private readonly WatchedFolderLogRepository? _logRepository;
         private readonly SettingsRepository? _settingsRepository;
-        private readonly FilterService _filterService = new();
+        // Use the app-wide shared service so the name model loads once and consistent replacements go
+        // through the same durable (database) context service the rest of the app uses.
+        private readonly FilterService _filterService = SharedFilterService.Instance;
         private readonly List<FileSystemWatcher> _watchers = new();
         private readonly object _gate = new();
         // Limits how many files redact at once (default 1). Re-created from settings on Restart; large
-        // files always run solo. The shared FilterService is stateless, so concurrent use is safe.
+        // files always run solo. The shared FilterService is safe for concurrent use.
         private RedactionConcurrencyGate _redactionGate = new(1);
         private readonly ConcurrentDictionary<string, byte> _inFlight = new(StringComparer.OrdinalIgnoreCase);
 

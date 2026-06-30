@@ -913,7 +913,7 @@ namespace PhilterDesktop.PolicyEditing
 
             // Guard against orphaning a watched folder: if any folder uses this policy, deleting it would
             // leave the folder pointing at an unknown policy (it would then silently fail every file).
-            // Offer to delete anyway and switch those folders to the 'default' policy (#491).
+            // Offer to delete anyway and switch those folders to the 'default' policy.
             List<WatchedFolderEntity> inUse = _watchedFolders is null
                 ? new List<WatchedFolderEntity>()
                 : WatchedFolderPolicyGuard.FoldersUsing(_watchedFolders, name);

@@ -25,7 +25,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// DrawingML text (&lt;a:t&gt; runs in shapes, SmartArt, and charts) is not made of WordprocessingML
     /// paragraphs, so it was never filtered — PII in a shape/SmartArt/chart label survived
-    /// (philterd-website issue #479). These pin that DrawingML text is redacted across the package, in
+    ///. These pin that DrawingML text is redacted across the package, in
     /// both the Redact and ApplySpans (Modify) paths.
     /// </summary>
     public sealed class WordDrawingTextRedactionTests : IDisposable

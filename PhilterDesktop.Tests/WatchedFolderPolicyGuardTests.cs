@@ -23,7 +23,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// Deleting a policy that a watched folder uses would orphan the folder (it then silently fails
     /// every file). The policy editor uses these helpers to find affected folders and reassign them to
-    /// the default policy (philterd-website issue #491).
+    /// the default policy.
     /// </summary>
     public sealed class WatchedFolderPolicyGuardTests : IDisposable
     {

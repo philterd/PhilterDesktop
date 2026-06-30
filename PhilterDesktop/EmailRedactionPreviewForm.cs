@@ -123,7 +123,7 @@ namespace PhilterDesktop
         }
 
         // Re-runs field detection for the chosen policy/context off the UI thread (awaited, with the
-        // inputs disabled and a wait cursor) so a large email never freezes the window (#486).
+        // inputs disabled and a wait cursor) so a large email never freezes the window.
         private async Task DetectAsync()
         {
             if (_busy)
@@ -180,7 +180,7 @@ namespace PhilterDesktop
 
         // A policy and context must both be selected before the redacted email can be written.
         // Without them no detection has run, so saving would write an unredacted copy that merely
-        // looks like a redacted draft (philterd-website issue #484).
+        // looks like a redacted draft.
         private bool PolicyChosen => _policyCombo.SelectedItem is not null && _contextCombo.SelectedItem is not null;
 
         private void RefreshAll()

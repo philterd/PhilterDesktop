@@ -24,6 +24,12 @@ namespace PhilterData
         public string Token { get; set; } = string.Empty;
         public string Replacement { get; set; } = string.Empty;
         public string Context { get; set; } = string.Empty;
+
+        /// <summary>UTC time the mapping was first stored. Default for entries written before this field existed.</summary>
+        public DateTime CreatedAtUtc { get; set; }
+
+        /// <summary>UTC time the mapping's replacement was last written (equals <see cref="CreatedAtUtc"/> until first updated).</summary>
+        public DateTime UpdatedAtUtc { get; set; }
     }
 
 }

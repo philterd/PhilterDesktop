@@ -26,7 +26,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// Text boxes / drawings live in a run inside an outer body paragraph, so the old recursive
     /// <c>Descendants&lt;Paragraph&gt;()</c> + wipe-and-rebuild both double-processed their text and
-    /// destroyed the drawing. These tests pin the fix (philterd-website issue #481): text-box content
+    /// destroyed the drawing. These tests pin the fix: text-box content
     /// is redacted as its own unit, the outer paragraph is redacted using only its own text, and the
     /// drawing is never destroyed.
     /// </summary>

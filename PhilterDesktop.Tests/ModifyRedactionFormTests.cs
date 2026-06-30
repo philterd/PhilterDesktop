@@ -24,7 +24,7 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// Modify Redaction's "Redact" re-writes the output (destructive), so pressing Enter must not
-    /// trigger it, and the form must lock while the async re-redaction runs (philterd-website #489).
+    /// trigger it, and the form must lock while the async re-redaction runs.
     /// </summary>
     public sealed class ModifyRedactionFormTests
     {

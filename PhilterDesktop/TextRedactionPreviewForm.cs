@@ -123,7 +123,7 @@ namespace PhilterDesktop
         // Re-runs detection for the chosen policy/context, resetting the working redactions. Detection
         // (and AI name detection in particular) can take a moment on a large file, so it runs off the UI
         // thread (awaited, not blocked) with the inputs disabled and a wait cursor, so the window never
-        // goes "Not Responding" (#486).
+        // goes "Not Responding".
         private async Task DetectAsync()
         {
             if (_busy)
@@ -193,7 +193,7 @@ namespace PhilterDesktop
 
         // A policy and context must both be selected before the redacted file can be written.
         // Without them no detection has run, so saving would write an unredacted copy that merely
-        // looks like a redacted draft (philterd-website issue #484).
+        // looks like a redacted draft.
         private bool PolicyChosen => _policyCombo.SelectedItem is not null && _contextCombo.SelectedItem is not null;
 
         private void RefreshAll()
@@ -275,7 +275,7 @@ namespace PhilterDesktop
         {
             using var dlg = new SpanEditForm("Add Redaction", SpanPositionKind.TextOffset,
                 new RedactionSpanEntity { UserAdded = true, Replacement = RedactionService.DefaultReplacement, ParagraphIndex = -1 },
-                positionEditable: true);
+                positionEditable: true, maxOffset: _originalText.Length);
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
                 _spans.Add(new RedactionSpanEntity
@@ -297,7 +297,7 @@ namespace PhilterDesktop
             {
                 return;
             }
-            using var dlg = new SpanEditForm("Edit Redaction", SpanPositionKind.TextOffset, span, positionEditable: span.UserAdded);
+            using var dlg = new SpanEditForm("Edit Redaction", SpanPositionKind.TextOffset, span, positionEditable: span.UserAdded, maxOffset: _originalText.Length);
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
                 if (span.UserAdded)

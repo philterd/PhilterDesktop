@@ -25,7 +25,7 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// Footnote and endnote text was never sent to the redaction engine — only the body and
-    /// headers/footers were — so PII in a note shipped in the output (philterd-website issue #477).
+    /// headers/footers were — so PII in a note shipped in the output.
     /// These pin that footnotes and endnotes are now redacted like body paragraphs.
     /// </summary>
     public sealed class WordFootnoteRedactionTests : IDisposable
@@ -281,8 +281,8 @@ namespace PhilterDesktop.Tests
         [Fact]
         public void Redact_FootnoteContainingTextBox_RedactsBoxText_PreservesDrawing()
         {
-            // A drawing/text box inside a footnote must be handled by the same drawing-safe rebuild (#481)
-            // while the note text is redacted (#477).
+            // A drawing/text box inside a footnote must be handled by the same drawing-safe rebuild
+            // while the note text is redacted.
             string input = NewPath("fnbox.docx");
             string output = NewPath("fnbox_out.docx");
             WordDocs.CreateWithRawFootnote(input, WordDocs.TextBoxParaXml("box bx@example.com", before: "note nx@example.com "), "body");

@@ -24,16 +24,19 @@ namespace PhilterDesktop
     /// https://philterd.ai/philterd-eula/) under which the official build is provided, notes the
     /// Apache 2.0 source license, warns that
     /// redaction uses statistical methods and must always be reviewed by a human, and gates startup
-    /// behind an "I Agree" / "I Disagree" choice. A "Don't show this again" checkbox suppresses it
-    /// on future launches. Shown by <see cref="Program"/> before the main window.
+    /// behind an "I Agree" / "I Disagree" choice. Once the user agrees, acceptance is recorded so the
+    /// dialog is not shown again. Shown by <see cref="Program"/> before the main window.
     /// </summary>
     public partial class WelcomeForm : Form
     {
-        private const string PrefsKeyPath = @"Software\PhilterDesktop";
-        private const string AcceptedValueName = "EulaAccepted";
-
         /// <summary>The published Philterd Commercial License Agreement governing the official build.</summary>
         private const string EulaUrl = "https://philterd.ai/philterd-eula/";
+
+        /// <summary>
+        /// Where acceptance is persisted. Defaults to the Windows registry; tests can swap in an
+        /// in-memory store so they don't touch the real per-user registry.
+        /// </summary>
+        internal static IEulaAcceptanceStore AcceptanceStore { get; set; } = new RegistryEulaAcceptanceStore();
 
         public WelcomeForm()
         {
@@ -44,11 +47,8 @@ namespace PhilterDesktop
             _body.Select(0, 0); // keep the view scrolled to the top
         }
 
-        /// <summary>True when the user ticked "Don't show this again".</summary>
-        public bool DoNotShowAgain => _doNotShowAgain.Checked;
-
-        /// <summary>Whether the welcome dialog should be shown on this launch.</summary>
-        public static bool ShouldShow() => !HasAccepted();
+        /// <summary>Whether the welcome dialog should be shown on this launch (i.e. not yet accepted).</summary>
+        public static bool ShouldShow() => !AcceptanceStore.HasAccepted();
 
         /// <summary>Opens the published Commercial License Agreement in the user's browser.</summary>
         private void OnEulaLinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
@@ -63,25 +63,11 @@ namespace PhilterDesktop
             }
         }
 
-        /// <summary>Persists that the user accepted and asked not to be shown the dialog again.</summary>
-        public static void RememberAccepted()
-        {
-            using RegistryKey key = Registry.CurrentUser.CreateSubKey(PrefsKeyPath, writable: true);
-            key.SetValue(AcceptedValueName, 1, RegistryValueKind.DWord);
-        }
-
-        private static bool HasAccepted()
-        {
-            try
-            {
-                using RegistryKey? key = Registry.CurrentUser.OpenSubKey(PrefsKeyPath, writable: false);
-                return key?.GetValue(AcceptedValueName) is int value && value == 1;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+        /// <summary>
+        /// Persists that the user accepted the agreement. Called unconditionally once the user agrees, so
+        /// acceptance is remembered and the dialog is never re-shown after that (no opt-out to leave off).
+        /// </summary>
+        public static void RememberAccepted() => AcceptanceStore.RememberAccepted();
 
         private const string BodyText =
             "Philter Desktop\r\n" +
@@ -107,5 +93,38 @@ namespace PhilterDesktop
             "Redacted documents must always be carefully reviewed by a qualified person before they " +
             "are shared or relied upon. You are responsible for verifying that every document has been " +
             "redacted appropriately for your needs.";
+    }
+
+    /// <summary>Stores whether the user has accepted the first-run agreement.</summary>
+    internal interface IEulaAcceptanceStore
+    {
+        bool HasAccepted();
+        void RememberAccepted();
+    }
+
+    /// <summary>Default acceptance store: a per-user value under HKCU\Software\PhilterDesktop.</summary>
+    internal sealed class RegistryEulaAcceptanceStore : IEulaAcceptanceStore
+    {
+        private const string PrefsKeyPath = @"Software\PhilterDesktop";
+        private const string AcceptedValueName = "EulaAccepted";
+
+        public bool HasAccepted()
+        {
+            try
+            {
+                using RegistryKey? key = Registry.CurrentUser.OpenSubKey(PrefsKeyPath, writable: false);
+                return key?.GetValue(AcceptedValueName) is int value && value == 1;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public void RememberAccepted()
+        {
+            using RegistryKey key = Registry.CurrentUser.CreateSubKey(PrefsKeyPath, writable: true);
+            key.SetValue(AcceptedValueName, 1, RegistryValueKind.DWord);
+        }
     }
 }

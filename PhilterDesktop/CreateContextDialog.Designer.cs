@@ -62,7 +62,7 @@ namespace PhilterDesktop
             btnOk.Name = "btnOk";
             btnOk.Size = new Size(110, 34);
             btnOk.TabIndex = 2;
-            btnOk.Text = "OK";
+            btnOk.Text = "&OK";
             btnOk.Click += BtnOk_Click;
             // 
             // btnCancel
@@ -72,7 +72,7 @@ namespace PhilterDesktop
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(110, 34);
             btnCancel.TabIndex = 3;
-            btnCancel.Text = "Cancel";
+            btnCancel.Text = "&Cancel";
             btnCancel.Click += BtnCancel_Click;
             // 
             // CreateContextDialog

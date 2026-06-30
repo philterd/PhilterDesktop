@@ -90,7 +90,7 @@ namespace PhilterDesktop.PolicyEditing
             okButton.Name = "okButton";
             okButton.Size = new Size(110, 34);
             okButton.TabIndex = 0;
-            okButton.Text = "OK";
+            okButton.Text = "&OK";
             okButton.UseVisualStyleBackColor = true;
             okButton.Click += OkButton_Click;
             // 
@@ -102,7 +102,7 @@ namespace PhilterDesktop.PolicyEditing
             cancelButton.Name = "cancelButton";
             cancelButton.Size = new Size(110, 34);
             cancelButton.TabIndex = 1;
-            cancelButton.Text = "Cancel";
+            cancelButton.Text = "&Cancel";
             cancelButton.UseVisualStyleBackColor = true;
             //
             // importButton

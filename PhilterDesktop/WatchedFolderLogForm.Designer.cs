@@ -94,7 +94,7 @@ namespace PhilterDesktop
             _clear.Name = "_clear";
             _clear.Size = new Size(110, 34);
             _clear.TabIndex = 2;
-            _clear.Text = "Clear Log";
+            _clear.Text = "Clear &Log";
             _clear.UseVisualStyleBackColor = true;
             _clear.Click += ClearButton_Click;
             //
@@ -106,7 +106,7 @@ namespace PhilterDesktop
             _close.Name = "_close";
             _close.Size = new Size(110, 34);
             _close.TabIndex = 3;
-            _close.Text = "Close";
+            _close.Text = "&Close";
             _close.UseVisualStyleBackColor = true;
             //
             // WatchedFolderLogForm

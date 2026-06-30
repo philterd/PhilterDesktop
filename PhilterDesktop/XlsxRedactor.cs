@@ -62,7 +62,7 @@ namespace PhilterDesktop
             int order = 0;
             int cellIndex = 0;
 
-            // Redact in memory, then write once so a failure never leaves the original or a partial file (issue #483).
+            // Redact in memory, then write once so a failure never leaves the original or a partial file.
             using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
             using SpreadsheetDocument document = SpreadsheetDocument.Open(buffer, isEditable: true);
             WorkbookPart? workbookPart = document.WorkbookPart;
@@ -73,7 +73,7 @@ namespace PhilterDesktop
                 return captured;
             }
 
-            foreach ((Cell cell, bool isHeaderRow) in EnumerateCells(workbookPart))
+            foreach ((Cell cell, bool isHeaderRow, int column) in EnumerateCells(workbookPart))
             {
                 int currentIndex = cellIndex++;
 
@@ -88,7 +88,7 @@ namespace PhilterDesktop
                     continue;
                 }
 
-                bool fullColumn = fullColumns.Contains(SpreadsheetColumn.LetterToIndex(cell.CellReference));
+                bool fullColumn = fullColumns.Contains(column);
 
                 if (fullColumn)
                 {
@@ -169,7 +169,7 @@ namespace PhilterDesktop
 
             int order = 0;
             int cellIndex = 0;
-            foreach ((Cell cell, bool _) in EnumerateCells(workbookPart))
+            foreach ((Cell cell, bool _, int _) in EnumerateCells(workbookPart))
             {
                 int currentIndex = cellIndex++;
                 if (cell.CellFormula is not null || !IsScannableCell(cell))
@@ -211,7 +211,7 @@ namespace PhilterDesktop
                 .GroupBy(s => s.ParagraphIndex)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            // Apply in memory, then write once (see Redact — issue #483).
+            // Apply in memory, then write once (see Redact).
             using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
             using SpreadsheetDocument document = SpreadsheetDocument.Open(buffer, isEditable: true);
             WorkbookPart? workbookPart = document.WorkbookPart;
@@ -223,7 +223,7 @@ namespace PhilterDesktop
             }
 
             int cellIndex = 0;
-            foreach ((Cell cell, bool _) in EnumerateCells(workbookPart))
+            foreach ((Cell cell, bool _, int _) in EnumerateCells(workbookPart))
             {
                 int currentIndex = cellIndex++;
                 if (cell.CellFormula is not null || !byCell.TryGetValue(currentIndex, out List<RedactionSpanEntity>? cellSpans))
@@ -313,8 +313,10 @@ namespace PhilterDesktop
         // --- helpers ----------------------------------------------------------
 
         // Canonical order: sheets in workbook order, then rows, then cells (document order). The flag
-        // marks cells in each sheet's first (header) row, which full-column redaction leaves intact.
-        private static IEnumerable<(Cell Cell, bool IsHeaderRow)> EnumerateCells(WorkbookPart workbookPart)
+        // marks cells in each sheet's first (header) row, which full-column redaction leaves intact. The
+        // 1-based Column comes from the cell's reference (e.g. "B3" -> 2); when a cell omits its reference
+        // (some generators do), it's the previous cell's column + 1, so it still maps to a column.
+        private static IEnumerable<(Cell Cell, bool IsHeaderRow, int Column)> EnumerateCells(WorkbookPart workbookPart)
         {
             Sheets? sheets = workbookPart.Workbook?.Sheets;
             if (sheets is null)
@@ -340,9 +342,12 @@ namespace PhilterDesktop
                 bool isHeaderRow = true;
                 foreach (Row row in sheetData.Elements<Row>())
                 {
+                    int column = 0;
                     foreach (Cell cell in row.Elements<Cell>())
                     {
-                        yield return (cell, isHeaderRow);
+                        int referenced = SpreadsheetColumn.LetterToIndex(cell.CellReference);
+                        column = referenced > 0 ? referenced : column + 1;
+                        yield return (cell, isHeaderRow, column);
                     }
                     isHeaderRow = false;
                 }
@@ -352,7 +357,7 @@ namespace PhilterDesktop
         // Cells whose stored value should be run through the detector. This includes numeric- and
         // date-typed cells: PII such as an SSN, phone, or account number is commonly typed as a bare
         // number (e.g. 123456789 with a custom "000-00-0000" display format), and that raw value is the
-        // sensitive data actually stored in the file (#478). A cell with no DataType defaults to number.
+        // sensitive data actually stored in the file. A cell with no DataType defaults to number.
         // Boolean and error cells are skipped (no free-text PII, and they shouldn't become strings);
         // formula cells are skipped by the callers (their value is computed).
         private static bool IsScannableCell(Cell cell)
@@ -408,7 +413,7 @@ namespace PhilterDesktop
             }
 
             var referenced = new HashSet<int>();
-            foreach ((Cell cell, bool _) in EnumerateCells(workbookPart))
+            foreach ((Cell cell, bool _, int _) in EnumerateCells(workbookPart))
             {
                 if (cell.DataType?.Value == CellValues.SharedString &&
                     int.TryParse(cell.CellValue?.InnerText, out int index))

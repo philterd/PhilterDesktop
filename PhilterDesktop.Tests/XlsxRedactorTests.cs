@@ -227,6 +227,34 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void FullColumn_OnCellsWithoutCellReferences_StillClears()
+        {
+            // Cells with no CellReference previously mapped to column 0 and slipped through full-column
+            // redaction; they must now be matched by their document-order position.
+            string input = Path.Combine(_tempDir, "noref.xlsx");
+            SpreadsheetTestHelper.CreateXlsxWithoutCellReferences(input, new[]
+            {
+                new string?[] { "Name", "Email" },
+                new string?[] { "Alice", "keep1@example.com" },
+                new string?[] { "Bob", "keep2@example.com" }
+            });
+            string output = Path.Combine(_tempDir, "noref_out.xlsx");
+
+            // Empty policy: detection finds nothing, so only the full-column selection can clear cells.
+            var fs = new Phileas.Services.FilterService();
+            var policy = new PhileasPolicy { Name = "empty", Identifiers = new Identifiers() };
+            XlsxRedactor.Redact(input, output, text => fs.Filter(policy, "ctx", 0, text), fullyRedactedColumns: new[] { 1 });
+
+            string text = SpreadsheetTestHelper.AllText(output);
+            Assert.DoesNotContain("Alice", text);   // column A data cleared even without a CellReference
+            Assert.DoesNotContain("Bob", text);
+            Assert.Contains(XlsxRedactor.ColumnReplacement, text);
+            Assert.Contains("Name", text);           // header label kept
+            Assert.Contains("keep1@example.com", text); // column B untouched
+            Assert.Contains("keep2@example.com", text);
+        }
+
+        [Fact]
         public void ReadColumns_ReturnsLetterAndHeader()
         {
             string input = Make(new[]

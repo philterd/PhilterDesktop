@@ -22,7 +22,7 @@ using PhileasPolicy = Phileas.Policy.Policy;
 namespace PhilterDesktop
 {
     /// <summary>
-    /// Prototype "preview-first" redaction workspace for a single <c>.pdf</c>: pick a policy/context,
+    /// "Preview-first" redaction workspace for a single <c>.pdf</c>: pick a policy/context,
     /// see the redacted PDF rendered next to the original, and only write the output on Save. The
     /// preview redacts entirely in memory — the redacted bytes are held in <see cref="_redactedBytes"/>
     /// and are written to disk only when the reviewer saves, so no redacted PII ever lands in a temp

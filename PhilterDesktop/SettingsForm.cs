@@ -485,11 +485,6 @@ namespace PhilterDesktop
             }
         }
 
-        private void ChkEnableLogging_CheckedChanged(object sender, EventArgs e)
-        {
-  
-        }
-
         private string GetLogFilePath()
         {
             string root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -621,6 +616,20 @@ namespace PhilterDesktop
                         return;
                     }
                 }
+            }
+
+            // Validate the redacted-file-name suffix: an empty/whitespace suffix (output would collide
+            // with the original) or one with characters that aren't legal in file names is normalized;
+            // surface the adjustment so the user can review it before it's saved.
+            string normalizedSuffix = RedactionService.NormalizeSuffix(txtSuffix.Text);
+            if (!string.Equals(normalizedSuffix, txtSuffix.Text.Trim(), StringComparison.Ordinal))
+            {
+                txtSuffix.Text = normalizedSuffix;
+                MessageBox.Show(this,
+                    $"The redacted file-name suffix was adjusted to \"{normalizedSuffix}\".\n\n" +
+                    "It can't be empty or contain characters that aren't allowed in file names.",
+                    "Settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return; // let the user see the corrected value, then save again
             }
 
             // Save settings

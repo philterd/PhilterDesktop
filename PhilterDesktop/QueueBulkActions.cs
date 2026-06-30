@@ -22,7 +22,7 @@ namespace PhilterDesktop
     /// <summary>
     /// Bulk queue operations that act on <b>every</b> selected row, extracted from the form so the
     /// multi-select behavior is unit-testable (the context-menu actions previously used only
-    /// <c>SelectedItems[0]</c> — issue #487).
+    /// <c>SelectedItems[0]</c>).
     /// </summary>
     internal static class QueueBulkActions
     {
@@ -51,6 +51,20 @@ namespace PhilterDesktop
                 deleteHistory(id);
             }
             return skipped;
+        }
+
+        /// <summary>
+        /// The confirmation prompt shown before removing queue items (context menu or Delete key), so an
+        /// accidental removal can't silently discard work. Names the single file when there's one.
+        /// </summary>
+        public static string RemoveConfirmationMessage(int count, string? singleFileName)
+        {
+            string lead = count == 1
+                ? $"Remove \"{singleFileName}\" from the queue?"
+                : $"Remove {count} items from the queue?";
+            return lead + Environment.NewLine + Environment.NewLine +
+                "This clears the redaction history for the removed item" + (count == 1 ? "" : "s") +
+                ". Your original documents and any saved redacted files are not deleted.";
         }
 
         /// <summary>

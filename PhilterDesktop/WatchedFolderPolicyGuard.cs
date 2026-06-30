@@ -21,7 +21,7 @@ namespace PhilterDesktop
     /// <summary>
     /// Helpers that keep watched folders from being orphaned when a policy is deleted: a folder that
     /// references a now-missing policy silently fails every file ("unknown policy"). The policy editor
-    /// uses these to warn and reassign affected folders to the default policy (#491).
+    /// uses these to warn and reassign affected folders to the default policy.
     /// </summary>
     internal static class WatchedFolderPolicyGuard
     {

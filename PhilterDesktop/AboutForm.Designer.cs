@@ -221,7 +221,7 @@ namespace PhilterDesktop
             btnOK.Name = "btnOK";
             btnOK.Size = new Size(77, 20);
             btnOK.TabIndex = 9;
-            btnOK.Text = "OK";
+            btnOK.Text = "&OK";
             btnOK.UseVisualStyleBackColor = true;
             btnOK.Click += btnOK_Click;
             // 

@@ -83,7 +83,7 @@ namespace PhilterDesktop
             _browseFolder.Name = "_browseFolder";
             _browseFolder.Size = new Size(110, 34);
             _browseFolder.TabIndex = 1;
-            _browseFolder.Text = "Browse…";
+            _browseFolder.Text = "&Browse…";
             _browseFolder.UseVisualStyleBackColor = true;
             _browseFolder.Click += BrowseFolder_Click;
             //
@@ -225,7 +225,7 @@ namespace PhilterDesktop
             _browseOutput.Name = "_browseOutput";
             _browseOutput.Size = new Size(110, 34);
             _browseOutput.TabIndex = 14;
-            _browseOutput.Text = "Browse…";
+            _browseOutput.Text = "Bro&wse…";
             _browseOutput.UseVisualStyleBackColor = true;
             _browseOutput.Click += BrowseOutput_Click;
             //
@@ -235,7 +235,7 @@ namespace PhilterDesktop
             _ok.Name = "_ok";
             _ok.Size = new Size(110, 34);
             _ok.TabIndex = 15;
-            _ok.Text = "OK";
+            _ok.Text = "&OK";
             _ok.UseVisualStyleBackColor = true;
             _ok.Click += OkButton_Click;
             //
@@ -246,7 +246,7 @@ namespace PhilterDesktop
             _cancel.Name = "_cancel";
             _cancel.Size = new Size(110, 34);
             _cancel.TabIndex = 16;
-            _cancel.Text = "Cancel";
+            _cancel.Text = "&Cancel";
             _cancel.UseVisualStyleBackColor = true;
             //
             // WatchedFolderForm

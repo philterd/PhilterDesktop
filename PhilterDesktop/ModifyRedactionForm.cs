@@ -377,7 +377,7 @@ namespace PhilterDesktop
             PhileasPolicy? policy = LoadPolicy(version.Policy);
 
             // Lock the form while the re-redaction runs so the user can't edit spans, switch versions,
-            // or close mid-write (which would race the async output) (#489).
+            // or close mid-write (which would race the async output).
             SetBusy(true);
             try
             {

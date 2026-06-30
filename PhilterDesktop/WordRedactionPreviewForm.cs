@@ -26,7 +26,7 @@ using PhileasPolicy = Phileas.Policy.Policy;
 namespace PhilterDesktop
 {
     /// <summary>
-    /// Prototype "preview-first" redaction workspace for a single Word (<c>.docx</c>) document. Shows
+    /// "Preview-first" redaction workspace for a single Word (<c>.docx</c>) document. Shows
     /// a paragraph-level text diff of how the redacted document will read (not a visual/WYSIWYG render),
     /// with editable redactions, and writes the real .docx (preserving structure) only on Save.
     /// </summary>
@@ -116,7 +116,7 @@ namespace PhilterDesktop
         }
 
         // Re-runs paragraph detection for the chosen policy/context off the UI thread (awaited, with the
-        // inputs disabled and a wait cursor) so a large document never freezes the window (#486).
+        // inputs disabled and a wait cursor) so a large document never freezes the window.
         private async Task DetectAsync()
         {
             if (_busy)
@@ -180,7 +180,7 @@ namespace PhilterDesktop
 
         // A policy and context must both be selected before the redacted file can be written.
         // Without them no detection has run, so saving would write an unredacted copy that merely
-        // looks like a redacted draft (philterd-website issue #484).
+        // looks like a redacted draft.
         private bool PolicyChosen => _policyCombo.SelectedItem is not null && _contextCombo.SelectedItem is not null;
 
         private void RefreshAll()

@@ -298,10 +298,5 @@ namespace PhilterDesktop
         {
             btnRemoveFile.Enabled = filesListBox.SelectedIndex >= 0;
         }
-
-        private void labelDropFiles_Click(object sender, EventArgs e)
-        {
-
-        }
     }
 }

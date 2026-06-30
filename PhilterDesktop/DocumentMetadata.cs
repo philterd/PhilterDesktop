@@ -68,7 +68,7 @@ namespace PhilterDesktop
             }
 
             // Scrub in memory, then overwrite once. Plain write (not SafeOutput): a failure must keep the
-            // already-redacted file, not delete it (issue #483).
+            // already-redacted file, not delete it.
             using MemoryStream buffer = SafeOutput.ReadToEditableStream(path);
             using WordprocessingDocument document = WordprocessingDocument.Open(buffer, isEditable: true);
 
@@ -107,7 +107,7 @@ namespace PhilterDesktop
         {
             try
             {
-                // Scrub in memory, then overwrite once (see ScrubDocx — issue #483).
+                // Scrub in memory, then overwrite once (see ScrubDocx).
                 using MemoryStream buffer = SafeOutput.ReadToEditableStream(path);
                 using (SpreadsheetDocument document = SpreadsheetDocument.Open(buffer, isEditable: true))
                 {
@@ -221,7 +221,7 @@ namespace PhilterDesktop
         // comment and the display names in word/people.xml. Replace authors with consistent per-author
         // pseudonyms ("Reviewer 1", "Reviewer 2", …) so the conversation stays readable without real
         // names, and drop the people part outright (it only stores reviewer identities). Gated by the
-        // "remove document metadata" option, the same class of identifying metadata (#508).
+        // "remove document metadata" option, the same class of identifying metadata.
         private static void AnonymizeCommentAuthors(WordprocessingDocument document)
         {
             try

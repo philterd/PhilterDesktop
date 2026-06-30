@@ -71,7 +71,7 @@ namespace PhilterDesktop.PolicyEditing
             _ok.Name = "_ok";
             _ok.Size = new Size(88, 30);
             _ok.TabIndex = 3;
-            _ok.Text = "Create";
+            _ok.Text = "Cr&eate";
             // 
             // _cancel
             // 
@@ -80,7 +80,7 @@ namespace PhilterDesktop.PolicyEditing
             _cancel.Name = "_cancel";
             _cancel.Size = new Size(88, 30);
             _cancel.TabIndex = 4;
-            _cancel.Text = "Cancel";
+            _cancel.Text = "&Cancel";
             // 
             // TemplatePickerForm
             // 
@@ -99,7 +99,6 @@ namespace PhilterDesktop.PolicyEditing
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "New Policy from Template";
-            Load += TemplatePickerForm_Load;
             ResumeLayout(false);
         }
 

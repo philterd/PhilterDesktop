@@ -25,7 +25,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// The <see cref="SettingsEntity"/> overload of <c>RedactFileAsync</c> is the single path every
     /// entry point (queue, watched folders, CLI, Find &amp; Redact) uses, so OCR can't be silently
-    /// skipped on one of them (philterd-website issue #482). These prove the overload actually honors
+    /// skipped on one of them. These prove the overload actually honors
     /// <see cref="SettingsEntity.OcrScannedPdfs"/> rather than ignoring it.
     /// </summary>
     public sealed class RedactFileSettingsOverloadTests

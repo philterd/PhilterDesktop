@@ -19,6 +19,11 @@
     <!-- Win32 application manifest: declares Windows 10/11 supportedOS and opts into long-path support.
          DPI awareness is set at runtime via ApplicationConfiguration.Initialize, not here. -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Per-monitor v2 DPI awareness (applied at runtime by ApplicationConfiguration.Initialize). This
+         is the modern mode: windows scale crisply on high-DPI and mixed-DPI multi-monitor setups, and
+         .NET automatically rescales controls when the DPI changes. Every form sets
+         AutoScaleMode = Font, so absolute-coordinate layouts scale proportionally with it. -->
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <!-- Declaring the x64 RID makes the self-contained publish lay out the native PDF
          dependencies (PDFium, SkiaSharp, ONNX Runtime) deterministically for the installer. -->
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
@@ -45,7 +50,9 @@
     <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="MimeKit" Version="4.17.0" />
     <PackageReference Include="MsgReader" Version="6.0.12" />
-    <PackageReference Include="Philterd.Phileas" Version="1.4.0" />
+    <!-- Local project reference (dev) so the injectable IContextService / durable context service is
+         available before a Phileas package with it is published. Restore the PackageReference for release. -->
+    <ProjectReference Include="..\..\phileas-dotnet\src\Phileas\Phileas.csproj" />
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
     <PackageReference Include="DiffPlex" Version="1.9.0" />
     <PackageReference Include="PDFtoImage" Version="5.2.1" />

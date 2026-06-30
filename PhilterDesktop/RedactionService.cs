@@ -111,7 +111,7 @@ namespace PhilterDesktop
         /// Returns <paramref name="desiredPath"/> if no file is already there, otherwise the next free
         /// name with a counter suffix — <c>name (2).ext</c>, <c>name (3).ext</c>, … — so two source
         /// files with the same name (from different folders) don't silently overwrite each other in a
-        /// shared output folder (#490). Used by the direct-write paths (queue, CLI, Find &amp; Redact);
+        /// shared output folder. Used by the direct-write paths (queue, CLI, Find &amp; Redact);
         /// the preview forms' Save dialog handles overwrites itself.
         /// </summary>
         public static string GetUniqueOutputPath(string desiredPath)
@@ -172,7 +172,7 @@ namespace PhilterDesktop
         /// Redacts using all the per-run options carried by <paramref name="settings"/> (OCR, Word/Excel
         /// metadata scrubbing, email-header handling). Every entry point (queue, watched folders, CLI,
         /// Find &amp; Redact) goes through here so they redact identically — no call site can forget an
-        /// option (the cause of issue #482).
+        /// option (the cause of).
         /// </summary>
         public static Task<List<RedactionSpanEntity>> RedactFileAsync(
             string inputPath,

@@ -57,7 +57,7 @@ install for all users, which does require an administrator.)
 ## Your first time opening the program
 
 The very first time you run Philter Desktop, it shows a short **welcome and license agreement** screen.
-Read it and click **I Agree** to continue (a **Don't show this again** option keeps it from reappearing).
+Read it and click **I Agree** to continue. Once you've agreed, it won't appear again on future launches.
 It also reminds you that automated redaction can miss things, so
 always review each cleaned-up document before sharing it.
 

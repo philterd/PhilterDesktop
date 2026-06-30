@@ -72,7 +72,7 @@ namespace PhilterDesktop
             _browse.Name = "_browse";
             _browse.Size = new Size(100, 26);
             _browse.TabIndex = 2;
-            _browse.Text = "Browse...";
+            _browse.Text = "&Browse...";
             _browse.UseVisualStyleBackColor = true;
             _browse.Click += OnBrowse;
             //
@@ -149,7 +149,7 @@ namespace PhilterDesktop
             _redact.Name = "_redact";
             _redact.Size = new Size(110, 34);
             _redact.TabIndex = 10;
-            _redact.Text = "Add to Queue";
+            _redact.Text = "&Add to Queue";
             _redact.UseVisualStyleBackColor = true;
             _redact.Click += OnRedact;
             //
@@ -161,7 +161,7 @@ namespace PhilterDesktop
             _cancel.Name = "_cancel";
             _cancel.Size = new Size(110, 34);
             _cancel.TabIndex = 11;
-            _cancel.Text = "Cancel";
+            _cancel.Text = "&Cancel";
             _cancel.UseVisualStyleBackColor = true;
             //
             // FolderRedactForm

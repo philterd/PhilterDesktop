@@ -75,7 +75,7 @@ namespace PhilterDesktop
             _export.Name = "_export";
             _export.Padding = new Padding(10, 0, 10, 0);
             _export.TabIndex = 2;
-            _export.Text = "Export Explanation (JSON)…";
+            _export.Text = "&Export Explanation (JSON)…";
             _export.UseVisualStyleBackColor = true;
             _export.Visible = false;
             //
@@ -87,7 +87,7 @@ namespace PhilterDesktop
             _close.Name = "_close";
             _close.Size = new Size(110, 34);
             _close.TabIndex = 1;
-            _close.Text = "Close";
+            _close.Text = "&Close";
             _close.UseVisualStyleBackColor = true;
             //
             // RedactionDetailsForm

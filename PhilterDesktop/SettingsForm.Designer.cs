@@ -148,7 +148,7 @@ namespace PhilterDesktop
             btnBrowse.Name = "btnBrowse";
             btnBrowse.Size = new Size(110, 34);
             btnBrowse.TabIndex = 3;
-            btnBrowse.Text = "Browse...";
+            btnBrowse.Text = "&Browse...";
             btnBrowse.UseVisualStyleBackColor = true;
             btnBrowse.Click += BtnBrowse_Click;
             // 
@@ -285,7 +285,7 @@ namespace PhilterDesktop
             btnOpenLog.Padding = new Padding(8, 4, 8, 4);
             btnOpenLog.Size = new Size(106, 33);
             btnOpenLog.TabIndex = 1;
-            btnOpenLog.Text = "Open Log File";
+            btnOpenLog.Text = "&Open Log File";
             btnOpenLog.UseVisualStyleBackColor = true;
             btnOpenLog.Click += BtnOpenLog_Click;
             // 
@@ -298,7 +298,7 @@ namespace PhilterDesktop
             btnClearLog.Padding = new Padding(8, 4, 8, 4);
             btnClearLog.Size = new Size(104, 33);
             btnClearLog.TabIndex = 2;
-            btnClearLog.Text = "Clear Log File";
+            btnClearLog.Text = "Clear &Log File";
             btnClearLog.UseVisualStyleBackColor = true;
             btnClearLog.Click += BtnClearLog_Click;
             // 
@@ -311,8 +311,7 @@ namespace PhilterDesktop
             chkEnableLogging.TabIndex = 0;
             chkEnableLogging.Text = "Enable logging";
             chkEnableLogging.UseVisualStyleBackColor = true;
-            chkEnableLogging.CheckedChanged += ChkEnableLogging_CheckedChanged;
-            // 
+            //
             // btnSave
             // 
             btnSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
@@ -320,7 +319,7 @@ namespace PhilterDesktop
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(110, 34);
             btnSave.TabIndex = 1;
-            btnSave.Text = "Save";
+            btnSave.Text = "&Save";
             btnSave.UseVisualStyleBackColor = true;
             btnSave.Click += BtnSave_Click;
             // 
@@ -331,7 +330,7 @@ namespace PhilterDesktop
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(110, 34);
             btnCancel.TabIndex = 2;
-            btnCancel.Text = "Cancel";
+            btnCancel.Text = "&Cancel";
             btnCancel.UseVisualStyleBackColor = true;
             btnCancel.Click += BtnCancel_Click;
             // 
@@ -441,7 +440,7 @@ namespace PhilterDesktop
             btnOcrAdvanced.Name = "btnOcrAdvanced";
             btnOcrAdvanced.Size = new Size(160, 34);
             btnOcrAdvanced.TabIndex = 2;
-            btnOcrAdvanced.Text = "Advanced…";
+            btnOcrAdvanced.Text = "Ad&vanced…";
             btnOcrAdvanced.UseVisualStyleBackColor = true;
             btnOcrAdvanced.Click += BtnOcrAdvanced_Click;
             // 
@@ -602,7 +601,7 @@ namespace PhilterDesktop
             btnAddWatched.Name = "btnAddWatched";
             btnAddWatched.Size = new Size(110, 34);
             btnAddWatched.TabIndex = 1;
-            btnAddWatched.Text = "Add...";
+            btnAddWatched.Text = "&Add...";
             btnAddWatched.UseVisualStyleBackColor = true;
             btnAddWatched.Click += BtnAddWatched_Click;
             // 
@@ -614,7 +613,7 @@ namespace PhilterDesktop
             btnEditWatched.Name = "btnEditWatched";
             btnEditWatched.Size = new Size(110, 34);
             btnEditWatched.TabIndex = 2;
-            btnEditWatched.Text = "Edit...";
+            btnEditWatched.Text = "&Edit...";
             btnEditWatched.UseVisualStyleBackColor = true;
             btnEditWatched.Click += BtnEditWatched_Click;
             // 
@@ -626,7 +625,7 @@ namespace PhilterDesktop
             btnRemoveWatched.Name = "btnRemoveWatched";
             btnRemoveWatched.Size = new Size(110, 34);
             btnRemoveWatched.TabIndex = 3;
-            btnRemoveWatched.Text = "Remove";
+            btnRemoveWatched.Text = "&Remove";
             btnRemoveWatched.UseVisualStyleBackColor = true;
             btnRemoveWatched.Click += BtnRemoveWatched_Click;
             // 
@@ -638,7 +637,7 @@ namespace PhilterDesktop
             btnViewLog.Name = "btnViewLog";
             btnViewLog.Size = new Size(110, 34);
             btnViewLog.TabIndex = 4;
-            btnViewLog.Text = "View Log...";
+            btnViewLog.Text = "&View Log...";
             btnViewLog.UseVisualStyleBackColor = true;
             btnViewLog.Click += BtnViewLog_Click;
             // 
@@ -798,7 +797,7 @@ namespace PhilterDesktop
             btnChangePassphrase.Name = "btnChangePassphrase";
             btnChangePassphrase.Size = new Size(170, 34);
             btnChangePassphrase.TabIndex = 2;
-            btnChangePassphrase.Text = "Change Passphrase…";
+            btnChangePassphrase.Text = "Change &Passphrase…";
             btnChangePassphrase.UseVisualStyleBackColor = true;
             btnChangePassphrase.Click += BtnChangePassphrase_Click;
             // 
@@ -856,8 +855,10 @@ namespace PhilterDesktop
             // 
             // SettingsForm
             // 
+            AcceptButton = btnSave;   // Enter saves
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            CancelButton = btnCancel; // Esc cancels
             ClientSize = new Size(712, 396);
             Controls.Add(btnCancel);
             Controls.Add(btnSave);

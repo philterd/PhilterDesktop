@@ -25,7 +25,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// The preview-first redaction workspaces must not let the user Save when no policy/context is
     /// selected — doing so would write an unredacted copy that looks like a redacted draft
-    /// (philterd-website issue #484). The fix is identical across the text/Word/email forms; this
+    ///. The fix is identical across the text/Word/email forms; this
     /// exercises the wiring through the plain-text form, which loads from a simple temp file.
     /// </summary>
     public sealed class PreviewSaveGatingTests
@@ -46,7 +46,7 @@ namespace PhilterDesktop.Tests
                     "Save should be enabled once a policy and context are selected."));
         }
 
-        // The Word preview uses the same off-UI-thread detection (#486); prove it finds PII via the
+        // The Word preview uses the same off-UI-thread detection; prove it finds PII via the
         // (more complex) docx detector.
         [Fact]
         public void WordPreview_AsyncDetection_FindsPii()
@@ -81,7 +81,7 @@ namespace PhilterDesktop.Tests
             });
         }
 
-        // The email preview uses the same off-UI-thread detection (#486).
+        // The email preview uses the same off-UI-thread detection.
         [Fact]
         public void EmailPreview_AsyncDetection_FindsPii()
         {
@@ -117,7 +117,7 @@ namespace PhilterDesktop.Tests
         }
 
         // The _busy guard must make an overlapping DetectAsync a no-op (so a re-detect can't trample an
-        // in-flight one) (#486).
+        // in-flight one).
         [Fact]
         public void DetectAsync_WhileBusy_IsNoOp()
         {
@@ -159,7 +159,7 @@ namespace PhilterDesktop.Tests
             field.SetValue(obj, value);
         }
 
-        // Proves the off-UI-thread detection (#486) actually runs the engine and populates spans.
+        // Proves the off-UI-thread detection actually runs the engine and populates spans.
         [Fact]
         public void AsyncDetection_RunsEngineOffUiThread_AndFindsPii()
         {
@@ -215,7 +215,7 @@ namespace PhilterDesktop.Tests
 
                     using var form = new TextRedactionPreviewForm(txtPath, policies, contexts, new SettingsEntity());
 
-                    // Detection now runs off the UI thread (#486). Clear the WinForms sync context so the
+                    // Detection now runs off the UI thread. Clear the WinForms sync context so the
                     // async continuation resumes on the thread pool (no message pump needed here), then
                     // wait for it to finish before asserting.
                     SynchronizationContext.SetSynchronizationContext(null);

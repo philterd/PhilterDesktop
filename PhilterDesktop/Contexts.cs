@@ -30,6 +30,9 @@ namespace PhilterDesktop
             ModernTheme.MakePrimary(btnCreate);
             _repo = contextRepository;
             _contextEntryRepository = contextEntryRepository;
+
+            // The Help button previously did nothing — open the Contexts documentation page.
+            helpButton.Click += (_, _) => Links.Open("https://philterd.github.io/PhilterDesktop/contexts/");
         }
 
         private void RedctionContextsForm_Load(object sender, EventArgs e)
@@ -118,9 +121,12 @@ namespace PhilterDesktop
             if (result == DialogResult.Yes)
             {
                 _repo.Delete(selectedContext.Id);
+                // Also drop the context's stored consistent-replacement entries so they don't linger in
+                // the database after the context is gone.
+                _contextEntryRepository.DeleteAllByContext(selectedContext.Name);
                 LoadContexts();
 
-                MessageBox.Show("Redaction context deleted successfully.", "Success", 
+                MessageBox.Show("Redaction context deleted successfully.", "Success",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }

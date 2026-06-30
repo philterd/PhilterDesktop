@@ -39,7 +39,7 @@ namespace PhilterDesktop
         private readonly WatchedFolderLogRepository _watchedFolderLogRepository;
         private readonly FolderWatcherService _folderWatcher;
         private bool _loggingEnabled;
-        private bool _queueBusy; // guards the async Verify / View Diff background operations (#486)
+        private bool _queueBusy; // guards the async Verify / View Diff background operations
 
         private NotifyIcon _trayIcon = null!;
         private ToolStripMenuItem _pauseResumeItem = null!;
@@ -112,6 +112,13 @@ namespace PhilterDesktop
             _redactionSpanRepository = new RedactionSpanRepository(_database);
             _watchedFolderRepository = new WatchedFolderRepository(_database);
             _watchedFolderLogRepository = new WatchedFolderLogRepository(_database);
+
+            // Back the shared redaction engine with a durable, database-backed context service so
+            // consistent (RANDOM_REPLACE) replacements persist across documents/restarts and don't
+            // accumulate in memory. Must run before any redaction (and before the watcher below, which
+            // captures the shared instance).
+            SharedFilterService.UseContextService(new LiteDbContextService(_contextEntryRepository));
+
             _folderWatcher = new FolderWatcherService(_policyRepository, _loggingEnabled, _watchedFolderLogRepository, _settingsRepository);
             _folderWatcher.FileProcessed += OnWatchedFileProcessed;
 
@@ -321,28 +328,28 @@ namespace PhilterDesktop
 
             redactDropDownItem.Name = "redactDropDownItem";
             redactDropDownItem.Size = new Size(189, 22);
-            redactDropDownItem.Text = "Redact...";
+            redactDropDownItem.Text = "&Redact...";
             redactDropDownItem.ToolTipText = "Add documents to the redaction queue";
             redactDropDownItem.Click += toolStripButtonRedactDocuments_Click;
 
             previewDropDownItem.Name = "previewDropDownItem";
             previewDropDownItem.Size = new Size(189, 22);
-            previewDropDownItem.Text = "Redact with Preview...";
+            previewDropDownItem.Text = "Redact with &Preview...";
             previewDropDownItem.Click += redactPreviewToolStripMenuItem_Click;
 
             findRedactDropDownItem.Name = "findRedactDropDownItem";
             findRedactDropDownItem.Size = new Size(189, 22);
-            findRedactDropDownItem.Text = "Find && Redact...";
+            findRedactDropDownItem.Text = "&Find && Redact...";
             findRedactDropDownItem.Click += findAndRedactToolStripMenuItem_Click;
 
             spreadsheetDropDownItem.Name = "spreadsheetDropDownItem";
             spreadsheetDropDownItem.Size = new Size(189, 22);
-            spreadsheetDropDownItem.Text = "Redact Spreadsheet...";
+            spreadsheetDropDownItem.Text = "Redact &Spreadsheet...";
             spreadsheetDropDownItem.Click += redactSpreadsheetToolStripMenuItem_Click;
 
             folderDropDownItem.Name = "folderDropDownItem";
             folderDropDownItem.Size = new Size(189, 22);
-            folderDropDownItem.Text = "Redact Folder...";
+            folderDropDownItem.Text = "Redact Fol&der...";
             folderDropDownItem.ToolTipText = "Add every supported file in a folder to the redaction queue";
             folderDropDownItem.Click += redactFolderToolStripMenuItem_Click;
 
@@ -471,22 +478,22 @@ namespace PhilterDesktop
             addFilesToRedactToolStripMenuItem.Name = "addFilesToRedactToolStripMenuItem";
             addFilesToRedactToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+O";
             addFilesToRedactToolStripMenuItem.Size = new Size(277, 22);
-            addFilesToRedactToolStripMenuItem.Text = "Add Files to Redact...";
+            addFilesToRedactToolStripMenuItem.Text = "&Add Files to Redact...";
             addFilesToRedactToolStripMenuItem.Click += addFilesToRedactToolStripMenuItem_Click;
 
             redactPreviewToolStripMenuItem.Name = "redactPreviewToolStripMenuItem";
             redactPreviewToolStripMenuItem.Size = new Size(277, 22);
-            redactPreviewToolStripMenuItem.Text = "Redact with Preview... (.txt, .docx, .pdf)";
+            redactPreviewToolStripMenuItem.Text = "Redact with &Preview... (.txt, .docx, .pdf, .rtf, .eml, .msg)";
             redactPreviewToolStripMenuItem.Click += redactPreviewToolStripMenuItem_Click;
 
             findAndRedactToolStripMenuItem.Name = "findAndRedactToolStripMenuItem";
             findAndRedactToolStripMenuItem.Size = new Size(277, 22);
-            findAndRedactToolStripMenuItem.Text = "Find && Redact... (redact specific text)";
+            findAndRedactToolStripMenuItem.Text = "&Find && Redact... (redact specific text)";
             findAndRedactToolStripMenuItem.Click += findAndRedactToolStripMenuItem_Click;
 
             redactSpreadsheetToolStripMenuItem.Name = "redactSpreadsheetToolStripMenuItem";
             redactSpreadsheetToolStripMenuItem.Size = new Size(277, 22);
-            redactSpreadsheetToolStripMenuItem.Text = "Redact Spreadsheet... (.xlsx, .csv)";
+            redactSpreadsheetToolStripMenuItem.Text = "Redact &Spreadsheet... (.xlsx, .csv)";
             redactSpreadsheetToolStripMenuItem.Click += redactSpreadsheetToolStripMenuItem_Click;
 
             toolStripSeparator2.Name = "toolStripSeparator2";
@@ -495,17 +502,17 @@ namespace PhilterDesktop
             removeToolStripMenuItem.Name = "removeToolStripMenuItem";
             removeToolStripMenuItem.ShortcutKeyDisplayString = "Del";
             removeToolStripMenuItem.Size = new Size(277, 22);
-            removeToolStripMenuItem.Text = "Remove...";
+            removeToolStripMenuItem.Text = "Re&move...";
             removeToolStripMenuItem.Click += removeToolStripMenuItem_Click;
 
             removeAllToolStripMenuItem.Name = "removeAllToolStripMenuItem";
             removeAllToolStripMenuItem.Size = new Size(277, 22);
-            removeAllToolStripMenuItem.Text = "Remove All...";
+            removeAllToolStripMenuItem.Text = "Remove A&ll...";
             removeAllToolStripMenuItem.Click += removeAllToolStripMenuItem_Click;
 
             removeCompletedToolStripMenuItem.Name = "removeCompletedToolStripMenuItem";
             removeCompletedToolStripMenuItem.Size = new Size(277, 22);
-            removeCompletedToolStripMenuItem.Text = "Remove Completed...";
+            removeCompletedToolStripMenuItem.Text = "Remove &Completed...";
             removeCompletedToolStripMenuItem.Click += removeCompletedToolStripMenuItem_Click;
 
             toolStripSeparatorRetry.Name = "toolStripSeparatorRetry";
@@ -513,12 +520,12 @@ namespace PhilterDesktop
 
             retryToolStripMenuItem.Name = "retryToolStripMenuItem";
             retryToolStripMenuItem.Size = new Size(277, 22);
-            retryToolStripMenuItem.Text = "Retry";
+            retryToolStripMenuItem.Text = "Re&try";
             retryToolStripMenuItem.Click += retryToolStripMenuItem_Click;
 
             retryAllFailedToolStripMenuItem.Name = "retryAllFailedToolStripMenuItem";
             retryAllFailedToolStripMenuItem.Size = new Size(277, 22);
-            retryAllFailedToolStripMenuItem.Text = "Retry All Failed";
+            retryAllFailedToolStripMenuItem.Text = "Retry All Faile&d";
             retryAllFailedToolStripMenuItem.Click += retryAllFailedToolStripMenuItem_Click;
 
             toolStripSeparator5.Name = "toolStripSeparator5";
@@ -527,17 +534,17 @@ namespace PhilterDesktop
             openRedactedFileToolStripMenuItem.Name = "openRedactedFileToolStripMenuItem";
             openRedactedFileToolStripMenuItem.ShortcutKeyDisplayString = "Enter";
             openRedactedFileToolStripMenuItem.Size = new Size(277, 22);
-            openRedactedFileToolStripMenuItem.Text = "Open Redacted File...";
+            openRedactedFileToolStripMenuItem.Text = "Open &Redacted File...";
             openRedactedFileToolStripMenuItem.Click += openRedactedFileToolStripMenuItem_Click;
 
             openOriginalFileToolStripMenuItem.Name = "openOriginalFileToolStripMenuItem";
             openOriginalFileToolStripMenuItem.Size = new Size(277, 22);
-            openOriginalFileToolStripMenuItem.Text = "Open Original File...";
+            openOriginalFileToolStripMenuItem.Text = "Open &Original File...";
             openOriginalFileToolStripMenuItem.Click += openOriginalFileToolStripMenuItem_Click;
 
             openContainingFolderToolStripMenuItem.Name = "openContainingFolderToolStripMenuItem";
             openContainingFolderToolStripMenuItem.Size = new Size(277, 22);
-            openContainingFolderToolStripMenuItem.Text = "Open Containing Folder";
+            openContainingFolderToolStripMenuItem.Text = "Open Containin&g Folder";
             openContainingFolderToolStripMenuItem.Click += openContainingFolderToolStripMenuItem_Click;
 
             toolStripSeparator8.Name = "toolStripSeparator8";
@@ -545,45 +552,45 @@ namespace PhilterDesktop
 
             modifyRedactionToolStripMenuItem.Name = "modifyRedactionToolStripMenuItem";
             modifyRedactionToolStripMenuItem.Size = new Size(277, 22);
-            modifyRedactionToolStripMenuItem.Text = "Modify Redaction...";
+            modifyRedactionToolStripMenuItem.Text = "Modif&y Redaction...";
             modifyRedactionToolStripMenuItem.Click += modifyRedactionToolStripMenuItem_Click;
 
             viewDiffToolStripMenuItem.Name = "viewDiffToolStripMenuItem";
             viewDiffToolStripMenuItem.Size = new Size(277, 22);
-            viewDiffToolStripMenuItem.Text = "View Diff...";
+            viewDiffToolStripMenuItem.Text = "Vie&w Diff...";
             viewDiffToolStripMenuItem.Click += viewDiffToolStripMenuItem_Click;
 
             viewDetailsToolStripMenuItem.Name = "viewDetailsToolStripMenuItem";
             viewDetailsToolStripMenuItem.Size = new Size(277, 22);
-            viewDetailsToolStripMenuItem.Text = "View Details...";
+            viewDetailsToolStripMenuItem.Text = "View D&etails...";
             viewDetailsToolStripMenuItem.Click += viewDetailsToolStripMenuItem_Click;
 
             exportExplanationToolStripMenuItem.Name = "exportExplanationToolStripMenuItem";
             exportExplanationToolStripMenuItem.Size = new Size(277, 22);
-            exportExplanationToolStripMenuItem.Text = "Export Explanation (JSON)...";
+            exportExplanationToolStripMenuItem.Text = "E&xport Explanation (JSON)...";
             exportExplanationToolStripMenuItem.Click += exportExplanationToolStripMenuItem_Click;
 
             verifyRedactionToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { verifyWithSamePolicyToolStripMenuItem, verifyWithBroadPolicyToolStripMenuItem });
             verifyRedactionToolStripMenuItem.Name = "verifyRedactionToolStripMenuItem";
             verifyRedactionToolStripMenuItem.Size = new Size(277, 22);
-            verifyRedactionToolStripMenuItem.Text = "Verify Redaction";
+            verifyRedactionToolStripMenuItem.Text = "&Verify Redaction";
             verifyRedactionToolStripMenuItem.ToolTipText = "Re-scan the redacted output for any PII that may remain";
 
             verifyWithSamePolicyToolStripMenuItem.Name = "verifyWithSamePolicyToolStripMenuItem";
             verifyWithSamePolicyToolStripMenuItem.Size = new Size(220, 22);
-            verifyWithSamePolicyToolStripMenuItem.Text = "With same policy";
+            verifyWithSamePolicyToolStripMenuItem.Text = "With &same policy";
             verifyWithSamePolicyToolStripMenuItem.ToolTipText = "Re-scan using the same policy that redacted this document";
             verifyWithSamePolicyToolStripMenuItem.Click += verifyWithSamePolicyToolStripMenuItem_Click;
 
             verifyWithBroadPolicyToolStripMenuItem.Name = "verifyWithBroadPolicyToolStripMenuItem";
             verifyWithBroadPolicyToolStripMenuItem.Size = new Size(220, 22);
-            verifyWithBroadPolicyToolStripMenuItem.Text = "With broad policy";
+            verifyWithBroadPolicyToolStripMenuItem.Text = "With &broad policy";
             verifyWithBroadPolicyToolStripMenuItem.ToolTipText = "Re-scan with every detector on (may flag items you chose not to redact)";
             verifyWithBroadPolicyToolStripMenuItem.Click += verifyWithBroadPolicyToolStripMenuItem_Click;
 
             generateReportToolStripMenuItem.Name = "generateReportToolStripMenuItem";
             generateReportToolStripMenuItem.Size = new Size(277, 22);
-            generateReportToolStripMenuItem.Text = "Generate Report...";
+            generateReportToolStripMenuItem.Text = "Ge&nerate Report...";
             generateReportToolStripMenuItem.ToolTipText = "Create a shareable PDF/HTML summary of this redaction (no original text)";
             generateReportToolStripMenuItem.Click += generateReportToolStripMenuItem_Click;
 
@@ -593,7 +600,7 @@ namespace PhilterDesktop
             refreshToolStripMenuItem.Name = "refreshToolStripMenuItem";
             refreshToolStripMenuItem.ShortcutKeyDisplayString = "F5";
             refreshToolStripMenuItem.Size = new Size(277, 22);
-            refreshToolStripMenuItem.Text = "Refresh";
+            refreshToolStripMenuItem.Text = "Refres&h";
             refreshToolStripMenuItem.Click += refreshToolStripMenuItem_Click;
 
             contextMenuStrip1.ResumeLayout(false);
@@ -811,7 +818,7 @@ namespace PhilterDesktop
                 Font = new Font(ModernTheme.UiFont.FontFamily, 11f, FontStyle.Regular),
                 Visible = false,
                 // The overlay sits on top of the (empty) list, so dropping onto the hint must work too —
-                // forward to the same handlers as the list (#488).
+                // forward to the same handlers as the list.
                 AllowDrop = true
             };
             _emptyStateLabel.DragEnter += QueueList_DragEnter;
@@ -2210,7 +2217,7 @@ namespace PhilterDesktop
             retryAllFailedToolStripMenuItem.Enabled = anyFailed;   // requeue every failed item
 
             // Single-document actions open a viewer/file/dialog for one item, so they're enabled only
-            // when exactly one row is selected — never silently acting on just the first of several (#487).
+            // when exactly one row is selected — never silently acting on just the first of several.
             openRedactedFileToolStripMenuItem.Enabled = singleCompleted; // exists only once redacted
             openOriginalFileToolStripMenuItem.Enabled = single;
             openContainingFolderToolStripMenuItem.Enabled = singleCompleted; // redacted file exists once completed
@@ -2313,7 +2320,7 @@ namespace PhilterDesktop
             }
 
             // Reading the files and (for .docx) extracting paragraphs can take a moment on a large file,
-            // so do it off the UI thread, then build and show the viewer on the UI thread (#486).
+            // so do it off the UI thread, then build and show the viewer on the UI thread.
             _queueBusy = true;
             UseWaitCursor = true;
             try
@@ -2580,7 +2587,7 @@ namespace PhilterDesktop
             GlobalLists.Apply(policy, _settingsRepository.GetSettings());
 
             // Re-scanning a large output can take a moment; run it off the UI thread so the window stays
-            // responsive (#486). string/policy locals are captured so the worker touches no UI state.
+            // responsive. string/policy locals are captured so the worker touches no UI state.
             string context = latest.Context;
             VerificationOutcome outcome;
             _queueBusy = true;
@@ -2705,7 +2712,7 @@ namespace PhilterDesktop
             LoadRedactionQueue();
         }
 
-        // Prototype preview-first flow for a single .txt or .pdf file: pick the file, preview the
+        // Preview-first flow for a single .txt or .pdf file: pick the file, preview the
         // redaction, and only write the output on Save. The result is recorded as a Completed queue
         // item (with version history) so View Diff / Modify Redaction work on it afterward.
         private void findAndRedactToolStripMenuItem_Click(object? sender, EventArgs e)
@@ -3159,6 +3166,15 @@ namespace PhilterDesktop
             List<ObjectId> ids = listView1.SelectedItems.Cast<ListViewItem>()
                 .Select(i => i.Tag).OfType<ObjectId>().ToList();
             if (ids.Count == 0)
+            {
+                return;
+            }
+
+            // Confirm first — removal is easy to trigger (context menu or Delete key) and discards the
+            // item's redaction history.
+            string? singleName = ids.Count == 1 ? Path.GetFileName(_redactionQueueRepository.GetById(ids[0])?.Name ?? string.Empty) : null;
+            if (MessageBox.Show(this, QueueBulkActions.RemoveConfirmationMessage(ids.Count, singleName),
+                    "Remove", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
             {
                 return;
             }

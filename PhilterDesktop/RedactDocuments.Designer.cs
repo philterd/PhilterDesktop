@@ -101,7 +101,7 @@ namespace PhilterDesktop
             btnClearAll.Name = "btnClearAll";
             btnClearAll.Size = new Size(110, 34);
             btnClearAll.TabIndex = 4;
-            btnClearAll.Text = "Clear All";
+            btnClearAll.Text = "C&lear All";
             btnClearAll.UseVisualStyleBackColor = true;
             btnClearAll.Click += BtnClearAll_Click;
             // 
@@ -112,7 +112,7 @@ namespace PhilterDesktop
             btnRemoveFile.Name = "btnRemoveFile";
             btnRemoveFile.Size = new Size(110, 34);
             btnRemoveFile.TabIndex = 3;
-            btnRemoveFile.Text = "Remove File";
+            btnRemoveFile.Text = "&Remove File";
             btnRemoveFile.UseVisualStyleBackColor = true;
             btnRemoveFile.Click += BtnRemoveFile_Click;
             // 
@@ -137,15 +137,14 @@ namespace PhilterDesktop
             labelDropFiles.Size = new Size(177, 15);
             labelDropFiles.TabIndex = 1;
             labelDropFiles.Text = "or drop files here to redact them";
-            labelDropFiles.Click += labelDropFiles_Click;
-            // 
+            //
             // btnSelectFiles
             // 
             btnSelectFiles.Location = new Point(13, 19);
             btnSelectFiles.Name = "btnSelectFiles";
             btnSelectFiles.Size = new Size(224, 28);
             btnSelectFiles.TabIndex = 0;
-            btnSelectFiles.Text = "Select Files to Redact...";
+            btnSelectFiles.Text = "&Select Files to Redact...";
             btnSelectFiles.UseVisualStyleBackColor = true;
             btnSelectFiles.Click += BtnSelectFiles_Click;
             // 
@@ -225,7 +224,7 @@ namespace PhilterDesktop
             chkHighlightRedactions.Name = "chkHighlightRedactions";
             chkHighlightRedactions.Size = new Size(296, 19);
             chkHighlightRedactions.TabIndex = 0;
-            chkHighlightRedactions.Text = "Highlight redactions in Word (.docx) documents";
+            chkHighlightRedactions.Text = "&Highlight redactions in Word (.docx) documents";
             chkHighlightRedactions.UseVisualStyleBackColor = true;
             //
             // btnStartRedaction
@@ -234,7 +233,7 @@ namespace PhilterDesktop
             btnStartRedaction.Name = "btnStartRedaction";
             btnStartRedaction.Size = new Size(110, 34);
             btnStartRedaction.TabIndex = 2;
-            btnStartRedaction.Text = "Add to Queue";
+            btnStartRedaction.Text = "&Add to Queue";
             btnStartRedaction.UseVisualStyleBackColor = true;
             btnStartRedaction.Click += BtnStartRedaction_Click;
             // 
@@ -244,7 +243,7 @@ namespace PhilterDesktop
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(110, 34);
             btnClose.TabIndex = 3;
-            btnClose.Text = "Close";
+            btnClose.Text = "&Cancel";
             btnClose.UseVisualStyleBackColor = true;
             btnClose.Click += BtnClose_Click;
             // 

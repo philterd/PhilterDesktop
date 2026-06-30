@@ -139,7 +139,7 @@ namespace PhilterDesktop.Tests
             Assert.Contains(WordDocs.BodyParagraphs(input), p => p.Contains("@example.com"));
         }
 
-        // Issue #483: a failure mid-redaction must never leave the original (unredacted) — or a partial —
+        // a failure mid-redaction must never leave the original (unredacted) — or a partial —
         // file at the output path. With the in-memory build, the output is written only on full success,
         // so a throwing filter leaves no output file at all.
         [Fact]

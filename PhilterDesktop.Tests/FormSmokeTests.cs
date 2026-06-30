@@ -73,7 +73,7 @@ namespace PhilterDesktop.Tests
         public void MainForm_Constructs() =>
             ConstructWithDb(db => new MainForm(db, startMinimized: false));
 
-        // #488: the empty-queue hint overlay must accept dropped files (it had no AllowDrop, so dropping
+        // the empty-queue hint overlay must accept dropped files (it had no AllowDrop, so dropping
         // onto the hint — the exact onboarding gesture it invites — silently failed).
         [Fact]
         public void MainForm_EmptyStateOverlay_AcceptsDrops() => Sta(() =>
@@ -88,7 +88,7 @@ namespace PhilterDesktop.Tests
                     System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                 Assert.NotNull(field);
                 var label = (Label)field!.GetValue(form)!;
-                Assert.True(label.AllowDrop, "the empty-state hint must accept dropped files (#488)");
+                Assert.True(label.AllowDrop, "the empty-state hint must accept dropped files");
             }
             finally { try { File.Delete(path); } catch { /* best effort */ } }
         });
@@ -145,6 +145,25 @@ namespace PhilterDesktop.Tests
         [Fact]
         public void SettingsForm_Constructs() =>
             ConstructWithDb(db => new SettingsForm(new SettingsRepository(db)));
+
+        // Enter saves, Esc cancels — the Settings dialog wires AcceptButton/CancelButton.
+        [Fact]
+        public void SettingsForm_HasAcceptAndCancelButtons() => Sta(() =>
+        {
+            string path = Path.Combine(Path.GetTempPath(), "smoke-" + Guid.NewGuid().ToString("N") + ".db");
+            try
+            {
+                using var db = new LiteDatabase(path);
+                using var form = new SettingsForm(new SettingsRepository(db));
+
+                var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+                var save = form.GetType().GetField("btnSave", flags)!.GetValue(form);
+                var cancel = form.GetType().GetField("btnCancel", flags)!.GetValue(form);
+                Assert.Same(save, form.AcceptButton);
+                Assert.Same(cancel, form.CancelButton);
+            }
+            finally { try { File.Delete(path); } catch { /* best effort */ } }
+        });
 
         [Fact]
         public void SettingsForm_WithWatchedFolderTab_Constructs() =>

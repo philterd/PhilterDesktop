@@ -20,8 +20,8 @@ namespace PhilterDesktop
 {
     /// <summary>
     /// Shown when files are redacted via the Windows Explorer right-click menu. Lists the selected
-    /// files and lets the user pick the policy and context; clicking <b>Redact</b> adds each file to
-    /// the Philter Desktop redaction queue (processed by the main app).
+    /// files and lets the user pick the policy and context; clicking <b>Add to Queue</b> adds each file
+    /// to the Philter Desktop redaction queue (processed by the main app).
     /// </summary>
     public partial class ContextMenuRedactForm : Form
     {
@@ -31,7 +31,7 @@ namespace PhilterDesktop
         private readonly SettingsRepository? _settings;
         private readonly IReadOnlyList<string> _files = Array.Empty<string>();
 
-        /// <summary>Number of files added to the queue when the user clicked Redact (0 if cancelled).</summary>
+        /// <summary>Number of files added to the queue when the user clicked Add to Queue (0 if cancelled).</summary>
         public int EnqueuedCount { get; private set; }
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
