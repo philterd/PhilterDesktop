@@ -335,5 +335,140 @@ namespace PhilterDesktop.Tests
             Assert.True(retained < fileSize / 4,
                 $"retained {retained:N0} bytes after streaming a {fileSize:N0}-byte CSV; the table appears to be materialized in memory");
         }
+
+        // --- Line-ending & trailing-newline fidelity (#564, #565) ------------
+
+        // No-op filter (no PII) so the output structure equals the input structure exactly.
+        private static Phileas.Model.TextFilterResult NoOp(string text) =>
+            new(text, new List<Phileas.Model.Span>());
+
+        private string WriteRaw(string content, string name) => Write(content, name); // verbatim UTF-8, no BOM
+
+        [Theory]
+        // (input, expected output) — output must be byte-identical for a no-op filter.
+        [InlineData("a,b\nc,d\n", "a,b\nc,d\n")]          // LF, trailing LF
+        [InlineData("a,b\nc,d", "a,b\nc,d")]              // LF, NO trailing newline
+        [InlineData("a,b\r\nc,d\r\n", "a,b\r\nc,d\r\n")]  // CRLF, trailing CRLF
+        [InlineData("a,b\r\nc,d", "a,b\r\nc,d")]          // CRLF, NO trailing newline
+        [InlineData("a,b\rc,d\r", "a,b\rc,d\r")]          // CR-only (old Mac), trailing CR
+        [InlineData("a,b\rc,d", "a,b\rc,d")]              // CR-only, NO trailing newline
+        [InlineData("a,b", "a,b")]                        // single record, no newline at all
+        [InlineData("a,b\n", "a,b\n")]                    // single record, trailing LF
+        [InlineData("a,b\r\n", "a,b\r\n")]                // single record, trailing CRLF
+        public void Redact_PreservesLineEndingStyleAndTrailingNewline(string input, string expected)
+        {
+            string inPath = WriteRaw(input, "le-in.csv");
+            string outPath = Path.Combine(_tempDir, "le-out.csv");
+
+            CsvRedactor.Redact(inPath, outPath, NoOp);
+
+            Assert.Equal(expected, File.ReadAllText(outPath));
+        }
+
+        [Fact]
+        public void Redact_MixedLineEndings_NormalizeToTheFirstStyle()
+        {
+            // First terminator is CRLF, so the whole output uses CRLF; source has no trailing newline.
+            string inPath = WriteRaw("a,b\r\nc,d\ne,f", "mixed.csv");
+            string outPath = Path.Combine(_tempDir, "mixed-out.csv");
+
+            CsvRedactor.Redact(inPath, outPath, NoOp);
+
+            Assert.Equal("a,b\r\nc,d\r\ne,f", File.ReadAllText(outPath));
+        }
+
+        [Fact]
+        public async Task RedactFileAsync_Csv_LfSource_StaysLf_AndStillRedacts()
+        {
+            // LF line endings, no trailing newline, with PII to redact.
+            string inPath = WriteRaw("Name,Email\nAlice,alice@example.com\nBob,bob@example.com", "lf-pii.csv");
+            string outPath = Path.Combine(_tempDir, "lf-pii-out.csv");
+
+            await RedactionService.RedactFileAsync(inPath, outPath, EmailAndSsnPolicy(), "ctx");
+
+            string result = await File.ReadAllTextAsync(outPath);
+            Assert.DoesNotContain("alice@example.com", result);
+            Assert.DoesNotContain("bob@example.com", result);
+            Assert.DoesNotContain("\r", result);                 // never introduced CRLF
+            Assert.False(result.EndsWith("\n"), "must not append a trailing newline the source lacked");
+        }
+
+        [Fact]
+        public void Redact_EmptyFile_ProducesEmptyOutput()
+        {
+            string inPath = WriteRaw(string.Empty, "empty.csv");
+            string outPath = Path.Combine(_tempDir, "empty-out.csv");
+
+            CsvRedactor.Redact(inPath, outPath, NoOp);
+
+            Assert.True(File.Exists(outPath));
+            Assert.Equal(0, new FileInfo(outPath).Length);
+        }
+
+        [Fact]
+        public void Redact_Utf8Bom_Lf_NoTrailingNewline_PreservedExactly()
+        {
+            // BOM + LF + no trailing newline: the trailing-newline trim must remove only the 1-byte LF
+            // terminator, never the BOM at the start.
+            var enc = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
+            string inPath = Path.Combine(_tempDir, "bom-lf.csv");
+            byte[] inputBytes = enc.GetPreamble().Concat(Encoding.UTF8.GetBytes("a,b\nc,d")).ToArray();
+            File.WriteAllBytes(inPath, inputBytes);
+            string outPath = Path.Combine(_tempDir, "bom-lf-out.csv");
+
+            CsvRedactor.Redact(inPath, outPath, NoOp);
+
+            byte[] expected = enc.GetPreamble().Concat(Encoding.UTF8.GetBytes("a,b\nc,d")).ToArray();
+            Assert.Equal(expected, File.ReadAllBytes(outPath));
+        }
+
+        [Fact]
+        public void Redact_Utf16Le_Lf_NoTrailingNewline_PreservedExactly()
+        {
+            // UTF-16: a code unit is 2 bytes, so the line-ending detection and the trailing-newline trim
+            // must both account for the encoding (LF = 0x0A 0x00, trim 2 bytes — not 1).
+            var enc = new UnicodeEncoding(bigEndian: false, byteOrderMark: true);
+            string inPath = Path.Combine(_tempDir, "u16-lf.csv");
+            byte[] inputBytes = enc.GetPreamble().Concat(enc.GetBytes("a,b\nc,d")).ToArray();
+            File.WriteAllBytes(inPath, inputBytes);
+            string outPath = Path.Combine(_tempDir, "u16-lf-out.csv");
+
+            CsvRedactor.Redact(inPath, outPath, NoOp);
+
+            byte[] expected = enc.GetPreamble().Concat(enc.GetBytes("a,b\nc,d")).ToArray();
+            Assert.Equal(expected, File.ReadAllBytes(outPath));
+        }
+
+        [Fact]
+        public void Redact_Utf16Le_Crlf_TrailingNewline_Preserved()
+        {
+            var enc = new UnicodeEncoding(bigEndian: false, byteOrderMark: true);
+            string inPath = Path.Combine(_tempDir, "u16-crlf.csv");
+            File.WriteAllBytes(inPath, enc.GetPreamble().Concat(enc.GetBytes("a,b\r\nc,d\r\n")).ToArray());
+            string outPath = Path.Combine(_tempDir, "u16-crlf-out.csv");
+
+            CsvRedactor.Redact(inPath, outPath, NoOp);
+
+            byte[] expected = enc.GetPreamble().Concat(enc.GetBytes("a,b\r\nc,d\r\n")).ToArray();
+            Assert.Equal(expected, File.ReadAllBytes(outPath));
+        }
+
+        [Fact]
+        public void Redact_LfSource_WithRedaction_KeepsLfAndNoTrailingNewline()
+        {
+            // Redaction changes a cell; the surrounding structure (LF, no trailing newline) must survive.
+            string inPath = WriteRaw("Email,Note\nalice@example.com,hi\nbob@example.com,yo", "lf-redact.csv");
+            string outPath = Path.Combine(_tempDir, "lf-redact-out.csv");
+            var fs = new Phileas.Services.FilterService();
+            var policy = EmailAndSsnPolicy();
+
+            CsvRedactor.Redact(inPath, outPath, t => fs.Filter(policy, "ctx", 0, t));
+
+            string result = File.ReadAllText(outPath);
+            Assert.DoesNotContain("alice@example.com", result);
+            Assert.Equal(2, result.Count(ch => ch == '\n')); // exactly the two interior LFs, none added
+            Assert.DoesNotContain("\r", result);
+            Assert.False(result.EndsWith("\n"));
+        }
     }
 }

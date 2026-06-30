@@ -27,7 +27,9 @@ namespace PhilterDesktop
     /// Redacts CSV files. Each field is treated as an independent cell (so values in different columns
     /// are never mis-joined): the field's text is run through the filter and, when changed, written
     /// back. Parsing and writing go through CsvHelper, which is quote- and delimiter-aware, so embedded
-    /// commas, quotes, and newlines round-trip correctly (and the detected delimiter is preserved).
+    /// commas, quotes, and newlines round-trip correctly. The output preserves the source's structure:
+    /// the detected delimiter, the line-ending style (LF / CRLF / CR), and whether the file ended with a
+    /// trailing newline.
     ///
     /// Processing is fully streamed — each row is read, redacted, written, and discarded — so the whole
     /// table is never materialized in memory, regardless of how many rows the file has. The output is
@@ -221,8 +223,12 @@ namespace PhilterDesktop
             Func<string[], int, string[]> transform)
         {
             Encoding encoding = DetectEncoding(inputPath);
+            // Preserve the source's line-ending style and trailing-newline (CsvHelper defaults to CRLF + trailing).
+            string newLine = DetectLineEnding(inputPath, encoding) ?? "\r\n";
+            bool sourceEndsWithNewline = EndsWithNewline(inputPath, encoding);
             string tempPath = outputPath + ".redacting-" + Guid.NewGuid().ToString("N") + ".tmp";
             bool committed = false;
+            bool wroteRecords = false;
 
             try
             {
@@ -236,6 +242,8 @@ namespace PhilterDesktop
                     }
                     else
                     {
+                        wroteRecords = true;
+
                         // The delimiter is detected on the first read; reuse it so the output keeps the
                         // same delimiter as the source.
                         string delimiter = string.IsNullOrEmpty(parser.Delimiter) ? "," : parser.Delimiter;
@@ -243,6 +251,7 @@ namespace PhilterDesktop
                         {
                             HasHeaderRecord = false,
                             Delimiter = delimiter,
+                            NewLine = newLine, // keep the source's line-ending style (LF / CRLF / CR)
                             // Guard against CSV/formula injection: a field beginning with = + - @ (or a
                             // tab/CR) is executable when the redacted file is opened in Excel/Sheets.
                             // Escape prefixes such a field with an apostrophe so it's treated as text.
@@ -267,6 +276,12 @@ namespace PhilterDesktop
                         }
                         while (parser.Read());
                     }
+                }
+
+                // CsvWriter terminates every record; drop the last terminator if the source had none.
+                if (wroteRecords && !sourceEndsWithNewline)
+                {
+                    TrimFinalNewline(tempPath, encoding, newLine);
                 }
 
                 // Atomically swap the completed file into place. Done only after every row is written and
@@ -311,6 +326,70 @@ namespace PhilterDesktop
                 // unreadable preamble — fall through to the default
             }
             return new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);           // UTF-8, no BOM
+        }
+
+        // The source's first line-ending ("\r\n", "\n", or "\r"), or null if it has no line break.
+        private static string? DetectLineEnding(string path, Encoding encoding)
+        {
+            try
+            {
+                using var reader = new StreamReader(path, encoding);
+                int ch;
+                while ((ch = reader.Read()) != -1)
+                {
+                    if (ch == '\r')
+                    {
+                        return reader.Peek() == '\n' ? "\r\n" : "\r";
+                    }
+                    if (ch == '\n')
+                    {
+                        return "\n";
+                    }
+                }
+            }
+            catch
+            {
+                // unreadable — fall back to the caller's default
+            }
+            return null;
+        }
+
+        // True when the file's final code unit is a line terminator (LF or CR), in the given encoding.
+        private static bool EndsWithNewline(string path, Encoding encoding)
+        {
+            try
+            {
+                byte[] lf = encoding.GetBytes("\n");
+                byte[] cr = encoding.GetBytes("\r");
+                int unit = lf.Length; // bytes per code unit (1 for UTF-8, 2 for UTF-16)
+                using FileStream fs = File.OpenRead(path);
+                if (fs.Length < unit)
+                {
+                    return false;
+                }
+                fs.Seek(-unit, SeekOrigin.End);
+                var tail = new byte[unit];
+                if (fs.Read(tail, 0, unit) != unit)
+                {
+                    return false;
+                }
+                return tail.AsSpan().SequenceEqual(lf) || tail.AsSpan().SequenceEqual(cr);
+            }
+            catch
+            {
+                return true; // if unsure, assume trailing newline so we never strip real content
+            }
+        }
+
+        // Removes the terminator CsvWriter appended after the last record (one newLine's worth of bytes).
+        private static void TrimFinalNewline(string path, Encoding encoding, string newLine)
+        {
+            int terminatorBytes = encoding.GetByteCount(newLine);
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.None);
+            if (fs.Length >= terminatorBytes)
+            {
+                fs.SetLength(fs.Length - terminatorBytes);
+            }
         }
 
         private static string ApplyRanges(string original, IEnumerable<ReplacementRange> ranges)
