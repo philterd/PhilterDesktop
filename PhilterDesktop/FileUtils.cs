@@ -14,10 +14,37 @@
  * limitations under the License.
  */
 
+using System.Globalization;
 using System.Security.Cryptography;
 
 namespace PhilterDesktop
 {
+    /// <summary>Small filesystem-path helpers.</summary>
+    internal static class PathUtils
+    {
+        /// <summary>
+        /// Returns true if <paramref name="path"/> is the same folder as, or nested inside,
+        /// <paramref name="ancestor"/> (case-insensitive, after normalization). Used to keep a
+        /// watched folder and its output folder from overlapping when subfolders are watched.
+        /// </summary>
+        public static bool IsSameOrInside(string path, string ancestor)
+        {
+            if (string.IsNullOrWhiteSpace(path) || string.IsNullOrWhiteSpace(ancestor))
+            {
+                return false;
+            }
+
+            string p = Normalize(path);
+            string a = Normalize(ancestor);
+
+            return string.Equals(p, a, StringComparison.OrdinalIgnoreCase)
+                || p.StartsWith(a + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string Normalize(string p) =>
+            Path.TrimEndingDirectorySeparator(Path.GetFullPath(p));
+    }
+
     /// <summary>
     /// Computes file content hashes for the redaction report, so a report can record exactly which
     /// source and output bytes it describes (tamper-evidence for a case file / compliance record).
@@ -46,6 +73,25 @@ namespace PhilterDesktop
             {
                 return "(file not available)";
             }
+        }
+    }
+
+    /// <summary>Formats a redaction duration for display.</summary>
+    internal static class DurationFormat
+    {
+        /// <summary>
+        /// "—" when unmeasured (0 or less), milliseconds under one second, otherwise seconds with two
+        /// decimals (e.g. <c>"850 ms"</c>, <c>"1.50 s"</c>).
+        /// </summary>
+        public static string Humanize(long milliseconds)
+        {
+            if (milliseconds <= 0)
+            {
+                return "—";
+            }
+            return milliseconds < 1000
+                ? $"{milliseconds} ms"
+                : string.Create(CultureInfo.InvariantCulture, $"{milliseconds / 1000.0:0.00} s");
         }
     }
 }

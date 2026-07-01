@@ -86,4 +86,75 @@ namespace PhilterDesktop
             return QueueSummary.StatusOrder.Length; // unknown statuses sort last
         }
     }
+
+    /// <summary>
+    /// Decides whether a queue row matches the filter box text. A blank query matches everything;
+    /// otherwise the (trimmed) query must appear, case-insensitively, in any of the supplied fields
+    /// (file name, status, policy, context).
+    /// </summary>
+    internal static class QueueFilter
+    {
+        public static bool Matches(string? query, params string?[] fields)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return true;
+            }
+
+            string trimmed = query.Trim();
+            foreach (string? field in fields)
+            {
+                if (!string.IsNullOrEmpty(field) &&
+                    field.Contains(trimmed, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    /// <summary>Builds the status-bar summary text for the redaction queue.</summary>
+    internal static class QueueSummary
+    {
+        /// <summary>Queue statuses in workflow order; shared with column sorting.</summary>
+        internal static readonly string[] StatusOrder = { "Pending", "Processing", "Completed", "Failed" };
+
+        /// <summary>
+        /// e.g. "3 files  ·  2 pending  ·  1 completed", or "No documents in queue" when empty.
+        /// Statuses are listed in workflow order and zero counts are omitted.
+        /// </summary>
+        public static string Describe(int total, IReadOnlyDictionary<string, int> counts)
+        {
+            if (total == 0)
+            {
+                return "No documents in queue";
+            }
+
+            var parts = new List<string> { $"{total} file{(total == 1 ? "" : "s")}" };
+            foreach (string status in StatusOrder)
+            {
+                if (counts.TryGetValue(status, out int n) && n > 0)
+                {
+                    parts.Add($"{n} {status.ToLowerInvariant()}");
+                }
+            }
+            return string.Join("  ·  ", parts);
+        }
+
+        /// <summary>
+        /// Summary shown while the filter box narrows the list, e.g. "Showing 2 of 5 documents".
+        /// </summary>
+        public static string DescribeFilter(int shown, int total)
+        {
+            return $"Showing {shown} of {total} document{(total == 1 ? "" : "s")}";
+        }
+    }
+
+    public class QueuedRedaction
+    {
+        public string filename { get; set; } = string.Empty;
+        public string context { get; set; } = string.Empty;
+        public string policy { get; set; } = string.Empty;
+    }
 }
