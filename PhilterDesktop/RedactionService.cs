@@ -314,9 +314,22 @@ namespace PhilterDesktop
             // Plain text. Run the filter off the calling thread too (consistent with the other
             // formats), so a large .txt — especially with on-device name detection — never blocks the
             // UI thread that drives the queue/preview.
+            Encoding textEncoding = TextEncodingDetector.Detect(inputPath); // preserve the source encoding/BOM
+
+            // A very large .txt is streamed in overlapping windows so neither the whole input nor the whole
+            // filtered output is ever resident (avoids a memory spike / OutOfMemoryException). Normal-sized
+            // files take the simpler whole-string path, which is byte-for-byte identical.
+            if (new FileInfo(inputPath).Length > TextStreamRedactor.StreamAboveBytes)
+            {
+                List<Span> streamed = await Task.Run(() =>
+                    TextStreamRedactor.Redact(inputPath, outputPath,
+                        t => filterService.Filter(policy, context, 0, t), textEncoding));
+                return MapTextSpans(streamed);
+            }
+
             string text = await File.ReadAllTextAsync(inputPath);
             TextFilterResult textResult = await Task.Run(() => filterService.Filter(policy, context, 0, text));
-            await SafeOutput.WriteTextAsync(outputPath, textResult.FilteredText);
+            await SafeOutput.WriteTextAsync(outputPath, textResult.FilteredText, textEncoding);
             return MapTextSpans(textResult.Spans);
         }
 
@@ -428,6 +441,7 @@ namespace PhilterDesktop
 
         private static async Task ApplyTextSpansAsync(string sourcePath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans)
         {
+            Encoding textEncoding = TextEncodingDetector.Detect(sourcePath); // preserve the source encoding/BOM
             string text = await File.ReadAllTextAsync(sourcePath);
 
             // Spans are applied by character position (start/stop), regardless of how they originated.
@@ -447,7 +461,7 @@ namespace PhilterDesktop
                 sb.Remove(r.Start, r.End - r.Start);
                 sb.Insert(r.Start, r.Replacement ?? string.Empty);
             }
-            await SafeOutput.WriteTextAsync(outputPath, sb.ToString());
+            await SafeOutput.WriteTextAsync(outputPath, sb.ToString(), textEncoding);
         }
 
         private static async Task ApplyPdfSpansAsync(

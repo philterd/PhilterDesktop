@@ -126,6 +126,9 @@ namespace PhilterDesktop.PolicyEditing
                     break;
                 case ReplacementStyle.ConsistentStandIn:
                     strategy.Strategy = AbstractFilterStrategy.RandomReplace;
+                    // CONTEXT scope makes the same original map to the same stand-in (the wizard's promise);
+                    // the default DOCUMENT scope re-randomizes per occurrence.
+                    strategy.ReplacementScope = AbstractFilterStrategy.ReplacementScopeContext;
                     break;
                 default:
                     strategy.Strategy = AbstractFilterStrategy.Redact;

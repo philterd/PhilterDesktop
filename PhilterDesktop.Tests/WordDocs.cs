@@ -101,6 +101,116 @@ namespace PhilterDesktop.Tests
         private static Paragraph Para(string text) =>
             new(new Run(new Text(text) { Space = SpaceProcessingModeValues.Preserve }));
 
+        // --- Hyperlinks ---------------------------------------------------------------
+
+        /// <summary>
+        /// Creates a .docx with one body paragraph holding a hyperlink whose visible text is
+        /// <paramref name="displayText"/> and whose external target (stored as a relationship, referenced
+        /// by r:id) is <paramref name="targetUri"/>, plus optional extra body paragraphs.
+        /// </summary>
+        public static void CreateWithHyperlink(string path, string displayText, string targetUri, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            var body = new Body();
+
+            HyperlinkRelationship rel = main.AddHyperlinkRelationship(new Uri(targetUri), isExternal: true);
+            body.AppendChild(new Paragraph(new Hyperlink(
+                new Run(new Text(displayText) { Space = SpaceProcessingModeValues.Preserve }))
+            { Id = rel.Id }));
+
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+            main.Document = new Document(body);
+        }
+
+        /// <summary>
+        /// Creates a .docx whose <b>header</b> holds a hyperlink (external target
+        /// <paramref name="targetUri"/>) — exercises hyperlink handling on a non-main part.
+        /// </summary>
+        public static void CreateWithHyperlinkInHeader(string path, string displayText, string targetUri, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            main.Document = new Document(new Body());
+            Body body = main.Document.Body!;
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+
+            HeaderPart headerPart = main.AddNewPart<HeaderPart>();
+            HyperlinkRelationship rel = headerPart.AddHyperlinkRelationship(new Uri(targetUri), isExternal: true);
+            headerPart.Header = new Header(new Paragraph(new Hyperlink(
+                new Run(new Text(displayText) { Space = SpaceProcessingModeValues.Preserve }))
+            { Id = rel.Id }));
+
+            body.AppendChild(new SectionProperties(
+                new HeaderReference { Type = HeaderFooterValues.Default, Id = main.GetIdOfPart(headerPart) }));
+        }
+
+        /// <summary>Every external hyperlink relationship target across all parts of the package, in order.</summary>
+        public static string[] HyperlinkTargets(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            var seen = new HashSet<string>();
+            var targets = new List<string>();
+            CollectHyperlinkTargets(doc.MainDocumentPart!, seen, targets);
+            return targets.ToArray();
+        }
+
+        /// <summary>
+        /// True if every w:hyperlink element (across all parts) that carries an r:id still resolves to a
+        /// hyperlink relationship on its owning part — i.e. redaction left no dangling reference that
+        /// would make Word report the document as corrupt.
+        /// </summary>
+        public static bool HyperlinkIdsAllResolve(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            var seen = new HashSet<string>();
+            return HyperlinkIdsResolve(doc.MainDocumentPart!, seen);
+        }
+
+        private static bool HyperlinkIdsResolve(OpenXmlPart part, HashSet<string> seen)
+        {
+            if (!seen.Add(part.Uri.OriginalString))
+            {
+                return true;
+            }
+            OpenXmlElement? root = null;
+            try { root = part.RootElement; } catch { /* unparseable — nothing to check here */ }
+            if (root is not null)
+            {
+                var ids = part.HyperlinkRelationships.Select(r => r.Id).ToHashSet();
+                foreach (Hyperlink h in root.Descendants<Hyperlink>())
+                {
+                    if (h.Id?.Value is string id && !ids.Contains(id))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return part.Parts.All(child => HyperlinkIdsResolve(child.OpenXmlPart, seen));
+        }
+
+        private static void CollectHyperlinkTargets(OpenXmlPart part, HashSet<string> seen, List<string> targets)
+        {
+            if (!seen.Add(part.Uri.OriginalString))
+            {
+                return;
+            }
+            foreach (HyperlinkRelationship rel in part.HyperlinkRelationships.Where(r => r.IsExternal))
+            {
+                targets.Add(rel.Uri.ToString());
+            }
+            foreach (IdPartPair child in part.Parts)
+            {
+                CollectHyperlinkTargets(child.OpenXmlPart, seen, targets);
+            }
+        }
+
         // --- Comments -----------------------------------------------------------------
 
         /// <summary>Creates a .docx with one Word comment (one paragraph) plus the given body paragraphs.</summary>

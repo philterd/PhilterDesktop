@@ -75,6 +75,13 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void RedactionChanged_DefaultsToFalse_BeforeAnyReRedaction()
+        {
+            // The caller resets the document's verification verdict only when this becomes true.
+            OnForm(form => Assert.False(form.RedactionChanged));
+        }
+
+        [Fact]
         public void CancelButtonIsClose_SoEscClosesSafely()
         {
             OnForm(form =>

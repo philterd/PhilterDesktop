@@ -52,11 +52,18 @@ namespace PhilterDesktop
         }
 
         /// <summary>Writes <paramref name="text"/> (UTF-8, no BOM), removing a partial file on failure.</summary>
-        public static async Task WriteTextAsync(string path, string text, CancellationToken cancellationToken = default)
+        public static Task WriteTextAsync(string path, string text, CancellationToken cancellationToken = default) =>
+            WriteTextAsync(path, text, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false), cancellationToken);
+
+        /// <summary>
+        /// Writes <paramref name="text"/> in <paramref name="encoding"/> (emitting its byte-order mark when it
+        /// has one), removing a partial file on failure. Lets the text path preserve the source encoding/BOM.
+        /// </summary>
+        public static async Task WriteTextAsync(string path, string text, System.Text.Encoding encoding, CancellationToken cancellationToken = default)
         {
             try
             {
-                await File.WriteAllTextAsync(path, text, cancellationToken).ConfigureAwait(false);
+                await File.WriteAllTextAsync(path, text, encoding, cancellationToken).ConfigureAwait(false);
             }
             catch
             {

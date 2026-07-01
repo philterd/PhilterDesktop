@@ -31,18 +31,42 @@ namespace PhilterDesktop
     /// <para>So we strip embedded object groups from the raw RTF up front. Embedded images
     /// (<c>{\pict …}</c>) are deliberately left intact: removing them would damage legitimate documents
     /// (logos, charts), and text inside images is a separate OCR concern handled elsewhere.</para>
+    ///
+    /// <para>It also strips comment/annotation destinations (<c>{\annotation …}</c> and the
+    /// <c>{\*\atnauthor …}</c>/<c>{\*\atnid …}</c> companions). RichEdit renders the spec-conformant
+    /// <c>\annotation</c> comment body as visible text glued directly onto the surrounding prose with no
+    /// boundary, so a reviewer comment would be silently merged into the document. Removing the comment
+    /// groups keeps the redacted body clean — consistent with dropping reviewer comments elsewhere.</para>
     /// </summary>
     internal static class RtfSanitizer
     {
+        private static readonly string[] ObjectDestinations = { "object" };
+
+        // Comment/annotation destinations. RichEdit flattens the \annotation comment body into visible
+        // prose with no separator, so the whole group set is removed before loading.
+        private static readonly string[] CommentDestinations =
+            { "annotation", "atnid", "atnauthor", "atndate", "atnparent", "atnicn", "atnref" };
+
         /// <summary>
         /// Removes every <c>{\object …}</c> group — including the ignorable-destination form
         /// <c>{\*\object …}</c>, and its nested <c>\objdata</c>, <c>\objclass</c>, and <c>\result</c>
         /// destinations — from <paramref name="rtf"/>, returning valid RTF. Input without embedded objects
         /// is returned effectively unchanged.
         /// </summary>
-        public static string RemoveEmbeddedObjects(string rtf)
+        public static string RemoveEmbeddedObjects(string rtf) => RemoveDestinationGroups(rtf, ObjectDestinations);
+
+        /// <summary>
+        /// Removes comment/annotation destination groups (<c>{\annotation …}</c>, <c>{\*\annotation …}</c>,
+        /// and the <c>{\*\atnauthor …}</c>/<c>{\*\atnid …}</c>/… companions) so reviewer comments aren't
+        /// flattened into the redacted body. Input without comments is returned effectively unchanged.
+        /// </summary>
+        public static string RemoveComments(string rtf) => RemoveDestinationGroups(rtf, CommentDestinations);
+
+        // Removes every "{\word …}" (or "{\*\word …}") destination group whose control word is in
+        // <paramref name="words"/>, honoring nesting and escaped braces. Returns valid RTF.
+        private static string RemoveDestinationGroups(string rtf, string[] words)
         {
-            if (string.IsNullOrEmpty(rtf) || rtf.IndexOf("\\object", StringComparison.Ordinal) < 0)
+            if (string.IsNullOrEmpty(rtf) || !ContainsAnyDestination(rtf, words))
             {
                 return rtf;
             }
@@ -63,9 +87,9 @@ namespace PhilterDesktop
                     continue;
                 }
 
-                if (c == '{' && IsObjectGroupAt(rtf, i))
+                if (c == '{' && IsDestinationGroupAt(rtf, i, words))
                 {
-                    i = SkipGroup(rtf, i); // drop the whole {\object …} (or {\*\object …}) group
+                    i = SkipGroup(rtf, i); // drop the whole "{\word …}" (or "{\*\word …}") group
                     continue;
                 }
 
@@ -75,17 +99,37 @@ namespace PhilterDesktop
             return sb.ToString();
         }
 
-        // True if the '{' at <paramref name="openBrace"/> begins an embedded-object group: an optional
-        // ignorable-destination marker (\*) followed by the \object control word — i.e. "{\object" or
-        // "{\*\object".
-        private static bool IsObjectGroupAt(string rtf, int openBrace)
+        // Cheap pre-check: is any target control word even present? Avoids the full walk otherwise.
+        private static bool ContainsAnyDestination(string rtf, string[] words)
+        {
+            foreach (string word in words)
+            {
+                if (rtf.IndexOf("\\" + word, StringComparison.Ordinal) >= 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // True if the '{' at <paramref name="openBrace"/> begins a destination group for one of
+        // <paramref name="words"/>: an optional ignorable-destination marker (\*) followed by the control
+        // word — e.g. "{\object", "{\*\object", "{\annotation", or "{\*\atnauthor".
+        private static bool IsDestinationGroupAt(string rtf, int openBrace, string[] words)
         {
             int pos = openBrace + 1; // just past '{'
             if (pos + 1 < rtf.Length && rtf[pos] == '\\' && rtf[pos + 1] == '*')
             {
                 pos += 2; // skip the "\*" ignorable-destination marker
             }
-            return IsControlWordAt(rtf, pos, "object");
+            foreach (string word in words)
+            {
+                if (IsControlWordAt(rtf, pos, word))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // True if, starting at index pos, the text is a backslash control word exactly equal to

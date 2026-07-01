@@ -41,6 +41,15 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void SettingsEntity_Verification_DefaultsToOn_AndBroadPolicy()
+        {
+            var settings = new SettingsEntity();
+            Assert.True(settings.VerifyAfterRedaction);
+            // Broad is the default: same-policy verification can't catch the missed-PII case (#519).
+            Assert.True(settings.VerificationUseBroadPolicy);
+        }
+
+        [Fact]
         public void PolicyEntity_HasIdentifiersJsonDefault()
         {
             var policy = new PolicyEntity();

@@ -27,6 +27,7 @@ namespace PhilterDesktop
     {
         private static readonly Color WarnColor = Color.FromArgb(0x8A, 0x1C, 0x1C);
         private static readonly Color OkColor = Color.FromArgb(0x1B, 0x5E, 0x20);
+        private static readonly Color CaveatColor = Color.DarkOrange;
 
         private readonly LinkLabel _scopeLink;
 
@@ -57,8 +58,12 @@ namespace PhilterDesktop
             switch (outcome.Status)
             {
                 case VerificationStatus.Clean:
-                    _summary.ForeColor = OkColor;
-                    _summary.Text = $"No detectable PII remains in {fileName}.\nThe redacted output passed verification.";
+                    // A fidelity caveat (e.g. an RTF's headers/footers weren't re-scanned) tempers the
+                    // "all clear": show it in amber with the note so "clean" doesn't overstate integrity.
+                    _summary.ForeColor = outcome.FidelityNote is null ? OkColor : CaveatColor;
+                    _summary.Text = outcome.FidelityNote is null
+                        ? $"No detectable PII remains in {fileName}.\nThe redacted output passed verification."
+                        : $"No detectable PII remains in the body text of {fileName}.\n\n{outcome.FidelityNote}";
                     _list.Visible = false;
                     break;
 
@@ -66,8 +71,9 @@ namespace PhilterDesktop
                     _summary.ForeColor = WarnColor;
                     _summary.Text =
                         $"{outcome.Count} possible item{(outcome.Count == 1 ? "" : "s")} may still be present in {fileName}.\n" +
-                        "Review the redaction (adjust the policy or use Modify Redaction) before sharing this file.";
-                    PopulateFindings(outcome.Residuals);
+                        "Review the redaction (adjust the policy or use Modify Redaction) before sharing this file." +
+                        (outcome.FidelityNote is null ? "" : $"\n\n{outcome.FidelityNote}");
+                    PopulateFindings(outcome.Residuals, Path.GetExtension(fileName));
                     break;
 
                 case VerificationStatus.Error:
@@ -79,7 +85,7 @@ namespace PhilterDesktop
             }
         }
 
-        private void PopulateFindings(IReadOnlyList<RedactionSpanEntity> residuals)
+        private void PopulateFindings(IReadOnlyList<RedactionSpanEntity> residuals, string fileType)
         {
             _list.BeginUpdate();
             _list.Items.Clear();
@@ -87,7 +93,7 @@ namespace PhilterDesktop
             {
                 var item = new ListViewItem(RedactionReport.FriendlyType(s));
                 item.SubItems.Add(s.Text);
-                item.SubItems.Add(RedactionReport.LocationOf(s));
+                item.SubItems.Add(RedactionReport.LocationOf(s, fileType));
                 _list.Items.Add(item);
             }
             _list.EndUpdate();

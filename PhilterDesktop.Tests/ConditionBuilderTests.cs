@@ -67,6 +67,87 @@ namespace PhilterDesktop.Tests
             Assert.False(ConditionBuilder.TryParse(condition, out _, out _, out _));
         }
 
+        // --- #559: the builder must not offer operators/values the engine silently ignores -----------
+
+        [Fact]
+        public void TypeField_DoesNotOfferStartsWith()
+        {
+            // EvaluateType only handles ==/!=; startswith would be an always-true (over-applying) condition.
+            Assert.DoesNotContain(ConditionBuilder.OperatorsFor(Field("type")), o => o.Symbol == "startswith");
+        }
+
+        [Theory]
+        [InlineData("token")]
+        [InlineData("context")]
+        public void TextFields_OfferStartsWith(string keyword)
+        {
+            // token and context genuinely implement startswith in the engine.
+            Assert.Contains(ConditionBuilder.OperatorsFor(Field(keyword)), o => o.Symbol == "startswith");
+        }
+
+        [Fact]
+        public void TypeStartsWith_IsAlwaysTrueInEngine_WhichIsWhyItIsExcluded()
+        {
+            // Pin the engine behavior that makes "type startswith" wrong: it passes regardless of the
+            // classification (both a prefix match and a non-match), so it could never narrow anything.
+            Assert.True(ConditionEvaluator.Evaluate("type startswith \"SS\"", "ctx", "x", 0.9, "SSN"));
+            Assert.True(ConditionEvaluator.Evaluate("type startswith \"ZZ\"", "ctx", "x", 0.9, "SSN"));
+        }
+
+        [Fact]
+        public void TypeEquals_ActuallyNarrowsInEngine()
+        {
+            string c = ConditionBuilder.Build(Field("type"), Op(Field("type"), "=="), "SSN");
+            Assert.True(ConditionEvaluator.Evaluate(c, "ctx", "x", 0.9, "SSN"));
+            Assert.False(ConditionEvaluator.Evaluate(c, "ctx", "x", 0.9, "EMAIL_ADDRESS"));
+        }
+
+        [Fact]
+        public void TryParse_TypeStartsWith_ReturnsFalse_SoItFallsBackToAdvanced()
+        {
+            // An old policy holding this always-true condition can't be shown in the guided editor; it is
+            // preserved verbatim as an "advanced" condition rather than silently rewritten.
+            Assert.False(ConditionBuilder.TryParse("type startswith \"SSN\"", out _, out _, out _));
+        }
+
+        [Theory]
+        [InlineData("0")]
+        [InlineData("100")]
+        [InlineData("0.85")]
+        [InlineData(" 0.5 ")] // trimmed
+        public void IsValidNumericValue_AcceptsEngineGrammar(string value) =>
+            Assert.True(ConditionBuilder.IsValidNumericValue(value));
+
+        [Theory]
+        [InlineData("1E3")]   // exponent — double.TryParse accepts, engine rejects
+        [InlineData("1e2")]
+        [InlineData("1,000")] // thousands separator
+        [InlineData("-1")]    // sign
+        [InlineData(".5")]    // leading dot
+        [InlineData("1.")]    // trailing dot
+        [InlineData("abc")]
+        [InlineData("")]
+        [InlineData(null)]
+        public void IsValidNumericValue_RejectsWhatEngineRejects(string? value) =>
+            Assert.False(ConditionBuilder.IsValidNumericValue(value));
+
+        [Fact]
+        public void RejectedNumericForm_IsAlwaysTrueInEngine_WhichIsWhyItIsRejected()
+        {
+            // "1E3" fails the engine's value regex, so the whole condition is unparseable and always true —
+            // it passes even for a confidence that plainly doesn't "equal" it.
+            Assert.True(ConditionEvaluator.Evaluate("confidence == 1E3", "ctx", "x", 0.5, "t"));
+            Assert.True(ConditionEvaluator.Evaluate("confidence == 1E3", "ctx", "x", 1000, "t"));
+        }
+
+        [Fact]
+        public void AcceptedNumericForm_ActuallyNarrowsInEngine()
+        {
+            string c = ConditionBuilder.Build(Field("confidence"), Op(Field("confidence"), ">="), "0.8");
+            Assert.True(ConditionEvaluator.Evaluate(c, "ctx", "x", 0.9, "t"));
+            Assert.False(ConditionEvaluator.Evaluate(c, "ctx", "x", 0.5, "t"));
+        }
+
         [Fact]
         public void BuiltConditions_AreAcceptedByPhileasEvaluator()
         {

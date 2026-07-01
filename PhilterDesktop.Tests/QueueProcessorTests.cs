@@ -15,10 +15,13 @@
  */
 
 using LiteDB;
+using Phileas.Policy;
+using Phileas.Policy.Filters;
 using Phileas.Services;
 using PhilterData;
 using PhilterDesktop;
 using Xunit;
+using PhileasPolicy = Phileas.Policy.Policy;
 
 namespace PhilterDesktop.Tests
 {
@@ -72,6 +75,98 @@ namespace PhilterDesktop.Tests
 
             Assert.False(result.Success);
             Assert.Equal("File not found", result.ErrorMessage);
+        }
+
+        [Fact]
+        public async Task ProcessAsync_FileExceedsHardLimit_FailsBeforeLoading()
+        {
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{}" });
+
+            // ~2 MB file against a 1 MB hard cap — over the limit.
+            string input = Path.Combine(_tempDir, "big.txt");
+            await File.WriteAllTextAsync(input, new string('a', 2 * 1024 * 1024));
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = true, MaxInputFileSizeMb = 1 };
+            var entity = new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.False(result.Success);
+            Assert.Contains("size limit", result.ErrorMessage);
+            Assert.Contains("1 MB", result.ErrorMessage);
+            Assert.Null(result.OutputPath);        // failed before producing output
+        }
+
+        [Fact]
+        public async Task ProcessAsync_LargeFile_NoLimit_StillProcesses()
+        {
+            // A hard limit of 0 means "no limit" — the same large file goes through.
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{}" });
+
+            string input = Path.Combine(_tempDir, "big-nolimit.txt");
+            await File.WriteAllTextAsync(input, new string('a', 2 * 1024 * 1024));
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = true, MaxInputFileSizeMb = 0 };
+            var entity = new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.True(result.Success);
+            Assert.True(File.Exists(result.OutputPath!));
+        }
+
+        [Fact]
+        public async Task ProcessAsync_FileUnderHardLimit_Proceeds()
+        {
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{\"identifiers\":{\"emailAddress\":{}}}" });
+
+            string input = Path.Combine(_tempDir, "small.txt");
+            await File.WriteAllTextAsync(input, "Email john@example.com please.");
+
+            // Well under a 500 MB cap.
+            var settings = new SettingsEntity { OutputToOriginalLocation = true, MaxInputFileSizeMb = 500 };
+            var entity = new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.True(result.Success);
+            Assert.DoesNotContain("john@example.com", await File.ReadAllTextAsync(result.OutputPath!));
+        }
+
+        [Fact]
+        public async Task ProcessAsync_RtfWithHeader_FlagsContentDropped()
+        {
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{\"identifiers\":{\"emailAddress\":{}}}" });
+
+            string input = Path.Combine(_tempDir, "hdr.rtf");
+            File.WriteAllText(input,
+                @"{\rtf1\ansi\deff0{\fonttbl{\f0\fnil Arial;}}{\header\pard\f0 Letterhead\par}\f0\fs24 Body a@b.com\par}");
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = true };
+            var entity = new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.True(result.Success);
+            Assert.True(result.ContentDropped); // header present -> fidelity warning
+        }
+
+        [Fact]
+        public async Task ProcessAsync_RtfBodyOnly_DoesNotFlagContentDropped()
+        {
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{\"identifiers\":{\"emailAddress\":{}}}" });
+
+            string input = Path.Combine(_tempDir, "body.rtf");
+            File.WriteAllText(input,
+                @"{\rtf1\ansi\deff0{\fonttbl{\f0\fnil Arial;}}\f0\fs24 Body a@b.com only\par}");
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = true };
+            var entity = new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.True(result.Success);
+            Assert.False(result.ContentDropped);
         }
 
         [Fact]
@@ -262,6 +357,64 @@ namespace PhilterDesktop.Tests
             Assert.Contains("folder B", redactedB);
             Assert.DoesNotContain("@example.com", redactedA);
             Assert.DoesNotContain("@example.com", redactedB);
+        }
+
+        [Fact]
+        public async Task ProcessAsync_NameModelMissing_FlagsNameDetectionUnavailable_ButStillRedacts()
+        {
+            // Force the on-device name model absent so a names-requesting policy can't run name detection.
+            string emptyModelDir = Path.Combine(_tempDir, "no-model");
+            Directory.CreateDirectory(emptyModelDir);
+            string? prev = Environment.GetEnvironmentVariable("PHEYE_MODEL_DIR");
+            Environment.SetEnvironmentVariable("PHEYE_MODEL_DIR", emptyModelDir);
+            try
+            {
+                Assert.False(PhEyeModel.IsAvailable);
+
+                var policy = new PhileasPolicy
+                {
+                    Name = "names",
+                    Identifiers = new Identifiers
+                    {
+                        EmailAddress = new EmailAddress(),
+                        PhEyes = new List<PhEye> { PhEyeModel.CreateDefaultFilter() }
+                    }
+                };
+                _policies.Insert(new PolicyEntity { Name = "names", Json = PolicySerializer.SerializeToJson(policy) });
+
+                string input = Path.Combine(_tempDir, "names.txt");
+                await File.WriteAllTextAsync(input, "Email amy@example.com about John Smith.");
+
+                var settings = new SettingsEntity { OutputToOriginalLocation = true };
+                var entity = new RedactionQueueEntity { Name = input, Policy = "names", Context = "ctx" };
+
+                QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+                Assert.True(result.Success);
+                Assert.True(result.NameDetectionUnavailable);            // flagged for the caller to warn
+                string redacted = await File.ReadAllTextAsync(result.OutputPath!);
+                Assert.DoesNotContain("amy@example.com", redacted);      // the rest is still redacted
+                Assert.Contains("John Smith", redacted);                 // names remain — why we warn
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("PHEYE_MODEL_DIR", prev);
+            }
+        }
+
+        [Fact]
+        public async Task ProcessAsync_PolicyWithoutNames_NameDetectionUnavailableIsFalse()
+        {
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{\"identifiers\":{\"emailAddress\":{}}}" });
+            string input = Path.Combine(_tempDir, "nonames.txt");
+            await File.WriteAllTextAsync(input, "Email john@example.com please.");
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(
+                new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" },
+                _policies, new SettingsEntity { OutputToOriginalLocation = true }, _filterService);
+
+            Assert.True(result.Success);
+            Assert.False(result.NameDetectionUnavailable); // policy never asked for names
         }
 
         [Fact]

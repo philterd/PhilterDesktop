@@ -77,10 +77,12 @@ namespace PhilterData
 
         /// <summary>
         /// When verifying, scan with a broad "all detectors on" policy instead of the policy used to
-        /// redact. This can surface PII <i>types</i> the redaction policy didn't cover, at the cost of
-        /// flagging items the user may have intentionally left unredacted. Off by default.
+        /// redact. <b>On by default</b>, because a verification with the redaction's own policy cannot
+        /// surface the missed-PII (false-negative) case it exists to catch — it can only re-find types
+        /// already redacted. Broad scanning flags PII <i>types</i> the redaction policy didn't cover (to
+        /// review), while the document's own inserted replacements are never reported.
         /// </summary>
-        public bool VerificationUseBroadPolicy { get; set; } = false;
+        public bool VerificationUseBroadPolicy { get; set; } = true;
 
         /// <summary>
         /// Strip document metadata (author, company, last-modified-by, title, keywords, custom fields)
@@ -192,5 +194,32 @@ namespace PhilterData
         /// Gets or sets the date and time when the settings were last modified.
         /// </summary>
         public DateTime LastModified { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// Copies the fields that are managed <i>outside</i> the Settings dialog — the remembered window
+        /// layout, the last-used policy/context/folder, the global always-redact/ignore lists, and the
+        /// tray hint — from <paramref name="source"/> onto this instance. The Settings dialog reads the
+        /// whole singleton on open and would otherwise persist its open-time snapshot of these fields,
+        /// reverting any change a background redaction, the main window, or the Global Lists dialog made
+        /// while it was open. Re-reading and adopting them just before Save keeps this dialog to the
+        /// fields it actually owns.
+        /// </summary>
+        public void CopyExternallyManagedFieldsFrom(SettingsEntity source)
+        {
+            TrayHintShown = source.TrayHintShown;
+            GlobalAlwaysRedact = source.GlobalAlwaysRedact;
+            GlobalAlwaysIgnore = source.GlobalAlwaysIgnore;
+            LastPolicy = source.LastPolicy;
+            LastContext = source.LastContext;
+            LastSaveFolder = source.LastSaveFolder;
+            WindowX = source.WindowX;
+            WindowY = source.WindowY;
+            WindowWidth = source.WindowWidth;
+            WindowHeight = source.WindowHeight;
+            WindowMaximized = source.WindowMaximized;
+            SortColumn = source.SortColumn;
+            SortAscending = source.SortAscending;
+            ColumnWidths = source.ColumnWidths;
+        }
     }
 }

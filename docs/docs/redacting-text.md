@@ -13,10 +13,19 @@ consider.
 
 ## Rich Text (`.rtf`)
 
-A redacted `.rtf` is **rebuilt from its visible content**, so document metadata it carried (such as the
-author or title) is dropped automatically, and any embedded objects (such as an attached spreadsheet or
-Word file) are removed so they cannot carry unredacted content into the output. The cleaned-up copy is
-saved as a new `.rtf` file with its formatting preserved.
+A redacted `.rtf` is **rebuilt from its main body**, so document metadata it carried (such as the author
+or title) is dropped automatically, any embedded objects (such as an attached spreadsheet or Word file)
+are removed so they cannot carry unredacted content into the output, and any **reviewer comments**
+(annotations) are removed rather than being merged into the text. The cleaned-up copy is saved as a new
+`.rtf` file that keeps the body's formatting.
+
+!!! warning "Headers, footers, and footnotes"
+    RTF redaction works on the document **body**. Content in other parts — such as **headers, footers,
+    and footnotes** — may not be carried into the redacted `.rtf`, so **review the result** rather than
+    assuming those parts came through. If a document keeps important information in headers, footers, or
+    footnotes, save it as a **`.docx`** and redact that instead, which covers those parts. When Philter
+    Desktop notices an `.rtf` with these parts, it flags the redaction for review (in the queue's
+    Verification column, the watched-folder log, and on the command line).
 
 For adding files to the queue, previewing, adjusting, verifying, and reporting on a redaction, see
 [Redacting Documents](redacting-documents.md).

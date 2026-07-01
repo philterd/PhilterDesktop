@@ -26,16 +26,26 @@ namespace PhilterDesktop.PolicyEditing
     /// </summary>
     internal static class ConditionBuilder
     {
-        internal sealed record ConditionField(string Display, string Keyword, bool Numeric);
+        // AllowsPrefix: whether the field supports the "starts with" operator. The engine's
+        // ConditionEvaluator implements startswith for token and context, but NOT for type (EvaluateType
+        // handles only ==/!= and returns true for anything else) — so offering it there would build an
+        // always-true condition that over-applies the strategy. Numeric fields never use prefix ops.
+        internal sealed record ConditionField(string Display, string Keyword, bool Numeric, bool AllowsPrefix);
         internal sealed record ConditionOperator(string Display, string Symbol);
 
         public static readonly IReadOnlyList<ConditionField> Fields = new[]
         {
-            new ConditionField("Matched text", "token", false),
-            new ConditionField("Context", "context", false),
-            new ConditionField("Detected type", "type", false),
-            new ConditionField("Confidence (0 to 1)", "confidence", true),
-            new ConditionField("Population", "population", true),
+            new ConditionField("Matched text", "token", Numeric: false, AllowsPrefix: true),
+            new ConditionField("Context", "context", Numeric: false, AllowsPrefix: true),
+            new ConditionField("Detected type", "type", Numeric: false, AllowsPrefix: false),
+            new ConditionField("Confidence (0 to 1)", "confidence", Numeric: true, AllowsPrefix: false),
+            new ConditionField("Population", "population", Numeric: true, AllowsPrefix: false),
+        };
+
+        public static readonly IReadOnlyList<ConditionOperator> EqualityOperators = new[]
+        {
+            new ConditionOperator("equals", "=="),
+            new ConditionOperator("does not equal", "!="),
         };
 
         public static readonly IReadOnlyList<ConditionOperator> TextOperators = new[]
@@ -56,7 +66,18 @@ namespace PhilterDesktop.PolicyEditing
         };
 
         public static IReadOnlyList<ConditionOperator> OperatorsFor(ConditionField field) =>
-            field.Numeric ? NumberOperators : TextOperators;
+            field.Numeric ? NumberOperators
+            : field.AllowsPrefix ? TextOperators
+            : EqualityOperators;
+
+        // The engine's condition grammar accepts numbers as \d+(?:\.\d+)? — no sign, exponent, or
+        // thousands separator. A value outside this (e.g. "1E3", "1,000") makes the whole condition
+        // unparseable, and an unparseable condition evaluates to true, so the strategy over-applies.
+        private static readonly Regex NumericValue = new(@"^\d+(?:\.\d+)?$", RegexOptions.Compiled);
+
+        /// <summary>Whether <paramref name="value"/> is a number the engine's condition grammar accepts.</summary>
+        public static bool IsValidNumericValue(string? value) =>
+            value is not null && NumericValue.IsMatch(value.Trim());
 
         /// <summary>Builds a condition string. Numeric values are bare; text values are quoted.</summary>
         public static string Build(ConditionField field, ConditionOperator op, string value) =>

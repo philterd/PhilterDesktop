@@ -75,7 +75,7 @@ namespace PhilterDesktop
                 .ToList();
 
             List<RedactionReportRow> details = options.IncludeDetailTable
-                ? ordered.Select((s, i) => new RedactionReportRow(i + 1, FriendlyType(s), LocationOf(s), s.Replacement)).ToList()
+                ? ordered.Select((s, i) => new RedactionReportRow(i + 1, FriendlyType(s), LocationOf(s, version.FileType), s.Replacement)).ToList()
                 : new List<RedactionReportRow>();
 
             return new RedactionReportModel
@@ -109,6 +109,8 @@ namespace PhilterDesktop
                 "Clean" => $"Verified: no detectable PII remained in the output{when}.",
                 "ResidualsFound" => $"Verification warning: {count} possible item{(count == 1 ? "" : "s")} may remain in the output{when}. Review before sharing.",
                 "Error" => $"Verification could not be completed{when}.",
+                "NamesNotChecked" => $"On-device name detection was unavailable when this was redacted{when}, so person names may remain. Review before sharing.",
+                "ContentDropped" => $"This was an RTF with headers, footers, or footnotes; RTF redaction works on the document body, so those parts may not have been carried into the output{when}. Review before sharing.",
                 _ => null
             };
         }
@@ -218,9 +220,10 @@ namespace PhilterDesktop
                 char.ToUpperInvariant(w[0]) + (w.Length > 1 ? w.Substring(1).ToLowerInvariant() : string.Empty)));
         }
 
-        // A short location string per file type: PDF -> page; ordinal formats (email field / spreadsheet
-        // cell) and .docx -> field/cell/paragraph index; plain text -> character range.
-        internal static string LocationOf(RedactionSpanEntity s)
+        // A short location string per file type: PDF -> page; the ParagraphIndex doubles as a spreadsheet
+        // cell ordinal (.xlsx/.csv) or an email field ordinal (.eml/.msg), so label it for what it actually
+        // is rather than "Section N"; .docx/.txt/.rtf -> section; plain text with no index -> character range.
+        internal static string LocationOf(RedactionSpanEntity s, string? fileType = null)
         {
             if (s.PageNumber > 0)
             {
@@ -228,7 +231,13 @@ namespace PhilterDesktop
             }
             if (s.ParagraphIndex >= 0)
             {
-                return $"Section {s.ParagraphIndex + 1}";
+                int n = s.ParagraphIndex + 1;
+                return (fileType?.ToLowerInvariant()) switch
+                {
+                    ".xlsx" or ".csv" => $"Cell {n}",
+                    ".eml" or ".msg" => $"Field {n}",
+                    _ => $"Section {n}"
+                };
             }
             return $"Characters {s.CharacterStart}-{s.CharacterEnd}";
         }

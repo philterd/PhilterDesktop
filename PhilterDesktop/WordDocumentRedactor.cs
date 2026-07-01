@@ -40,6 +40,11 @@ namespace PhilterDesktop
     {
         private const string DefaultReplacement = "{{{REDACTED-custom}}}";
 
+        // A PII-bearing hyperlink target is rewritten to this. ".invalid" is reserved (RFC 2606) so it
+        // never resolves; the relationship keeps its id, so the (already redacted) link text stays valid.
+        private const string RedactedHyperlinkTarget = "https://redacted.invalid/";
+        private const string HyperlinkClassification = "hyperlink-target";
+
         /// <summary>
         /// Returns the text of each redactable paragraph (body, then headers/footers) in the canonical
         /// order used for redaction — i.e. index <c>i</c> here is <see cref="RedactionSpanEntity.ParagraphIndex"/>
@@ -49,6 +54,58 @@ namespace PhilterDesktop
         {
             using WordprocessingDocument document = WordprocessingDocument.Open(inputPath, isEditable: false);
             return EnumerateTargets(document).Select(OwnText).ToList();
+        }
+
+        /// <summary>
+        /// Returns every readable line of a .docx for a before/after review diff: the redactable
+        /// paragraphs (body, headers/footers, notes, comments — as <see cref="ReadParagraphs"/>) plus the
+        /// DrawingML text of shapes, SmartArt, and chart labels, which redaction also rewrites. Unlike
+        /// <see cref="ReadParagraphs"/>, this is <b>not</b> paragraph-index aligned — it exists so the diff
+        /// doesn't understate redactions by hiding shape/SmartArt/chart changes. Read-only.
+        /// </summary>
+        public static List<string> ReadReviewLines(string inputPath)
+        {
+            using WordprocessingDocument document = WordprocessingDocument.Open(inputPath, isEditable: false);
+            var lines = EnumerateTargets(document).Select(OwnText).ToList();
+            lines.AddRange(ReadDrawingParagraphText(document));
+            return lines;
+        }
+
+        // The concatenated text of each DrawingML paragraph across every part, in the same AllParts walk
+        // order RedactDrawingText uses — redaction preserves the drawing structure (it flattens each
+        // paragraph's text into its first run without removing paragraphs), so source and output align.
+        private static IEnumerable<string> ReadDrawingParagraphText(WordprocessingDocument document)
+        {
+            MainDocumentPart? main = document.MainDocumentPart;
+            if (main is null)
+            {
+                yield break;
+            }
+
+            foreach (OpenXmlPart part in AllParts(main))
+            {
+                OpenXmlElement? root;
+                try
+                {
+                    root = part.RootElement; // may throw on binary/VML/untyped parts — skip those
+                }
+                catch
+                {
+                    continue;
+                }
+                if (root is null)
+                {
+                    continue;
+                }
+                foreach (A.Paragraph paragraph in root.Descendants<A.Paragraph>())
+                {
+                    List<A.Text> texts = paragraph.Descendants<A.Text>().ToList();
+                    if (texts.Count > 0)
+                    {
+                        yield return string.Concat(texts.Select(t => t.Text));
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -148,7 +205,8 @@ namespace PhilterDesktop
                 paragraphIndex++;
             }
 
-            RedactDrawingText(document, filter);
+            captured.AddRange(RedactDrawingText(document, filter, ref order));
+            captured.AddRange(RedactHyperlinkTargets(document, filter, ref order));
             RemoveThreadedCommentDuplicate(document);
             document.Save(); // flush into the buffer
             SafeOutput.Write(outputPath, buffer.ToArray());
@@ -196,7 +254,12 @@ namespace PhilterDesktop
 
             if (drawingFilter is not null)
             {
-                RedactDrawingText(document, drawingFilter);
+                // Re-render path: re-redact drawing/hyperlink text via the filter (stored spans re-apply the
+                // body by position). The captured drawing spans are already in the stored history, so the
+                // returns are discarded here.
+                int order = 0;
+                RedactDrawingText(document, drawingFilter, ref order);
+                RedactHyperlinkTargets(document, drawingFilter, ref order);
             }
             RemoveThreadedCommentDuplicate(document);
             document.Save(); // flush into the buffer
@@ -269,14 +332,17 @@ namespace PhilterDesktop
         // Redacts DrawingML text (<a:t> runs in shapes, SmartArt, and charts) — which is not made of
         // WordprocessingML <w:p> paragraphs and so is missed by the body/notes enumeration. Each DrawingML
         // paragraph's runs are concatenated, filtered, and (when changed) flattened into its first run so
-        // PII in a shape/SmartArt/chart label doesn't survive. Walks every part of the package so
-        // text in the main document, headers/footers, notes, chart parts, and SmartArt data is covered.
-        private static void RedactDrawingText(WordprocessingDocument document, Func<string, TextFilterResult> filter)
+        // PII in a shape/SmartArt/chart label doesn't survive. Walks every part of the package so text in
+        // the main document, headers/footers, notes, chart parts, and SmartArt data is covered. Returns the
+        // redactions it made so they're recorded in the report/explanation like any other span (#561).
+        private static List<RedactionSpanEntity> RedactDrawingText(
+            WordprocessingDocument document, Func<string, TextFilterResult> filter, ref int order)
         {
+            var captured = new List<RedactionSpanEntity>();
             MainDocumentPart? main = document.MainDocumentPart;
             if (main is null)
             {
-                return;
+                return captured;
             }
 
             foreach (OpenXmlPart part in AllParts(main))
@@ -298,12 +364,14 @@ namespace PhilterDesktop
                 }
                 foreach (A.Paragraph paragraph in root.Descendants<A.Paragraph>().ToList())
                 {
-                    RedactDrawingParagraph(paragraph, filter);
+                    RedactDrawingParagraph(paragraph, filter, ref order, captured);
                 }
             }
+            return captured;
         }
 
-        private static void RedactDrawingParagraph(A.Paragraph paragraph, Func<string, TextFilterResult> filter)
+        private static void RedactDrawingParagraph(
+            A.Paragraph paragraph, Func<string, TextFilterResult> filter, ref int order, List<RedactionSpanEntity> captured)
         {
             List<A.Text> texts = paragraph.Descendants<A.Text>().ToList();
             if (texts.Count == 0)
@@ -330,6 +398,86 @@ namespace PhilterDesktop
             {
                 texts[i].Text = string.Empty;
             }
+
+            // Record each detection so shape/SmartArt/chart redactions appear in the report count, the
+            // "What was removed" table, and the explanation export. ParagraphIndex -1: not a body paragraph.
+            foreach (Span s in result.Spans
+                         .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
+                         .OrderBy(s => s.CharacterStart))
+            {
+                var entity = new RedactionSpanEntity
+                {
+                    Order = order++,
+                    ParagraphIndex = -1,
+                    CharacterStart = s.CharacterStart,
+                    CharacterEnd = s.CharacterEnd,
+                    Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
+                    Replacement = s.Replacement ?? string.Empty,
+                    Classification = s.Classification ?? string.Empty
+                };
+                SpanExplanation.Populate(entity, s);
+                captured.Add(entity);
+            }
+        }
+
+        // Redacts hyperlink URL *targets* — the external addresses stored as relationships and referenced
+        // by w:hyperlink r:id / HYPERLINK fields (e.g. mailto:john@x.com, an intranet URL carrying an id,
+        // a file:// path). The visible link text is redacted with the body, but the target lives in the
+        // part's relationships and would otherwise ship intact. Each external target is run through the
+        // policy filter; any target the policy flags is rewritten to a neutral placeholder (keeping the
+        // relationship id so the document stays valid). Benign targets are left untouched. Every part is
+        // walked, so links in the body, headers/footers, notes, and comments are all covered.
+        private static List<RedactionSpanEntity> RedactHyperlinkTargets(WordprocessingDocument document, Func<string, TextFilterResult> filter, ref int order)
+        {
+            var captured = new List<RedactionSpanEntity>();
+            MainDocumentPart? main = document.MainDocumentPart;
+            if (main is null)
+            {
+                return captured;
+            }
+
+            foreach (OpenXmlPart part in AllParts(main))
+            {
+                // Snapshot: we delete/re-add relationships on this part inside the loop.
+                foreach (HyperlinkRelationship rel in part.HyperlinkRelationships.ToList())
+                {
+                    if (!rel.IsExternal)
+                    {
+                        continue; // internal anchors (#bookmark) carry no external address
+                    }
+
+                    string target = rel.Uri?.ToString() ?? string.Empty;
+                    if (string.IsNullOrEmpty(target))
+                    {
+                        continue;
+                    }
+
+                    TextFilterResult result = filter(target);
+                    if (result.Spans.Count == 0)
+                    {
+                        continue; // policy found nothing in this target -> keep the link intact
+                    }
+
+                    string id = rel.Id;
+                    part.DeleteReferenceRelationship(rel);
+                    part.AddHyperlinkRelationship(new Uri(RedactedHyperlinkTarget, UriKind.Absolute), isExternal: true, id);
+
+                    var entity = new RedactionSpanEntity
+                    {
+                        Order = order++,
+                        ParagraphIndex = -1, // a hyperlink target, not a paragraph offset
+                        CharacterStart = 0,
+                        CharacterEnd = target.Length,
+                        Text = target,
+                        Replacement = RedactedHyperlinkTarget,
+                        Classification = HyperlinkClassification,
+                    };
+                    SpanExplanation.Populate(entity, result.Spans[0]);
+                    captured.Add(entity);
+                }
+            }
+
+            return captured;
         }
 
         // Every distinct part reachable from the main document part (itself included), breadth-first.

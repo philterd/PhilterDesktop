@@ -35,9 +35,23 @@ namespace PhilterDesktop
         /// <summary>End-to-end time, in milliseconds, taken to redact (and verify) this document.</summary>
         public long DurationMs { get; init; }
 
+        /// <summary>True when the policy asked for on-device name detection but the model wasn't installed,
+        /// so names were silently skipped — the caller surfaces this as a warning.</summary>
+        public bool NameDetectionUnavailable { get; private init; }
+
+        /// <summary>True when the source was an RTF with header/footer/footnote content that RTF redaction
+        /// does not carry into the output — the caller surfaces this as a fidelity warning.</summary>
+        public bool ContentDropped { get; private init; }
+
         public static QueueRedactionResult Succeeded(
-            string outputPath, IReadOnlyList<RedactionSpanEntity> spans, VerificationOutcome? verification = null, long durationMs = 0) =>
-            new() { Success = true, OutputPath = outputPath, Spans = spans, Verification = verification, DurationMs = durationMs };
+            string outputPath, IReadOnlyList<RedactionSpanEntity> spans, VerificationOutcome? verification = null,
+            long durationMs = 0, bool nameDetectionUnavailable = false, bool contentDropped = false) =>
+            new()
+            {
+                Success = true, OutputPath = outputPath, Spans = spans, Verification = verification,
+                DurationMs = durationMs, NameDetectionUnavailable = nameDetectionUnavailable,
+                ContentDropped = contentDropped
+            };
 
         public static QueueRedactionResult Failed(string message, Exception? exception = null) =>
             new() { Success = false, ErrorMessage = message, Exception = exception };
@@ -67,6 +81,16 @@ namespace PhilterDesktop
                 return QueueRedactionResult.Failed("File not found");
             }
 
+            // Enforce the hard size cap here — the single choke point every queued item passes through,
+            // whatever added it (drag-drop, Add Files, Redact Spreadsheet). A file over the limit is failed
+            // cleanly rather than being loaded whole into memory, where a multi-GB file could spike memory
+            // and OutOfMemoryException. The interactive add points still show the softer advisory prompt;
+            // this is the same safety limit (default 500 MB, 0 = no limit) the watched-folder/CLI paths use.
+            if (LargeFileWarning.ExceedsHardLimit(entity.Name, settings.MaxInputFileSizeMb))
+            {
+                return QueueRedactionResult.Failed($"Exceeds the {settings.MaxInputFileSizeMb} MB size limit");
+            }
+
             try
             {
                 // Time the whole operation end-to-end (redact + verify) for this file.
@@ -74,6 +98,11 @@ namespace PhilterDesktop
 
                 var policy = PolicySerializer.DeserializeFromJson(policyEntity.Json);
                 GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
+
+                // If names are requested but the model isn't installed, RedactFileAsync's PhEyeModel.Prepare
+                // will silently strip name detection. Capture that now (before redaction) so the caller can
+                // warn instead of reporting a clean success.
+                bool nameDetectionUnavailable = PhEyeModel.RequestedButUnavailable(policy);
                 // Don't overwrite an existing output (e.g. another source with the same file name from a
                 // different folder, written into a shared output folder) — pick a free "name (n)" instead.
                 string outputPath = RedactionService.GetUniqueOutputPath(RedactionService.GetOutputPath(entity.Name, settings));
@@ -93,12 +122,15 @@ namespace PhilterDesktop
                         verifyPolicy = VerificationPolicy.Broad();
                         GlobalLists.Apply(verifyPolicy, settings);
                     }
+                    // Don't re-flag this redaction's own inserted replacements as residual PII.
+                    IReadOnlySet<string> knownReplacements = RedactionVerifier.ReplacementsOf(spans);
                     verification = await Task.Run(() =>
-                        RedactionVerifier.Verify(outputPath, verifyPolicy, entity.Context, filterService));
+                        RedactionVerifier.Verify(outputPath, verifyPolicy, entity.Context, filterService, knownReplacements, sourcePath: entity.Name));
                 }
 
                 stopwatch.Stop();
-                return QueueRedactionResult.Succeeded(outputPath, spans, verification, stopwatch.ElapsedMilliseconds);
+                bool contentDropped = RtfFidelity.HasDroppedContent(entity.Name); // RTF header/footer/footnote loss
+                return QueueRedactionResult.Succeeded(outputPath, spans, verification, stopwatch.ElapsedMilliseconds, nameDetectionUnavailable, contentDropped);
             }
             catch (Exception ex)
             {

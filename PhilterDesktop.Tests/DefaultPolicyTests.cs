@@ -59,5 +59,37 @@ namespace PhilterDesktop.Tests
             Assert.DoesNotContain("123-45-6789", result.FilteredText);
             Assert.DoesNotContain("4111 1111 1111 1111", result.FilteredText);
         }
+
+        [Fact]
+        public void DefaultPolicy_IncludesDateFilter_WithOnlyValidDates()
+        {
+            var policy = PolicySerializer.DeserializeFromJson(DefaultPolicy.Json());
+            Assert.NotNull(policy.Identifiers.Date);
+            Assert.True(policy.Identifiers.Date!.OnlyValidDates); // valid calendar dates only, to limit noise
+        }
+
+        [Fact]
+        public void DefaultPolicy_RedactsDateOfBirth()
+        {
+            var policy = PolicySerializer.DeserializeFromJson(DefaultPolicy.Json());
+            PhEyeModel.Prepare(policy);
+
+            var result = new FilterService().Filter(policy, "ctx", 0, "Patient DOB: 03/14/1981 on file.");
+
+            Assert.DoesNotContain("03/14/1981", result.FilteredText);
+        }
+
+        [Fact]
+        public void DefaultPolicy_DoesNotRedactIncidentalNonDateNumbers()
+        {
+            // Enabling Date must not start redacting number/slash text that isn't a real calendar date.
+            var policy = PolicySerializer.DeserializeFromJson(DefaultPolicy.Json());
+            PhEyeModel.Prepare(policy);
+
+            const string sample = "The mix ratio was 3/4 and it is page 12 of 34.";
+            var result = new FilterService().Filter(policy, "ctx", 0, sample);
+
+            Assert.Equal(sample, result.FilteredText);
+        }
     }
 }

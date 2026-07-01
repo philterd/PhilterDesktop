@@ -22,10 +22,10 @@ namespace PhilterDesktop
 {
     /// <summary>
     /// The starter "default" policy created on first run. It enables a conservative set of
-    /// high-confidence, structured identifiers (low false-positive risk) plus on-device PhEye name
-    /// detection — so a brand-new user who clicks Redact actually gets meaningful redactions instead
-    /// of an unchanged copy (an empty "{}" policy redacts nothing). Users can tailor it in the Policy
-    /// Editor afterward.
+    /// high-confidence, structured identifiers (low false-positive risk), dates (valid calendar dates
+    /// only, to catch dates of birth), plus on-device PhEye name detection — so a brand-new user who
+    /// clicks Redact actually gets meaningful redactions instead of an unchanged copy (an empty "{}"
+    /// policy redacts nothing). Users can tailor it in the Policy Editor afterward.
     /// </summary>
     internal static class DefaultPolicy
     {
@@ -61,6 +61,10 @@ namespace PhilterDesktop
                     BitcoinAddress = new BitcoinAddress(),
                     TrackingNumber = new TrackingNumber(),
                     ZipCode = new ZipCode(),
+
+                    // Dates (e.g. dates of birth). OnlyValidDates keeps it to real calendar dates to
+                    // limit false positives on incidental number/slash text.
+                    Date = new Date { OnlyValidDates = true },
 
                     // On-device name detection (no network, model bundled with the app).
                     PhEyes = new List<PhEye> { PhEyeModel.CreateDefaultFilter() }

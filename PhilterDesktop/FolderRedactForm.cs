@@ -202,18 +202,23 @@ namespace PhilterDesktop
 
             RememberLastUsed(policy, context);
 
+            int queued = 0;
             foreach (string path in _selectedFiles)
             {
-                _queue.Insert(new RedactionQueueEntity
+                // Skip files already queued for this policy/context so re-running the folder doesn't re-queue them.
+                if (QueueBulkActions.TryEnqueue(_queue, new RedactionQueueEntity
                 {
                     Name = path,
                     Policy = policy,
                     Context = context,
                     Highlight = _highlight.Checked
-                });
+                }))
+                {
+                    queued++;
+                }
             }
 
-            EnqueuedCount = _selectedFiles.Count;
+            EnqueuedCount = queued;
             DialogResult = DialogResult.OK;
             Close();
         }

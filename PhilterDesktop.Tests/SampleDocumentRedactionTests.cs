@@ -16,6 +16,7 @@
 
 using Phileas.Policy;
 using Phileas.Policy.Filters;
+using PhilterData;
 using Xunit;
 using PhileasPolicy = Phileas.Policy.Policy;
 
@@ -140,6 +141,124 @@ namespace PhilterDesktop.Tests
             await RedactionService.RedactFileAsync(Path.Combine(SamplesDir, "test1.docx"), docxOut, SamplePolicy(), "ctx");
 
             Assert.Equal(File.ReadAllText(txtOut).Trim(), WordDocs.AllBodyText(docxOut));
+        }
+
+        [Fact]
+        public async Task RtfWithHeaderFooter_DropsNonBodyContent_AndFlagsIt()
+        {
+            string input = Path.Combine(SamplesDir, "header-footer.rtf");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+
+            // The source genuinely carries header/footer content, and it's flagged as a fidelity concern.
+            Assert.True(RtfFidelity.HasDroppedContent(input));
+            string sourceRaw = File.ReadAllText(input);
+            Assert.Contains("records@brannon-legal.com", sourceRaw); // header email present in the source
+            Assert.Contains("Jane Doe", sourceRaw);                  // footer content present in the source
+
+            string output = Path.Combine(_tempDir, "header-footer_redacted.rtf");
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            // The body is redacted and re-serialized; its non-PII text survives.
+            string body = RtfRedactor.ReadText(output);
+            Assert.Contains("Client Matter Summary", body);
+            Assert.DoesNotContain(Email, body);
+            Assert.DoesNotContain(Ssn, body);
+
+            // The header and footer — and their PII — are not carried into the redacted RTF at all
+            // (RTF redaction works on the body only; this is the #541 drop the app warns about).
+            string outputRaw = File.ReadAllText(output);
+            Assert.DoesNotContain("records@brannon-legal.com", outputRaw); // header email gone
+            Assert.DoesNotContain("Brannon & Associates", outputRaw);      // header text gone
+            Assert.DoesNotContain("Jane Doe", outputRaw);                  // footer content gone
+            Assert.DoesNotContain("Case No. 2025-CV-01234", outputRaw);    // footer content gone
+            Assert.DoesNotContain("\\header", outputRaw);                  // no header destination emitted
+            Assert.DoesNotContain("\\footer", outputRaw);                  // no footer destination emitted
+
+            // The original sample is untouched — header/footer still there for anyone else.
+            Assert.Contains("records@brannon-legal.com", File.ReadAllText(input));
+        }
+
+        [Fact]
+        public async Task EmailSample_EncodedHtml_RedactsEntityAndTagSplitAddresses()
+        {
+            // This .eml's HTML body hides addresses as an HTML entity (john&#64;…), split by a tag
+            // (jane<span>@</span>…), and in a mailto: href — the exact forms that used to survive in the
+            // rendered HTML while the plain-text path was clean (#540).
+            string input = Path.Combine(SamplesDir, "email-encoded-html.eml");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "email-encoded-html_redacted.eml");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            using var stream = File.OpenRead(output);
+            string html = MimeKit.MimeMessage.Load(stream).HtmlBody ?? string.Empty;
+
+            Assert.DoesNotContain("john@example.com", html);     // entity-encoded, decoded form
+            Assert.DoesNotContain("john&#64;example.com", html); // entity-encoded, raw form
+            Assert.DoesNotContain("@example.com", html);         // covers the tag-split and href addresses
+            Assert.DoesNotContain("secret@example.com", html);
+            Assert.Contains("open a ticket", html);              // non-PII link text survives
+        }
+
+        [Fact]
+        public void DocxWithChartSample_ReviewLines_IncludeDrawingText()
+        {
+            // #562: the .docx View Diff builds from ReadReviewLines, which must include shape/chart text.
+            string input = Path.Combine(SamplesDir, "docx-with-chart.docx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+
+            List<string> review = WordDocumentRedactor.ReadReviewLines(input);
+            Assert.Contains(review, l => l.Contains("chart@example.com"));                          // chart label present
+            Assert.DoesNotContain(WordDocumentRedactor.ReadParagraphs(input), l => l.Contains("chart@example.com")); // not in body-only read
+        }
+
+        [Fact]
+        public async Task DocxWithChartSample_RedactionRecordsChartAndBodySpans()
+        {
+            // #561: shape/chart redactions are captured as spans (so the report/explanation count them).
+            string input = Path.Combine(SamplesDir, "docx-with-chart.docx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "docx-with-chart_redacted.docx");
+
+            List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            Assert.Contains(spans, s => s.Text == "chart@example.com"); // drawing redaction recorded
+            Assert.Contains(spans, s => s.Text == "body@example.com");  // body redaction recorded
+            Assert.False(WordDocs.AnyPartContains(output, "@example.com"), "no email may survive in any part");
+        }
+
+        [Fact]
+        public async Task RtfWithCommentSample_CommentRemoved_NotFlattenedIntoBody()
+        {
+            // #542: an RTF comment must not be glued into the visible body.
+            string input = Path.Combine(SamplesDir, "rtf-with-comment.rtf");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "rtf-with-comment_redacted.rtf");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            string body = RtfRedactor.ReadText(output);
+            Assert.Contains("The signed contract", body);
+            Assert.Contains("Please proceed", body);
+            Assert.DoesNotContain("Reviewer note", body);                           // comment text not merged in
+            Assert.DoesNotContain("555-12-3456", body);                             // comment PII gone
+            Assert.DoesNotContain("for review.Reviewer", body);                     // no "glued comment" corruption
+        }
+
+        [Fact]
+        public async Task MsgWithRtfOnlyBodySample_IsRecoveredAndRedacted()
+        {
+            // #523: an Outlook .msg whose only body is RTF is recovered as text and redacted (not dropped).
+            string input = Path.Combine(SamplesDir, "rtf-only-body.msg");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "rtf-only-body.eml"); // .msg redacts to .eml
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            using var stream = File.OpenRead(output);
+            string body = MimeKit.MimeMessage.Load(stream).TextBody ?? string.Empty;
+            Assert.Contains("Quarterly figures", body);        // the RTF body was recovered, not dropped
+            Assert.DoesNotContain("secret@example.com", body); // and its PII is redacted
         }
 
         [Fact]

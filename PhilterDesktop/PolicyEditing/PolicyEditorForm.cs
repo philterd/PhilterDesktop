@@ -95,9 +95,6 @@ namespace PhilterDesktop.PolicyEditing
         // Identifies the editor-managed ignored-terms set, so other ignored sets in a policy are left alone.
         private const string IgnoredTermsName = "ignored-terms";
 
-        // Identifies the editor-managed always-redact dictionary, leaving any other dictionaries alone.
-        private const string AlwaysRedactName = "always-redact";
-
         // Each filter category is a tab, so only one group shows at a time and the window stays small.
         private readonly TabControl _tabs = new()
         {
@@ -985,27 +982,13 @@ namespace PhilterDesktop.PolicyEditing
                 return;
             }
 
-            Phileas.Policy.Filters.Dictionary? existing =
-                _policy.Identifiers.Dictionaries?.FirstOrDefault(d => d.Name == AlwaysRedactName);
-
-            using var dlg = new AlwaysRedactTermsForm(existing?.Terms ?? new List<string>());
+            using var dlg = new AlwaysRedactTermsForm(AlwaysRedactPolicy.GetTerms(_policy));
             if (dlg.ShowDialog(this) != DialogResult.OK)
             {
                 return;
             }
 
-            // Replace only the editor-managed dictionary; leave any other dictionaries intact.
-            _policy.Identifiers.Dictionaries?.RemoveAll(d => d.Name == AlwaysRedactName);
-            if (dlg.Terms.Count > 0)
-            {
-                _policy.Identifiers.Dictionaries ??= new List<Phileas.Policy.Filters.Dictionary>();
-                _policy.Identifiers.Dictionaries.Add(new Phileas.Policy.Filters.Dictionary
-                {
-                    Name = AlwaysRedactName,
-                    Terms = dlg.Terms.ToList(),
-                    Enabled = true
-                });
-            }
+            AlwaysRedactPolicy.SetTerms(_policy, dlg.Terms);
             _dirty = true;
         }
 

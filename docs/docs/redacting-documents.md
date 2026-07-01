@@ -38,6 +38,10 @@ There are two ways to add files:
 - **Drag and drop.** Drag one or more files from a Windows folder onto the Philter Desktop window.
   Files added this way use the **default** policy and the **default** context.
 
+If a file is already waiting in the queue (or being redacted) with the same policy and context, adding
+it again is skipped, so you won't get duplicate redactions of the same document. You can still redact a
+file again after it finishes, or add it with a different policy or context.
+
 ![The Redact Documents dialog: choose the files, a policy, and a context, then start redacting](img/redact-documents.png)
 
 *Adding files with the Redact button: pick a policy and a context, then add your documents.*
@@ -53,6 +57,10 @@ where that document is in the process:
 | **Processing** | The document is being redacted now. |
 | **Completed** | The document was redacted successfully and the copy is ready. |
 | **Failed** | Something prevented redaction: for example, the original file was moved or deleted, the file was open in another program, or the chosen policy no longer exists. |
+
+A **Completed** status shown in **amber or red** means the document finished but its **Verification**
+result needs review (for example, residual PII may remain, or names weren't checked because the name
+model isn't installed). Hover the row for a short explanation, and check the **Verification** column.
 
 If a document shows **Failed**, Philter Desktop records the reason. **Hover over the failed row** to
 see it in a pop-up, or right-click the row and choose **View Details…**, where the reason appears as a
@@ -305,6 +313,10 @@ produces `report_redacted-draft.docx`, later versions add a number, like
 `report_redacted-draft_2.docx`). Because the file is built from the original, **the original document
 must still be in its original location.** The finished document opens automatically when ready.
 
+Re-redacting produces a **new, unverified** output, so the document's earlier verification result is
+cleared (its **Verification** status returns to not-checked). Run **Verify Redaction** again on the new
+copy if you want it re-checked before sharing.
+
 ## Comparing the original and the cleaned-up copy (View Diff)
 
 Before you rely on a redacted document, confirm what changed. Right-click a **Completed** item and
@@ -325,7 +337,8 @@ A line-by-line comparison keeps matching lines side by side and color-codes the 
 - **Yellow** marks lines that were **changed**.
 
 Long lines wrap, and the two sides scroll together. For Word documents, the comparison looks at the
-**paragraphs of text** (one paragraph per line), the words Philter Desktop worked on, rather than the
+**text** Philter Desktop worked on — the paragraphs (body, headers and footers, footnotes, and
+comments) and the text inside **shapes, SmartArt, and charts** — one line at a time, rather than the
 page's fonts, spacing, or layout.
 
 ### PDF documents (`.pdf`)
@@ -375,35 +388,46 @@ document and choosing **Verify Redaction**.
   showing each item's **type, the text still present, and where it is**. Fix it by adjusting the
   policy and redacting again, or by using **Modify Redaction**, before you share the file.
 
-### Two ways to scan: same policy vs. broad policy
+Verification looks for residual **detectable PII** in the text it can read back from the output; it is
+not a check that every part of the document was preserved. For **rich text (`.rtf`)** in particular it
+re-scans the **body** only, so a clean result does not by itself confirm that headers, footers, or
+footnotes came through — when that applies, the result is flagged for review (see
+[Rich Text](redacting-text.md#rich-text-rtf)).
+
+### Two ways to scan: broad policy (default) vs. same policy
 
 When you right-click a finished document, **Verify Redaction** offers two choices:
 
-- **With same policy**: re-scans using the **same policy that redacted the document**. This is the
-  best check that the redaction *took effect*: it confirms everything the policy was meant to remove
-  is gone from the saved file. (It can't find a *kind* of information the policy never looked for.)
-- **With broad policy**: re-scans with **every built-in detector turned on**. This can surface kinds
-  of information your policy didn't cover (for example, a phone number when your policy only removed
-  email addresses). Because it looks for everything, it may also flag things you **chose not to
-  redact**, so treat its findings as prompts to review, not as mistakes.
+- **With broad policy** (recommended, and the default): re-scans with **every built-in detector turned
+  on**. This is the check that matters most: it can surface kinds of information your policy never
+  looked for (for example, a phone number when your policy only removed email addresses). Because it
+  looks for everything, it may also flag things you **chose not to redact**, so treat its findings as
+  prompts to review, not as mistakes. The document's own replacement values (such as realistic stand-in
+  names) are **not** reported.
+- **With same policy**: re-scans using only the **same policy that redacted the document**. This merely
+  confirms that policy *took effect*; it **cannot** find a kind of information the policy never looked
+  for, so it is a limited check.
 
 The automatic check after each redaction uses whichever of these you select in
-[Settings → Security](settings.md) (it uses the same policy by default).
+[Settings → Security](settings.md). It uses the **broad policy by default**.
 
 ### Seeing a document's verification result later
 
 Each document's most recent result is shown in the **Verification** column of the queue (**Clean**,
-**N may remain** in red, **Check failed**, or **Not checked**), so you can see at a glance which
-finished documents need attention. The same result, with the time it was checked, also appears in
-**View Details** (right-click a document). Running **Verify Redaction** again refreshes it.
+**N may remain** in red, **Names not checked** in amber, **Check failed**, or **Not checked**), so you
+can see at a glance which finished documents need attention. **Names not checked** means the document
+was redacted but on-device name detection wasn't available (the model isn't installed), so person names
+may remain — review it. The same result, with the time it was checked, also appears in **View Details**
+(right-click a document). Running **Verify Redaction** again refreshes it.
 
 Verification reads the **written output**, not an in-memory copy, so it also catches any problem in how
 a particular format was saved. Like everything else in Philter Desktop, it runs **entirely on your
 device**: nothing is sent anywhere. The result is included in the redaction report below.
 
 !!! note "Verification is a safety net, not a guarantee"
-    A "passed" result means nothing the **current policy** can detect remains. It can't prove a document
-    is free of every possible identifier. Always give an important document a human review as well.
+    A "passed" result means no built-in detector found anything remaining (aside from the document's own
+    replacements). It can't prove a document is free of every possible identifier. Always give an
+    important document a human review as well.
 
 ## Generating a redaction report (a shareable certificate)
 
@@ -448,6 +472,9 @@ PhilterDesktop.exe /p mypolicy /c mycontext file1.pdf file2.pdf file3.pdf
   off, the **default** policy is used.
 - **`/c`** or **`--context`**: the name of the context (consistency setting) to use. Optional; if
   you leave it off, the **default** context is used.
+- **`--highlight`**: highlight the replacements in redacted **Word (`.docx`)** documents so they are
+  easy to spot during review (the same option offered for [watched folders](watched-folders.md) and in
+  the main window). Optional and off by default; it has no effect on other file types.
 - **`/h`** or **`--help`**: show a short usage reminder.
 
 Each file is redacted into a copy with the usual `_redacted-draft` label (saved according to your

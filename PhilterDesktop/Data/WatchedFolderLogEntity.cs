@@ -31,7 +31,7 @@ namespace PhilterData
 
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
-        /// <summary>"Info" or "Error".</summary>
+        /// <summary>"Info", "Warning", or "Error".</summary>
         public string Level { get; set; } = "Info";
 
         public string Message { get; set; } = string.Empty;

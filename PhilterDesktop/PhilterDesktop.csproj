@@ -132,6 +132,24 @@
     </ItemGroup>
   </Target>
 
+  <!-- Person names are detected ONLY by the bundled model; if it's absent, names ship with just a runtime
+       warning. A real (Release) build must therefore include it, so an installer can never be packaged
+       without it. Enforced by default on Release; a local/dev build opts out with
+       -p:SkipPhEyeModelDownload=true (tests set EnforcePhEyeModelPresent explicitly to exercise the guard). -->
+  <PropertyGroup>
+    <EnforcePhEyeModelPresent Condition="'$(EnforcePhEyeModelPresent)' == '' And '$(Configuration)' == 'Release' And '$(SkipPhEyeModelDownload)' != 'true'">true</EnforcePhEyeModelPresent>
+  </PropertyGroup>
+
+  <Target Name="EnsurePhEyeModelPresent" AfterTargets="DownloadPhEyeModel" BeforeTargets="AssignTargetPaths"
+          Condition="'$(EnforcePhEyeModelPresent)' == 'true'">
+    <Error Condition="!Exists('$(PhEyeModelDir)\model.onnx')"
+           Text="PhEye name-detection model is missing from '$(PhEyeModelDir)'. A Release build must bundle it or person names ship unredacted (only a runtime warning is shown). The Release build downloads it automatically (~90 MB, network required); if that failed, re-run the build, or pass -p:SkipPhEyeModelDownload=true to intentionally build a no-model dev package." />
+    <Error Condition="Exists('$(PhEyeModelDir)\model.onnx') And !Exists('$(PhEyeModelDir)\gliner_config.json')"
+           Text="PhEye model is incomplete: model.onnx is present but gliner_config.json is missing from '$(PhEyeModelDir)', so the model would fail to load." />
+    <Error Condition="Exists('$(PhEyeModelDir)\model.onnx') And !Exists('$(PhEyeModelDir)\spm.model')"
+           Text="PhEye model is incomplete: model.onnx is present but spm.model is missing from '$(PhEyeModelDir)', so the model would fail to load." />
+  </Target>
+
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>

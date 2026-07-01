@@ -63,6 +63,10 @@ namespace PhilterDesktop
                 {
                     item.ForeColor = Color.Firebrick;
                 }
+                else if (string.Equals(entry.Level, "Warning", StringComparison.OrdinalIgnoreCase))
+                {
+                    item.ForeColor = Color.DarkOrange;
+                }
                 _list.Items.Add(item);
             }
             _list.EndUpdate();

@@ -169,7 +169,10 @@ and from where.
   they wouldn't otherwise be redacted. **Bcc** is the most important: it names blind-copy recipients and
   is carried over when an Outlook `.msg` is converted, so without this it would survive into the
   redacted email. When on, these headers are **removed entirely** (not just scanned): both their value
-  and the fact that they were present are gone. Turn it off only if you specifically need to keep them.
+  and the fact that they were present are gone. Turn it off only if you specifically need to keep them —
+  and be aware that **when it is off, these headers are kept exactly as they are**. Unlike **From / To /
+  Cc**, they are **not** scanned for PII, so any addresses in them — **including Bcc recipients** — remain
+  in the redacted email. If you disable this, review those headers yourself before sharing.
 
 Leave these on unless you specifically need to preserve the original headers (for example, for an
 e-discovery chain-of-custody requirement).
@@ -220,10 +223,13 @@ The **Limits** tab holds safeguards that keep very large or unusual inputs from 
 computer's memory.
 
 - **Skip input files larger than … MB** (default **500**). Redacting a file loads it into memory, so an
-  extremely large file can be slow or fail. On the **automatic** paths (watched folders and the
-  command line), any file larger than this is **skipped** (and noted in the log) rather than processed.
-  Set it to **0** for no limit. When you add files yourself (drag-and-drop, **Add Files**, or **Redact
-  Spreadsheet**), Philter Desktop instead shows a heads-up above **50 MB** but still lets you proceed.
+  extremely large file can be slow or fail. **Any** file larger than this is not redacted, however it was
+  added: on the **automatic** paths (watched folders and the command line) it is **skipped** and noted in
+  the log, and a file you add yourself (drag-and-drop, **Add Files**, or **Redact Spreadsheet**) is marked
+  **failed** in the queue with a note — rather than being loaded whole and risking running your computer
+  out of memory. Set it to **0** for no limit. Separately, when you add files yourself, Philter Desktop
+  also shows a proceed/cancel heads-up above **50 MB** for large (but still under-the-limit) files, since
+  those can be slow.
 - **Maximum time for one detection pattern (seconds)** (default **5**, adjustable from **5 to 15**).
   Detection patterns can come from a [policy](policies.md), including your own
   [custom-identifier](policies.md#redacting-your-own-special-identifiers-custom-identifiers) regular
@@ -290,10 +296,12 @@ something is found, you're warned and shown what and where. It runs entirely on 
 
 Two scan choices sit underneath it (they apply to the automatic check):
 
-- **Scan with the same policy used to redact** (default): confirms that everything the policy was
-  meant to remove is genuinely gone from the saved file.
-- **Scan with a broad policy (every detector on)**: also looks for kinds of information your policy
-  didn't cover. This catches more, but may flag things you deliberately left unredacted.
+- **Scan with a broad policy — every detector on** (default, recommended): looks for kinds of
+  information your policy didn't cover (the missed-PII case that matters most). It catches more, so it
+  may flag things you deliberately left unredacted (review those); the document's own replacement
+  values aren't reported.
+- **Scan with the same policy used to redact** (limited): only confirms that policy took effect — it
+  can't find a kind of information the policy never looked for.
 
 Leave verification on, or turn it off if you prefer to verify manually. You can always right-click a
 finished document and choose **Verify Redaction**, which lets you pick **With

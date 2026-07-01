@@ -37,7 +37,10 @@ Where a person is or lives.
 - **State**: the full state name (e.g., *California*).
 - **State Abbreviation**: the two-letter form (e.g., *CA*).
 - **Zip Code**
-- **Street Address**: a street-level address (e.g., *123 Main St*).
+- **Street Address**: a US-style street address — a house number plus street name and a common street
+  type (*St*, *Ave*, *Blvd*, *Loop*, *Crossing*, ...), including directionals, an apartment/suite/unit,
+  and *PO Box* lines (e.g., *123 N Main St, Apt 4* or *PO Box 1234*). It is oriented to US/English
+  address formats, so addresses in other formats may not be caught; review location-heavy documents.
 
 ## Financial
 

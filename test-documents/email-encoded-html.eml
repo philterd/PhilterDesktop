@@ -1,0 +1,12 @@
+From: George Banks <george@fake.com>
+To: Mary Johnson <mary@example.org>
+Subject: Your account contacts
+Date: Tue, 01 Apr 2025 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+
+<html><body>
+<p>Reach me at john&#64;example.com about the account.</p>
+<p>Or email jane<span>@</span>example.com directly for billing.</p>
+<p>Support: <a href="mailto:secret@example.com">open a ticket</a>.</p>
+</body></html>

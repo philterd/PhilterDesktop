@@ -59,33 +59,12 @@ namespace PhilterDesktop
 
             foreach (IEmailField field in EnumerateFields(message))
             {
-                string original = field.Get();
-                if (!string.IsNullOrEmpty(original))
+                (string? newContent, List<RedactionSpanEntity> spans) = RedactField(field, filter, fieldIndex, ref order);
+                if (newContent is not null)
                 {
-                    TextFilterResult result = filter(original);
-                    if (!string.Equals(result.FilteredText, original, StringComparison.Ordinal))
-                    {
-                        field.Set(result.FilteredText);
-
-                        foreach (Span s in result.Spans
-                            .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
-                            .OrderBy(s => s.CharacterStart))
-                        {
-                            var entity = new RedactionSpanEntity
-                            {
-                                Order = order++,
-                                ParagraphIndex = fieldIndex,
-                                CharacterStart = s.CharacterStart,
-                                CharacterEnd = s.CharacterEnd,
-                                Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
-                                Replacement = s.Replacement ?? string.Empty,
-                                Classification = s.Classification ?? string.Empty
-                            };
-                            SpanExplanation.Populate(entity, s);
-                            captured.Add(entity);
-                        }
-                    }
+                    field.Set(newContent);
                 }
+                captured.AddRange(spans);
                 fieldIndex++;
             }
 
@@ -124,30 +103,71 @@ namespace PhilterDesktop
 
             foreach (IEmailField field in EnumerateFields(message))
             {
-                string original = field.Get();
-                if (!string.IsNullOrEmpty(original))
-                {
-                    foreach (Span s in filter(original).Spans
-                        .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
-                        .OrderBy(s => s.CharacterStart))
-                    {
-                        var entity = new RedactionSpanEntity
-                        {
-                            Order = order++,
-                            ParagraphIndex = fieldIndex,
-                            CharacterStart = s.CharacterStart,
-                            CharacterEnd = s.CharacterEnd,
-                            Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
-                            Replacement = s.Replacement ?? string.Empty,
-                            Classification = s.Classification ?? string.Empty
-                        };
-                        SpanExplanation.Populate(entity, s);
-                        captured.Add(entity);
-                    }
-                }
+                (_, List<RedactionSpanEntity> spans) = RedactField(field, filter, fieldIndex, ref order);
+                captured.AddRange(spans);
                 fieldIndex++;
             }
             return captured;
+        }
+
+        // Redacts one field. Returns the new content to write (null when unchanged) and the spans captured
+        // (field-indexed by <paramref name="fieldIndex"/>). An HTML body is redacted by its visible text —
+        // entity-aware and tag-aware — with the spans mapped to raw-HTML offsets so position-based re-apply
+        // (Modify/ApplySpans) still works; every other field is a straight text filter.
+        private static (string? NewContent, List<RedactionSpanEntity> Spans) RedactField(
+            IEmailField field, Func<string, TextFilterResult> filter, int fieldIndex, ref int order)
+        {
+            var spans = new List<RedactionSpanEntity>();
+            string original = field.Get();
+            if (string.IsNullOrEmpty(original))
+            {
+                return (null, spans);
+            }
+
+            if (field.IsHtmlBody)
+            {
+                (string redacted, List<HtmlRedactor.HtmlRedaction> redactions) = HtmlRedactor.Redact(original, filter);
+                foreach (HtmlRedactor.HtmlRedaction r in redactions)
+                {
+                    var entity = new RedactionSpanEntity
+                    {
+                        Order = order++,
+                        ParagraphIndex = fieldIndex,
+                        CharacterStart = r.RawStart,
+                        CharacterEnd = r.RawEnd,
+                        Text = r.Span.Text ?? string.Empty,
+                        Replacement = r.Span.Replacement ?? string.Empty,
+                        Classification = r.Span.Classification ?? string.Empty
+                    };
+                    SpanExplanation.Populate(entity, r.Span);
+                    spans.Add(entity);
+                }
+                return (string.Equals(redacted, original, StringComparison.Ordinal) ? null : redacted, spans);
+            }
+
+            TextFilterResult result = filter(original);
+            if (string.Equals(result.FilteredText, original, StringComparison.Ordinal))
+            {
+                return (null, spans);
+            }
+            foreach (Span s in result.Spans
+                         .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
+                         .OrderBy(s => s.CharacterStart))
+            {
+                var entity = new RedactionSpanEntity
+                {
+                    Order = order++,
+                    ParagraphIndex = fieldIndex,
+                    CharacterStart = s.CharacterStart,
+                    CharacterEnd = s.CharacterEnd,
+                    Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
+                    Replacement = s.Replacement ?? string.Empty,
+                    Classification = s.Classification ?? string.Empty
+                };
+                SpanExplanation.Populate(entity, s);
+                spans.Add(entity);
+            }
+            return (result.FilteredText, spans);
         }
 
         /// <summary>
@@ -298,6 +318,8 @@ namespace PhilterDesktop
             string Label { get; }
             /// <summary>True for a body part (free text where a character position is meaningful), false for a header.</summary>
             bool IsBody { get; }
+            /// <summary>True for an HTML body part, which is redacted by its visible text (entity/tag aware).</summary>
+            bool IsHtmlBody { get; }
             string Get();
             void Set(string value);
         }
@@ -308,6 +330,7 @@ namespace PhilterDesktop
             public HeaderField(Header header, string label) { _header = header; Label = label; }
             public string Label { get; }
             public bool IsBody => false;
+            public bool IsHtmlBody => false;
             public string Get() => _header.Value ?? string.Empty;
             public void Set(string value) => _header.Value = value;
         }
@@ -318,6 +341,7 @@ namespace PhilterDesktop
             public TextPartField(TextPart part) => _part = part;
             public string Label => _part.IsHtml ? "Body (HTML)" : "Body (text)";
             public bool IsBody => true;
+            public bool IsHtmlBody => _part.IsHtml;
             public string Get() => _part.Text ?? string.Empty;
             public void Set(string value) => _part.Text = value;
         }
@@ -416,6 +440,17 @@ namespace PhilterDesktop
             if (!string.IsNullOrEmpty(msg.BodyText))
             {
                 builder.TextBody = msg.BodyText;
+            }
+            // RTF-only message: no HTML or plain-text body, but there is an RTF body. Recover its text so
+            // the body — and any PII in it — isn't silently dropped from the redacted output (#523).
+            if (string.IsNullOrEmpty(builder.HtmlBody) && string.IsNullOrEmpty(builder.TextBody)
+                && !string.IsNullOrEmpty(msg.BodyRtf))
+            {
+                string rtfText = RtfRedactor.ExtractText(msg.BodyRtf);
+                if (!string.IsNullOrEmpty(rtfText))
+                {
+                    builder.TextBody = rtfText;
+                }
             }
             message.Body = builder.ToMessageBody();
 

@@ -85,6 +85,47 @@ namespace PhilterDesktop.Tests
             }
         }
 
+        // #536: the ParagraphIndex doubles as a spreadsheet cell / email field ordinal, so it must be
+        // labeled for what it is instead of always "Section N".
+        [Theory]
+        [InlineData(".xlsx", "Cell 3")]
+        [InlineData(".csv", "Cell 3")]
+        [InlineData(".XLSX", "Cell 3")] // case-insensitive
+        [InlineData(".eml", "Field 3")]
+        [InlineData(".msg", "Field 3")]
+        [InlineData(".docx", "Section 3")]
+        [InlineData(".txt", "Section 3")]
+        [InlineData(".rtf", "Section 3")]
+        [InlineData(null, "Section 3")]
+        public void LocationOf_LabelsOrdinalByFileType(string? fileType, string expected)
+        {
+            var span = new RedactionSpanEntity { ParagraphIndex = 2 }; // ordinal 2 -> "… 3"
+            Assert.Equal(expected, RedactionReport.LocationOf(span, fileType));
+        }
+
+        [Fact]
+        public void LocationOf_PageAndCharacterRange_AreUnaffectedByFileType()
+        {
+            Assert.Equal("Page 5", RedactionReport.LocationOf(new RedactionSpanEntity { PageNumber = 5 }, ".pdf"));
+            Assert.Equal("Characters 10-20",
+                RedactionReport.LocationOf(new RedactionSpanEntity { ParagraphIndex = -1, CharacterStart = 10, CharacterEnd = 20 }, ".txt"));
+        }
+
+        [Fact]
+        public void Build_SpreadsheetDetail_LabelsLocationAsCell()
+        {
+            var version = new RedactionVersionEntity { Version = 1, FileType = ".xlsx", Policy = "p", Context = "c" };
+            var spans = new List<RedactionSpanEntity>
+            {
+                new() { Order = 0, FilterType = "EMAIL_ADDRESS", ParagraphIndex = 4, Text = "a@b.com", Replacement = "{{R}}" }
+            };
+
+            RedactionReportModel m = RedactionReport.Build(
+                version, spans, "1.0.0", Generated, "h1", "h2", new RedactionReportOptions { IncludeDetailTable = true });
+
+            Assert.Equal("Cell 5", m.Details[0].Location);
+        }
+
         [Fact]
         public void Build_MachineInfo_OnlyWhenRequested()
         {
@@ -136,6 +177,18 @@ namespace PhilterDesktop.Tests
                 Version(), Spans(), "1.0.0", Generated, "h1", "h2", new RedactionReportOptions(),
                 verificationStatus: "ResidualsFound", verificationCount: 2);
             Assert.Contains("2 possible items may remain", residual.VerificationSummary!);
+        }
+
+        [Fact]
+        public void Build_VerificationSummary_NamesNotChecked_WarnsNamesMayRemain()
+        {
+            RedactionReportModel m = RedactionReport.Build(
+                Version(), Spans(), "1.0.0", Generated, "h1", "h2", new RedactionReportOptions(),
+                verificationStatus: "NamesNotChecked");
+
+            Assert.NotNull(m.VerificationSummary);
+            Assert.Contains("name detection was unavailable", m.VerificationSummary!, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains(m.VerificationSummary!, RedactionReport.ToHtml(m)); // rendered in the report
         }
 
         [Fact]

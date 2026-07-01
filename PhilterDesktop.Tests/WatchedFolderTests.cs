@@ -417,6 +417,136 @@ namespace PhilterDesktop.Tests
             Assert.Contains(entries, e => e.Level == "Info" && e.Message.Contains("Redacted") && e.Message.Contains("doc_redacted-draft.txt"));
         }
 
+        [Fact]
+        public async Task Watcher_WarnsWhenNameModelMissing_InsteadOfReportingCleanSuccess()
+        {
+            // Force the on-device name model to be absent so this unattended path's leak scenario is
+            // exercised deterministically (regardless of whether a model is installed locally).
+            string emptyModelDir = Path.Combine(_root, "no-model");
+            Directory.CreateDirectory(emptyModelDir);
+            string? previousModelDir = Environment.GetEnvironmentVariable("PHEYE_MODEL_DIR");
+            Environment.SetEnvironmentVariable("PHEYE_MODEL_DIR", emptyModelDir);
+            try
+            {
+                Assert.False(PhEyeModel.IsAvailable);
+
+                var namesPolicy = new PhileasPolicy
+                {
+                    Name = "names",
+                    Identifiers = new Identifiers
+                    {
+                        EmailAddress = new EmailAddress(),
+                        PhEyes = new List<PhEye> { PhEyeModel.CreateDefaultFilter() }
+                    }
+                };
+                _policyRepo.Insert(new PolicyEntity { Name = "names", Json = PolicySerializer.SerializeToJson(namesPolicy) });
+
+                string watched = Path.Combine(_root, "watched-noname");
+                string output = Path.Combine(_root, "output-noname");
+                Directory.CreateDirectory(watched);
+
+                var folder = new WatchedFolderEntity
+                {
+                    FolderPath = watched, OutputFolder = output, Policy = "names", Context = "ctx", Notify = true
+                };
+
+                var events = new System.Collections.Concurrent.ConcurrentQueue<WatchedFileProcessedEventArgs>();
+                using var watcher = new FolderWatcherService(_policyRepo, loggingEnabled: false, _logRepo);
+                watcher.FileProcessed += (_, e) => events.Enqueue(e);
+                watcher.Restart(new[] { folder });
+
+                await File.WriteAllTextAsync(Path.Combine(watched, "memo.txt"), "Email amy@example.com about John Smith.");
+
+                // The notification surfaces the name-model warning (not a silent clean success).
+                WatchedFileProcessedEventArgs evt = await WaitForEventAsync(events, e => e.Success);
+                Assert.True(evt.Success);
+                Assert.False(string.IsNullOrEmpty(evt.VerificationWarning));
+
+                // The rest is still redacted (email gone) but the name remains — which is exactly why we warn.
+                string redacted = await WaitForFileAsync(Path.Combine(output, "memo_redacted-draft.txt"));
+                Assert.DoesNotContain("amy@example.com", redacted);
+                Assert.Contains("John Smith", redacted);
+
+                // The activity log records a Warning, not a clean "Redacted" Info line.
+                var entries = await WaitForLogAsync(folder, log => log.Any(e => e.Level == "Warning"));
+                Assert.Contains(entries, e => e.Level == "Warning" && e.Message.Contains("without name detection"));
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("PHEYE_MODEL_DIR", previousModelDir);
+            }
+        }
+
+        [Fact]
+        public async Task Watcher_Rtf_WithHeaderFooter_WarnsAndRecordsInActivityLog()
+        {
+            // The header-footer sample carries PII in a header and footer that RTF redaction can't carry
+            // over. The watcher must surface that (not silently), end to end (#541 via #531 channels).
+            string watched = Path.Combine(_root, "watched-rtf-hf");
+            string output = Path.Combine(_root, "output-rtf-hf");
+            Directory.CreateDirectory(watched);
+
+            var folder = new WatchedFolderEntity
+            {
+                FolderPath = watched, OutputFolder = output, Policy = "p", Context = "ctx", Notify = true
+            };
+
+            // Place the file before starting the watcher so it's picked up by the deterministic initial
+            // scan (avoids relying on a live FileSystemWatcher event, which can lag under parallel load).
+            string sample = Path.Combine(AppContext.BaseDirectory, "test-documents", "header-footer.rtf");
+            Assert.True(File.Exists(sample), $"Sample not found: {sample}");
+            File.Copy(sample, Path.Combine(watched, "letter.rtf"));
+
+            var events = new System.Collections.Concurrent.ConcurrentQueue<WatchedFileProcessedEventArgs>();
+            using var watcher = new FolderWatcherService(_policyRepo, loggingEnabled: false, _logRepo);
+            watcher.FileProcessed += (_, e) => events.Enqueue(e);
+            watcher.Restart(new[] { folder });
+
+            // The body is redacted and the header/footer content isn't carried into the output.
+            string redacted = await WaitForFileAsync(Path.Combine(output, "letter_redacted-draft.rtf"), timeoutMs: 30000);
+            Assert.DoesNotContain("george@fake.com", redacted);            // body PII redacted
+            Assert.DoesNotContain("records@brannon-legal.com", redacted);  // header content dropped
+            Assert.DoesNotContain("Jane Doe", redacted);                   // footer content dropped
+
+            // The notification carries the RTF fidelity warning...
+            WatchedFileProcessedEventArgs evt = await WaitForEventAsync(events, e => e.Success, timeoutMs: 30000);
+            Assert.Contains(".docx", evt.VerificationWarning ?? "");
+
+            // ...and a Warning is written to the (always-on) activity log, which the folder's Issues
+            // indicator reads.
+            var entries = await WaitForLogAsync(folder, log => log.Any(e => e.Level == "Warning"), timeoutMs: 30000);
+            Assert.Contains(entries, e => e.Level == "Warning" && e.Message.Contains("headers/footers/footnotes"));
+            Assert.True(_logRepo.CountByLevels(folder.Id, "Warning") >= 1);
+        }
+
+        [Fact]
+        public async Task Watcher_UnknownPolicy_RecordsErrorInActivityLog_AndProducesNoOutput()
+        {
+            // A watched-folder failure must be discoverable even with notifications and logging off: it is
+            // written to the per-folder activity log, which drives the Issues indicator (#531).
+            string watched = Path.Combine(_root, "watched-badpolicy");
+            string output = Path.Combine(_root, "output-badpolicy");
+            Directory.CreateDirectory(watched);
+
+            var folder = new WatchedFolderEntity
+            {
+                FolderPath = watched, OutputFolder = output, Policy = "does-not-exist", Context = "ctx"
+            };
+
+            // File present before start -> deterministic initial-scan pickup (no live-event dependency).
+            await File.WriteAllTextAsync(Path.Combine(watched, "doc.txt"), "Email x@example.com here.");
+
+            using var watcher = new FolderWatcherService(_policyRepo, loggingEnabled: false, _logRepo);
+            watcher.Restart(new[] { folder });
+
+            var entries = await WaitForLogAsync(folder, log => log.Any(e => e.Level == "Error"), timeoutMs: 30000);
+            Assert.Contains(entries, e => e.Level == "Error" && e.Message.Contains("Unknown policy"));
+            Assert.True(_logRepo.CountByLevels(folder.Id, "Error") >= 1); // surfaces on the Issues indicator
+
+            // The file was not redacted (it failed before redaction) and no output was produced.
+            Assert.False(File.Exists(Path.Combine(output, "doc_redacted-draft.txt")));
+        }
+
         private async Task<IReadOnlyList<WatchedFolderLogEntity>> WaitForLogAsync(
             WatchedFolderEntity folder, Func<IReadOnlyList<WatchedFolderLogEntity>, bool> predicate, int timeoutMs = 15000)
         {

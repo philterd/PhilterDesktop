@@ -277,9 +277,8 @@ namespace PhilterDesktop
                     Context = context,
                     Highlight = chkHighlightRedactions.Checked
                 };
-                _redactionQueueRepository.Insert(entity);
-
-                if (_loggingEnabled)
+                // Skip files already queued for this policy/context (avoids duplicate redactions).
+                if (QueueBulkActions.TryEnqueue(_redactionQueueRepository, entity) && _loggingEnabled)
                 {
                     Logger.LogInfo($"Queued for redaction: {file}");
                 }

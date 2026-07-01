@@ -351,6 +351,12 @@ namespace PhilterDesktop
             }
         }
 
+        /// <summary>
+        /// True once the user re-redacted to a new output during this session. The caller uses it to
+        /// reset the document's (now stale) verification verdict, since the new output is unverified.
+        /// </summary>
+        public bool RedactionChanged { get; private set; }
+
         private async void OnRedact(object? sender, EventArgs e)
         {
             if (_selectedVersion is null)
@@ -398,6 +404,7 @@ namespace PhilterDesktop
 
             version.OutputPath = output;
             _versions.Update(version);
+            RedactionChanged = true; // the new output is unverified; the caller resets the stale verdict
             ReloadVersions(selectLatest: false, select: version.Id);
 
             // Open the freshly redacted document in the system default application.

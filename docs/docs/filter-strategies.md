@@ -55,13 +55,17 @@ Turn on **Only apply when** and fill in the builder. You pick:
 
 - **When**: what to test: the *Matched text*, the *Context*, the *Detected type*, the *Confidence*
   (how sure the detector is, from 0 to 1), or the *Population*.
-- **Is**: how to compare: *equals*, *does not equal*, *starts with*, and (for numbers like
-  confidence) *is greater than*, *is less than*, and so on.
-- **Value**: what to compare against.
+- **Is**: how to compare. The choices depend on the field: *equals* and *does not equal* are always
+  available; *starts with* is offered for the *Matched text* and *Context* fields; and numbers (like
+  *Confidence* and *Population*) add *is greater than*, *is less than*, and so on. Only the comparisons
+  that actually work for the chosen field are shown.
+- **Value**: what to compare against. For a number, enter plain digits with an optional decimal point
+  (for example `0.85`) — signs, exponents, and thousands separators aren't accepted.
 
 As you choose, Philter Desktop shows the exact condition it will use (for example,
-`confidence is greater than 0.8`). Building it this way keeps the condition always valid; you can't
-mistype one.
+`confidence is greater than 0.8`). Building it this way keeps the condition always valid: it only lets
+you pick comparisons and values the redaction engine understands, so a condition can never be silently
+ignored (which would make the strategy apply everywhere instead of only where you intended).
 
 These examples show the kind of fine-tuning conditions make possible:
 

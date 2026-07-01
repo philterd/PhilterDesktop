@@ -51,6 +51,10 @@ namespace PhilterDesktop
 
         private readonly List<WatchedFileProcessedEventArgs> _pendingNotifications = new();
         private System.Windows.Forms.Timer? _notifyCoalesceTimer;
+
+        // A second app launch signals this so the running window comes to the front (single-instance).
+        private EventWaitHandle? _activationSignal;
+        private RegisteredWaitHandle? _activationRegistration;
         private string? _lastNotifyDirectory;
 
         private const string HelpUrl = "https://philterd.github.io/PhilterDesktop/";
@@ -483,17 +487,17 @@ namespace PhilterDesktop
 
             redactPreviewToolStripMenuItem.Name = "redactPreviewToolStripMenuItem";
             redactPreviewToolStripMenuItem.Size = new Size(277, 22);
-            redactPreviewToolStripMenuItem.Text = "Redact with &Preview... (.txt, .docx, .pdf, .rtf, .eml, .msg)";
+            redactPreviewToolStripMenuItem.Text = "Redact with &Preview...";
             redactPreviewToolStripMenuItem.Click += redactPreviewToolStripMenuItem_Click;
 
             findAndRedactToolStripMenuItem.Name = "findAndRedactToolStripMenuItem";
             findAndRedactToolStripMenuItem.Size = new Size(277, 22);
-            findAndRedactToolStripMenuItem.Text = "&Find && Redact... (redact specific text)";
+            findAndRedactToolStripMenuItem.Text = "&Find && Redact...";
             findAndRedactToolStripMenuItem.Click += findAndRedactToolStripMenuItem_Click;
 
             redactSpreadsheetToolStripMenuItem.Name = "redactSpreadsheetToolStripMenuItem";
             redactSpreadsheetToolStripMenuItem.Size = new Size(277, 22);
-            redactSpreadsheetToolStripMenuItem.Text = "Redact &Spreadsheet... (.xlsx, .csv)";
+            redactSpreadsheetToolStripMenuItem.Text = "Redact &Spreadsheet...";
             redactSpreadsheetToolStripMenuItem.Click += redactSpreadsheetToolStripMenuItem_Click;
 
             toolStripSeparator2.Name = "toolStripSeparator2";
@@ -567,7 +571,7 @@ namespace PhilterDesktop
 
             exportExplanationToolStripMenuItem.Name = "exportExplanationToolStripMenuItem";
             exportExplanationToolStripMenuItem.Size = new Size(277, 22);
-            exportExplanationToolStripMenuItem.Text = "E&xport Explanation (JSON)...";
+            exportExplanationToolStripMenuItem.Text = "E&xport Explanation...";
             exportExplanationToolStripMenuItem.Click += exportExplanationToolStripMenuItem_Click;
 
             verifyRedactionToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { verifyWithSamePolicyToolStripMenuItem, verifyWithBroadPolicyToolStripMenuItem });
@@ -1025,6 +1029,44 @@ namespace PhilterDesktop
         {
             base.OnHandleCreated(e);
             EnsureStarted();
+            RegisterActivationListener();
+        }
+
+        // Listen for a second launch asking us to come forward (single-instance activation). Best-effort;
+        // never blocks startup. Cleaned up in OnHandleDestroyed (which also runs on Dispose).
+        private void RegisterActivationListener()
+        {
+            if (_activationSignal is not null)
+            {
+                return;
+            }
+            try
+            {
+                _activationSignal = AppInstance.CreateActivationSignal();
+                _activationRegistration = ThreadPool.RegisterWaitForSingleObject(
+                    _activationSignal,
+                    (_, _) =>
+                    {
+                        try { BeginInvoke(new Action(ShowFromTray)); }
+                        catch { /* form closing/handle gone */ }
+                    },
+                    state: null,
+                    millisecondsTimeOutInterval: Timeout.Infinite,
+                    executeOnlyOnce: false);
+            }
+            catch
+            {
+                // Activation is a convenience; a failure here must not stop the app from running.
+            }
+        }
+
+        protected override void OnHandleDestroyed(EventArgs e)
+        {
+            _activationRegistration?.Unregister(null);
+            _activationRegistration = null;
+            _activationSignal?.Dispose();
+            _activationSignal = null;
+            base.OnHandleDestroyed(e);
         }
 
         // EnsureStarted() loads the queue during handle creation, before the form has done its
@@ -1642,9 +1684,10 @@ namespace PhilterDesktop
             {
                 foreach (string path in valid)
                 {
-                    _redactionQueueRepository.Insert(new RedactionQueueEntity { Name = path, Policy = policy, Context = context });
-
-                    if (_loggingEnabled)
+                    // Skip files already queued for this policy/context so a re-drop doesn't double-redact.
+                    if (QueueBulkActions.TryEnqueue(_redactionQueueRepository,
+                            new RedactionQueueEntity { Name = path, Policy = policy, Context = context })
+                        && _loggingEnabled)
                     {
                         Logger.LogInfo($"File queued via drag-drop: {path} (policy={policy}, context={context})");
                     }
@@ -1988,6 +2031,16 @@ namespace PhilterDesktop
                 modifySettings.RedactedSuffix, DocumentMetadata.OptionsFor(modifySettings),
                 modifySettings.ScrubEmailHeaders, modifySettings.RemoveCommonEmailHeaders);
             form.ShowDialog(this);
+
+            // A modify re-redaction produces a new, unverified output. Clear the document's stored
+            // verification verdict so the report (and queue column / details / highlight) don't carry the
+            // previous version's "verified" result onto the new output.
+            if (form.RedactionChanged && _redactionQueueRepository.GetById(id) is { } entity)
+            {
+                ResetVerification(entity);
+                _redactionQueueRepository.Update(entity);
+                LoadRedactionQueue();
+            }
         }
 
         // Stores the initial redaction as version 1 (with its spans) so it can be reviewed/modified.
@@ -2007,18 +2060,16 @@ namespace PhilterDesktop
                     Highlight = entity.Highlight,
                     DurationMs = durationMs
                 };
-                _redactionVersionRepository.Insert(version);
-
                 int order = 0;
                 foreach (RedactionSpanEntity s in spans)
                 {
-                    s.VersionId = version.Id;
+                    s.VersionId = version.Id; // version.Id is assigned at construction, so this is valid pre-insert
                     s.Order = order++;
                 }
-                if (spans.Count > 0)
-                {
-                    _redactionSpanRepository.InsertBulk(spans);
-                }
+
+                // Atomic: a span-write failure rolls back the version too, so we never leave a span-less version.
+                RedactionHistory.SaveVersionWithSpans(
+                    _database, _redactionVersionRepository, _redactionSpanRepository, version, spans);
             }
             catch (Exception ex)
             {
@@ -2335,11 +2386,12 @@ namespace PhilterDesktop
                 }
                 else if (source.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Word documents have no plain-text form: compare the extracted body paragraphs
-                    // (one per line), which is what the redactor operates on.
+                    // Word documents have no plain-text form: compare the extracted review lines (one per
+                    // line) — the body/headers/footers/notes paragraphs plus shape/SmartArt/chart text —
+                    // so the diff reflects every place the redactor changed, not just the body.
                     (string before, string after) = await Task.Run(() => (
-                        string.Join("\n", WordDocumentRedactor.ReadParagraphs(source)),
-                        string.Join("\n", WordDocumentRedactor.ReadParagraphs(output))));
+                        string.Join("\n", WordDocumentRedactor.ReadReviewLines(source)),
+                        string.Join("\n", WordDocumentRedactor.ReadReviewLines(output))));
                     UseWaitCursor = false;
                     using var diff = new DiffViewerForm(before, after, Path.GetFileName(source), Path.GetFileName(output));
                     diff.ShowDialog(this);
@@ -2528,6 +2580,15 @@ namespace PhilterDesktop
             await RunAndShowVerification(this, id, quietWhenClean: false, broadPolicy: true);
         }
 
+        // Clears the stored verification verdict (does not persist; the caller saves). Used when the
+        // output changes (e.g. a Modify-Redaction re-redact) so a stale verdict isn't shown for it.
+        internal static void ResetVerification(RedactionQueueEntity entity)
+        {
+            entity.VerificationStatus = "NotRun";
+            entity.VerificationFindingCount = 0;
+            entity.VerificationCheckedAt = null;
+        }
+
         // Copies a verification outcome onto the queue entity (does not persist; the caller saves).
         private static void ApplyVerificationFields(RedactionQueueEntity entity, VerificationOutcome? outcome)
         {
@@ -2540,19 +2601,69 @@ namespace PhilterDesktop
             entity.VerificationCheckedAt = DateTime.UtcNow;
         }
 
+        // Verification status shown when name detection was requested but the model was missing, so names
+        // were silently skipped — kept distinct from a real "Clean" so the row doesn't read as fully checked.
+        internal const string NamesNotCheckedStatus = "NamesNotChecked";
+
+        // Verification status shown when the source RTF had header/footer/footnote content that RTF
+        // redaction doesn't carry into the output — kept distinct from "Clean" so the row invites review.
+        internal const string ContentDroppedStatus = "ContentDropped";
+
         // A short, human display of an item's stored verification status (queue column + View Details).
         private static string VerificationDisplay(RedactionQueueEntity e) => e.VerificationStatus switch
         {
             "Clean" => "Clean",
             "ResidualsFound" => $"{e.VerificationFindingCount} may remain",
             "Error" => "Check failed",
+            NamesNotCheckedStatus => "Names not checked",
+            ContentDroppedStatus => "Some parts not carried over",
             _ => "Not checked"
         };
+
+        // The verification status to store/show, accounting for name detection having been silently skipped
+        // and for RTF non-body content that wasn't carried over. "Clean"/"NotRun" downgrade to a review
+        // status; more severe states (residuals/error) are left as-is (the caveats still ride along in the
+        // notification and report). Names-not-checked takes precedence over content-dropped when both apply.
+        internal static string EffectiveVerificationStatus(string verificationStatus, bool nameDetectionUnavailable, bool contentDropped = false)
+        {
+            if (verificationStatus is not ("Clean" or "NotRun" or NamesNotCheckedStatus))
+            {
+                return verificationStatus;
+            }
+            if (nameDetectionUnavailable)
+            {
+                return NamesNotCheckedStatus;
+            }
+            if (contentDropped)
+            {
+                return ContentDroppedStatus;
+            }
+            return verificationStatus;
+        }
+
+        // A verification result that warrants review (drives the amber/red cue on the Status cell). The
+        // stored Status stays "Completed"; only its colour changes, so sorting/filtering are unaffected.
+        internal static bool IsVerificationWarning(string verificationStatus) =>
+            verificationStatus is "ResidualsFound" or NamesNotCheckedStatus or ContentDroppedStatus;
 
         private static string? ResidualWarning(VerificationOutcome? outcome) =>
             outcome is { Status: VerificationStatus.ResidualsFound }
                 ? $"Verification: {outcome.Count} possible item{(outcome.Count == 1 ? "" : "s")} may remain"
                 : null;
+
+        // The combined "check needed" notification text: the residual-PII warning, the name-model warning,
+        // and/or the RTF non-body-content warning (null when none applies).
+        internal static string? CombinedRedactionWarning(VerificationOutcome? verification, bool nameDetectionUnavailable, bool contentDropped = false)
+        {
+            string?[] parts =
+            {
+                ResidualWarning(verification),
+                nameDetectionUnavailable ? PhEyeModel.UnavailableWarning : null,
+                contentDropped ? RtfFidelity.Warning : null
+            };
+            string combined = string.Join("\n", parts.Where(s => !string.IsNullOrEmpty(s)));
+            return combined.Length > 0 ? combined : null;
+        }
 
         // Builds the effective policy for a completed item and verifies its redacted output, persisting
         // the result and (unless clean and asked to stay quiet) showing it. Used on demand and after a
@@ -2589,12 +2700,15 @@ namespace PhilterDesktop
             // Re-scanning a large output can take a moment; run it off the UI thread so the window stays
             // responsive. string/policy locals are captured so the worker touches no UI state.
             string context = latest.Context;
+            // Don't re-flag this version's own inserted replacements as residual PII.
+            IReadOnlySet<string> knownReplacements =
+                RedactionVerifier.ReplacementsOf(_redactionSpanRepository.GetForVersion(latest.Id));
             VerificationOutcome outcome;
             _queueBusy = true;
             UseWaitCursor = true;
             try
             {
-                outcome = await Task.Run(() => RedactionVerifier.Verify(output, policy, context, SharedFilterService.Instance));
+                outcome = await Task.Run(() => RedactionVerifier.Verify(output, policy, context, SharedFilterService.Instance, knownReplacements, sourcePath: entity.Name));
             }
             finally
             {
@@ -2603,6 +2717,10 @@ namespace PhilterDesktop
             }
 
             ApplyVerificationFields(entity, outcome);
+            // A clean re-scan of an RTF that dropped non-body content must not read as fully "Clean" — keep
+            // the review cue (#543/#541), so the report and queue row stay honest after a re-verify.
+            entity.VerificationStatus = EffectiveVerificationStatus(
+                entity.VerificationStatus, nameDetectionUnavailable: false, contentDropped: RtfFidelity.HasDroppedContent(entity.Name));
             _redactionQueueRepository.Update(entity);
             LoadRedactionQueue();
 
@@ -2875,6 +2993,13 @@ namespace PhilterDesktop
 
                 foreach (var entity in pendingEntities)
                 {
+                    // Re-check: a still-Pending item later in the snapshot can be removed while we await
+                    // an earlier one. Skip it so we don't redact a row that's gone (orphan output/history).
+                    if (!QueueBulkActions.IsStillPending(_redactionQueueRepository, entity.Id))
+                    {
+                        continue;
+                    }
+
                     UpdateEntityStatus(entity, "Processing");
 
                     QueueRedactionResult result = await QueueProcessor.ProcessAsync(
@@ -2885,18 +3010,25 @@ namespace PhilterDesktop
                         SaveRedactionVersion(entity, result.OutputPath!, result.Spans.ToList(), result.DurationMs);
                         entity.ErrorMessage = string.Empty; // clear any prior failure reason
                         ApplyVerificationFields(entity, result.Verification);
+                        // Names requested but model missing, or RTF non-body content not carried over:
+                        // don't let the row read "Clean" — it needs review.
+                        entity.VerificationStatus = EffectiveVerificationStatus(entity.VerificationStatus, result.NameDetectionUnavailable, result.ContentDropped);
                         UpdateEntityStatus(entity, "Completed");
                         QueueNotification(new WatchedFileProcessedEventArgs
                         {
                             InputPath = entity.Name,
                             OutputPath = result.OutputPath,
                             Success = true,
-                            VerificationWarning = ResidualWarning(result.Verification)
+                            VerificationWarning = CombinedRedactionWarning(result.Verification, result.NameDetectionUnavailable, result.ContentDropped)
                         });
 
                         if (_loggingEnabled)
                         {
                             Logger.LogInfo($"Redaction completed: {entity.Name} -> {result.OutputPath}");
+                            if (result.NameDetectionUnavailable)
+                            {
+                                Logger.LogWarning($"Name detection was unavailable (model not installed); names may remain in {result.OutputPath}.");
+                            }
                         }
                     }
                     else
@@ -2972,7 +3104,7 @@ namespace PhilterDesktop
                 }
 
                 var item = new ListViewItem(entity.Name);
-                item.SubItems.Add(entity.Status);
+                ListViewItem.ListViewSubItem statusCell = item.SubItems.Add(entity.Status);
                 item.SubItems.Add(entity.Policy);
                 item.SubItems.Add(entity.Context);
                 ListViewItem.ListViewSubItem verification = item.SubItems.Add(VerificationDisplay(entity));
@@ -2980,13 +3112,26 @@ namespace PhilterDesktop
                 item.ImageIndex = 0;
                 if (entity.VerificationStatus == "ResidualsFound")
                 {
-                    // Make a "needs review" result stand out without affecting the rest of the row.
+                    // Make a "needs review" result stand out without affecting the rest of the row, and
+                    // cue the Status cell (its text stays "Completed", only the colour changes).
                     item.UseItemStyleForSubItems = false;
                     verification.ForeColor = Color.FromArgb(0x8A, 0x1C, 0x1C);
+                    statusCell.ForeColor = Color.FromArgb(0x8A, 0x1C, 0x1C);
+                }
+                else if (entity.VerificationStatus is NamesNotCheckedStatus or ContentDroppedStatus)
+                {
+                    item.UseItemStyleForSubItems = false;
+                    verification.ForeColor = Color.DarkOrange;
+                    statusCell.ForeColor = Color.DarkOrange;
                 }
                 if (!string.IsNullOrEmpty(entity.ErrorMessage))
                 {
                     item.ToolTipText = entity.ErrorMessage; // hover a failed row to see why
+                }
+                else if (IsVerificationWarning(entity.VerificationStatus))
+                {
+                    // Non-colour cue (hover) so the warning isn't missed, e.g. by color-blind users.
+                    item.ToolTipText = $"Completed with a warning — {VerificationDisplay(entity)}. See the Verification column.";
                 }
                 listView1.Items.Add(item);
                 shown++;

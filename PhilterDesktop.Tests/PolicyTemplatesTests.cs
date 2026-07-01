@@ -61,6 +61,19 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void RecommendedTemplate_RedactsDateOfBirth()
+        {
+            // "Common PII (recommended)" reuses the default policy, so it must catch DOBs too.
+            string json = PolicyTemplates.All.First(t => t.Id == "common-pii").BuildJson();
+            var policy = PolicySerializer.DeserializeFromJson(json);
+            PhEyeModel.Prepare(policy);
+
+            var result = new FilterService().Filter(policy, "ctx", 0, "DOB 03/14/1981.");
+
+            Assert.DoesNotContain("03/14/1981", result.FilteredText);
+        }
+
+        [Fact]
         public void Disclaimer_IsPresent()
         {
             Assert.Contains("starting points", PolicyTemplates.Disclaimer);

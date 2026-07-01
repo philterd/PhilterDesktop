@@ -190,13 +190,19 @@ namespace PhilterDesktop
                 return;
             }
 
-            _queue.Insert(new RedactionQueueEntity
+            bool queued = QueueBulkActions.TryEnqueue(_queue, new RedactionQueueEntity
             {
                 Name = source,
                 Policy = _policy.Text,
                 Context = _context.Text,
                 FullyRedactedColumns = fullColumns
             });
+            if (!queued)
+            {
+                MessageBox.Show(this, "This spreadsheet is already queued with the same policy and context.",
+                    "Redact Spreadsheet", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return; // leave the dialog open
+            }
 
             DialogResult = DialogResult.OK;
             Close();

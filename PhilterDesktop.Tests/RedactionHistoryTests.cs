@@ -84,5 +84,79 @@ namespace PhilterDesktop.Tests
             Assert.Contains(remaining, x => x.Status == "Processing");
             Assert.DoesNotContain(remaining, x => x.Status == "Completed");
         }
+
+        // --- SaveVersionWithSpans atomicity (#547) ------------------------------------------------
+
+        private static RedactionVersionEntity NewVersion(string src = "a.txt") =>
+            new() { DocumentId = ObjectId.NewObjectId(), Version = 1, SourcePath = src, OutputPath = src + ".red" };
+
+        [Fact]
+        public void SaveVersionWithSpans_PersistsVersionAndSpansAtomically()
+        {
+            RedactionVersionEntity version = NewVersion();
+            var spans = new List<RedactionSpanEntity>
+            {
+                new() { VersionId = version.Id, Text = "alice@example.com", Replacement = "[E]", Order = 0 },
+                new() { VersionId = version.Id, Text = "078-05-1120", Replacement = "[S]", Order = 1 },
+            };
+
+            RedactionHistory.SaveVersionWithSpans(_db, _versions, _spans, version, spans);
+
+            Assert.NotNull(_versions.GetById(version.Id));
+            Assert.Equal(2, _spans.Find(x => x.VersionId == version.Id).Count());
+        }
+
+        [Fact]
+        public void SaveVersionWithSpans_NoSpans_PersistsVersionOnly()
+        {
+            RedactionVersionEntity version = NewVersion();
+
+            RedactionHistory.SaveVersionWithSpans(_db, _versions, _spans, version, new List<RedactionSpanEntity>());
+
+            Assert.NotNull(_versions.GetById(version.Id));
+            Assert.Equal(0, _spans.Count());
+        }
+
+        [Fact]
+        public void SaveVersionWithSpans_RollsBackVersion_WhenSpanWriteFails()
+        {
+            RedactionVersionEntity version = NewVersion();
+            ObjectId dupId = ObjectId.NewObjectId();
+            var spans = new List<RedactionSpanEntity>
+            {
+                new() { Id = dupId, VersionId = version.Id, Text = "a", Order = 0 },
+                new() { Id = dupId, VersionId = version.Id, Text = "b", Order = 1 }, // duplicate _id -> bulk insert throws
+            };
+
+            Assert.ThrowsAny<Exception>(() =>
+                RedactionHistory.SaveVersionWithSpans(_db, _versions, _spans, version, spans));
+
+            // The whole save is rolled back: no orphaned span-less version, and no partial spans.
+            Assert.Null(_versions.GetById(version.Id));
+            Assert.Equal(0, _spans.Count());
+        }
+
+        [Fact]
+        public void SaveVersionWithSpans_FailureDoesNotAffectPriorVersions()
+        {
+            // A previously saved version stays intact when a later save fails and rolls back.
+            RedactionVersionEntity good = NewVersion("good.txt");
+            RedactionHistory.SaveVersionWithSpans(_db, _versions, _spans, good,
+                new List<RedactionSpanEntity> { new() { VersionId = good.Id, Text = "x", Order = 0 } });
+
+            RedactionVersionEntity bad = NewVersion("bad.txt");
+            ObjectId dupId = ObjectId.NewObjectId();
+            var dupSpans = new List<RedactionSpanEntity>
+            {
+                new() { Id = dupId, VersionId = bad.Id, Order = 0 },
+                new() { Id = dupId, VersionId = bad.Id, Order = 1 },
+            };
+            Assert.ThrowsAny<Exception>(() =>
+                RedactionHistory.SaveVersionWithSpans(_db, _versions, _spans, bad, dupSpans));
+
+            Assert.NotNull(_versions.GetById(good.Id));                 // earlier version survives
+            Assert.Null(_versions.GetById(bad.Id));                     // failed one rolled back
+            Assert.Equal(1, _spans.Find(x => x.VersionId == good.Id).Count());
+        }
     }
 }

@@ -384,13 +384,37 @@ namespace PhilterDesktop
                     return;
                 }
 
+                // If the policy asks for on-device name detection but the model isn't installed,
+                // redaction proceeds with names left in. This unattended path must not report that as a
+                // clean success — warn in the log, the activity feed, and the notification. (Checked
+                // before redaction because RedactFileAsync's PhEyeModel.Prepare strips PhEye from the
+                // policy.)
+                string? nameWarning = PhEyeModel.RequestedButUnavailable(policy) ? PhEyeModel.UnavailableWarning : null;
+
                 await RedactionService.RedactFileAsync(
                     fullPath, outputPath, policy, folder.Context, watcherSettings, _filterService, folder.Highlight)
                     .ConfigureAwait(false);
 
-                Log($"Redacted watched file '{fullPath}' -> '{outputPath}'.");
-                Activity(folder, "Info", $"Redacted: {fullPath} → {outputPath}");
-                RaiseProcessed(folder, fullPath, outputPath, success: true, error: null);
+                // An RTF with headers/footers/footnotes: RTF redaction doesn't carry those into the output.
+                string? rtfWarning = RtfFidelity.HasDroppedContent(fullPath) ? RtfFidelity.Warning : null;
+
+                if (nameWarning is not null)
+                {
+                    Log($"Redacted watched file '{fullPath}' -> '{outputPath}' WITHOUT name detection: {nameWarning}", warning: true);
+                    Activity(folder, "Warning", $"Redacted without name detection (model unavailable): {fullPath} → {outputPath}");
+                }
+                else
+                {
+                    Log($"Redacted watched file '{fullPath}' -> '{outputPath}'.");
+                    Activity(folder, "Info", $"Redacted: {fullPath} → {outputPath}");
+                }
+                if (rtfWarning is not null)
+                {
+                    Log($"Redacted RTF '{fullPath}' -> '{outputPath}': headers/footers/footnotes may not be carried into the output.", warning: true);
+                    Activity(folder, "Warning", $"RTF headers/footers/footnotes may not be carried into the output: {fullPath} → {outputPath}");
+                }
+                RaiseProcessed(folder, fullPath, outputPath, success: true, error: null,
+                    warning: nameWarning is null ? rtfWarning : (rtfWarning is null ? nameWarning : nameWarning + "\n" + rtfWarning));
             }
         }
 
@@ -446,7 +470,7 @@ namespace PhilterDesktop
             return false;
         }
 
-        private void RaiseProcessed(WatchedFolderEntity folder, string inputPath, string? outputPath, bool success, string? error)
+        private void RaiseProcessed(WatchedFolderEntity folder, string inputPath, string? outputPath, bool success, string? error, string? warning = null)
         {
             if (!folder.Notify)
             {
@@ -465,7 +489,8 @@ namespace PhilterDesktop
                     InputPath = inputPath,
                     OutputPath = outputPath,
                     Success = success,
-                    ErrorMessage = error
+                    ErrorMessage = error,
+                    VerificationWarning = warning
                 });
             }
             catch
@@ -490,9 +515,13 @@ namespace PhilterDesktop
             }
         }
 
+        // Info respects the logging toggle; warnings/errors are always recorded, so a watched-folder
+        // failure or skip is never lost from the application log just because logging happens to be off (#531).
+        internal static bool ShouldWriteToGlobalLog(bool warning, bool loggingEnabled) => warning || loggingEnabled;
+
         private void Log(string message, bool warning = false)
         {
-            if (!_loggingEnabled)
+            if (!ShouldWriteToGlobalLog(warning, _loggingEnabled))
             {
                 return;
             }

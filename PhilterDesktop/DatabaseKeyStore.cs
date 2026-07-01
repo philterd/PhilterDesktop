@@ -80,34 +80,57 @@ namespace PhilterDesktop
         /// </summary>
         public void UnlockWithDpapi()
         {
-            KeyFileModel? model = ReadModel();
-
-            if (model is null)
+            if (TryLoadDpapiOrThrow())
             {
-                if (File.Exists(_keyPath))
-                {
-                    // Legacy format: the whole file is a DPAPI blob of the raw key.
-                    _key = ProtectedData.Unprotect(File.ReadAllBytes(_keyPath), null, DataProtectionScope.CurrentUser);
-                    CreatedNewKey = false;
-                }
-                else
-                {
-                    _key = RandomNumberGenerator.GetBytes(KeySize);
-                    CreatedNewKey = true;
-                    WriteDpapiModel();
-                }
-                IsPassphraseProtected = false;
                 return;
             }
 
-            if (model.Mode == ModePassphrase)
+            // First run: no key file yet. Serialize creation across processes so two simultaneous
+            // first-run launches (e.g. the GUI, a CLI redaction, and the Explorer right-click flow all
+            // starting before data.key exists) can't each generate a different key and clobber the file,
+            // which would leave data.db encrypted with one key while data.key holds another (unreadable DB).
+            using (KeyInitLock.Acquire(_keyPath))
             {
-                throw new PassphraseRequiredException();
+                // Another process may have created the key while we waited for the lock — re-check.
+                if (TryLoadDpapiOrThrow())
+                {
+                    return;
+                }
+
+                _key = RandomNumberGenerator.GetBytes(KeySize);
+                CreatedNewKey = true;
+                WriteDpapiModel();
+                IsPassphraseProtected = false;
+            }
+        }
+
+        // Loads the existing key via DPAPI — the JSON model, or a legacy raw DPAPI blob. Returns false
+        // when no key file exists yet (first run). Throws when the file is passphrase-protected.
+        private bool TryLoadDpapiOrThrow()
+        {
+            KeyFileModel? model = ReadModel();
+            if (model is not null)
+            {
+                if (model.Mode == ModePassphrase)
+                {
+                    throw new PassphraseRequiredException();
+                }
+                _key = ProtectedData.Unprotect(Convert.FromBase64String(model.DpapiKey!), null, DataProtectionScope.CurrentUser);
+                CreatedNewKey = false;
+                IsPassphraseProtected = false;
+                return true;
             }
 
-            _key = ProtectedData.Unprotect(Convert.FromBase64String(model.DpapiKey!), null, DataProtectionScope.CurrentUser);
-            CreatedNewKey = false;
-            IsPassphraseProtected = false;
+            if (File.Exists(_keyPath))
+            {
+                // Legacy format: the whole file is a DPAPI blob of the raw key.
+                _key = ProtectedData.Unprotect(File.ReadAllBytes(_keyPath), null, DataProtectionScope.CurrentUser);
+                CreatedNewKey = false;
+                IsPassphraseProtected = false;
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>Unlocks with a passphrase. Returns false if it's wrong (or not passphrase-protected).</summary>
@@ -305,6 +328,77 @@ namespace PhilterDesktop
             catch
             {
                 // best effort — never let an ACL change prevent the key from being written
+            }
+        }
+
+        // A cross-process lock that serializes first-run key creation for one key file. Named from the
+        // key path so only processes using the same file (same user) contend; Global-scoped so it also
+        // serializes across that user's sessions. Entirely best-effort — if the OS won't give us the
+        // mutex, we proceed unlocked and rely on the double-checked read in UnlockWithDpapi.
+        private sealed class KeyInitLock : IDisposable
+        {
+            private readonly Mutex? _mutex;
+            private readonly bool _held;
+
+            private KeyInitLock(Mutex? mutex, bool held)
+            {
+                _mutex = mutex;
+                _held = held;
+            }
+
+            public static KeyInitLock Acquire(string keyPath)
+            {
+                string name = NameFor(keyPath);
+                Mutex? mutex = TryCreate(@"Global\" + name) ?? TryCreate(@"Local\" + name);
+                if (mutex is null)
+                {
+                    return new KeyInitLock(null, false);
+                }
+
+                bool held;
+                try
+                {
+                    held = mutex.WaitOne(TimeSpan.FromSeconds(10));
+                }
+                catch (AbandonedMutexException)
+                {
+                    held = true; // a previous owner crashed mid-creation; we now hold it
+                }
+                return new KeyInitLock(mutex, held);
+            }
+
+            public void Dispose()
+            {
+                try
+                {
+                    if (_held)
+                    {
+                        _mutex?.ReleaseMutex();
+                    }
+                }
+                catch
+                {
+                    // never let lock release surface as an error
+                }
+                _mutex?.Dispose();
+            }
+
+            private static Mutex? TryCreate(string name)
+            {
+                try
+                {
+                    return new Mutex(initiallyOwned: false, name);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            private static string NameFor(string keyPath)
+            {
+                byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(keyPath.ToLowerInvariant()));
+                return "PhilterDesktop.KeyInit." + Convert.ToHexString(hash, 0, 8);
             }
         }
 

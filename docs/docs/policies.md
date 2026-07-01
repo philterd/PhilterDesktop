@@ -60,7 +60,8 @@ To start from a ready-made policy rather than from scratch, click **New** and ch
 Template…**. Philter Desktop offers a small set of starting points:
 
 - **Common PII (recommended)**: the high-confidence everyday identifiers (Social Security numbers,
-  email, phone, credit cards, and so on) plus on-device name detection. A safe general-purpose start.
+  email, phone, credit cards, dates such as dates of birth, and so on) plus on-device name detection.
+  A safe general-purpose start. (This is also the **default** policy applied to new documents.)
 - **HIPAA Safe Harbor (template)**: broad coverage aimed at the kinds of information called out by the
   HIPAA Safe Harbor standard (names, dates, locations, ages, and more). Deliberately thorough, so
   expect to review some over-redaction.

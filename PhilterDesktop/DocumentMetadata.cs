@@ -77,6 +77,7 @@ namespace PhilterDesktop
                 ClearCoreProperties(document);
                 ClearExtendedProperties(document.ExtendedFilePropertiesPart);
                 RemoveCustomProperties(document, document.CustomFilePropertiesPart);
+                RemoveCustomXmlParts(document);
                 AnonymizeCommentAuthors(document);
             }
             if (options.HasFlag(WordScrubOptions.TrackedChanges))
@@ -173,19 +174,27 @@ namespace PhilterDesktop
         }
 #pragma warning restore OOXML0001
 
-        // Extended (app.xml) properties: remove the identifying ones (company, manager). Structural
-        // fields (application name, etc.) are left so the file stays well-formed.
+        // Extended (app.xml) properties: remove every field that carries identity or document content —
+        // company, manager, a hyperlink base path, the template path (which can reveal a user/share path),
+        // and the cached part titles / heading outline (which mirror document text and so can hold PII that
+        // was redacted from the body). Structural fields (application name, statistics) are left so the
+        // file stays well-formed.
         private static void ClearExtendedProperties(ExtendedFilePropertiesPart? ext)
         {
             try
             {
-                if (ext?.Properties is null)
+                DocumentFormat.OpenXml.ExtendedProperties.Properties? p = ext?.Properties;
+                if (p is null)
                 {
                     return;
                 }
-                ext.Properties.Company?.Remove();
-                ext.Properties.Manager?.Remove();
-                ext.Properties.Save();
+                p.Company?.Remove();
+                p.Manager?.Remove();
+                p.HyperlinkBase?.Remove();
+                p.Template?.Remove();
+                p.TitlesOfParts?.Remove();
+                p.HeadingPairs?.Remove();
+                p.Save();
             }
             catch
             {
@@ -201,6 +210,30 @@ namespace PhilterDesktop
                 if (custom is not null)
                 {
                     package.DeletePart(custom);
+                }
+            }
+            catch
+            {
+                // best effort
+            }
+        }
+
+        // Custom XML data stores (word/customXml/*): a data-bound content control reads its displayed value
+        // from one of these stores, which keeps the ORIGINAL (unredacted) value even after the visible run
+        // text is redacted — and Word can refresh the control from it. They're user-data stores, so remove
+        // them with the metadata scrub so bound PII can't persist or reappear.
+        private static void RemoveCustomXmlParts(WordprocessingDocument document)
+        {
+            try
+            {
+                MainDocumentPart? main = document.MainDocumentPart;
+                if (main is null)
+                {
+                    return;
+                }
+                foreach (CustomXmlPart part in main.GetPartsOfType<CustomXmlPart>().ToList())
+                {
+                    main.DeletePart(part);
                 }
             }
             catch

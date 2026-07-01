@@ -51,6 +51,32 @@ namespace PhilterDesktop
         }
 
         /// <summary>
+        /// Returns the plain (visible) text of a raw RTF string. Used to recover the body of an Outlook
+        /// message whose only body is RTF, so it isn't silently dropped. Sanitized first (embedded objects
+        /// and comments removed). Returns an empty string for empty or unparseable input.
+        /// </summary>
+        public static string ExtractText(string rtf)
+        {
+            if (string.IsNullOrWhiteSpace(rtf))
+            {
+                return string.Empty;
+            }
+            return RunSta(() =>
+            {
+                try
+                {
+                    using var box = new RichTextBox();
+                    box.Rtf = RtfSanitizer.RemoveComments(RtfSanitizer.RemoveEmbeddedObjects(rtf));
+                    return box.Text;
+                }
+                catch
+                {
+                    return string.Empty; // not RTF the control accepts — don't fail the whole redaction
+                }
+            });
+        }
+
+        /// <summary>
         /// Loads <paramref name="inputPath"/>, redacts its visible text with <paramref name="filter"/>,
         /// writes the result to <paramref name="outputPath"/>, and returns the applied spans. The input
         /// file is left untouched.
@@ -142,7 +168,10 @@ namespace PhilterDesktop
         {
             byte[] bytes = File.ReadAllBytes(inputPath);
             string rtf = Encoding.Latin1.GetString(bytes);
-            box.Rtf = RtfSanitizer.RemoveEmbeddedObjects(rtf);
+            // Strip embedded objects (which the position-based redactor can't reach) and comment/annotation
+            // destinations (which RichEdit would otherwise flatten into the visible body).
+            string sanitized = RtfSanitizer.RemoveComments(RtfSanitizer.RemoveEmbeddedObjects(rtf));
+            box.Rtf = sanitized;
         }
 
         // Serialize to RTF in memory, then write once so a failure never leaves the original or a partial file.

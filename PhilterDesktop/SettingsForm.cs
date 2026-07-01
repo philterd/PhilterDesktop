@@ -337,6 +337,24 @@ namespace PhilterDesktop
                 item.SubItems.Add(folder.Context);
                 item.SubItems.Add(folder.OutputFolder);
                 item.SubItems.Add(folder.Highlight ? "Yes" : "No");
+
+                // Surface failures/warnings from the folder's (always-written) activity log so they're
+                // visible here even when notifications and application logging are both off (#531).
+                int errors = _watchedFolderLogRepository?.CountByLevels(folder.Id, "Error") ?? 0;
+                int warnings = _watchedFolderLogRepository?.CountByLevels(folder.Id, "Warning") ?? 0;
+                item.SubItems.Add(WatchedFolderIssueSummary.Describe(errors, warnings));
+                switch (WatchedFolderIssueSummary.Severity(errors, warnings))
+                {
+                    case WatchedFolderSeverity.Error:
+                        item.ForeColor = System.Drawing.Color.FromArgb(197, 15, 31); // red — files not redacted
+                        item.ToolTipText = WatchedFolderIssueSummary.Tooltip(errors, warnings);
+                        break;
+                    case WatchedFolderSeverity.Warning:
+                        item.ForeColor = System.Drawing.Color.DarkOrange; // amber — redacted with a caveat
+                        item.ToolTipText = WatchedFolderIssueSummary.Tooltip(errors, warnings);
+                        break;
+                }
+
                 listWatched.Items.Add(item);
             }
             listWatched.EndUpdate();
@@ -651,6 +669,11 @@ namespace PhilterDesktop
             _settings.MaxInputFileSizeMb = (int)numMaxFileSize.Value;
             _settings.RegexMatchTimeoutSeconds = (int)numRegexTimeout.Value;
 
+            // The settings singleton is shared. Fields this dialog doesn't own — window layout, last-used
+            // policy/context/folder, the global always-redact/ignore lists, the tray hint — may have been
+            // written (by a background redaction, the main window, or the Global Lists dialog) since this
+            // dialog opened. Re-read and carry those forward so saving here doesn't revert them.
+            _settings.CopyExternallyManagedFieldsFrom(_settingsRepository.GetSettings());
             _settingsRepository.SaveSettings(_settings);
 
             // Apply the new regex timeout immediately so it governs subsequent redactions without a restart.

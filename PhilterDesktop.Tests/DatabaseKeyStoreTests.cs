@@ -52,6 +52,23 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void UnlockWithDpapi_ConcurrentFirstRun_AllAgreeOnOneKey()
+        {
+            // Simulate several processes doing their very first unlock at the same time (no key file yet).
+            // They must all end up with the SAME key — exactly one generates it, the rest load it —
+            // instead of each generating a different key and clobbering data.key (#545).
+            List<DatabaseKeyStore> stores = Enumerable.Range(0, 8)
+                .Select(_ => DatabaseKeyStore.ForDatabase(_dbPath))
+                .ToList();
+
+            Parallel.ForEach(stores, s => s.UnlockWithDpapi());
+
+            List<string> distinctKeys = stores.Select(s => s.DatabasePassword).Distinct().ToList();
+            Assert.Single(distinctKeys);                        // one agreed key across all of them
+            Assert.Single(stores.Where(s => s.CreatedNewKey));  // exactly one created it; the rest reused it
+        }
+
+        [Fact]
         public void KeyFile_IsRestrictedToCurrentUserOnly()
         {
             var store = DatabaseKeyStore.ForDatabase(_dbPath);

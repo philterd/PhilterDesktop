@@ -68,6 +68,36 @@ namespace PhilterDesktop
         }
 
         /// <summary>
+        /// Whether a snapshotted item still exists and is still <c>Pending</c>. The queue timer snapshots
+        /// the pending rows then awaits each; a later still-pending row can be removed (or change) while
+        /// an earlier one is processing, so it must be re-checked before being redacted.
+        /// </summary>
+        public static bool IsStillPending(RedactionQueueRepository repository, ObjectId id)
+        {
+            RedactionQueueEntity? entity = repository.GetById(id);
+            return entity is not null && string.Equals(entity.Status, "Pending", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>True if the same file is already queued and active (Pending or Processing) for this policy and context.</summary>
+        public static bool IsAlreadyQueued(RedactionQueueRepository repository, string name, string policy, string context)
+            => repository.Find(x => x.Name == name && x.Policy == policy && x.Context == context
+                && (x.Status == "Pending" || x.Status == "Processing")).Any();
+
+        /// <summary>
+        /// Inserts <paramref name="entity"/> unless an equivalent file is already active in the queue
+        /// (avoids accidentally redacting the same file twice). Returns true if it was inserted.
+        /// </summary>
+        public static bool TryEnqueue(RedactionQueueRepository repository, RedactionQueueEntity entity)
+        {
+            if (IsAlreadyQueued(repository, entity.Name, entity.Policy, entity.Context))
+            {
+                return false;
+            }
+            repository.Insert(entity);
+            return true;
+        }
+
+        /// <summary>
         /// Requeues every <c>Failed</c> item among <paramref name="ids"/> (resets it to <c>Pending</c>
         /// and clears its error). Returns how many were requeued; non-failed and unknown ids are ignored.
         /// </summary>

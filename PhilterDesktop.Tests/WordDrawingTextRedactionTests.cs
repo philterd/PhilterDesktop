@@ -263,5 +263,64 @@ namespace PhilterDesktop.Tests
             Assert.True(doc.MainDocumentPart!.GetPartsOfType<DocumentFormat.OpenXml.Packaging.ChartPart>().Any(),
                 "the chart part must survive redaction");
         }
+
+        // --- #561: shape/SmartArt/chart redactions are recorded as spans (report/explanation) ----------
+
+        [Fact]
+        public void Redact_ChartText_IsCapturedAsASpan()
+        {
+            string input = NewPath("cap-chart.docx");
+            string output = NewPath("cap-chart_out.docx");
+            WordDocs.CreateWithChart(input, WordDocs.AParagraph("Sales chart@example.com"), "body plain");
+
+            List<RedactionSpanEntity> spans = WordDocumentRedactor.Redact(input, output, Filter);
+
+            Assert.Contains(spans, s => s.Text == "chart@example.com"); // the drawing redaction is recorded
+        }
+
+        [Fact]
+        public void Redact_SmartArtText_IsCapturedWithNonParagraphIndex()
+        {
+            string input = NewPath("cap-sa.docx");
+            string output = NewPath("cap-sa_out.docx");
+            WordDocs.CreateWithSmartArt(input, WordDocs.AParagraph("node smart@example.com"), "body");
+
+            List<RedactionSpanEntity> spans = WordDocumentRedactor.Redact(input, output, Filter);
+
+            Assert.Contains(spans, s => s.Text == "smart@example.com" && s.ParagraphIndex == -1);
+        }
+
+        [Fact]
+        public void Redact_BodyAndChart_BothCaptured()
+        {
+            string input = NewPath("cap-both.docx");
+            string output = NewPath("cap-both_out.docx");
+            WordDocs.CreateWithChart(input, WordDocs.AParagraph("chart c@example.com"), "body b@example.com");
+
+            List<RedactionSpanEntity> spans = WordDocumentRedactor.Redact(input, output, Filter);
+
+            Assert.Contains(spans, s => s.Text == "b@example.com"); // body paragraph span
+            Assert.Contains(spans, s => s.Text == "c@example.com"); // drawing (chart) span
+            Assert.Equal(2, spans.Count);                            // no longer undercounts the drawing
+        }
+
+        [Fact]
+        public void Report_CountsChartRedaction_NotJustBody()
+        {
+            string input = NewPath("rep.docx");
+            string output = NewPath("rep_out.docx");
+            WordDocs.CreateWithChart(input, WordDocs.AParagraph("chart c@example.com"), "body b@example.com");
+
+            List<RedactionSpanEntity> spans = WordDocumentRedactor.Redact(input, output, Filter);
+
+            var version = new RedactionVersionEntity { Version = 1, FileType = ".docx", Policy = "p", Context = "ctx" };
+            RedactionReportModel model = RedactionReport.Build(
+                version, spans, "1.0.0", new DateTimeOffset(2026, 6, 27, 12, 0, 0, TimeSpan.Zero), "h1", "h2",
+                new RedactionReportOptions { IncludeDetailTable = true });
+
+            Assert.Equal(2, model.TotalRedactions);                       // body + chart both counted
+            Assert.Contains(model.CountsByType, t => t.Count == 2);       // both emails grouped in the type breakdown
+            Assert.Equal(2, model.Details.Count);                         // a detail row per redaction
+        }
     }
 }

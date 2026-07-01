@@ -59,6 +59,21 @@ namespace PhilterData
         public int PruneOldEntries() =>
             DeleteOlderThan(DateTime.UtcNow.AddDays(-RetentionDays));
 
+        /// <summary>
+        /// Counts a folder's entries whose <see cref="WatchedFolderLogEntity.Level"/> matches any of the
+        /// given levels (case-insensitive) — used to surface a failure/warning indicator on the
+        /// watched-folder list. Returns 0 when no levels are supplied.
+        /// </summary>
+        public int CountByLevels(ObjectId folderId, params string[] levels)
+        {
+            if (levels is null || levels.Length == 0)
+            {
+                return 0;
+            }
+            var wanted = new HashSet<string>(levels, StringComparer.OrdinalIgnoreCase);
+            return Find(x => x.FolderId == folderId).Count(e => wanted.Contains(e.Level));
+        }
+
         /// <summary>Appends an entry for a folder.</summary>
         public void Append(ObjectId folderId, string level, string message)
         {

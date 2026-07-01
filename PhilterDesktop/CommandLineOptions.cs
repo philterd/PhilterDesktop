@@ -37,6 +37,12 @@ namespace PhilterDesktop
         public bool ShowHelp { get; private set; }
 
         /// <summary>
+        /// True when <c>--highlight</c>/<c>/highlight</c> was given: highlight replacements in Word
+        /// (.docx) output (ignored for other file types), matching the queue/watched-folder option.
+        /// </summary>
+        public bool Highlight { get; private set; }
+
+        /// <summary>
         /// True when launched from the Explorer right-click menu (the hidden <c>--shell</c> switch).
         /// In this mode, files from a multi-file selection (which Explorer launches as one process per
         /// file) are coalesced into a single instance for one batched redaction.
@@ -47,9 +53,9 @@ namespace PhilterDesktop
         public bool IsCommandLine => ShowHelp || Files.Count > 0;
 
         /// <summary>
-        /// Parses arguments. Recognizes <c>/p|-p|--policy</c>, <c>/c|-c|--context</c>, and
-        /// <c>/h|/?|-h|--help</c>; the GUI-only <c>--minimized|-m</c> switch is ignored here; every
-        /// other token is treated as a file to redact.
+        /// Parses arguments. Recognizes <c>/p|-p|--policy</c>, <c>/c|-c|--context</c>,
+        /// <c>--highlight|/highlight</c>, and <c>/h|/?|-h|--help</c>; the GUI-only <c>--minimized|-m</c>
+        /// switch is ignored here; every other token is treated as a file to redact.
         /// </summary>
         public static CommandLineOptions Parse(string[] args)
         {
@@ -83,6 +89,11 @@ namespace PhilterDesktop
                     case "-h":
                     case "--help":
                         options.ShowHelp = true;
+                        break;
+
+                    case "--highlight":
+                    case "/highlight":
+                        options.Highlight = true;
                         break;
 
                     case "--shell":

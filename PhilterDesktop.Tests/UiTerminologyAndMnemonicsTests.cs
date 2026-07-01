@@ -72,17 +72,18 @@ namespace PhilterDesktop.Tests
             return (string)control!.GetType().GetProperty("Text")!.GetValue(control)!;
         }
 
-        // ---- #501: the "Redact with Preview" label lists all preview-capable types ----
-
+        // The listview context-menu labels are kept clean of parenthetical hints.
         [Fact]
-        public void PreviewMenuLabel_ListsEverySupportedType() => WithDb(db =>
+        public void ContextMenuLabels_HaveNoParentheticalText() => WithDb(db =>
         {
             using var form = new MainForm(db, startMinimized: false);
-            string text = TextOf(form, "redactPreviewToolStripMenuItem");
-
-            foreach (string ext in new[] { ".txt", ".docx", ".pdf", ".rtf", ".eml", ".msg" })
+            foreach (string name in new[]
             {
-                Assert.Contains(ext, text);
+                "redactPreviewToolStripMenuItem", "findAndRedactToolStripMenuItem",
+                "redactSpreadsheetToolStripMenuItem", "exportExplanationToolStripMenuItem"
+            })
+            {
+                Assert.DoesNotContain("(", TextOf(form, name));
             }
         });
 

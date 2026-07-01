@@ -470,5 +470,231 @@ namespace PhilterDesktop.Tests
             Assert.DoesNotContain("\r", result);
             Assert.False(result.EndsWith("\n"));
         }
+
+        // --- Per-field verification detection (#552) --------------------------
+
+        [Fact]
+        public void Detect_FindsResidual_AtFieldOrdinalAndPerCellOffset()
+        {
+            // header: fields 0,1; row1: Bob (field 2), "SSN 078-05-1120" (field 3).
+            string input = Write("Name,Notes\r\nBob,SSN 078-05-1120\r\n", "detect.csv");
+            var fs = new Phileas.Services.FilterService();
+            var policy = EmailAndSsnPolicy();
+
+            List<RedactionSpanEntity> residuals = CsvRedactor.Detect(input, t => fs.Filter(policy, "ctx", 0, t));
+
+            RedactionSpanEntity ssn = Assert.Single(residuals);
+            Assert.Equal(3, ssn.ParagraphIndex);     // 4th field (row-major), not a whole-file marker (-1)
+            Assert.Equal(4, ssn.CharacterStart);     // offset within the cell "SSN 078-05-1120", not the file
+            Assert.Equal("078-05-1120", ssn.Text);
+        }
+
+        [Fact]
+        public void Detect_NoPii_ReturnsEmpty()
+        {
+            string input = Write("Name,Notes\r\nBob,just a normal note\r\n", "detect-clean.csv");
+            var fs = new Phileas.Services.FilterService();
+            var policy = EmailAndSsnPolicy();
+
+            Assert.Empty(CsvRedactor.Detect(input, t => fs.Filter(policy, "ctx", 0, t)));
+        }
+
+        [Fact]
+        public void Detect_MultipleResiduals_HaveRowMajorOrdinals()
+        {
+            string input = Write("Name,Email\r\nAlice,a@example.com\r\nBob,b@example.com\r\n", "detect-multi.csv");
+            var fs = new Phileas.Services.FilterService();
+            var policy = EmailAndSsnPolicy();
+
+            List<RedactionSpanEntity> residuals = CsvRedactor.Detect(input, t => fs.Filter(policy, "ctx", 0, t));
+
+            Assert.Equal(new[] { 3, 5 }, residuals.Select(r => r.ParagraphIndex).OrderBy(x => x).ToArray());
+        }
+
+        [Fact]
+        public void Detect_SkipsEmptyCells_ButKeepsOrdinalAlignment()
+        {
+            // row1: empty (field 2), email (field 3).
+            string input = Write("Name,Email\r\n,c@example.com\r\n", "detect-empty.csv");
+            var fs = new Phileas.Services.FilterService();
+            var policy = EmailAndSsnPolicy();
+
+            RedactionSpanEntity span = Assert.Single(CsvRedactor.Detect(input, t => fs.Filter(policy, "ctx", 0, t)));
+            Assert.Equal(3, span.ParagraphIndex);
+        }
+
+        [Fact]
+        public void Detect_OnRedactedOutput_IsClean()
+        {
+            // Redacting then detecting the output must find nothing — verification matches redaction.
+            string input = Write("Name,Email\r\nAlice,alice@example.com\r\nBob,bob@example.com\r\n", "detect-rt.csv");
+            string output = Path.Combine(_tempDir, "detect-rt-out.csv");
+            var fs = new Phileas.Services.FilterService();
+            var policy = EmailAndSsnPolicy();
+            CsvRedactor.Redact(input, output, t => fs.Filter(policy, "ctx", 0, t));
+
+            Assert.Empty(CsvRedactor.Detect(output, t => fs.Filter(policy, "ctx", 0, t)));
+        }
+
+        [Fact]
+        public void Detect_DoesNotMatchAcrossCellBoundaries()
+        {
+            // The two cells would form an SSN only if joined ("078-05" + "1120"); per-field scanning must
+            // not detect one. A whole-file blob scan is the behavior this fix replaces.
+            string input = Write("078-05,1120\r\n", "detect-split.csv");
+            var fs = new Phileas.Services.FilterService();
+            var policy = EmailAndSsnPolicy();
+
+            Assert.Empty(CsvRedactor.Detect(input, t => fs.Filter(policy, "ctx", 0, t)));
+        }
+
+        // --- Blank-line preservation (#563) ----------------------------------
+
+        [Theory]
+        [InlineData("a,b\nx,y\n\np,q\n")]        // blank line in the middle (LF, trailing)
+        [InlineData("a,b\n\n\nc,d\n")]           // multiple consecutive blank lines
+        [InlineData("\na,b\n")]                  // leading blank line
+        [InlineData("a,b\n\n")]                  // trailing blank line
+        [InlineData("a,b\n\nc,d")]               // blank line + no trailing newline (combines with #565)
+        [InlineData("a,b\r\n\r\nc,d\r\n")]       // CRLF blank line
+        public void Redact_PreservesBlankLines_Exactly(string input)
+        {
+            string inPath = WriteRaw(input, "blank-in.csv");
+            string outPath = Path.Combine(_tempDir, "blank-out.csv");
+
+            CsvRedactor.Redact(inPath, outPath, NoOp);
+
+            Assert.Equal(input, File.ReadAllText(outPath)); // blank rows neither dropped nor added
+        }
+
+        [Fact]
+        public void Redact_BlankLines_RowCountPreserved()
+        {
+            string inPath = WriteRaw("a,b\n\nc,d\n\n\ne,f\n", "blank-count.csv");
+            string outPath = Path.Combine(_tempDir, "blank-count-out.csv");
+
+            CsvRedactor.Redact(inPath, outPath, NoOp);
+
+            Assert.Equal(6, File.ReadAllText(outPath).Count(ch => ch == '\n')); // same 6 line terminators as input
+        }
+
+        [Fact]
+        public async Task RedactFileAsync_Csv_PreservesBlankLines_AndStillRedacts()
+        {
+            string inPath = WriteRaw("Email\nalice@example.com\n\nbob@example.com\n", "blank-pii.csv");
+            string outPath = Path.Combine(_tempDir, "blank-pii-out.csv");
+
+            await RedactionService.RedactFileAsync(inPath, outPath, EmailAndSsnPolicy(), "ctx");
+
+            string result = await File.ReadAllTextAsync(outPath);
+            Assert.DoesNotContain("alice@example.com", result);
+            Assert.DoesNotContain("bob@example.com", result);
+            Assert.Equal(4, result.Count(ch => ch == '\n')); // header + 2 data rows + 1 blank, all preserved
+            Assert.Contains("\n\n", result);                  // the blank separator survives
+        }
+
+        // --- Column header as detection context (#567) -----------------------
+
+        // A context-dependent detector: only flags the 9-digit token when an 'SSN' label is in the text,
+        // so it fires only when the column header supplies that context. Mirrors how a context-sensitive
+        // detector (e.g. the name model) behaves, deterministically.
+        private static Phileas.Model.TextFilterResult LabelGated(string input)
+        {
+            const string token = "999999999";
+            int idx = input.IndexOf(token, StringComparison.Ordinal);
+            if (idx < 0 || input.IndexOf("SSN", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return new Phileas.Model.TextFilterResult(input, new List<Phileas.Model.Span>());
+            }
+            var span = new Phileas.Model.Span
+            {
+                CharacterStart = idx,
+                CharacterEnd = idx + token.Length,
+                Text = token,
+                Replacement = "{{{REDACTED-ssn}}}",
+                Classification = "SSN"
+            };
+            string filtered = input[..idx] + span.Replacement + input[(idx + token.Length)..];
+            return new Phileas.Model.TextFilterResult(filtered, new List<Phileas.Model.Span> { span });
+        }
+
+        [Fact]
+        public void Redact_UsesColumnHeaderAsContext_EnablingContextDependentDetection()
+        {
+            // Header "SSN" (field 0); data "999999999" (field 1). The value alone carries no label, so the
+            // detector only fires because the header is supplied as context.
+            string input = Write("SSN\r\n999999999\r\n", "hdr-ctx.csv");
+            string output = Path.Combine(_tempDir, "hdr-ctx-out.csv");
+
+            List<RedactionSpanEntity> spans = CsvRedactor.Redact(input, output, LabelGated);
+
+            string result = File.ReadAllText(output);
+            Assert.DoesNotContain("999999999", result); // value redacted thanks to header context
+            Assert.Contains("SSN", result);             // header label preserved (never redacted)
+            RedactionSpanEntity span = Assert.Single(spans);
+            Assert.Equal(1, span.ParagraphIndex);       // the data cell (row-major field ordinal)
+            Assert.Equal(0, span.CharacterStart);       // offset within the value, not the combined string
+            Assert.Equal("999999999", span.Text);
+        }
+
+        [Fact]
+        public void Redact_WithoutLabelHeader_ContextDependentDetectionDoesNotFire()
+        {
+            // Same value, but the header ("Number") gives no SSN context, so nothing is detected.
+            string input = Write("Number\r\n999999999\r\n", "no-ctx.csv");
+            string output = Path.Combine(_tempDir, "no-ctx-out.csv");
+
+            List<RedactionSpanEntity> spans = CsvRedactor.Redact(input, output, LabelGated);
+
+            Assert.Contains("999999999", File.ReadAllText(output));
+            Assert.Empty(spans);
+        }
+
+        [Fact]
+        public void Redact_HeaderContext_DropsMatchesInTheHeaderRegion_NeverRedactingIntoTheCell()
+        {
+            // Header label literally contains the token. When used as context for the data cell, that
+            // match lands in the header region and must be dropped (never redacted into the data value).
+            // The header row's own cell is still scanned and redacted on its own.
+            string input = Write("SSN 999999999\r\nplain\r\n", "hdr-region.csv");
+            string output = Path.Combine(_tempDir, "hdr-region-out.csv");
+
+            List<RedactionSpanEntity> spans = CsvRedactor.Redact(input, output, LabelGated);
+
+            string result = File.ReadAllText(output);
+            Assert.Contains("plain", result);                          // data cell untouched
+            Assert.DoesNotContain(spans, s => s.ParagraphIndex == 1);  // no detection mapped into the data cell
+            RedactionSpanEntity headerSpan = Assert.Single(spans);     // only the header row's own value was redacted
+            Assert.Equal(0, headerSpan.ParagraphIndex);
+        }
+
+        [Fact]
+        public void Detect_UsesColumnHeaderAsContext_MatchingRedaction()
+        {
+            // Verification must apply the same header context so it stays symmetric with redaction.
+            string input = Write("SSN\r\n999999999\r\n", "detect-ctx.csv");
+
+            List<RedactionSpanEntity> residuals = CsvRedactor.Detect(input, LabelGated);
+
+            RedactionSpanEntity d = Assert.Single(residuals);
+            Assert.Equal(1, d.ParagraphIndex);
+            Assert.Equal(0, d.CharacterStart);
+            Assert.Equal("999999999", d.Text);
+        }
+
+        [Fact]
+        public void Redact_HeaderContext_RoundTripsThroughApplySpans()
+        {
+            // The captured header-context spans re-apply correctly (offsets are value-relative).
+            string input = Write("SSN\r\n999999999\r\n", "hdr-apply.csv");
+            string firstPass = Path.Combine(_tempDir, "hdr-apply-1.csv");
+            List<RedactionSpanEntity> spans = CsvRedactor.Redact(input, firstPass, LabelGated);
+
+            string reapplied = Path.Combine(_tempDir, "hdr-apply-2.csv");
+            CsvRedactor.ApplySpans(input, reapplied, spans);
+
+            Assert.DoesNotContain("999999999", File.ReadAllText(reapplied));
+            Assert.Contains("SSN", File.ReadAllText(reapplied)); // header preserved
+        }
     }
 }

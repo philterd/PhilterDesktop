@@ -59,6 +59,18 @@ namespace PhilterDesktop
             // are not individually themed.
             Application.SetDefaultFont(ModernTheme.UiFont);
 
+            // Single-instance: only one GUI per session may run, since the database is shared multi-process
+            // and two GUIs would both run the queue timer and double-process the same items. A second
+            // launch brings the running window to the front and exits. Checked before the EULA/passphrase
+            // prompts so a second launch doesn't re-prompt. Held for the GUI's lifetime (also lets the
+            // Explorer context-menu flow detect a running GUI).
+            using Mutex guiLifetime = AppInstance.CreateGuiLifetime(out bool isFirstInstance);
+            if (!isFirstInstance)
+            {
+                AppInstance.SignalExistingInstance();
+                return 0;
+            }
+
             // Launched at sign-in (or with --minimized): start hidden in the system tray.
             bool startMinimized = args.Any(a =>
                 a.Equals(StartupManager.MinimizedSwitch, StringComparison.OrdinalIgnoreCase) ||
@@ -94,10 +106,6 @@ namespace PhilterDesktop
                 keyStore.UnlockWithDpapi();
             }
             EncryptedDatabase.Prepare(keyStore);
-
-            // Hold a session-scoped mutex for the GUI's lifetime so the Explorer context-menu flow can
-            // tell the app is running (and let it process the queue instead of launching a new instance).
-            using Mutex guiLifetime = AppInstance.CreateGuiLifetime();
 
             Application.Run(new MainForm(startMinimized));
             return 0;

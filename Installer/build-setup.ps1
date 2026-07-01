@@ -224,6 +224,18 @@ if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed." }
 # matches what the app reports (About dialog / update check), unless explicitly overridden.
 $exe = Join-Path $publishDir "PhilterDesktop.exe"
 if (-not (Test-Path $exe)) { throw "Published exe not found at $exe" }
+
+# The bundled on-device model is the ONLY thing that redacts person names, so an installer without it
+# would silently ship names unredacted (only a per-run warning is shown). The Release publish downloads
+# it; verify it actually landed in the publish output before packaging, and fail loudly if not.
+$modelDir = Join-Path $publishDir "Models\ph-eye-pii-en-xsmall"
+foreach ($modelFile in @('model.onnx', 'gliner_config.json', 'spm.model')) {
+    $modelPath = Join-Path $modelDir $modelFile
+    if (-not (Test-Path $modelPath)) {
+        throw "PhEye name-detection model file missing from the publish output: $modelPath. The installer must bundle the model or person names ship unredacted. Re-run the Release publish (network required to download it)."
+    }
+}
+Write-Host "Verified PhEye name-detection model is present in the publish output."
 if (-not $Version) {
     $fileVersion = [version]((Get-Item $exe).VersionInfo.FileVersion)
     $Version = "{0}.{1}.{2}" -f $fileVersion.Major, $fileVersion.Minor, $fileVersion.Build

@@ -112,5 +112,33 @@ namespace PhilterDesktop.Tests
             var o = CommandLineOptions.Parse(new[] { "a.pdf" });
             Assert.False(o.ShellInvoked);
         }
+
+        [Theory]
+        [InlineData("--highlight")]
+        [InlineData("/highlight")]
+        public void Parse_HighlightSwitch_SetsHighlightAndIsNotAFile(string flag)
+        {
+            var o = CommandLineOptions.Parse(new[] { flag, "a.docx" });
+            Assert.True(o.Highlight);
+            Assert.Equal(new[] { "a.docx" }, o.Files); // the switch isn't treated as a file
+        }
+
+        [Fact]
+        public void Parse_NoHighlightSwitch_HighlightIsFalse()
+        {
+            var o = CommandLineOptions.Parse(new[] { "a.docx" });
+            Assert.False(o.Highlight);
+        }
+
+        [Fact]
+        public void Parse_HighlightCoexistsWithPolicyContextAndFiles_AnyOrder()
+        {
+            var o = CommandLineOptions.Parse(new[] { "a.docx", "/p", "mypolicy", "--highlight", "/c", "ctx", "b.docx" });
+
+            Assert.True(o.Highlight);
+            Assert.Equal("mypolicy", o.Policy);
+            Assert.Equal("ctx", o.Context);
+            Assert.Equal(new[] { "a.docx", "b.docx" }, o.Files);
+        }
     }
 }

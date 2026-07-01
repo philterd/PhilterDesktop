@@ -112,18 +112,23 @@ namespace PhilterDesktop
                 }
             }
 
+            int queued = 0;
             foreach (string path in _files)
             {
-                _queue.Insert(new RedactionQueueEntity
+                // Skip files already queued for this policy/context (avoids duplicate redactions).
+                if (QueueBulkActions.TryEnqueue(_queue, new RedactionQueueEntity
                 {
                     Name = path,
                     Policy = policy,
                     Context = context,
                     Highlight = _highlight.Checked
-                });
+                }))
+                {
+                    queued++;
+                }
             }
 
-            EnqueuedCount = _files.Count;
+            EnqueuedCount = queued;
             DialogResult = DialogResult.OK;
             Close();
         }

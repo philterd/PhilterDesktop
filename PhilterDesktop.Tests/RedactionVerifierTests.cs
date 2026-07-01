@@ -16,6 +16,7 @@
 
 using Phileas.Policy;
 using Phileas.Services;
+using PhilterData;
 using PhilterDesktop;
 using Xunit;
 using PhileasPolicy = Phileas.Policy.Policy;
@@ -84,6 +85,37 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void Verify_Csv_CleanAfterRedaction()
+        {
+            string source = Path_("src.csv");
+            File.WriteAllText(source, "Name,Email\r\nAlice,alice@example.com\r\nBob,bob@example.com\r\n");
+            string output = Path_("src_redacted.csv");
+            PhileasPolicy policy = EmailPolicy();
+            CsvRedactor.Redact(source, output, t => _fs.Filter(policy, "ctx", 0, t));
+
+            VerificationOutcome outcome = RedactionVerifier.Verify(output, policy, "ctx", _fs);
+
+            Assert.Equal(VerificationStatus.Clean, outcome.Status);
+        }
+
+        // The residual maps to its cell (per-field), not to a whole-file offset (the blob behavior this
+        // replaced, which yielded ParagraphIndex -1 and a file-wide CharacterStart).
+        [Fact]
+        public void Verify_Csv_Residual_IsMappedToCellOrdinal_NotFileOffset()
+        {
+            string output = Path_("residual.csv");
+            File.WriteAllText(output, "Name,Email\r\nAlice,leftover@example.com\r\n");
+
+            VerificationOutcome outcome = RedactionVerifier.Verify(output, EmailPolicy(), "ctx", _fs);
+
+            Assert.Equal(VerificationStatus.ResidualsFound, outcome.Status);
+            RedactionSpanEntity r = Assert.Single(outcome.Residuals);
+            Assert.Equal(3, r.ParagraphIndex);   // 4th field, not -1
+            Assert.Equal(0, r.CharacterStart);   // offset within the cell, not the file
+            Assert.Contains("leftover@example.com", r.Text);
+        }
+
+        [Fact]
         public void Verify_Docx_CleanAfterRedaction()
         {
             string source = Path_("note.docx");
@@ -127,6 +159,54 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void Verify_DoesNotReportTheRedactionsOwnReplacements()
+        {
+            // Simulates a RANDOM_REPLACE stand-in (a PII-shaped value the redactor inserted): it must not
+            // be reported as residual PII when it's in the known-replacements set.
+            string output = Path_("standin.txt");
+            File.WriteAllText(output, "Contact standin@example.com about this.");
+
+            var known = new HashSet<string> { "standin@example.com" };
+            VerificationOutcome outcome = RedactionVerifier.Verify(output, EmailPolicy(), "ctx", _fs, known);
+
+            Assert.Equal(VerificationStatus.Clean, outcome.Status);
+            Assert.Empty(outcome.Residuals);
+        }
+
+        [Fact]
+        public void Verify_StillReportsGenuineResiduals_AlongsideOwnReplacements()
+        {
+            // One real leftover email plus one inserted stand-in: only the genuine residual is reported.
+            string output = Path_("mixed.txt");
+            File.WriteAllText(output, "Real leftover@example.com and standin standin@example.com.");
+
+            var known = new HashSet<string> { "standin@example.com" };
+            VerificationOutcome outcome = RedactionVerifier.Verify(output, EmailPolicy(), "ctx", _fs, known);
+
+            Assert.Equal(VerificationStatus.ResidualsFound, outcome.Status);
+            Assert.Contains(outcome.Residuals, r => r.Text == "leftover@example.com");
+            Assert.DoesNotContain(outcome.Residuals, r => r.Text == "standin@example.com");
+        }
+
+        [Fact]
+        public void ReplacementsOf_ReturnsDistinctNonEmptyReplacements()
+        {
+            var spans = new List<RedactionSpanEntity>
+            {
+                new() { Replacement = "AAA" },
+                new() { Replacement = "AAA" }, // duplicate
+                new() { Replacement = "BBB" },
+                new() { Replacement = "" },     // empty -> excluded
+            };
+
+            IReadOnlySet<string> set = RedactionVerifier.ReplacementsOf(spans);
+
+            Assert.Equal(2, set.Count);
+            Assert.Contains("AAA", set);
+            Assert.Contains("BBB", set);
+        }
+
+        [Fact]
         public void BroadPolicy_FindsTypesTheRedactionPolicyMissed()
         {
             // The output still contains a phone number. The narrow (email-only) policy can't see it, so
@@ -161,6 +241,86 @@ namespace PhilterDesktop.Tests
 
             Assert.Equal(VerificationStatus.Error, outcome.Status);
             Assert.False(string.IsNullOrWhiteSpace(outcome.Error));
+        }
+
+        // --- #543: RTF verification carries a fidelity caveat so "clean" doesn't overstate integrity ----
+
+        private static PhileasPolicy EmailSsnPolicy() =>
+            PolicySerializer.DeserializeFromJson("{\"identifiers\":{\"emailAddress\":{},\"ssn\":{}}}");
+
+        [Fact]
+        public void Verify_Rtf_SourceHadHeaderFooter_IsCleanButCarriesFidelityNote()
+        {
+            // Source has a header (dropped by RTF redaction); the redacted body has no residual PII.
+            string source = Path_("hdr-source.rtf");
+            File.WriteAllText(source, @"{\rtf1\ansi{\header Letterhead records@example.com}\f0 Plain body no pii}");
+            string output = Path_("hdr-out.rtf");
+            File.WriteAllText(output, @"{\rtf1\ansi\f0 Plain body no pii}"); // body-only, as the redactor would write
+
+            VerificationOutcome outcome = RedactionVerifier.Verify(output, EmailPolicy(), "ctx", _fs, sourcePath: source);
+
+            Assert.Equal(VerificationStatus.Clean, outcome.Status); // no detectable PII in the body
+            Assert.NotNull(outcome.FidelityNote);                   // but "clean" is qualified for RTF
+            Assert.Contains(".docx", outcome.FidelityNote!);
+        }
+
+        [Fact]
+        public void Verify_Rtf_BodyOnlySource_HasNoFidelityNote()
+        {
+            string source = Path_("body-source.rtf");
+            File.WriteAllText(source, @"{\rtf1\ansi\f0 Plain body no pii}");
+            string output = Path_("body-out.rtf");
+            File.WriteAllText(output, @"{\rtf1\ansi\f0 Plain body no pii}");
+
+            VerificationOutcome outcome = RedactionVerifier.Verify(output, EmailPolicy(), "ctx", _fs, sourcePath: source);
+
+            Assert.Equal(VerificationStatus.Clean, outcome.Status);
+            Assert.Null(outcome.FidelityNote); // nothing was dropped -> no caveat
+        }
+
+        [Fact]
+        public void Verify_Rtf_NoSourcePath_HasNoFidelityNote()
+        {
+            string output = Path_("nosource-out.rtf");
+            File.WriteAllText(output, @"{\rtf1\ansi\f0 Plain body no pii}");
+
+            VerificationOutcome outcome = RedactionVerifier.Verify(output, EmailPolicy(), "ctx", _fs); // no sourcePath
+
+            Assert.Equal(VerificationStatus.Clean, outcome.Status);
+            Assert.Null(outcome.FidelityNote); // can't assess fidelity without the source -> no caveat
+        }
+
+        [Fact]
+        public void Verify_Rtf_WithResidualAndDroppedSource_FlagsResidual_AndCarriesFidelityNote()
+        {
+            string source = Path_("both-source.rtf");
+            File.WriteAllText(source, @"{\rtf1\ansi{\footer foot@example.com}\f0 Body}");
+            string output = Path_("both-out.rtf");
+            File.WriteAllText(output, @"{\rtf1\ansi\f0 leftover@example.com in the body}");
+
+            VerificationOutcome outcome = RedactionVerifier.Verify(output, EmailPolicy(), "ctx", _fs, sourcePath: source);
+
+            Assert.Equal(VerificationStatus.ResidualsFound, outcome.Status); // real residual still reported
+            Assert.NotNull(outcome.FidelityNote);                            // and the caveat rides along
+        }
+
+        [Fact]
+        public async Task Verify_Rtf_HeaderFooterSample_CleanBody_ButFidelityCaveat()
+        {
+            // Integration: redact the real header/footer sample, then verify — the body's PII is redacted
+            // (clean) but the result is honestly qualified because the source had headers/footers (#543).
+            string input = Path.Combine(AppContext.BaseDirectory, "test-documents", "header-footer.rtf");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path_("hf_redacted.rtf");
+
+            PhileasPolicy policy = EmailSsnPolicy();
+            await RedactionService.RedactFileAsync(input, output, policy, "ctx");
+
+            VerificationOutcome outcome = RedactionVerifier.Verify(output, policy, "ctx", _fs, sourcePath: input);
+
+            Assert.Equal(VerificationStatus.Clean, outcome.Status); // body email/SSN redacted -> no residual
+            Assert.NotNull(outcome.FidelityNote);                   // header/footer weren't re-scanned
+            Assert.Contains(".docx", outcome.FidelityNote!);
         }
     }
 }

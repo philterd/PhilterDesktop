@@ -45,6 +45,13 @@ namespace PhilterDesktop
     {
         private const string DefaultReplacement = "{{{REDACTED-custom}}}";
 
+        // Separator placed between a column header and a cell value when the header is supplied as
+        // detection context (e.g. "Email: jane@x.com").
+        private const string HeaderContextSeparator = ": ";
+
+        // A detection within a single cell, with value-relative offsets and its source engine span.
+        private readonly record struct CellDetection(int Start, int End, Span Source);
+
         public static List<RedactionSpanEntity> Redact(
             string inputPath,
             string outputPath,
@@ -58,12 +65,18 @@ namespace PhilterDesktop
             var captured = new List<RedactionSpanEntity>();
             int order = 0;
             int fieldIndex = 0;
+            string[]? headerRow = null;
 
             // Stream the table: read a row, redact it in place, write it, discard it. Whole-column
             // redaction only needs the (per-field) column index and the header check only needs the row
             // number — both are available in a single forward pass, so no second pass is required.
             StreamTransform(inputPath, outputPath, (row, rowNumber) =>
             {
+                if (rowNumber == 0)
+                {
+                    headerRow = (string[])row.Clone(); // original header labels, used as detection context below
+                }
+
                 for (int column = 0; column < row.Length; column++)
                 {
                     int currentIndex = fieldIndex++;
@@ -93,28 +106,37 @@ namespace PhilterDesktop
                         continue;
                     }
 
-                    TextFilterResult result = filter(original);
-                    if (string.Equals(result.FilteredText, original, StringComparison.Ordinal))
+                    List<CellDetection> dets = DetectInCell(filter, HeaderFor(headerRow, rowNumber, column), original);
+                    if (dets.Count == 0)
                     {
                         continue;
                     }
 
-                    row[column] = result.FilteredText;
-                    foreach (Span s in result.Spans
-                        .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
-                        .OrderBy(s => s.CharacterStart))
+                    var ranges = dets
+                        .Select(d => new ReplacementRange(d.Start, d.End,
+                            string.IsNullOrEmpty(d.Source.Replacement) ? DefaultReplacement : d.Source.Replacement))
+                        .ToList();
+                    List<ReplacementRange> resolved = RedactionSpanMath.ResolveNonOverlapping(ranges);
+                    string redacted = ApplyRanges(original, resolved);
+                    if (string.Equals(redacted, original, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+                    row[column] = redacted;
+
+                    foreach (CellDetection d in dets.OrderBy(d => d.Start))
                     {
                         var entity = new RedactionSpanEntity
                         {
                             Order = order++,
                             ParagraphIndex = currentIndex,
-                            CharacterStart = s.CharacterStart,
-                            CharacterEnd = s.CharacterEnd,
-                            Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
-                            Replacement = s.Replacement ?? string.Empty,
-                            Classification = s.Classification ?? string.Empty
+                            CharacterStart = d.Start,
+                            CharacterEnd = d.End,
+                            Text = original.Substring(d.Start, d.End - d.Start),
+                            Replacement = d.Source.Replacement ?? string.Empty,
+                            Classification = d.Source.Classification ?? string.Empty
                         };
-                        SpanExplanation.Populate(entity, s);
+                        SpanExplanation.Populate(entity, d.Source);
                         captured.Add(entity);
                     }
                 }
@@ -164,6 +186,62 @@ namespace PhilterDesktop
             });
         }
 
+        /// <summary>
+        /// Scans each field independently (exactly as <see cref="Redact"/> does) and returns residual
+        /// detections — used by post-redaction verification so it matches per-field redaction instead of
+        /// scanning the serialized file as one blob. Streams row by row; field ordinals match Redact's.
+        /// </summary>
+        public static List<RedactionSpanEntity> Detect(string inputPath, Func<string, TextFilterResult> filter)
+        {
+            var captured = new List<RedactionSpanEntity>();
+            int order = 0;
+            int fieldIndex = 0;
+            string[]? headerRow = null;
+            int rowNumber = 0;
+
+            using var reader = new StreamReader(inputPath);
+            using var parser = new CsvParser(reader, ReadConfig());
+            while (parser.Read())
+            {
+                string[] row = parser.Record ?? Array.Empty<string>();
+                if (rowNumber == 0)
+                {
+                    headerRow = (string[])row.Clone();
+                }
+
+                for (int column = 0; column < row.Length; column++)
+                {
+                    int currentIndex = fieldIndex++;
+                    string original = row[column];
+                    if (string.IsNullOrEmpty(original))
+                    {
+                        continue;
+                    }
+
+                    foreach (CellDetection d in DetectInCell(filter, HeaderFor(headerRow, rowNumber, column), original)
+                        .OrderBy(d => d.Start))
+                    {
+                        var entity = new RedactionSpanEntity
+                        {
+                            Order = order++,
+                            ParagraphIndex = currentIndex,
+                            CharacterStart = d.Start,
+                            CharacterEnd = d.End,
+                            Text = original.Substring(d.Start, d.End - d.Start),
+                            Replacement = d.Source.Replacement ?? string.Empty,
+                            Classification = d.Source.Classification ?? string.Empty
+                        };
+                        SpanExplanation.Populate(entity, d.Source);
+                        captured.Add(entity);
+                    }
+                }
+
+                rowNumber++;
+            }
+
+            return captured;
+        }
+
         /// <summary>Reads the header (first) row as the column list for the "redact entire column" picker.</summary>
         public static List<SpreadsheetColumn> ReadColumns(string inputPath)
         {
@@ -207,6 +285,7 @@ namespace PhilterDesktop
         {
             HasHeaderRecord = false,    // treat every row as data; the first row is just row 0
             DetectDelimiter = true,
+            IgnoreBlankLines = false,   // keep blank/separator lines so the output has the same rows
             BadDataFound = null         // tolerate quirky quoting rather than throwing
         };
 
@@ -300,33 +379,9 @@ namespace PhilterDesktop
 
         // Chooses the output encoding to match the source so the redacted CSV keeps the same byte-order
         // mark and character encoding (otherwise non-ASCII — e.g. accented names — can be mangled when
-        // the file is reopened, especially in Excel). Falls back to UTF-8 without a BOM.
-        private static Encoding DetectEncoding(string path)
-        {
-            try
-            {
-                using FileStream fs = File.OpenRead(path);
-                Span<byte> bom = stackalloc byte[3];
-                int read = fs.Read(bom);
-                if (read >= 3 && bom[0] == 0xEF && bom[1] == 0xBB && bom[2] == 0xBF)
-                {
-                    return new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);    // UTF-8 with BOM
-                }
-                if (read >= 2 && bom[0] == 0xFF && bom[1] == 0xFE)
-                {
-                    return new UnicodeEncoding(bigEndian: false, byteOrderMark: true); // UTF-16 LE
-                }
-                if (read >= 2 && bom[0] == 0xFE && bom[1] == 0xFF)
-                {
-                    return new UnicodeEncoding(bigEndian: true, byteOrderMark: true);  // UTF-16 BE
-                }
-            }
-            catch
-            {
-                // unreadable preamble — fall through to the default
-            }
-            return new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);           // UTF-8, no BOM
-        }
+        // the file is reopened, especially in Excel). Falls back to UTF-8 without a BOM. Shared with the
+        // plain-text path via TextEncodingDetector so both formats preserve encoding the same way.
+        private static Encoding DetectEncoding(string path) => TextEncodingDetector.Detect(path);
 
         // The source's first line-ending ("\r\n", "\n", or "\r"), or null if it has no line break.
         private static string? DetectLineEnding(string path, Encoding encoding)
@@ -390,6 +445,47 @@ namespace PhilterDesktop
             {
                 fs.SetLength(fs.Length - terminatorBytes);
             }
+        }
+
+        // The column header to use as detection context for a data cell: the header row's label for this
+        // column. Null for the header row itself or when there's no usable label, so those cells are
+        // scanned on their own.
+        private static string? HeaderFor(string[]? headerRow, int rowNumber, int column)
+        {
+            if (rowNumber == 0 || headerRow is null || column >= headerRow.Length)
+            {
+                return null;
+            }
+            string header = headerRow[column];
+            return string.IsNullOrWhiteSpace(header) ? null : header;
+        }
+
+        // Detects PII in a cell. When a header is supplied it is prepended as leading context so
+        // context-sensitive detectors (e.g. the on-device name model) can use it; the header is never
+        // redacted because only detections lying entirely within the value are kept and their offsets are
+        // mapped back to be value-relative.
+        private static List<CellDetection> DetectInCell(Func<string, TextFilterResult> filter, string? header, string value)
+        {
+            int offset = 0;
+            string input = value;
+            if (!string.IsNullOrEmpty(header))
+            {
+                string prefix = header + HeaderContextSeparator;
+                offset = prefix.Length;
+                input = prefix + value;
+            }
+
+            var detections = new List<CellDetection>();
+            foreach (Span s in filter(input).Spans)
+            {
+                int start = s.CharacterStart - offset;
+                int end = s.CharacterEnd - offset;
+                if (start >= 0 && end <= value.Length && end > start)
+                {
+                    detections.Add(new CellDetection(start, end, s));
+                }
+            }
+            return detections;
         }
 
         private static string ApplyRanges(string original, IEnumerable<ReplacementRange> ranges)

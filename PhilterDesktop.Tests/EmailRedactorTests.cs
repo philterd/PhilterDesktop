@@ -235,6 +235,108 @@ namespace PhilterDesktop.Tests
             Assert.Contains("Thanks.", message.TextBody ?? string.Empty);
         }
 
+        [Fact]
+        public async Task RedactFileAsync_Msg_RtfOnlyBody_IsRecoveredAndRedacted()
+        {
+            // An Outlook message whose ONLY body is RTF must not be dropped: its text is recovered,
+            // redacted, and written into the .eml body (#523).
+            string input = WriteRtfOnlyMsg("rtf-only.msg");
+            string output = Path.Combine(_tempDir, "rtf-only.eml");
+
+            await RedactionService.RedactFileAsync(input, output, EmailPolicy(), "ctx");
+
+            using var stream = File.OpenRead(output);
+            MimeKit.MimeMessage message = MimeKit.MimeMessage.Load(stream);
+            string body = message.TextBody ?? string.Empty;
+
+            Assert.False(string.IsNullOrWhiteSpace(body), "the RTF-only body must be recovered, not dropped");
+            Assert.Contains("Quarterly figures", body);        // non-PII body text preserved
+            Assert.DoesNotContain("secret@example.com", body); // PII in the RTF body is redacted
+            Assert.DoesNotContain("555-123-4567", body);
+        }
+
+        [Fact]
+        public void ExtractText_ReturnsPlainTextOfRtf()
+        {
+            string text = RtfRedactor.ExtractText(@"{\rtf1\ansi\deff0 Hello \b world\b0 .\par}");
+
+            Assert.Contains("Hello", text);
+            Assert.Contains("world", text);
+            Assert.DoesNotContain("\\b", text); // control words aren't returned as text
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData("not rtf at all")]
+        public void ExtractText_EmptyOrInvalid_ReturnsEmpty(string input)
+        {
+            Assert.Equal(string.Empty, RtfRedactor.ExtractText(input));
+        }
+
+        // A .msg whose only body is RTF (no BodyText/BodyHtml) — the #523 case.
+        private string WriteRtfOnlyMsg(string name)
+        {
+            string path = Path.Combine(_tempDir, name);
+            using var email = new MsgKit.Email(
+                new MsgKit.Sender("john@example.com", "John Doe"),
+                "RTF only")
+            {
+                BodyRtf = @"{\rtf1\ansi\deff0 Quarterly figures. Please email secret@example.com or call 555-123-4567.\par}"
+            };
+            email.Recipients.AddTo("jane@example.com", "Jane Roe");
+            email.Save(path);
+            return path;
+        }
+
+        [Fact]
+        public async Task RedactFileAsync_Eml_EntityEncodedEmailInHtml_IsRedacted()
+        {
+            // The HTML alternative encodes the '@' as an entity; the plain-text path would catch it but the
+            // HTML (which most clients render) must not leak it either (#540).
+            string input = Path.Combine(_tempDir, "entity.eml");
+            var message = new MimeKit.MimeMessage();
+            message.From.Add(new MimeKit.MailboxAddress("George", "george@fake.com"));
+            message.To.Add(new MimeKit.MailboxAddress("Mary", "mary@example.org"));
+            message.Subject = "Entity encoded";
+            message.Body = new MimeKit.BodyBuilder
+            {
+                HtmlBody = "<html><body><p>Reach me at john&#64;example.com soon.</p></body></html>"
+            }.ToMessageBody();
+            using (var fs = File.Create(input)) { message.WriteTo(fs); }
+
+            string output = Path.Combine(_tempDir, "entity-out.eml");
+            await RedactionService.RedactFileAsync(input, output, EmailPolicy(), "ctx");
+
+            using var stream = File.OpenRead(output);
+            string html = MimeKit.MimeMessage.Load(stream).HtmlBody ?? string.Empty;
+            Assert.DoesNotContain("john@example.com", html);     // decoded form
+            Assert.DoesNotContain("john&#64;example.com", html); // entity form
+            Assert.DoesNotContain("example.com", html);
+        }
+
+        [Fact]
+        public async Task RedactFileAsync_Eml_TagSplitEmailInHtml_IsRedacted()
+        {
+            string input = Path.Combine(_tempDir, "split.eml");
+            var message = new MimeKit.MimeMessage();
+            message.From.Add(new MimeKit.MailboxAddress("George", "george@fake.com"));
+            message.To.Add(new MimeKit.MailboxAddress("Mary", "mary@example.org"));
+            message.Subject = "Tag split";
+            message.Body = new MimeKit.BodyBuilder
+            {
+                HtmlBody = "<html><body><p>Write to john<span>@</span>example.com please.</p></body></html>"
+            }.ToMessageBody();
+            using (var fs = File.Create(input)) { message.WriteTo(fs); }
+
+            string output = Path.Combine(_tempDir, "split-out.eml");
+            await RedactionService.RedactFileAsync(input, output, EmailPolicy(), "ctx");
+
+            using var stream = File.OpenRead(output);
+            string html = MimeKit.MimeMessage.Load(stream).HtmlBody ?? string.Empty;
+            Assert.DoesNotContain("@example.com", html); // the tag-split address is caught
+        }
+
         // Builds a minimal real Outlook .msg fixture with MsgKit (test-only dependency).
         private string WriteMsg(string name)
         {

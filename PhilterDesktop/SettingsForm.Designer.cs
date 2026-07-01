@@ -88,6 +88,7 @@ namespace PhilterDesktop
             colContext = new ColumnHeader();
             colOutput = new ColumnHeader();
             colHighlight = new ColumnHeader();
+            colIssues = new ColumnHeader();
             btnAddWatched = new Button();
             btnEditWatched = new Button();
             btnRemoveWatched = new Button();
@@ -556,7 +557,7 @@ namespace PhilterDesktop
             // listWatched
             // 
             listWatched.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            listWatched.Columns.AddRange(new ColumnHeader[] { colFolder, colPolicy, colContext, colOutput, colHighlight });
+            listWatched.Columns.AddRange(new ColumnHeader[] { colFolder, colPolicy, colContext, colOutput, colHighlight, colIssues });
             listWatched.FullRowSelect = true;
             listWatched.GridLines = true;
             listWatched.Location = new Point(6, 7);
@@ -567,6 +568,7 @@ namespace PhilterDesktop
             listWatched.TabIndex = 0;
             listWatched.UseCompatibleStateImageBehavior = false;
             listWatched.View = View.Details;
+            listWatched.ShowItemToolTips = true; // rows with failures carry a hover tooltip pointing at View Log
             listWatched.SelectedIndexChanged += ListWatched_SelectedIndexChanged;
             // 
             // colFolder
@@ -593,7 +595,12 @@ namespace PhilterDesktop
             // 
             colHighlight.Text = "Highlight";
             colHighlight.Width = 70;
-            // 
+            //
+            // colIssues
+            //
+            colIssues.Text = "Issues";
+            colIssues.Width = 120;
+            //
             // btnAddWatched
             // 
             btnAddWatched.Location = new Point(6, 193);
@@ -829,7 +836,7 @@ namespace PhilterDesktop
             rdoVerifySamePolicy.Size = new Size(240, 19);
             rdoVerifySamePolicy.TabIndex = 5;
             rdoVerifySamePolicy.TabStop = true;
-            rdoVerifySamePolicy.Text = "Scan with the same policy used to redact";
+            rdoVerifySamePolicy.Text = "Scan with the same policy used to redact (limited — can't catch missed PII types)";
             rdoVerifySamePolicy.UseVisualStyleBackColor = true;
             // 
             // rdoVerifyBroadPolicy
@@ -839,7 +846,7 @@ namespace PhilterDesktop
             rdoVerifyBroadPolicy.Name = "rdoVerifyBroadPolicy";
             rdoVerifyBroadPolicy.Size = new Size(257, 19);
             rdoVerifyBroadPolicy.TabIndex = 6;
-            rdoVerifyBroadPolicy.Text = "Scan with a broad policy (every detector on)";
+            rdoVerifyBroadPolicy.Text = "Scan with a broad policy — every detector on (recommended)";
             rdoVerifyBroadPolicy.UseVisualStyleBackColor = true;
             // 
             // lblVerifyHint
@@ -948,6 +955,7 @@ namespace PhilterDesktop
         private ColumnHeader colContext;
         private ColumnHeader colOutput;
         private ColumnHeader colHighlight;
+        private ColumnHeader colIssues;
         private Button btnAddWatched;
         private Button btnEditWatched;
         private Button btnRemoveWatched;

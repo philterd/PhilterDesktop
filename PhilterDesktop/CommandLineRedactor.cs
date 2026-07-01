@@ -122,9 +122,14 @@ namespace PhilterDesktop
                         PhileasPolicy policy = DeserializePolicy(policyJson);
                         GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
                         string outputPath = RedactionService.GetUniqueOutputPath(RedactionService.GetOutputPath(path, settings));
-                        RedactionService.RedactFileAsync(path, outputPath, policy, contextName, settings, filterService)
+                        RedactionService.RedactFileAsync(path, outputPath, policy, contextName, settings, filterService,
+                                highlight: options.Highlight)
                             .GetAwaiter().GetResult();
                         Console.WriteLine($"Redacted: {path} -> {outputPath}");
+                        if (RtfFidelity.HasDroppedContent(path))
+                        {
+                            Console.Error.WriteLine("Warning: " + RtfFidelity.Warning);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -203,6 +208,7 @@ namespace PhilterDesktop
             Console.WriteLine();
             Console.WriteLine("  /p, --policy   Redaction policy name to use (default: \"default\").");
             Console.WriteLine("  /c, --context  Redaction context name to use (default: \"default\").");
+            Console.WriteLine("  --highlight    Highlight replacements in Word (.docx) output (ignored for other types).");
             Console.WriteLine("  /h, --help     Show this help.");
             Console.WriteLine();
             Console.WriteLine("Each file is redacted to a copy with the configured suffix (default \"_redacted-draft\"); the original is not changed.");

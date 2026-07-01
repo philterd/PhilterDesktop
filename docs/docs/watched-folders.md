@@ -55,6 +55,13 @@ records and another for financial documents.
 To change a watched folder's settings later, select it and click **Edit…**. To stop watching a folder,
 select it and click **Remove**. Changes to the watched-folder list take effect immediately.
 
+The watched-folder list has an **Issues** column that shows, at a glance, how many problems each folder
+has recorded — files that **weren't redacted** (shown in **red**, e.g. an unknown policy or a file over
+the size limit) and files redacted **with a caveat** (shown in **amber**, e.g. redacted without name
+detection). This is drawn from each folder's activity log, so it appears **even if notifications and
+logging are turned off**; select the folder and click **View Log…** to see the details. It's a reminder
+to check on folders that need attention rather than assuming everything was redacted.
+
 ## How the automatic redaction works
 
 - **Which files are handled:** only `.txt`, `.docx`, `.pdf`, `.rtf`, `.xlsx`, `.csv`, `.eml`, and
@@ -101,7 +108,10 @@ Every watched folder keeps its own **activity log** so you can confirm nothing w
 
 - when a file was **found**,
 - when it was **redacted**, and **where** the redacted copy was saved,
-- when a file was **skipped** (because it had already been redacted), and
+- when a file was **skipped** (because it had already been redacted),
+- any **warnings** (shown in amber) — for example, a file redacted **without name detection** because the
+  on-device name model isn't installed; the file is still redacted for everything else, but person names
+  may remain, so review it (the notification also flags this), and
 - any **errors** (shown in red).
 
 The log window has a **Refresh** button to load the latest activity and a **Clear Log** button to
@@ -115,7 +125,9 @@ To keep watching your folders without a window on screen, Philter Desktop can hi
 
 - **Closing the window** (clicking the **X**) does **not** quit the program; it hides it to the
   tray, and watching keeps running. The first time this happens, a pop-up explains it.
-- **Double-click the tray icon** to bring the main window back.
+- **Double-click the tray icon** to bring the main window back. (Launching Philter Desktop again — from
+  the Start menu, a shortcut, or the taskbar — does the same: it brings the already-running window to the
+  front rather than opening a second copy. Only one Philter Desktop window runs at a time.)
 - **Right-click the tray icon** for a short menu:
     - **Open Philter Desktop**: reopen the window.
     - **Pause watching / Resume watching**: temporarily stop or restart automatic monitoring.

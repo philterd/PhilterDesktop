@@ -203,5 +203,109 @@ namespace PhilterDesktop.Tests
         {
             Assert.Equal(0, QueueBulkActions.RetryManyFailed(_repo, Array.Empty<ObjectId>()));
         }
+
+        // --- IsStillPending (#537) ----------------------------------------------------------------
+
+        [Fact]
+        public void IsStillPending_True_ForExistingPendingItem()
+        {
+            ObjectId id = Add(@"C:\a.txt", "Pending");
+            Assert.True(QueueBulkActions.IsStillPending(_repo, id));
+        }
+
+        [Fact]
+        public void IsStillPending_False_WhenItemWasRemoved()
+        {
+            ObjectId id = Add(@"C:\a.txt", "Pending");
+            _repo.Delete(id); // user removed it from the queue mid-tick
+            Assert.False(QueueBulkActions.IsStillPending(_repo, id));
+        }
+
+        [Theory]
+        [InlineData("Processing")]
+        [InlineData("Completed")]
+        [InlineData("Failed")]
+        public void IsStillPending_False_WhenStatusIsNotPending(string status)
+        {
+            ObjectId id = Add(@"C:\a.txt", status);
+            Assert.False(QueueBulkActions.IsStillPending(_repo, id));
+        }
+
+        [Fact]
+        public void IsStillPending_False_ForUnknownId()
+        {
+            Assert.False(QueueBulkActions.IsStillPending(_repo, ObjectId.NewObjectId()));
+        }
+
+        [Fact]
+        public void IsStillPending_IsCaseInsensitiveOnStatus()
+        {
+            ObjectId id = Add(@"C:\a.txt", "pending"); // lower-case
+            Assert.True(QueueBulkActions.IsStillPending(_repo, id));
+        }
+
+        // --- TryEnqueue / IsAlreadyQueued (#538) --------------------------------------------------
+
+        private static RedactionQueueEntity Item(string name, string policy = "p", string context = "c") =>
+            new() { Name = name, Policy = policy, Context = context };
+
+        [Fact]
+        public void TryEnqueue_InsertsWhenQueueIsEmpty()
+        {
+            Assert.True(QueueBulkActions.TryEnqueue(_repo, Item(@"C:\a.txt")));
+            Assert.Single(_repo.GetAll());
+        }
+
+        [Fact]
+        public void TryEnqueue_SkipsDuplicateOfAPendingItem()
+        {
+            Assert.True(QueueBulkActions.TryEnqueue(_repo, Item(@"C:\a.txt")));
+            Assert.False(QueueBulkActions.TryEnqueue(_repo, Item(@"C:\a.txt"))); // same name/policy/context
+            Assert.Single(_repo.GetAll()); // not duplicated
+        }
+
+        [Fact]
+        public void TryEnqueue_SkipsDuplicateOfAProcessingItem()
+        {
+            Add(@"C:\a.txt", "Processing");
+            Assert.False(QueueBulkActions.TryEnqueue(_repo, Item(@"C:\a.txt")));
+            Assert.Single(_repo.GetAll());
+        }
+
+        [Theory]
+        [InlineData("Completed")]
+        [InlineData("Failed")]
+        public void TryEnqueue_AllowsReQueueWhenPriorItemIsTerminal(string terminalStatus)
+        {
+            Add(@"C:\a.txt", terminalStatus); // a finished/failed prior run shouldn't block a deliberate redo
+            Assert.True(QueueBulkActions.TryEnqueue(_repo, Item(@"C:\a.txt")));
+            Assert.Equal(2, _repo.GetAll().Count());
+        }
+
+        [Fact]
+        public void TryEnqueue_AllowsSameFileWithDifferentPolicyOrContext()
+        {
+            Assert.True(QueueBulkActions.TryEnqueue(_repo, Item(@"C:\a.txt", policy: "p1", context: "c")));
+            Assert.True(QueueBulkActions.TryEnqueue(_repo, Item(@"C:\a.txt", policy: "p2", context: "c")));   // different policy
+            Assert.True(QueueBulkActions.TryEnqueue(_repo, Item(@"C:\a.txt", policy: "p1", context: "c2")));  // different context
+            Assert.Equal(3, _repo.GetAll().Count());
+        }
+
+        [Fact]
+        public void TryEnqueue_DifferentFilesAreAllQueued()
+        {
+            Assert.True(QueueBulkActions.TryEnqueue(_repo, Item(@"C:\a.txt")));
+            Assert.True(QueueBulkActions.TryEnqueue(_repo, Item(@"C:\b.txt")));
+            Assert.Equal(2, _repo.GetAll().Count());
+        }
+
+        [Fact]
+        public void IsAlreadyQueued_TrueForActive_FalseForTerminalOnly()
+        {
+            Add(@"C:\a.txt", "Completed");
+            Assert.False(QueueBulkActions.IsAlreadyQueued(_repo, @"C:\a.txt", "p", "c")); // only a completed copy
+            Add(@"C:\a.txt", "Pending");
+            Assert.True(QueueBulkActions.IsAlreadyQueued(_repo, @"C:\a.txt", "p", "c"));  // now an active copy exists
+        }
     }
 }

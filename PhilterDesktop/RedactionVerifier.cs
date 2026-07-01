@@ -42,6 +42,13 @@ namespace PhilterDesktop
         /// <summary>A plain-language reason when <see cref="Status"/> is <see cref="VerificationStatus.Error"/>.</summary>
         public string? Error { get; init; }
 
+        /// <summary>
+        /// A fidelity caveat (or null) noting a scope the verification could not cover — e.g. for an RTF
+        /// that had headers/footers/footnotes, the verifier re-scans the body only, so a clean result must
+        /// not be read as confirming those parts came through.
+        /// </summary>
+        public string? FidelityNote { get; init; }
+
         public int Count => Residuals.Count;
     }
 
@@ -61,7 +68,8 @@ namespace PhilterDesktop
         /// <c>.msg</c> redacted to <c>.eml</c> verifies as email.
         /// </summary>
         public static VerificationOutcome Verify(
-            string outputPath, PhileasPolicy policy, string context, FilterService filterService)
+            string outputPath, PhileasPolicy policy, string context, FilterService filterService,
+            IReadOnlySet<string>? knownReplacements = null, string? sourcePath = null)
         {
             if (string.IsNullOrEmpty(outputPath) || !File.Exists(outputPath))
             {
@@ -80,15 +88,31 @@ namespace PhilterDesktop
                     ".docx" => WordDocumentRedactor.Detect(outputPath, Filter),
                     ".eml" or ".msg" => EmailRedactor.Detect(outputPath, Filter),
                     ".xlsx" => XlsxRedactor.Detect(outputPath, Filter),
+                    ".csv" => CsvRedactor.Detect(outputPath, Filter), // per-field, matching how CSV is redacted
                     ".rtf" => MapTextSpans(Filter(RtfRedactor.ReadText(outputPath)).Spans),
                     ".pdf" => DetectPdf(outputPath, policy, context, filterService),
-                    _ => MapTextSpans(Filter(File.ReadAllText(outputPath)).Spans) // .txt, .csv
+                    _ => MapTextSpans(Filter(File.ReadAllText(outputPath)).Spans) // .txt
                 };
+
+                // Don't report the document's own inserted replacements (e.g. RANDOM_REPLACE realistic
+                // stand-ins, which are PII-shaped by design) as residual PII.
+                if (knownReplacements is { Count: > 0 })
+                {
+                    residuals = residuals.Where(r => !knownReplacements.Contains(r.Text)).ToList();
+                }
+
+                // For an RTF whose source carried non-body content, note that this pass only re-scanned the
+                // body text — so a "clean" residual-PII result isn't a guarantee the whole document is
+                // intact (headers/footers/footnotes may not have been carried over). See #543/#541.
+                string? fidelityNote = ext == ".rtf" && sourcePath is not null && RtfFidelity.HasDroppedContent(sourcePath)
+                    ? RtfFidelity.VerificationCaveat
+                    : null;
 
                 return new VerificationOutcome
                 {
                     Status = residuals.Count == 0 ? VerificationStatus.Clean : VerificationStatus.ResidualsFound,
-                    Residuals = residuals
+                    Residuals = residuals,
+                    FidelityNote = fidelityNote
                 };
             }
             catch (Exception ex)
@@ -96,6 +120,11 @@ namespace PhilterDesktop
                 return new VerificationOutcome { Status = VerificationStatus.Error, Error = ex.Message };
             }
         }
+
+        /// <summary>The distinct, non-empty replacement strings a redaction inserted — passed to
+        /// <see cref="Verify"/> so its own stand-ins aren't reported as residual PII.</summary>
+        public static IReadOnlySet<string> ReplacementsOf(IEnumerable<RedactionSpanEntity> spans) =>
+            spans.Select(s => s.Replacement).Where(r => !string.IsNullOrEmpty(r)).ToHashSet(StringComparer.Ordinal);
 
         // Runs the engine's PDF detection over the output bytes (it extracts the text layer internally),
         // collecting any residual detections. The redacted document the engine also produces is ignored.

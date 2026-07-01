@@ -369,9 +369,11 @@ namespace PhilterDesktop.PolicyEditing
             var op = (ConditionBuilder.ConditionOperator)_conditionOp.SelectedItem!;
             string value = _conditionVal.Text;
 
-            if (field.Numeric && !double.TryParse(value.Trim(), out _))
+            if (field.Numeric && !ConditionBuilder.IsValidNumericValue(value))
             {
-                MessageBox.Show(this, $"Enter a number for \"{field.Display}\".",
+                MessageBox.Show(this, $"Enter a plain number for \"{field.Display}\" — digits only, with an " +
+                    "optional decimal point (for example 0.85). Signs, exponents (1E3), and thousands " +
+                    "separators aren't allowed.",
                     "Condition", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 DialogResult = DialogResult.None; // keep the dialog open
                 return;

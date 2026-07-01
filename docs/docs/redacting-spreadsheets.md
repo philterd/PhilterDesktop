@@ -23,9 +23,16 @@ numbers, the formulas) intact. An Excel file stays `.xlsx` and a CSV stays `.csv
 
 Philter Desktop recognizes sensitive information partly from the **words around it**, and a cell often
 holds a value by itself, with no surrounding sentence for context. Patterns with a fixed shape (Social
-Security numbers, email addresses, account numbers) are still caught reliably. But a value such as a
-lone first name in a cell (for example, "April") has nothing around it to signal that it is a name, so
-automatic name detection is **much weaker** on bare cells than on ordinary paragraphs of writing.
+Security numbers, email addresses, account numbers) are still caught reliably. To help with the rest,
+Philter Desktop uses each column's **header** as context when scanning that column's cells — so a value
+under a "First Name" or "SSN" header is more likely to be recognized than the same value with no label.
+
+Even so, two limits remain. A bare value under a vague or missing header (for example a lone first name)
+can still be missed, so automatic name detection is weaker on bare cells than on ordinary paragraphs.
+And because each cell is scanned **on its own**, sensitive information **split across columns** (for
+example a first name in one column and a last name in the next) is not seen as a single item. For
+columns you know are sensitive, **whole-column redaction** (described next) remains the most dependable
+option.
 
 Numbers are scanned too. A value a spreadsheet stores as a *number* — such as a Social Security number,
 phone number, or account number typed as plain digits (for example `123456789`) — is run through

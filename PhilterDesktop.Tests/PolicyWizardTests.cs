@@ -64,6 +64,65 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void BuildJson_ConsistentStandIn_UsesRandomReplaceWithContextScope()
+        {
+            // CONTEXT scope is what makes "the same original always maps to the same stand-in" true;
+            // the default DOCUMENT scope re-randomizes per occurrence (#570).
+            string json = PolicyWizard.BuildJson("w", new[] { "Ssn" }, includeNames: true,
+                PolicyWizard.ReplacementStyle.ConsistentStandIn);
+
+            var policy = PolicySerializer.DeserializeFromJson(json);
+            AbstractFilterStrategy ssn = policy.Identifiers.Ssn!.Strategies![0];
+            Assert.Equal(AbstractFilterStrategy.RandomReplace, ssn.Strategy);
+            Assert.Equal(AbstractFilterStrategy.ReplacementScopeContext, ssn.ReplacementScope);
+
+            // The style is applied to on-device name detection too.
+            AbstractFilterStrategy phEye = policy.Identifiers.PhEyes![0].Strategies![0];
+            Assert.Equal(AbstractFilterStrategy.RandomReplace, phEye.Strategy);
+            Assert.Equal(AbstractFilterStrategy.ReplacementScopeContext, phEye.ReplacementScope);
+        }
+
+        [Fact]
+        public void BuildJson_LabeledMarker_LeavesDocumentScope() => AssertDocumentScope(PolicyWizard.ReplacementStyle.LabeledMarker);
+
+        [Fact]
+        public void BuildJson_FixedWord_LeavesDocumentScope() => AssertDocumentScope(PolicyWizard.ReplacementStyle.FixedWord);
+
+        private static void AssertDocumentScope(PolicyWizard.ReplacementStyle style)
+        {
+            var policy = PolicySerializer.DeserializeFromJson(
+                PolicyWizard.BuildJson("w", new[] { "Ssn" }, includeNames: false, style));
+
+            Assert.Equal(AbstractFilterStrategy.ReplacementScopeDocument,
+                policy.Identifiers.Ssn!.Strategies![0].ReplacementScope);
+        }
+
+        [Fact]
+        public void BuildJson_ConsistentStandIn_IsSchemaValid()
+        {
+            string json = PolicyWizard.BuildJson("w", new[] { "Ssn", "EmailAddress" }, includeNames: true,
+                PolicyWizard.ReplacementStyle.ConsistentStandIn);
+
+            Assert.True(PolicyValidator.Validate(json).IsValid);
+        }
+
+        [Fact]
+        public void BuildJson_ConsistentStandIn_ReplacesTheSameValueConsistently()
+        {
+            // The end-to-end promise: the same original is replaced with the same stand-in everywhere.
+            string json = PolicyWizard.BuildJson("w", new[] { "Ssn" }, includeNames: false,
+                PolicyWizard.ReplacementStyle.ConsistentStandIn);
+            var policy = PolicySerializer.DeserializeFromJson(json);
+
+            var result = new FilterService().Filter(policy, "ctx", 0, "SSN 123-45-6789 and again 123-45-6789");
+
+            var ssnSpans = result.Spans.Where(s => s.Text == "123-45-6789").ToList();
+            Assert.Equal(2, ssnSpans.Count);
+            Assert.Equal(ssnSpans[0].Replacement, ssnSpans[1].Replacement); // same original -> same stand-in
+            Assert.DoesNotContain("123-45-6789", result.FilteredText);
+        }
+
+        [Fact]
         public void BuildJson_IncludeNames_AddsPhEye()
         {
             string json = PolicyWizard.BuildJson("w", Array.Empty<string>(), includeNames: true,

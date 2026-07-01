@@ -26,6 +26,42 @@ namespace PhilterDesktop
     internal static class RedactionHistory
     {
         /// <summary>
+        /// Persists a redaction version and its spans atomically, in a single transaction, so a failure
+        /// can never leave a span-less version (which the Modify-Redaction UI would show but be unable to
+        /// re-apply). On any error both writes are rolled back and the exception is rethrown. Callers must
+        /// set each span's <c>VersionId</c> to <paramref name="version"/>.Id before calling.
+        /// </summary>
+        public static void SaveVersionWithSpans(
+            LiteDatabase database,
+            RedactionVersionRepository versions,
+            RedactionSpanRepository spans,
+            RedactionVersionEntity version,
+            IReadOnlyList<RedactionSpanEntity> versionSpans)
+        {
+            bool ownsTransaction = database.BeginTrans();
+            try
+            {
+                versions.Insert(version);
+                if (versionSpans.Count > 0)
+                {
+                    spans.InsertBulk(versionSpans);
+                }
+                if (ownsTransaction)
+                {
+                    database.Commit();
+                }
+            }
+            catch
+            {
+                if (ownsTransaction)
+                {
+                    database.Rollback();
+                }
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Clears all saved redaction history — every version and its spans (including the detected
         /// text) — and removes the completed documents from the queue. In-progress and pending items
         /// are left alone, and redacted output files on disk are not touched.

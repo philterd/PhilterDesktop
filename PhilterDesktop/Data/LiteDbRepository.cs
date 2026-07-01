@@ -170,6 +170,17 @@ namespace PhilterData
             _collection.EnsureIndex(field, unique);
         }
 
+        /// <summary>
+        /// Ensures a named index built from a raw LiteDB <see cref="BsonExpression"/> — e.g. a composite
+        /// key spanning several fields — optionally enforcing uniqueness.
+        /// </summary>
+        protected void EnsureIndex(string name, BsonExpression expression, bool unique = false)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(name);
+            ArgumentNullException.ThrowIfNull(expression);
+            _collection.EnsureIndex(name, expression, unique);
+        }
+
         // ── IDisposable ───────────────────────────────────────────────────────────
 
         public void Dispose()

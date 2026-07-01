@@ -155,6 +155,104 @@ namespace PhilterDesktop.Tests
             }
         }
 
+        // --- Comment / annotation stripping (#542) -----------------------------------
+
+        [Fact]
+        public void RemoveComments_StripsAnnotationGroupAndItsText()
+        {
+            const string rtf = @"{\rtf1\ansi Body {\annotation COMMENTBODYXYZ SSN 555-12-3456} after}";
+            string cleaned = RtfSanitizer.RemoveComments(rtf);
+
+            Assert.DoesNotContain("\\annotation", cleaned);
+            Assert.DoesNotContain("COMMENTBODYXYZ", cleaned);
+            Assert.DoesNotContain("555-12-3456", cleaned);
+            Assert.Contains("Body", cleaned);
+            Assert.Contains("after", cleaned);
+        }
+
+        [Fact]
+        public void RemoveComments_StripsIgnorableAnnotationAndAuthorIdCompanions()
+        {
+            const string rtf = @"{\rtf1 Body{\*\atnid JZ}{\*\atnauthor Jeff}{\annotation the comment text} after}";
+            string cleaned = RtfSanitizer.RemoveComments(rtf);
+
+            Assert.DoesNotContain("\\annotation", cleaned);
+            Assert.DoesNotContain("\\atnid", cleaned);
+            Assert.DoesNotContain("\\atnauthor", cleaned);
+            Assert.DoesNotContain("the comment text", cleaned);
+            Assert.DoesNotContain("Jeff", cleaned);
+            Assert.Contains("Body", cleaned);
+            Assert.Contains("after", cleaned);
+        }
+
+        [Fact]
+        public void RemoveComments_LeavesDocumentsWithoutCommentsUnchanged()
+        {
+            const string plain = @"{\rtf1\ansi\deff0 Just body text. SSN 123-45-6789.\par}";
+            Assert.Equal(plain, RtfSanitizer.RemoveComments(plain));
+        }
+
+        [Fact]
+        public void RemoveComments_KeepsBodyImagesAndOtherGroups()
+        {
+            const string rtf = @"{\rtf1\ansi{\fonttbl{\f0\fnil Arial;}} keep {\annotation COMMENTBODYXYZ} more {\pict\wmetafile8 0102}}";
+            string cleaned = RtfSanitizer.RemoveComments(rtf);
+
+            Assert.DoesNotContain("\\annotation", cleaned);
+            Assert.DoesNotContain("COMMENTBODYXYZ", cleaned);
+            Assert.Contains("\\fonttbl", cleaned);
+            Assert.Contains("\\pict", cleaned);
+            Assert.Contains("keep", cleaned);
+            Assert.Contains("more", cleaned);
+        }
+
+        [Fact]
+        public void RemoveComments_DoesNotStripControlWordThatMerelyStartsWithAnnotation()
+        {
+            const string rtf = @"{\rtf1 a {\annotationlike x} b}"; // not the \annotation control word
+            Assert.Equal(rtf, RtfSanitizer.RemoveComments(rtf));
+        }
+
+        [Fact]
+        public void RemoveComments_PreservesEscapedBraces_WhileStrippingComment()
+        {
+            const string rtf = @"{\rtf1 lit \{x\} {\annotation note} end}";
+            string cleaned = RtfSanitizer.RemoveComments(rtf);
+
+            Assert.DoesNotContain("\\annotation", cleaned);
+            Assert.Contains(@"\{x\}", cleaned); // escaped literal braces are not group delimiters
+            Assert.Contains("end", cleaned);
+        }
+
+        [Fact]
+        public async Task RtfRedactor_Comment_IsNotFlattenedIntoTheBody()
+        {
+            // An RTF comment is rendered by RichEdit glued onto the surrounding prose with no boundary;
+            // stripping the annotation group first keeps the redacted body clean (#542).
+            string input = Path.Combine(_tempDir, "comment.rtf");
+            File.WriteAllText(input,
+                @"{\rtf1\ansi\deff0{\fonttbl{\f0\fnil Arial;}}\f0\fs22 The invoice total is due." +
+                @"{\annotation Reviewer: verify client SSN 555-12-3456 before sending.} Please review.\par}");
+            string output = Path.Combine(_tempDir, "comment-out.rtf");
+
+            var policy = new PhileasPolicy { Name = "rtf", Identifiers = new Identifiers { Ssn = new Ssn() } };
+            await RedactionService.RedactFileAsync(input, output, policy, "ctx");
+
+            // The body reads cleanly — the comment text is not merged into the prose.
+            string body = RtfRedactor.ReadText(output);
+            Assert.Contains("The invoice total is due.", body);
+            Assert.Contains("Please review.", body);
+            Assert.DoesNotContain("Reviewer", body);
+            Assert.DoesNotContain("verify client", body);
+            Assert.DoesNotContain("due.Reviewer", body); // the exact "glued comment" corruption is gone
+
+            // The comment (and the PII inside it) is not in the output at all.
+            string raw = await File.ReadAllTextAsync(output);
+            Assert.DoesNotContain("Reviewer", raw);
+            Assert.DoesNotContain("555-12-3456", raw);
+            Assert.DoesNotContain("\\annotation", raw);
+        }
+
         [Fact]
         public async Task RtfRedactor_DoesNotLeakEmbeddedObjectContent()
         {

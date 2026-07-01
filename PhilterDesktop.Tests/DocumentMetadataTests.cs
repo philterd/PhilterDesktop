@@ -53,14 +53,22 @@ namespace PhilterDesktop.Tests
             ext.Properties = new DocumentFormat.OpenXml.ExtendedProperties.Properties();
             ext.Properties.Company = new Company("Acme Corp");
             ext.Properties.Manager = new Manager("Big Boss");
+            ext.Properties.HyperlinkBase = new HyperlinkBase(@"\\fileserver\jane.doe\docs");
+            ext.Properties.Template = new Template(@"C:\Users\jane.doe\Templates\Custom.dotm");
             ext.Properties.Save();
 
             CustomFilePropertiesPart custom = doc.AddNewPart<CustomFilePropertiesPart>();
             custom.Properties = new DocumentFormat.OpenXml.CustomProperties.Properties();
             custom.Properties.Save();
+
+            // A data-bound content control's backing data store, holding an unredacted value.
+            CustomXmlPart cxml = doc.MainDocumentPart!.AddCustomXmlPart(CustomXmlPartType.CustomXml);
+            using var writer = new StreamWriter(cxml.GetStream(FileMode.Create));
+            writer.Write("<root><ssn>555-99-1234</ssn></root>");
         }
 
-        private static (string Creator, string Title, string LastModifiedBy, bool HasCompany, bool HasCustomPart) ReadMetadata(string path)
+        private static (string Creator, string Title, string LastModifiedBy, bool HasCompany, bool HasCustomPart,
+            bool HasHyperlinkBase, bool HasCustomXml) ReadMetadata(string path)
         {
             using WordprocessingDocument doc = WordprocessingDocument.Open(path, isEditable: false);
             return (
@@ -68,7 +76,9 @@ namespace PhilterDesktop.Tests
                 doc.PackageProperties.Title ?? string.Empty,
                 doc.PackageProperties.LastModifiedBy ?? string.Empty,
                 doc.ExtendedFilePropertiesPart?.Properties?.Company is not null,
-                doc.CustomFilePropertiesPart is not null);
+                doc.CustomFilePropertiesPart is not null,
+                doc.ExtendedFilePropertiesPart?.Properties?.HyperlinkBase is not null,
+                doc.MainDocumentPart?.GetPartsOfType<CustomXmlPart>().Any() ?? false);
         }
 #pragma warning restore OOXML0001
 
@@ -90,6 +100,28 @@ namespace PhilterDesktop.Tests
 
             // The visible document content must be untouched.
             Assert.Contains("Important body content stays.", WordDocs.AllBodyText(path));
+        }
+
+        [Fact]
+        public void ScrubDocx_RemovesExtendedIdentityFields_AndDataBoundCustomXml()
+        {
+            string path = Path.Combine(_dir, "bound.docx");
+            WordDocs.Create(path, "Visible body stays.");
+            StampMetadata(path);
+
+            // Sanity: the fixture really has these before scrubbing.
+            var before = ReadMetadata(path);
+            Assert.True(before.HasHyperlinkBase);
+            Assert.True(before.HasCustomXml);
+            Assert.True(WordDocs.AnyPartContains(path, "555-99-1234"));
+
+            DocumentMetadata.ScrubDocx(path);
+
+            var after = ReadMetadata(path);
+            Assert.False(after.HasHyperlinkBase); // #534: app.xml hyperlink base (and template/titles) removed
+            Assert.False(after.HasCustomXml);     // #534: data-bound custom XML store removed
+            Assert.False(WordDocs.AnyPartContains(path, "555-99-1234")); // bound PII physically gone
+            Assert.Contains("Visible body stays.", WordDocs.AllBodyText(path)); // body untouched
         }
 
         [Fact]
