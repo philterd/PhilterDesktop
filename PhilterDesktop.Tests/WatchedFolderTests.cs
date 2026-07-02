@@ -481,7 +481,7 @@ namespace PhilterDesktop.Tests
         public async Task Watcher_Rtf_WithHeaderFooter_WarnsAndRecordsInActivityLog()
         {
             // The header-footer sample carries PII in a header and footer that RTF redaction can't carry
-            // over. The watcher must surface that (not silently), end to end (#541 via #531 channels).
+            // over. The watcher must surface that (not silently), end to end.
             string watched = Path.Combine(_root, "watched-rtf-hf");
             string output = Path.Combine(_root, "output-rtf-hf");
             Directory.CreateDirectory(watched);
@@ -523,7 +523,7 @@ namespace PhilterDesktop.Tests
         public async Task Watcher_UnknownPolicy_RecordsErrorInActivityLog_AndProducesNoOutput()
         {
             // A watched-folder failure must be discoverable even with notifications and logging off: it is
-            // written to the per-folder activity log, which drives the Issues indicator (#531).
+            // written to the per-folder activity log, which drives the Issues indicator.
             string watched = Path.Combine(_root, "watched-badpolicy");
             string output = Path.Combine(_root, "output-badpolicy");
             Directory.CreateDirectory(watched);

@@ -27,7 +27,7 @@ namespace PhilterDesktop.Tests
     /// The HTML body is redacted by its visible text so that entity-encoded (<c>&amp;#64;</c>) or
     /// tag-split (<c>john&lt;span&gt;@&lt;/span&gt;example.com</c>) PII can't survive in the HTML
     /// alternative most clients render, while PII in attribute values (a <c>mailto:</c> href) is still
-    /// caught (#540).
+    /// caught.
     /// </summary>
     public sealed class HtmlRedactorTests
     {

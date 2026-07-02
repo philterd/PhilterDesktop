@@ -52,7 +52,8 @@ namespace PhilterDesktop
             string inputPath,
             string outputPath,
             Func<string, TextFilterResult> filter,
-            IReadOnlyCollection<int>? fullyRedactedColumns = null)
+            IReadOnlyCollection<int>? fullyRedactedColumns = null,
+            string? worksheet = null)
         {
             var fullColumns = fullyRedactedColumns is { Count: > 0 }
                 ? new HashSet<int>(fullyRedactedColumns)
@@ -73,7 +74,7 @@ namespace PhilterDesktop
                 return captured;
             }
 
-            foreach ((Cell cell, bool isHeaderRow, int column) in EnumerateCells(workbookPart))
+            foreach ((Cell cell, bool isHeaderRow, int column) in EnumerateCells(workbookPart, worksheet))
             {
                 int currentIndex = cellIndex++;
 
@@ -157,7 +158,7 @@ namespace PhilterDesktop
         /// would apply. Used by the post-redaction verification pass to scan a written output. (Whole-
         /// column redaction isn't reproduced here — verification looks for content the detector flags.)
         /// </summary>
-        public static List<RedactionSpanEntity> Detect(string inputPath, Func<string, TextFilterResult> filter)
+        public static List<RedactionSpanEntity> Detect(string inputPath, Func<string, TextFilterResult> filter, string? worksheet = null)
         {
             using SpreadsheetDocument document = SpreadsheetDocument.Open(inputPath, isEditable: false);
             WorkbookPart? workbookPart = document.WorkbookPart;
@@ -169,7 +170,7 @@ namespace PhilterDesktop
 
             int order = 0;
             int cellIndex = 0;
-            foreach ((Cell cell, bool _, int _) in EnumerateCells(workbookPart))
+            foreach ((Cell cell, bool _, int _) in EnumerateCells(workbookPart, worksheet))
             {
                 int currentIndex = cellIndex++;
                 if (cell.CellFormula is not null || !IsScannableCell(cell))
@@ -205,7 +206,7 @@ namespace PhilterDesktop
             return captured;
         }
 
-        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans)
+        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, string? worksheet = null)
         {
             Dictionary<int, List<RedactionSpanEntity>> byCell = spans
                 .GroupBy(s => s.ParagraphIndex)
@@ -223,7 +224,7 @@ namespace PhilterDesktop
             }
 
             int cellIndex = 0;
-            foreach ((Cell cell, bool _, int _) in EnumerateCells(workbookPart))
+            foreach ((Cell cell, bool _, int _) in EnumerateCells(workbookPart, worksheet))
             {
                 int currentIndex = cellIndex++;
                 if (cell.CellFormula is not null || !byCell.TryGetValue(currentIndex, out List<RedactionSpanEntity>? cellSpans))
@@ -264,11 +265,44 @@ namespace PhilterDesktop
         /// Reads the columns of the first worksheet for the "redact entire column" picker: every column
         /// that has data, with its letter and the header text from the first row (when present).
         /// </summary>
-        public static List<SpreadsheetColumn> ReadColumns(string inputPath)
+        /// <summary>The worksheet names in workbook order (for the single-worksheet picker).</summary>
+        public static List<string> ReadSheetNames(string inputPath)
+        {
+            using SpreadsheetDocument document = SpreadsheetDocument.Open(inputPath, isEditable: false);
+            Sheets? sheets = document.WorkbookPart?.Workbook?.Sheets;
+            if (sheets is null)
+            {
+                return new List<string>();
+            }
+            return sheets.Elements<Sheet>()
+                .Select(s => s.Name?.Value ?? string.Empty)
+                .Where(n => n.Length > 0)
+                .ToList();
+        }
+
+        // Resolves a worksheet by name (or the first sheet when the name is empty) to its part.
+        private static WorksheetPart? FindWorksheetPart(WorkbookPart? workbookPart, string? sheetName)
+        {
+            if (workbookPart is null)
+            {
+                return null;
+            }
+            Sheets? sheets = workbookPart.Workbook?.Sheets;
+            if (sheets is null)
+            {
+                return workbookPart.WorksheetParts.FirstOrDefault();
+            }
+            Sheet? sheet = string.IsNullOrEmpty(sheetName)
+                ? sheets.Elements<Sheet>().FirstOrDefault()
+                : sheets.Elements<Sheet>().FirstOrDefault(s => string.Equals(s.Name?.Value, sheetName, StringComparison.Ordinal));
+            return sheet?.Id?.Value is string relId && workbookPart.GetPartById(relId) is WorksheetPart part ? part : null;
+        }
+
+        public static List<SpreadsheetColumn> ReadColumns(string inputPath, string? sheetName = null)
         {
             using SpreadsheetDocument document = SpreadsheetDocument.Open(inputPath, isEditable: false);
             WorkbookPart? workbookPart = document.WorkbookPart;
-            WorksheetPart? sheetPart = workbookPart?.WorksheetParts.FirstOrDefault();
+            WorksheetPart? sheetPart = FindWorksheetPart(workbookPart, sheetName);
             SheetData? sheetData = sheetPart?.Worksheet?.GetFirstChild<SheetData>();
             if (workbookPart is null || sheetData is null)
             {
@@ -316,7 +350,8 @@ namespace PhilterDesktop
         // marks cells in each sheet's first (header) row, which full-column redaction leaves intact. The
         // 1-based Column comes from the cell's reference (e.g. "B3" -> 2); when a cell omits its reference
         // (some generators do), it's the previous cell's column + 1, so it still maps to a column.
-        private static IEnumerable<(Cell Cell, bool IsHeaderRow, int Column)> EnumerateCells(WorkbookPart workbookPart)
+        private static IEnumerable<(Cell Cell, bool IsHeaderRow, int Column)> EnumerateCells(
+            WorkbookPart workbookPart, string? worksheet = null)
         {
             Sheets? sheets = workbookPart.Workbook?.Sheets;
             if (sheets is null)
@@ -326,6 +361,11 @@ namespace PhilterDesktop
 
             foreach (Sheet sheet in sheets.Elements<Sheet>())
             {
+                // A named worksheet limits redaction to that single sheet; empty means the whole workbook.
+                if (!string.IsNullOrEmpty(worksheet) && !string.Equals(sheet.Name?.Value, worksheet, StringComparison.Ordinal))
+                {
+                    continue;
+                }
                 if (sheet.Id?.Value is not string relationshipId)
                 {
                     continue;

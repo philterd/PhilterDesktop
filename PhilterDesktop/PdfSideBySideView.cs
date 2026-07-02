@@ -394,6 +394,28 @@ namespace PhilterDesktop
             return new PdfRegionDrawnEventArgs(pageNumber, lowerLeftX, lowerLeftY, upperRightX, upperRightY);
         }
 
+        /// <summary>
+        /// Inverse of <see cref="MapPictureRectToPage" />: a page-space region back to displayed-picture
+        /// pixels, for painting an overlay of an already-drawn box. Pure so it can be unit-tested.
+        /// </summary>
+        internal static Rectangle MapPageRegionToPicture(PdfRegionDrawnEventArgs region,
+            int pictureWidth, int imageWidth, int imageHeight, int renderDpi)
+        {
+            if (pictureWidth <= 0 || imageWidth <= 0 || renderDpi <= 0)
+            {
+                return Rectangle.Empty;
+            }
+            double displayScale = (double)pictureWidth / imageWidth;
+            double pxPerPt = renderDpi * displayScale / 72.0;
+            double pageHeightPts = imageHeight * 72.0 / renderDpi;
+
+            int left = (int)Math.Round(region.LowerLeftX * pxPerPt);
+            int right = (int)Math.Round(region.UpperRightX * pxPerPt);
+            int top = (int)Math.Round((pageHeightPts - region.UpperRightY) * pxPerPt);
+            int bottom = (int)Math.Round((pageHeightPts - region.LowerLeftY) * pxPerPt);
+            return Rectangle.FromLTRB(left, top, right, bottom);
+        }
+
         // --- Rendering --------------------------------------------------------
 
         private static int PageCount(byte[]? pdf) =>

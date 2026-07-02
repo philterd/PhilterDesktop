@@ -208,7 +208,7 @@ namespace PhilterDesktop.Tests
             Assert.Equal("Notes", columns[2].Header);
         }
 
-        // --- Streaming refactor (#476) ---------------------------------------
+        // --- Streaming refactor ---------------------------------------
 
         // Byte-level guard: with a no-op filter the streamed writer must emit canonical CSV exactly,
         // proving the streaming write path produces the same bytes as before.
@@ -336,7 +336,7 @@ namespace PhilterDesktop.Tests
                 $"retained {retained:N0} bytes after streaming a {fileSize:N0}-byte CSV; the table appears to be materialized in memory");
         }
 
-        // --- Line-ending & trailing-newline fidelity (#564, #565) ------------
+        // --- Line-ending & trailing-newline fidelity ------------
 
         // No-op filter (no PII) so the output structure equals the input structure exactly.
         private static Phileas.Model.TextFilterResult NoOp(string text) =>
@@ -471,7 +471,7 @@ namespace PhilterDesktop.Tests
             Assert.False(result.EndsWith("\n"));
         }
 
-        // --- Per-field verification detection (#552) --------------------------
+        // --- Per-field verification detection --------------------------
 
         [Fact]
         public void Detect_FindsResidual_AtFieldOrdinalAndPerCellOffset()
@@ -548,14 +548,14 @@ namespace PhilterDesktop.Tests
             Assert.Empty(CsvRedactor.Detect(input, t => fs.Filter(policy, "ctx", 0, t)));
         }
 
-        // --- Blank-line preservation (#563) ----------------------------------
+        // --- Blank-line preservation ----------------------------------
 
         [Theory]
         [InlineData("a,b\nx,y\n\np,q\n")]        // blank line in the middle (LF, trailing)
         [InlineData("a,b\n\n\nc,d\n")]           // multiple consecutive blank lines
         [InlineData("\na,b\n")]                  // leading blank line
         [InlineData("a,b\n\n")]                  // trailing blank line
-        [InlineData("a,b\n\nc,d")]               // blank line + no trailing newline (combines with #565)
+        [InlineData("a,b\n\nc,d")]               // blank line + no trailing newline
         [InlineData("a,b\r\n\r\nc,d\r\n")]       // CRLF blank line
         public void Redact_PreservesBlankLines_Exactly(string input)
         {
@@ -593,7 +593,7 @@ namespace PhilterDesktop.Tests
             Assert.Contains("\n\n", result);                  // the blank separator survives
         }
 
-        // --- Column header as detection context (#567) -----------------------
+        // --- Column header as detection context -----------------------
 
         // A context-dependent detector: only flags the 9-digit token when an 'SSN' label is in the text,
         // so it fires only when the column header supplies that context. Mirrors how a context-sensitive

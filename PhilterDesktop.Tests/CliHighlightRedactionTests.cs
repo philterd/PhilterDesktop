@@ -28,7 +28,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// The CLI's <c>--highlight</c> flag flows into the same <see cref="RedactionService.RedactFileAsync"/>
     /// (SettingsEntity) overload the command line calls. These guard that overload so that highlight is
-    /// applied to Word (.docx) output when requested and not otherwise (#539).
+    /// applied to Word (.docx) output when requested and not otherwise.
     /// </summary>
     public sealed class CliHighlightRedactionTests : IDisposable
     {

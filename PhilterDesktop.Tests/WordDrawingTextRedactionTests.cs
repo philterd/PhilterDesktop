@@ -24,8 +24,8 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// DrawingML text (&lt;a:t&gt; runs in shapes, SmartArt, and charts) is not made of WordprocessingML
-    /// paragraphs, so it was never filtered — PII in a shape/SmartArt/chart label survived
-    ///. These pin that DrawingML text is redacted across the package, in
+    /// paragraphs, so it was never filtered — PII in a shape/SmartArt/chart label survived.
+    /// These pin that DrawingML text is redacted across the package, in
     /// both the Redact and ApplySpans (Modify) paths.
     /// </summary>
     public sealed class WordDrawingTextRedactionTests : IDisposable
@@ -264,7 +264,7 @@ namespace PhilterDesktop.Tests
                 "the chart part must survive redaction");
         }
 
-        // --- #561: shape/SmartArt/chart redactions are recorded as spans (report/explanation) ----------
+        // --- shape/SmartArt/chart redactions are recorded as spans (report/explanation) ----------
 
         [Fact]
         public void Redact_ChartText_IsCapturedAsASpan()
@@ -321,6 +321,41 @@ namespace PhilterDesktop.Tests
             Assert.Equal(2, model.TotalRedactions);                       // body + chart both counted
             Assert.Contains(model.CountsByType, t => t.Count == 2);       // both emails grouped in the type breakdown
             Assert.Equal(2, model.Details.Count);                         // a detail row per redaction
+        }
+
+        // A Modify re-render of a .docx must still enforce the global always-redact list on drawing text
+        // (the policy carries those terms once merged, as ModifyRedactionForm.LoadPolicy now does).
+        [Fact]
+        public async Task ApplySpans_ReRedactsGlobalAlwaysRedactTerm_InChartDrawing()
+        {
+            string input = NewPath("gl-in.docx");
+            string output = NewPath("gl-out.docx");
+            WordDocs.CreateWithChart(input, WordDocs.AParagraph("Project Projity summary"), "ordinary body");
+
+            var policy = new PhileasPolicy { Identifiers = new Phileas.Policy.Identifiers() };
+            GlobalLists.ApplyTerms(policy, new[] { "Projity" }, Array.Empty<string>());
+
+            await RedactionService.ApplySpansAsync(input, output, ".docx", highlight: false,
+                new List<RedactionSpanEntity>(), policy);
+
+            Assert.False(WordDocs.AnyPartContains(output, "Projity")); // drawing term re-redacted
+        }
+
+        [Fact]
+        public async Task ApplySpans_WithoutGlobalTerm_LeavesDrawingText()
+        {
+            // Control: the drawing term survives when the policy doesn't carry it — proving the policy is
+            // what drives the re-render (so a missing global list, the bug, would let it reappear).
+            string input = NewPath("gl-in2.docx");
+            string output = NewPath("gl-out2.docx");
+            WordDocs.CreateWithChart(input, WordDocs.AParagraph("Project Projity summary"), "ordinary body");
+
+            var policy = new PhileasPolicy { Identifiers = new Phileas.Policy.Identifiers() };
+
+            await RedactionService.ApplySpansAsync(input, output, ".docx", highlight: false,
+                new List<RedactionSpanEntity>(), policy);
+
+            Assert.True(WordDocs.AnyPartContains(output, "Projity"));
         }
     }
 }

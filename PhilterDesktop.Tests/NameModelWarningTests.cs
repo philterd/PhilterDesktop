@@ -22,7 +22,7 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// When a queued redaction's policy wants on-device names but the model is missing, the main queue
-    /// must surface a warning instead of a clean success (#573, parity with #556).
+    /// must surface a warning instead of a clean success.
     /// </summary>
     public sealed class NameModelWarningTests
     {

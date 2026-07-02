@@ -56,7 +56,7 @@ namespace PhilterDesktop.Tests
         {
             // Simulate several processes doing their very first unlock at the same time (no key file yet).
             // They must all end up with the SAME key — exactly one generates it, the rest load it —
-            // instead of each generating a different key and clobbering data.key (#545).
+            // instead of each generating a different key and clobbering data.key.
             List<DatabaseKeyStore> stores = Enumerable.Range(0, 8)
                 .Select(_ => DatabaseKeyStore.ForDatabase(_dbPath))
                 .ToList();

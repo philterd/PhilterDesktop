@@ -21,7 +21,7 @@ using Xunit;
 namespace PhilterDesktop.Tests
 {
     /// <summary>
-    /// The single-instance guard (#544/#549): only the first GUI in a session "creates new"; a second
+    /// The single-instance guard: only the first GUI in a session "creates new"; a second
     /// launch detects the running one and can signal it to come to the front. Tested with unique names so
     /// it's deterministic and never touches the real session-scoped objects.
     /// </summary>

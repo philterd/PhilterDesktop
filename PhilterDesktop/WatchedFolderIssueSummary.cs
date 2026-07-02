@@ -27,7 +27,7 @@ namespace PhilterDesktop
     /// <summary>
     /// Turns a watched folder's error/warning counts (from its always-written activity log) into an
     /// at-a-glance summary, so failures are visible on the watched-folder list even when notifications
-    /// and application logging are both off (#531).
+    /// and application logging are both off.
     /// </summary>
     internal static class WatchedFolderIssueSummary
     {

@@ -22,7 +22,7 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// RTF redaction runs on the document body only, so headers/footers/footnotes aren't carried into the
-    /// output. That must be surfaced (not silent) — these cover the detection and the warning plumbing (#541).
+    /// output. That must be surfaced (not silent) — these cover the detection and the warning plumbing.
     /// </summary>
     public sealed class RtfFidelityTests : IDisposable
     {

@@ -24,7 +24,7 @@ namespace PhilterDesktop.Tests
     /// The context store keeps RANDOM_REPLACE mappings consistent across the GUI and CLI redacting the
     /// shared database at the same time. The in-process write lock can't cover two processes, so a unique
     /// composite (Context, Token) index guarantees a single row per pair. These simulate two "processes"
-    /// with two separate LiteDB connections to one file (#546).
+    /// with two separate LiteDB connections to one file.
     /// </summary>
     public sealed class ContextConsistencyCrossProcessTests : IDisposable
     {

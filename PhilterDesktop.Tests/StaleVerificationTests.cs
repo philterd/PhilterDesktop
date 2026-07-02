@@ -23,7 +23,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// A Modify-Redaction re-redact creates a new, unverified output; the document's stored verification
     /// verdict must be cleared so a report for the new version isn't stamped with the old "verified"
-    /// result (#560).
+    /// result.
     /// </summary>
     public sealed class StaleVerificationTests
     {

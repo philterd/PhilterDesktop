@@ -155,7 +155,7 @@ namespace PhilterDesktop.Tests
             }
         }
 
-        // --- Comment / annotation stripping (#542) -----------------------------------
+        // --- Comment / annotation stripping -----------------------------------
 
         [Fact]
         public void RemoveComments_StripsAnnotationGroupAndItsText()
@@ -228,7 +228,7 @@ namespace PhilterDesktop.Tests
         public async Task RtfRedactor_Comment_IsNotFlattenedIntoTheBody()
         {
             // An RTF comment is rendered by RichEdit glued onto the surrounding prose with no boundary;
-            // stripping the annotation group first keeps the redacted body clean (#542).
+            // stripping the annotation group first keeps the redacted body clean.
             string input = Path.Combine(_tempDir, "comment.rtf");
             File.WriteAllText(input,
                 @"{\rtf1\ansi\deff0{\fonttbl{\f0\fnil Arial;}}\f0\fs22 The invoice total is due." +

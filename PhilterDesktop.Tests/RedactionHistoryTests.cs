@@ -85,7 +85,7 @@ namespace PhilterDesktop.Tests
             Assert.DoesNotContain(remaining, x => x.Status == "Completed");
         }
 
-        // --- SaveVersionWithSpans atomicity (#547) ------------------------------------------------
+        // --- SaveVersionWithSpans atomicity ------------------------------------------------
 
         private static RedactionVersionEntity NewVersion(string src = "a.txt") =>
             new() { DocumentId = ObjectId.NewObjectId(), Version = 1, SourcePath = src, OutputPath = src + ".red" };

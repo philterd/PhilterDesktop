@@ -2029,7 +2029,9 @@ namespace PhilterDesktop
             using var form = new ModifyRedactionForm(
                 id, _redactionVersionRepository, _redactionSpanRepository, _policyRepository,
                 modifySettings.RedactedSuffix, DocumentMetadata.OptionsFor(modifySettings),
-                modifySettings.ScrubEmailHeaders, modifySettings.RemoveCommonEmailHeaders);
+                modifySettings.ScrubEmailHeaders, modifySettings.RemoveCommonEmailHeaders,
+                modifySettings.OutputToOriginalLocation, modifySettings.CustomOutputFolder,
+                modifySettings.GlobalAlwaysRedact, modifySettings.GlobalAlwaysIgnore);
             form.ShowDialog(this);
 
             // A modify re-redaction produces a new, unverified output. Clear the document's stored
@@ -2058,6 +2060,7 @@ namespace PhilterDesktop
                     Policy = entity.Policy,
                     Context = entity.Context,
                     Highlight = entity.Highlight,
+                    Worksheet = entity.Worksheet,
                     DurationMs = durationMs
                 };
                 int order = 0;
@@ -2718,7 +2721,7 @@ namespace PhilterDesktop
 
             ApplyVerificationFields(entity, outcome);
             // A clean re-scan of an RTF that dropped non-body content must not read as fully "Clean" — keep
-            // the review cue (#543/#541), so the report and queue row stay honest after a re-verify.
+            // the review cue, so the report and queue row stay honest after a re-verify.
             entity.VerificationStatus = EffectiveVerificationStatus(
                 entity.VerificationStatus, nameDetectionUnavailable: false, contentDropped: RtfFidelity.HasDroppedContent(entity.Name));
             _redactionQueueRepository.Update(entity);

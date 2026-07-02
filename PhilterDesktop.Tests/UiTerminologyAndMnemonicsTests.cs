@@ -23,9 +23,9 @@ using Xunit;
 namespace PhilterDesktop.Tests
 {
     /// <summary>
-    /// Guards the 1.0.0 UI-polish fixes: the preview label lists every supported type (#501),
-    /// consistent action/dismiss terminology across forms (#503), and Alt-key mnemonics on
-    /// buttons and menus (#506). Forms are built on an STA thread, like the smoke tests.
+    /// Guards the 1.0.0 UI-polish fixes: the preview label lists every supported type,
+    /// consistent action/dismiss terminology across forms, and Alt-key mnemonics on
+    /// buttons and menus. Forms are built on an STA thread, like the smoke tests.
     /// </summary>
     public sealed class UiTerminologyAndMnemonicsTests
     {
@@ -87,7 +87,7 @@ namespace PhilterDesktop.Tests
             }
         });
 
-        // ---- #503: consistent terminology ----
+        // ---- consistent terminology ----
 
         // Every form that adds documents to the redaction queue uses the SAME action label, instead of
         // some saying "Redact" and others "Add to Queue".
@@ -144,7 +144,7 @@ namespace PhilterDesktop.Tests
             Assert.Equal("&Redact", TextOf(form, "_redact"));
         });
 
-        // ---- #506: mnemonics on buttons and menus ----
+        // ---- mnemonics on buttons and menus ----
 
         [Fact]
         public void DialogButtons_HaveMnemonics() => WithDb(db =>

@@ -71,6 +71,7 @@ namespace PhilterDesktop.PolicyEditing
         {
             Dock = DockStyle.Bottom,
             FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false, // keep the term/region buttons on a single row
             Height = 48,
             Padding = new Padding(10, 8, 10, 8)
         };
@@ -89,6 +90,16 @@ namespace PhilterDesktop.PolicyEditing
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             Enabled = false,
+            Margin = new Padding(0, 0, 8, 0),
+            Padding = new Padding(10, 4, 10, 4)
+        };
+        private readonly Button _pdfRegions = new()
+        {
+            Text = "PDF Regions…",
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Enabled = false,
+            Margin = new Padding(0, 0, 8, 0), // match the other action buttons so the row is even
             Padding = new Padding(10, 4, 10, 4)
         };
 
@@ -143,6 +154,7 @@ namespace PhilterDesktop.PolicyEditing
             _consultingLink.Click += (_, _) => Links.Open(Links.ConsultingUrl("policy-editor"));
             _ignoreList.Click += OnIgnoredTerms;
             _alwaysRedact.Click += OnAlwaysRedact;
+            _pdfRegions.Click += OnPdfRegions;
 
             ModernTheme.Apply(this);
 
@@ -184,6 +196,7 @@ namespace PhilterDesktop.PolicyEditing
 
             _actions.Controls.Add(_ignoreList);
             _actions.Controls.Add(_alwaysRedact);
+            _actions.Controls.Add(_pdfRegions);
 
             // A quiet "score this policy" link pinned to the bottom-right, pointing at Philter Scope.
             // Sits in the empty right side of the bottom actions bar; anchored bottom-right so it stays
@@ -992,6 +1005,23 @@ namespace PhilterDesktop.PolicyEditing
             _dirty = true;
         }
 
+        private void OnPdfRegions(object? sender, EventArgs e)
+        {
+            if (_policy is null)
+            {
+                return;
+            }
+
+            using var dlg = new PdfRegionsForm(_policy.Graphical.BoundingBoxes);
+            if (dlg.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            _policy.Graphical.BoundingBoxes = dlg.Boxes;
+            _dirty = true;
+        }
+
         private void SetEditingEnabled(bool enabled)
         {
             _tabs.Enabled = enabled;
@@ -1002,6 +1032,7 @@ namespace PhilterDesktop.PolicyEditing
             _description.Enabled = enabled;
             _ignoreList.Enabled = enabled;
             _alwaysRedact.Enabled = enabled;
+            _pdfRegions.Enabled = enabled;
         }
 
         private static string? Prompt(string message, string title)

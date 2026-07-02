@@ -19,7 +19,7 @@ using Xunit;
 namespace PhilterDesktop.Tests
 {
     /// <summary>
-    /// High-DPI configuration (#504). The app opts into Per-Monitor v2 DPI awareness so windows scale
+    /// High-DPI configuration. The app opts into Per-Monitor v2 DPI awareness so windows scale
     /// crisply on high-DPI and mixed-DPI multi-monitor setups; combined with AutoScaleMode.Font on every
     /// form, absolute-coordinate layouts scale proportionally. This guards against the setting being
     /// dropped (which would silently revert to the blurrier SystemAware default).

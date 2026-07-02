@@ -28,7 +28,7 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// The overlapping-window streamer must redact a large .txt exactly as the whole-string path would,
-    /// including entities that straddle window seams (#568). Tests force many tiny windows over small
+    /// including entities that straddle window seams. Tests force many tiny windows over small
     /// inputs so the boundary logic is exercised deterministically. Emails are surrounded by spaces so
     /// each is a discrete token at a known position (the detector treats adjacent non-space text as part
     /// of the address).

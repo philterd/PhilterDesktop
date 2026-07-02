@@ -516,7 +516,7 @@ namespace PhilterDesktop
         }
 
         // Info respects the logging toggle; warnings/errors are always recorded, so a watched-folder
-        // failure or skip is never lost from the application log just because logging happens to be off (#531).
+        // failure or skip is never lost from the application log just because logging happens to be off.
         internal static bool ShouldWriteToGlobalLog(bool warning, bool loggingEnabled) => warning || loggingEnabled;
 
         private void Log(string message, bool warning = false)

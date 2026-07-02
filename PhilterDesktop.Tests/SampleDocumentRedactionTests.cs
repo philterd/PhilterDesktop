@@ -165,7 +165,7 @@ namespace PhilterDesktop.Tests
             Assert.DoesNotContain(Ssn, body);
 
             // The header and footer — and their PII — are not carried into the redacted RTF at all
-            // (RTF redaction works on the body only; this is the #541 drop the app warns about).
+            // (RTF redaction works on the body only; this is the drop the app warns about).
             string outputRaw = File.ReadAllText(output);
             Assert.DoesNotContain("records@brannon-legal.com", outputRaw); // header email gone
             Assert.DoesNotContain("Brannon & Associates", outputRaw);      // header text gone
@@ -183,7 +183,7 @@ namespace PhilterDesktop.Tests
         {
             // This .eml's HTML body hides addresses as an HTML entity (john&#64;…), split by a tag
             // (jane<span>@</span>…), and in a mailto: href — the exact forms that used to survive in the
-            // rendered HTML while the plain-text path was clean (#540).
+            // rendered HTML while the plain-text path was clean.
             string input = Path.Combine(SamplesDir, "email-encoded-html.eml");
             Assert.True(File.Exists(input), $"Sample not found: {input}");
             string output = Path.Combine(_tempDir, "email-encoded-html_redacted.eml");
@@ -203,7 +203,7 @@ namespace PhilterDesktop.Tests
         [Fact]
         public void DocxWithChartSample_ReviewLines_IncludeDrawingText()
         {
-            // #562: the .docx View Diff builds from ReadReviewLines, which must include shape/chart text.
+            // The .docx View Diff builds from ReadReviewLines, which must include shape/chart text.
             string input = Path.Combine(SamplesDir, "docx-with-chart.docx");
             Assert.True(File.Exists(input), $"Sample not found: {input}");
 
@@ -215,7 +215,7 @@ namespace PhilterDesktop.Tests
         [Fact]
         public async Task DocxWithChartSample_RedactionRecordsChartAndBodySpans()
         {
-            // #561: shape/chart redactions are captured as spans (so the report/explanation count them).
+            // Shape/chart redactions are captured as spans (so the report/explanation count them).
             string input = Path.Combine(SamplesDir, "docx-with-chart.docx");
             Assert.True(File.Exists(input), $"Sample not found: {input}");
             string output = Path.Combine(_tempDir, "docx-with-chart_redacted.docx");
@@ -230,7 +230,7 @@ namespace PhilterDesktop.Tests
         [Fact]
         public async Task RtfWithCommentSample_CommentRemoved_NotFlattenedIntoBody()
         {
-            // #542: an RTF comment must not be glued into the visible body.
+            // An RTF comment must not be glued into the visible body.
             string input = Path.Combine(SamplesDir, "rtf-with-comment.rtf");
             Assert.True(File.Exists(input), $"Sample not found: {input}");
             string output = Path.Combine(_tempDir, "rtf-with-comment_redacted.rtf");
@@ -248,7 +248,7 @@ namespace PhilterDesktop.Tests
         [Fact]
         public async Task MsgWithRtfOnlyBodySample_IsRecoveredAndRedacted()
         {
-            // #523: an Outlook .msg whose only body is RTF is recovered as text and redacted (not dropped).
+            // An Outlook .msg whose only body is RTF is recovered as text and redacted (not dropped).
             string input = Path.Combine(SamplesDir, "rtf-only-body.msg");
             Assert.True(File.Exists(input), $"Sample not found: {input}");
             string output = Path.Combine(_tempDir, "rtf-only-body.eml"); // .msg redacts to .eml
@@ -259,6 +259,27 @@ namespace PhilterDesktop.Tests
             string body = MimeKit.MimeMessage.Load(stream).TextBody ?? string.Empty;
             Assert.Contains("Quarterly figures", body);        // the RTF body was recovered, not dropped
             Assert.DoesNotContain("secret@example.com", body); // and its PII is redacted
+        }
+
+        [Fact]
+        public async Task XlsxSample_MultiSheet_RedactsChosenWorksheetOnly()
+        {
+            // The workbook has an "Employees" sheet and a "Vendors" sheet; redaction targets one sheet.
+            string input = Path.Combine(SamplesDir, "multi-sheet.xlsx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "multi-sheet_redacted.xlsx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx", worksheet: "Employees");
+
+            string all = SpreadsheetTestHelper.AllText(output);
+            // The Employees sheet is redacted.
+            Assert.DoesNotContain("jane.doe@example.com", all);
+            Assert.DoesNotContain("john.smith@example.com", all);
+            Assert.DoesNotContain("123-45-6789", all);
+            Assert.DoesNotContain("234-56-7890", all);
+            // The Vendors sheet is left untouched.
+            Assert.Contains("bob@vendor.example", all);
+            Assert.Contains("alice@vendor.example", all);
         }
 
         [Fact]

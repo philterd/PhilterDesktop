@@ -25,7 +25,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// The .docx View Diff builds both sides from <see cref="WordDocumentRedactor.ReadReviewLines"/>,
     /// which — unlike ReadParagraphs — also includes DrawingML (shape/SmartArt/chart) text, so the diff
-    /// no longer understates redactions by hiding drawing changes (#562).
+    /// no longer understates redactions by hiding drawing changes.
     /// </summary>
     public sealed class WordReviewLinesTests : IDisposable
     {

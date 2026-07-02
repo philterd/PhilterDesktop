@@ -67,7 +67,7 @@ namespace PhilterDesktop.Tests
             Assert.False(ConditionBuilder.TryParse(condition, out _, out _, out _));
         }
 
-        // --- #559: the builder must not offer operators/values the engine silently ignores -----------
+        // --- the builder must not offer operators/values the engine silently ignores -----------
 
         [Fact]
         public void TypeField_DoesNotOfferStartsWith()

@@ -69,7 +69,7 @@ namespace PhilterDesktop
         /// </summary>
         public static VerificationOutcome Verify(
             string outputPath, PhileasPolicy policy, string context, FilterService filterService,
-            IReadOnlySet<string>? knownReplacements = null, string? sourcePath = null)
+            IReadOnlySet<string>? knownReplacements = null, string? sourcePath = null, string? worksheet = null)
         {
             if (string.IsNullOrEmpty(outputPath) || !File.Exists(outputPath))
             {
@@ -87,7 +87,7 @@ namespace PhilterDesktop
                 {
                     ".docx" => WordDocumentRedactor.Detect(outputPath, Filter),
                     ".eml" or ".msg" => EmailRedactor.Detect(outputPath, Filter),
-                    ".xlsx" => XlsxRedactor.Detect(outputPath, Filter),
+                    ".xlsx" => XlsxRedactor.Detect(outputPath, Filter, worksheet),
                     ".csv" => CsvRedactor.Detect(outputPath, Filter), // per-field, matching how CSV is redacted
                     ".rtf" => MapTextSpans(Filter(RtfRedactor.ReadText(outputPath)).Spans),
                     ".pdf" => DetectPdf(outputPath, policy, context, filterService),
@@ -103,7 +103,7 @@ namespace PhilterDesktop
 
                 // For an RTF whose source carried non-body content, note that this pass only re-scanned the
                 // body text — so a "clean" residual-PII result isn't a guarantee the whole document is
-                // intact (headers/footers/footnotes may not have been carried over). See #543/#541.
+                // intact (headers/footers/footnotes may not have been carried over).
                 string? fidelityNote = ext == ".rtf" && sourcePath is not null && RtfFidelity.HasDroppedContent(sourcePath)
                     ? RtfFidelity.VerificationCaveat
                     : null;

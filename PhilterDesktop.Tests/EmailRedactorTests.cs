@@ -239,7 +239,7 @@ namespace PhilterDesktop.Tests
         public async Task RedactFileAsync_Msg_RtfOnlyBody_IsRecoveredAndRedacted()
         {
             // An Outlook message whose ONLY body is RTF must not be dropped: its text is recovered,
-            // redacted, and written into the .eml body (#523).
+            // redacted, and written into the .eml body.
             string input = WriteRtfOnlyMsg("rtf-only.msg");
             string output = Path.Combine(_tempDir, "rtf-only.eml");
 
@@ -274,7 +274,7 @@ namespace PhilterDesktop.Tests
             Assert.Equal(string.Empty, RtfRedactor.ExtractText(input));
         }
 
-        // A .msg whose only body is RTF (no BodyText/BodyHtml) — the #523 case.
+        // A .msg whose only body is RTF (no BodyText/BodyHtml).
         private string WriteRtfOnlyMsg(string name)
         {
             string path = Path.Combine(_tempDir, name);
@@ -293,7 +293,7 @@ namespace PhilterDesktop.Tests
         public async Task RedactFileAsync_Eml_EntityEncodedEmailInHtml_IsRedacted()
         {
             // The HTML alternative encodes the '@' as an entity; the plain-text path would catch it but the
-            // HTML (which most clients render) must not leak it either (#540).
+            // HTML (which most clients render) must not leak it either.
             string input = Path.Combine(_tempDir, "entity.eml");
             var message = new MimeKit.MimeMessage();
             message.From.Add(new MimeKit.MailboxAddress("George", "george@fake.com"));

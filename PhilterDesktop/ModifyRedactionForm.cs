@@ -42,6 +42,10 @@ namespace PhilterDesktop
         private readonly WordScrubOptions _wordScrub = WordScrubOptions.None;
         private readonly bool _scrubEmailHeaders;
         private readonly bool _removeCommonEmailHeaders;
+        private readonly bool _outputToOriginalLocation = true;
+        private readonly string _customOutputFolder = string.Empty;
+        private readonly string _globalAlwaysRedact = string.Empty;
+        private readonly string _globalAlwaysIgnore = string.Empty;
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public ModifyRedactionForm()
@@ -59,7 +63,11 @@ namespace PhilterDesktop
             string? redactedSuffix = null,
             WordScrubOptions wordScrub = WordScrubOptions.None,
             bool scrubEmailHeaders = false,
-            bool removeCommonEmailHeaders = false)
+            bool removeCommonEmailHeaders = false,
+            bool outputToOriginalLocation = true,
+            string? customOutputFolder = null,
+            string? globalAlwaysRedact = null,
+            string? globalAlwaysIgnore = null)
             : this()
         {
             _documentId = documentId;
@@ -70,6 +78,10 @@ namespace PhilterDesktop
             _wordScrub = wordScrub;
             _scrubEmailHeaders = scrubEmailHeaders;
             _removeCommonEmailHeaders = removeCommonEmailHeaders;
+            _outputToOriginalLocation = outputToOriginalLocation;
+            _customOutputFolder = customOutputFolder ?? string.Empty;
+            _globalAlwaysRedact = globalAlwaysRedact ?? string.Empty;
+            _globalAlwaysIgnore = globalAlwaysIgnore ?? string.Empty;
 
             ReloadVersions(selectLatest: true);
         }
@@ -373,12 +385,11 @@ namespace PhilterDesktop
                 return;
             }
 
-            string dir = Path.GetDirectoryName(version.SourcePath) ?? string.Empty;
-            string baseName = Path.GetFileNameWithoutExtension(version.SourcePath);
-            string ext = RedactionService.OutputExtension(version.SourcePath);
-            string output = version.Version == 1
-                ? Path.Combine(dir, $"{baseName}{_redactedSuffix}{ext}")
-                : Path.Combine(dir, $"{baseName}{_redactedSuffix}_{version.Version}{ext}");
+            // Resolve the output the same way the main redaction paths do — honoring the configured
+            // output location (original folder vs. custom folder) and the suffix — then make it unique so
+            // re-redacting never silently overwrites an earlier output (e.g. version 1's original file).
+            string output = RedactionService.GetUniqueOutputPath(
+                RedactionService.GetOutputPath(version.SourcePath, _outputToOriginalLocation, _customOutputFolder, _redactedSuffix));
 
             PhileasPolicy? policy = LoadPolicy(version.Policy);
 
@@ -390,7 +401,8 @@ namespace PhilterDesktop
                 await RedactionService.ApplySpansAsync(version.SourcePath, output, version.FileType, version.Highlight, _working, policy,
                     wordScrub: _wordScrub,
                     scrubEmailHeaders: _scrubEmailHeaders,
-                    removeCommonEmailHeaders: _removeCommonEmailHeaders);
+                    removeCommonEmailHeaders: _removeCommonEmailHeaders,
+                    worksheet: version.Worksheet);
             }
             catch (Exception ex)
             {
@@ -432,7 +444,15 @@ namespace PhilterDesktop
             try
             {
                 PolicyEntity? entity = _policies.FindByName(name);
-                return entity is null ? null : PolicySerializer.DeserializeFromJson(string.IsNullOrWhiteSpace(entity.Json) ? "{}" : entity.Json);
+                if (entity is null)
+                {
+                    return null;
+                }
+                PhileasPolicy policy = PolicySerializer.DeserializeFromJson(string.IsNullOrWhiteSpace(entity.Json) ? "{}" : entity.Json);
+                // Merge the global always-redact/ignore lists like every other redaction path, so a
+                // re-render (e.g. of docx drawings) still enforces them instead of letting terms reappear.
+                GlobalLists.ApplyTerms(policy, GlobalLists.ParseTerms(_globalAlwaysRedact), GlobalLists.ParseTerms(_globalAlwaysIgnore));
+                return policy;
             }
             catch
             {

@@ -153,6 +153,40 @@ namespace PhilterDesktop.Tests
             Assert.Equal("first redaction", File.ReadAllText(firstOutput)); // previous output preserved
         }
 
+        // Modify Redaction computes its output exactly this way — GetUniqueOutputPath(GetOutputPath(
+        // source, outputToOriginalLocation, customOutputFolder, suffix)). Modifying version 1 must not
+        // overwrite version 1's original output.
+        [Fact]
+        public void ModifyRedaction_Version1_DoesNotOverwriteOriginalOutput()
+        {
+            string source = Path_("report.txt");
+            string v1Output = RedactionService.GetOutputPath(source, true, null, "_redacted-draft");
+            File.WriteAllText(v1Output, "version 1 output");
+
+            string modifyOutput = RedactionService.GetUniqueOutputPath(
+                RedactionService.GetOutputPath(source, true, null, "_redacted-draft"));
+
+            Assert.Equal(Path_("report_redacted-draft (2).txt"), modifyOutput); // a new file, not v1's
+            Assert.Equal("version 1 output", File.ReadAllText(v1Output));       // v1 output untouched
+        }
+
+        // Modify Redaction must honor the configured output location, not always the source folder.
+        [Fact]
+        public void ModifyRedaction_HonorsCustomOutputFolder_NotSourceFolder()
+        {
+            string srcDir = Path.Combine(_dir, "src");
+            string outDir = Path.Combine(_dir, "out");
+            Directory.CreateDirectory(srcDir);
+            Directory.CreateDirectory(outDir);
+            string source = Path.Combine(srcDir, "memo.txt");
+
+            string modifyOutput = RedactionService.GetUniqueOutputPath(
+                RedactionService.GetOutputPath(source, false, outDir, "_redacted-draft"));
+
+            Assert.Equal(Path.Combine(outDir, "memo_redacted-draft.txt"), modifyOutput);
+            Assert.NotEqual(srcDir, Path.GetDirectoryName(modifyOutput)); // not next to the source
+        }
+
         [Fact]
         public void ManySequentialCollisions_KeepProducingDistinctPaths()
         {

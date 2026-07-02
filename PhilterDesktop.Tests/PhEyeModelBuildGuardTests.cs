@@ -21,7 +21,7 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// Person names are detected only by the bundled on-device model, so a Release build must include it
-    /// or names ship unredacted (#557). These exercise the csproj build guard (EnsurePhEyeModelPresent):
+    /// or names ship unredacted. These exercise the csproj build guard (EnsurePhEyeModelPresent):
     /// it fails a build whose model is missing/incomplete and passes when the model is complete, while a
     /// dev build (guard not enforced) is unaffected. Runs the target via `dotnet msbuild` with an
     /// overridden model directory, so it never triggers the real ~90 MB download.

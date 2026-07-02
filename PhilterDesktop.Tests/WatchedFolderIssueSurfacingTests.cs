@@ -23,7 +23,7 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// A watched-folder failure must be visible even when notifications and application logging are both
-    /// off (#531): every failure is written to the folder's (database-backed) activity log, the list
+    /// off: every failure is written to the folder's (database-backed) activity log, the list
     /// surfaces an error/warning count from it, and error/warning entries always reach the application log.
     /// </summary>
     public sealed class WatchedFolderIssueSurfacingTests : IDisposable

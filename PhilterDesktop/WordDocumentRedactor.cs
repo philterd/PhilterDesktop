@@ -334,7 +334,7 @@ namespace PhilterDesktop
         // paragraph's runs are concatenated, filtered, and (when changed) flattened into its first run so
         // PII in a shape/SmartArt/chart label doesn't survive. Walks every part of the package so text in
         // the main document, headers/footers, notes, chart parts, and SmartArt data is covered. Returns the
-        // redactions it made so they're recorded in the report/explanation like any other span (#561).
+        // redactions it made so they're recorded in the report/explanation like any other span.
         private static List<RedactionSpanEntity> RedactDrawingText(
             WordprocessingDocument document, Func<string, TextFilterResult> filter, ref int order)
         {

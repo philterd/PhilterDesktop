@@ -23,7 +23,7 @@ namespace PhilterDesktop.Tests
     /// <summary>
     /// The Settings dialog reads the whole settings singleton on open and saves it back, so a naive
     /// full Upsert reverts any field a concurrent writer changed while it was open. These pin the
-    /// merge that keeps the dialog to the fields it owns (#548).
+    /// merge that keeps the dialog to the fields it owns.
     /// </summary>
     public sealed class SettingsMergeTests : IDisposable
     {

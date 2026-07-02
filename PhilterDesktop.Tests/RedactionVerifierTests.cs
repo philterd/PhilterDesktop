@@ -243,7 +243,7 @@ namespace PhilterDesktop.Tests
             Assert.False(string.IsNullOrWhiteSpace(outcome.Error));
         }
 
-        // --- #543: RTF verification carries a fidelity caveat so "clean" doesn't overstate integrity ----
+        // --- RTF verification carries a fidelity caveat so "clean" doesn't overstate integrity ----
 
         private static PhileasPolicy EmailSsnPolicy() =>
             PolicySerializer.DeserializeFromJson("{\"identifiers\":{\"emailAddress\":{},\"ssn\":{}}}");
@@ -308,7 +308,7 @@ namespace PhilterDesktop.Tests
         public async Task Verify_Rtf_HeaderFooterSample_CleanBody_ButFidelityCaveat()
         {
             // Integration: redact the real header/footer sample, then verify — the body's PII is redacted
-            // (clean) but the result is honestly qualified because the source had headers/footers (#543).
+            // (clean) but the result is honestly qualified because the source had headers/footers.
             string input = Path.Combine(AppContext.BaseDirectory, "test-documents", "header-footer.rtf");
             Assert.True(File.Exists(input), $"Sample not found: {input}");
             string output = Path_("hf_redacted.rtf");

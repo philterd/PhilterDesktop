@@ -131,6 +131,31 @@ namespace PhilterDesktop.Tests
             Assert.Equal(Path.Combine(_tempDir, "report_clean.txt"), output);
         }
 
+        // The granular overload (used by Modify Redaction, which carries the pieces rather than a whole
+        // SettingsEntity) must resolve identically to the settings-based one.
+        [Fact]
+        public void GetOutputPath_Granular_OriginalLocation_MatchesSettingsOverload()
+        {
+            string input = Path.Combine(_tempDir, "memo.msg");
+            var settings = new SettingsEntity { OutputToOriginalLocation = true, RedactedSuffix = "_r" };
+
+            string granular = RedactionService.GetOutputPath(input, true, null, "_r");
+
+            Assert.Equal(Path.Combine(_tempDir, "memo_r.eml"), granular); // honors location + suffix + .msg->.eml
+            Assert.Equal(RedactionService.GetOutputPath(input, settings), granular);
+        }
+
+        [Fact]
+        public void GetOutputPath_Granular_CustomFolder_UsesThatFolder()
+        {
+            string custom = Path.Combine(_tempDir, "out");
+            string input = Path.Combine(_tempDir, "in", "memo.docx");
+
+            string output = RedactionService.GetOutputPath(input, false, custom, "_redacted-draft");
+
+            Assert.Equal(Path.Combine(custom, "memo_redacted-draft.docx"), output);
+        }
+
         [Theory]
         [InlineData(null, "_redacted-draft")]
         [InlineData("", "_redacted-draft")]

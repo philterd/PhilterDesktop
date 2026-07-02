@@ -47,8 +47,10 @@ of identifiers, **whole-column redaction** (described next) remains the most dep
 
 For these reasons, spreadsheets have an additional tool: **whole-column redaction**. Use the **Redact
 Spreadsheet…** action (on the **Redact** button's arrow menu, or by right-clicking a spreadsheet in the
-queue). It opens a small window where you choose the **policy** and **context** as usual, and also see
-a **list of the file's columns** (with their headers). Tick any column whose contents should be removed
+queue). It opens a small window where you choose the **policy** and **context** as usual. For an Excel
+file you also pick the **worksheet** to redact: redaction through this window targets **one worksheet at
+a time**, and the column list below shows **that worksheet's** columns (choosing a different worksheet
+reloads the list). You then see a **list of the columns** (with their headers). Tick any column whose contents should be removed
 **entirely** (for example a "Name" column, a "Patient ID" column, or an "Account" column), and every
 **data cell** in that column is cleared, regardless of whether the detector would have flagged it. The
 column's **header label is kept** (so the table stays readable; only the values below it are removed).
@@ -59,11 +61,12 @@ When you click **Redact**, the spreadsheet is **added to the queue** with your c
 closes; it's then redacted in the background like any other document and appears in the main list with
 its status.
 
-!!! note "Whole-column removal is only offered by Redact Spreadsheet…"
+!!! note "Whole-column removal and worksheet choice are only offered by Redact Spreadsheet…"
     When you redact a spreadsheet through the ordinary queue, drag-and-drop, a
     [watched folder](watched-folders.md), or the command line, Philter Desktop runs **detection on
-    every cell** (no column is fully cleared, because those routes don't ask you any questions). To pick
-    whole columns to remove, use **Redact Spreadsheet…**.
+    every cell of every worksheet** (no column is fully cleared and no single sheet is chosen, because
+    those routes don't ask you any questions). To pick a **worksheet** and **whole columns** to remove,
+    use **Redact Spreadsheet…**.
 
 Spreadsheets are not available in **Redact with Preview**; redact them the ordinary way and review the
 cleaned-up copy afterward. For adjusting, verifying, and reporting on a redaction, see

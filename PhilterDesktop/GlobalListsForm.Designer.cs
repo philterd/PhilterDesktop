@@ -78,7 +78,7 @@ namespace PhilterDesktop
             lblRedact.Name = "lblRedact";
             lblRedact.Size = new Size(436, 34);
             lblRedact.TabIndex = 0;
-            lblRedact.Text = "These terms are always redacted, no matter which policy is used. One per line.";
+            lblRedact.Text = "These terms are always redacted with any policy. One per line, matched as whole words — use * to match inside words.";
             //
             // txtRedact
             //

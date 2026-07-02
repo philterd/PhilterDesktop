@@ -26,7 +26,7 @@ using PhileasPolicy = Phileas.Policy.Policy;
 namespace PhilterDesktop.Tests
 {
     /// <summary>
-    /// The policy editor's "Always Redact" feature (#569): terms must be stored so the policy still
+    /// The policy editor's "Always Redact" feature: terms must be stored so the policy still
     /// validates against the engine's schema (the editor blocks any save that fails it) and so the engine
     /// actually redacts them. Previously they were stored under the schema-invalid "dictionary" key,
     /// which made the policy unsaveable.

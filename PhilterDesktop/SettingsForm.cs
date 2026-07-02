@@ -339,7 +339,7 @@ namespace PhilterDesktop
                 item.SubItems.Add(folder.Highlight ? "Yes" : "No");
 
                 // Surface failures/warnings from the folder's (always-written) activity log so they're
-                // visible here even when notifications and application logging are both off (#531).
+                // visible here even when notifications and application logging are both off.
                 int errors = _watchedFolderLogRepository?.CountByLevels(folder.Id, "Error") ?? 0;
                 int warnings = _watchedFolderLogRepository?.CountByLevels(folder.Id, "Warning") ?? 0;
                 item.SubItems.Add(WatchedFolderIssueSummary.Describe(errors, warnings));

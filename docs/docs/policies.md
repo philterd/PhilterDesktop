@@ -149,6 +149,12 @@ Matching ignores capitalization. These terms are saved as part of **this policy*
 you redact with it. For a term you want removed in **every** policy, use the global **Lists** button on
 the main toolbar instead; see below.
 
+## PDF regions (Always redact a fixed area)
+
+The Policy Editor's **PDF Regions…** button lets a policy always black out fixed rectangles on a PDF — a
+signature block, an ID photo, a letterhead, or a stamp — whether or not they contain readable text. See
+[Always blacking out a fixed area](redacting-pdf.md#always-blacking-out-a-fixed-area-pdf-regions).
+
 ## Lists that apply to every policy (the Lists button)
 
 The two lists above live **inside a single policy**; they only take effect when you redact with that
@@ -157,7 +163,11 @@ policy. For a rule that applies **no matter which policy is used**, use the **Li
 
 It opens a window with two tabs, each a box where you type terms **one per line**:
 
-- **Always Redact**: terms removed from **every** document you redact, with any policy.
+- **Always Redact**: terms removed from **every** document you redact, with any policy. Each term is
+  matched as a **whole word**, so `Acme` is removed from `Acme, Inc.` but not from `Acmeish`. To match
+  inside longer words too, add a `*` wildcard: `*acme*` matches anywhere, `acme*` matches words starting
+  with it, and `*acme` words ending with it. (Use it deliberately — a short term like `a*` would remove
+  every word beginning with "a".)
 - **Always Ignore**: terms **never** removed, with any policy.
 
 You can type terms directly, or click **Import from file…** to load them from a `.txt` or single-column

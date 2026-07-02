@@ -85,7 +85,7 @@ namespace PhilterDesktop.Tests
             }
         }
 
-        // #536: the ParagraphIndex doubles as a spreadsheet cell / email field ordinal, so it must be
+        // The ParagraphIndex doubles as a spreadsheet cell / email field ordinal, so it must be
         // labeled for what it is instead of always "Section N".
         [Theory]
         [InlineData(".xlsx", "Cell 3")]

@@ -95,7 +95,7 @@ namespace PhilterDesktop
 
             if (!string.IsNullOrEmpty(_source.Text))
             {
-                LoadColumns(_source.Text);
+                LoadFile(_source.Text);
             }
             UpdateCanRedact();
         }
@@ -124,12 +124,56 @@ namespace PhilterDesktop
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
                 _source.Text = dlg.FileName;
-                LoadColumns(dlg.FileName);
+                LoadFile(dlg.FileName);
                 UpdateCanRedact();
             }
         }
 
-        // Populates the column checklist from the chosen file (Excel or CSV).
+        // Loads the worksheet list (Excel only) and the column checklist for the chosen file. For .xlsx,
+        // redaction targets a single worksheet, so the columns shown are that sheet's.
+        private void LoadFile(string path)
+        {
+            bool isXlsx = !path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+            _worksheetLabel.Visible = isXlsx;
+            _worksheet.Visible = isXlsx;
+
+            if (isXlsx)
+            {
+                // Suppress the change handler while repopulating so it doesn't reload columns mid-setup.
+                _worksheet.SelectedIndexChanged -= OnWorksheetChanged;
+                _worksheet.Items.Clear();
+                try
+                {
+                    foreach (string name in XlsxRedactor.ReadSheetNames(path))
+                    {
+                        _worksheet.Items.Add(name);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this, UserError.Describe(ex, path, writing: false), "Redact Spreadsheet",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                if (_worksheet.Items.Count > 0)
+                {
+                    _worksheet.SelectedIndex = 0;
+                }
+                _worksheet.SelectedIndexChanged += OnWorksheetChanged;
+            }
+
+            LoadColumns(path);
+        }
+
+        private void OnWorksheetChanged(object? sender, EventArgs e)
+        {
+            string path = _source.Text.Trim();
+            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+            {
+                LoadColumns(path);
+            }
+        }
+
+        // Populates the column checklist from the chosen file (the selected worksheet, for Excel).
         private void LoadColumns(string path)
         {
             _columns.Items.Clear();
@@ -138,7 +182,7 @@ namespace PhilterDesktop
             {
                 _columnList = path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
                     ? CsvRedactor.ReadColumns(path)
-                    : XlsxRedactor.ReadColumns(path);
+                    : XlsxRedactor.ReadColumns(path, _worksheet.SelectedItem as string);
             }
             catch (Exception ex)
             {
@@ -190,12 +234,18 @@ namespace PhilterDesktop
                 return;
             }
 
+            // .xlsx redaction targets a single worksheet; .csv has none.
+            string worksheet = source.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase)
+                ? _worksheet.SelectedItem as string ?? string.Empty
+                : string.Empty;
+
             bool queued = QueueBulkActions.TryEnqueue(_queue, new RedactionQueueEntity
             {
                 Name = source,
                 Policy = _policy.Text,
                 Context = _context.Text,
-                FullyRedactedColumns = fullColumns
+                FullyRedactedColumns = fullColumns,
+                Worksheet = worksheet
             });
             if (!queued)
             {

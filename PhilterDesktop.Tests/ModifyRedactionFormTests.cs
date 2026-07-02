@@ -74,6 +74,83 @@ namespace PhilterDesktop.Tests
             OnForm(form => Assert.Null(form.AcceptButton));
         }
 
+        // The form must carry the configured output location so its re-redaction writes there (not always
+        // next to the source). This guards the constructor wiring the OnRedact path relies on.
+        [Fact]
+        public void Constructor_StoresOutputLocationSettings()
+        {
+            ExceptionDispatchInfo? captured = null;
+            var thread = new Thread(() =>
+            {
+                string dbPath = Path.Combine(Path.GetTempPath(), "mrf-" + Guid.NewGuid().ToString("N") + ".db");
+                try
+                {
+                    using var db = new LiteDatabase(dbPath);
+                    using var form = new ModifyRedactionForm(
+                        ObjectId.NewObjectId(),
+                        new RedactionVersionRepository(db),
+                        new RedactionSpanRepository(db),
+                        new PolicyRepository(db),
+                        redactedSuffix: "_r",
+                        outputToOriginalLocation: false,
+                        customOutputFolder: @"C:\out\folder");
+                    form.CreateControl();
+
+                    Assert.False((bool)Field(form, "_outputToOriginalLocation"));
+                    Assert.Equal(@"C:\out\folder", (string)Field(form, "_customOutputFolder"));
+                }
+                catch (Exception ex) { captured = ExceptionDispatchInfo.Capture(ex); }
+                finally { try { File.Delete(dbPath); } catch { /* best effort */ } }
+            })
+            { IsBackground = true };
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+            captured?.Throw();
+        }
+
+        private static object Field(ModifyRedactionForm form, string name) =>
+            typeof(ModifyRedactionForm).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(form)!;
+
+        // LoadPolicy must merge the global always-redact/ignore lists (like every other redaction path),
+        // so a Modify re-render still enforces them instead of letting terms reappear in re-detected content.
+        [Fact]
+        public void LoadPolicy_MergesGlobalAlwaysRedactList()
+        {
+            ExceptionDispatchInfo? captured = null;
+            var thread = new Thread(() =>
+            {
+                string dbPath = Path.Combine(Path.GetTempPath(), "mrf-" + Guid.NewGuid().ToString("N") + ".db");
+                try
+                {
+                    using var db = new LiteDatabase(dbPath);
+                    var policies = new PolicyRepository(db);
+                    policies.Upsert(new PolicyEntity { Name = "p", Json = "{}" });
+
+                    using var form = new ModifyRedactionForm(
+                        ObjectId.NewObjectId(),
+                        new RedactionVersionRepository(db),
+                        new RedactionSpanRepository(db),
+                        policies,
+                        globalAlwaysRedact: "Projity");
+                    form.CreateControl();
+
+                    var loadPolicy = typeof(ModifyRedactionForm).GetMethod("LoadPolicy", BindingFlags.Instance | BindingFlags.NonPublic)!;
+                    var policy = (Phileas.Policy.Policy?)loadPolicy.Invoke(form, new object?[] { "p" });
+
+                    Assert.NotNull(policy);
+                    Assert.Contains(policy!.Identifiers!.CustomIdentifiers!, i => i.Classification == GlobalLists.AlwaysRedactName);
+                }
+                catch (Exception ex) { captured = ExceptionDispatchInfo.Capture(ex); }
+                finally { try { File.Delete(dbPath); } catch { /* best effort */ } }
+            })
+            { IsBackground = true };
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+            captured?.Throw();
+        }
+
         [Fact]
         public void RedactionChanged_DefaultsToFalse_BeforeAnyReRedaction()
         {

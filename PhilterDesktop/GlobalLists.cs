@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+using System.Text.RegularExpressions;
 using Phileas.Policy;
 using PhilterData;
 using PhileasPolicy = Phileas.Policy.Policy;
-using PhileasDictionary = Phileas.Policy.Filters.Dictionary;
+using PhileasIdentifier = Phileas.Policy.Filters.Identifier;
 
 namespace PhilterDesktop
 {
@@ -61,14 +62,20 @@ namespace PhilterDesktop
         {
             policy.Identifiers ??= new Identifiers();
 
+            // Always-redact matches each term as a whole word; a '*' opts into inside-word matching
+            // (*acme*, acme*, *acme). One case-insensitive regex identifier, re-applied in place. Also drop
+            // any dictionary from an older build so a reused policy object can't keep stale terms.
             policy.Identifiers.Dictionaries?.RemoveAll(d => d.Name == AlwaysRedactName);
-            if (alwaysRedact.Count > 0)
+            policy.Identifiers.CustomIdentifiers?.RemoveAll(i => i.Classification == AlwaysRedactName);
+            string? pattern = BuildAlwaysRedactPattern(alwaysRedact);
+            if (pattern is not null)
             {
-                policy.Identifiers.Dictionaries ??= new List<PhileasDictionary>();
-                policy.Identifiers.Dictionaries.Add(new PhileasDictionary
+                policy.Identifiers.CustomIdentifiers ??= new List<PhileasIdentifier>();
+                policy.Identifiers.CustomIdentifiers.Add(new PhileasIdentifier
                 {
-                    Name = AlwaysRedactName,
-                    Terms = alwaysRedact.ToList(),
+                    Pattern = pattern,
+                    CaseSensitive = false,
+                    Classification = AlwaysRedactName,
                     Enabled = true
                 });
             }
@@ -85,6 +92,35 @@ namespace PhilterDesktop
                     CaseSensitive = false
                 });
             }
+        }
+
+        /// <summary>One regex matching every always-redact term (word-bounded, '*' = wildcard), or null if none.</summary>
+        internal static string? BuildAlwaysRedactPattern(IReadOnlyList<string> terms)
+        {
+            List<string> alternatives = terms
+                .Select(TermToPattern)
+                .Where(p => p is not null)
+                .Select(p => p!)
+                .ToList();
+
+            return alternatives.Count == 0 ? null : "(?:" + string.Join("|", alternatives) + ")";
+        }
+
+        /// <summary>
+        /// One term as a regex: literal text escaped, '*' → word-character wildcard, bounded to word edges.
+        /// Null for a term with no literal content (e.g. "" or "*"), which would otherwise match everything.
+        /// </summary>
+        internal static string? TermToPattern(string term)
+        {
+            string[] segments = term.Split('*');
+            if (segments.All(s => s.Length == 0))
+            {
+                return null;
+            }
+
+            string core = string.Join(@"\w*", segments.Select(Regex.Escape));
+            // Word boundaries that also work when a term edge is punctuation.
+            return @"(?<!\w)" + core + @"(?!\w)";
         }
     }
 }

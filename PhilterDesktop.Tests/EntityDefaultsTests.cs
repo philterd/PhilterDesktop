@@ -45,7 +45,7 @@ namespace PhilterDesktop.Tests
         {
             var settings = new SettingsEntity();
             Assert.True(settings.VerifyAfterRedaction);
-            // Broad is the default: same-policy verification can't catch the missed-PII case (#519).
+            // Broad is the default: same-policy verification can't catch the missed-PII case.
             Assert.True(settings.VerificationUseBroadPolicy);
         }
 

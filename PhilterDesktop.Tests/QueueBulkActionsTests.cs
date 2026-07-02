@@ -204,7 +204,7 @@ namespace PhilterDesktop.Tests
             Assert.Equal(0, QueueBulkActions.RetryManyFailed(_repo, Array.Empty<ObjectId>()));
         }
 
-        // --- IsStillPending (#537) ----------------------------------------------------------------
+        // --- IsStillPending ----------------------------------------------------------------
 
         [Fact]
         public void IsStillPending_True_ForExistingPendingItem()
@@ -244,7 +244,7 @@ namespace PhilterDesktop.Tests
             Assert.True(QueueBulkActions.IsStillPending(_repo, id));
         }
 
-        // --- TryEnqueue / IsAlreadyQueued (#538) --------------------------------------------------
+        // --- TryEnqueue / IsAlreadyQueued --------------------------------------------------
 
         private static RedactionQueueEntity Item(string name, string policy = "p", string context = "c") =>
             new() { Name = name, Policy = policy, Context = context };

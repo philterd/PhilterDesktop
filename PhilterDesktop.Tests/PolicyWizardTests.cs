@@ -67,7 +67,7 @@ namespace PhilterDesktop.Tests
         public void BuildJson_ConsistentStandIn_UsesRandomReplaceWithContextScope()
         {
             // CONTEXT scope is what makes "the same original always maps to the same stand-in" true;
-            // the default DOCUMENT scope re-randomizes per occurrence (#570).
+            // the default DOCUMENT scope re-randomizes per occurrence.
             string json = PolicyWizard.BuildJson("w", new[] { "Ssn" }, includeNames: true,
                 PolicyWizard.ReplacementStyle.ConsistentStandIn);
 

@@ -98,13 +98,21 @@ namespace PhilterDesktop
         /// setting and appending the configured suffix (default "_redacted-draft") while preserving
         /// the extension.
         /// </summary>
-        public static string GetOutputPath(string inputPath, SettingsEntity settings)
-        {
-            string directory = settings.OutputToOriginalLocation
-                ? Path.GetDirectoryName(inputPath) ?? string.Empty
-                : settings.CustomOutputFolder;
+        public static string GetOutputPath(string inputPath, SettingsEntity settings) =>
+            GetOutputPath(inputPath, settings.OutputToOriginalLocation, settings.CustomOutputFolder, settings.RedactedSuffix);
 
-            return Path.Combine(directory, ApplySuffix(inputPath, settings.RedactedSuffix));
+        /// <summary>
+        /// The redacted output path from the output-location pieces (rather than a whole
+        /// <see cref="SettingsEntity"/>), so callers that only carry those options — e.g. Modify
+        /// Redaction — resolve the path exactly the same way as the main redaction paths.
+        /// </summary>
+        public static string GetOutputPath(string inputPath, bool outputToOriginalLocation, string? customOutputFolder, string? suffix)
+        {
+            string directory = outputToOriginalLocation
+                ? Path.GetDirectoryName(inputPath) ?? string.Empty
+                : customOutputFolder ?? string.Empty;
+
+            return Path.Combine(directory, ApplySuffix(inputPath, suffix));
         }
 
         /// <summary>
@@ -182,9 +190,11 @@ namespace PhilterDesktop
             SettingsEntity settings,
             FilterService? filterService = null,
             bool highlight = false,
-            IReadOnlyCollection<int>? fullyRedactedColumns = null) =>
+            IReadOnlyCollection<int>? fullyRedactedColumns = null,
+            string? worksheet = null) =>
             RedactFileAsync(
                 inputPath, outputPath, policy, context, filterService, highlight, fullyRedactedColumns,
+                worksheet: worksheet,
                 wordScrub: DocumentMetadata.OptionsFor(settings),
                 ocrScannedPdfs: settings.OcrScannedPdfs,
                 ocrTextCoverage: settings.OcrTextCoverageThreshold,
@@ -206,6 +216,7 @@ namespace PhilterDesktop
             FilterService? filterService = null,
             bool highlight = false,
             IReadOnlyCollection<int>? fullyRedactedColumns = null,
+            string? worksheet = null,
             WordScrubOptions wordScrub = WordScrubOptions.None,
             bool ocrScannedPdfs = false,
             double ocrTextCoverage = 0.01,
@@ -282,7 +293,8 @@ namespace PhilterDesktop
                     inputPath,
                     outputPath,
                     text => filterService.Filter(policy, context, 0, text),
-                    fullyRedactedColumns));
+                    fullyRedactedColumns,
+                    worksheet));
                 // Strip identifying document properties so the redacted spreadsheet doesn't leak them
                 // (same "Remove document metadata" setting that governs Word).
                 if (wordScrub.HasFlag(WordScrubOptions.Metadata))
@@ -347,7 +359,8 @@ namespace PhilterDesktop
             FilterService? filterService = null,
             WordScrubOptions wordScrub = WordScrubOptions.None,
             bool scrubEmailHeaders = false,
-            bool removeCommonEmailHeaders = false)
+            bool removeCommonEmailHeaders = false,
+            string? worksheet = null)
         {
             filterService ??= new FilterService();
             switch (fileType.ToLowerInvariant())
@@ -373,7 +386,7 @@ namespace PhilterDesktop
                     await Task.Run(() => RtfRedactor.ApplySpans(sourcePath, outputPath, spans));
                     break;
                 case ".xlsx":
-                    await Task.Run(() => XlsxRedactor.ApplySpans(sourcePath, outputPath, spans));
+                    await Task.Run(() => XlsxRedactor.ApplySpans(sourcePath, outputPath, spans, worksheet));
                     if (wordScrub.HasFlag(WordScrubOptions.Metadata))
                     {
                         await Task.Run(() => DocumentMetadata.ScrubXlsx(outputPath));
@@ -484,7 +497,7 @@ namespace PhilterDesktop
         {
             filterService ??= new FilterService();
             PhEyeModel.Prepare(policy);
-            PreparePdfPolicy(policy);
+            PreparePdfPolicy(policy, input);
 
             // When the OCR setting is on, use a hybrid extractor that OCRs scanned (text-layer-less)
             // pages so their PII is detected; otherwise the default text-layer extractor is used.
@@ -543,7 +556,7 @@ namespace PhilterDesktop
             }
 
             PhileasPolicy applyPolicy = policy ?? new PhileasPolicy { Name = "reapply" };
-            PreparePdfPolicy(applyPolicy);
+            PreparePdfPolicy(applyPolicy, input);
 
             return await Task.Run(() =>
                 new PdfFilterService(filterService).Apply(applyPolicy, input, spanList, MimeType.ApplicationPdf));
@@ -551,10 +564,55 @@ namespace PhilterDesktop
 
         // The engine renders the output PDF at 25% scale by default (forcing ~400% zoom to read);
         // render at full size and a higher DPI so the result is legible at 100%.
-        private static void PreparePdfPolicy(PhileasPolicy policy)
+        private static void PreparePdfPolicy(PhileasPolicy policy, byte[] input)
         {
             policy.Config.Pdf.Scale = 1.0f;
             policy.Config.Pdf.Dpi = Math.Max(policy.Config.Pdf.Dpi, 200);
+
+            // A bounding box with page < 1 means "all pages". The engine matches an exact page, so expand
+            // it into one box per page using the document's real page count.
+            if (policy.Graphical.BoundingBoxes.Any(b => b.Page < 1))
+            {
+                ExpandAllPagesBoundingBoxes(policy, ReadPageCount(input));
+            }
+        }
+
+        private static int ReadPageCount(byte[] input)
+        {
+            try
+            {
+                using UglyToad.PdfPig.PdfDocument doc = UglyToad.PdfPig.PdfDocument.Open(input);
+                return doc.NumberOfPages;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Replaces each "all pages" bounding box (page &lt; 1) with one box per page of a
+        /// <paramref name="pageCount"/>-page document; boxes pinned to a specific page are kept as-is.
+        /// </summary>
+        internal static void ExpandAllPagesBoundingBoxes(PhileasPolicy policy, int pageCount)
+        {
+            var expanded = new List<Phileas.Policy.BoundingBox>();
+            foreach (Phileas.Policy.BoundingBox b in policy.Graphical.BoundingBoxes)
+            {
+                if (b.Page >= 1)
+                {
+                    expanded.Add(b);
+                    continue;
+                }
+                for (int page = 1; page <= pageCount; page++)
+                {
+                    expanded.Add(new Phileas.Policy.BoundingBox
+                    {
+                        Page = page, X = b.X, Y = b.Y, W = b.W, H = b.H, Color = b.Color, Enabled = b.Enabled
+                    });
+                }
+            }
+            policy.Graphical.BoundingBoxes = expanded;
         }
     }
 }

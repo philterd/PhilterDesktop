@@ -40,6 +40,8 @@ namespace PhilterDesktop
             _policy = new ComboBox();
             _contextLabel = new Label();
             _context = new ComboBox();
+            _worksheetLabel = new Label();
+            _worksheet = new ComboBox();
             _columnsLabel = new Label();
             _selectAll = new LinkLabel();
             _clearAll = new LinkLabel();
@@ -113,67 +115,85 @@ namespace PhilterDesktop
             _context.Size = new Size(180, 23);
             _context.TabIndex = 6;
             // 
+            // _worksheetLabel
+            // 
+            _worksheetLabel.AutoSize = true;
+            _worksheetLabel.Location = new Point(12, 108);
+            _worksheetLabel.Name = "_worksheetLabel";
+            _worksheetLabel.Size = new Size(116, 15);
+            _worksheetLabel.TabIndex = 7;
+            _worksheetLabel.Text = "Worksheet to redact:";
+            // 
+            // _worksheet
+            // 
+            _worksheet.DropDownStyle = ComboBoxStyle.DropDownList;
+            _worksheet.Location = new Point(163, 105);
+            _worksheet.Name = "_worksheet";
+            _worksheet.Size = new Size(250, 23);
+            _worksheet.TabIndex = 8;
+            _worksheet.SelectedIndexChanged += OnWorksheetChanged;
+            // 
             // _columnsLabel
             // 
             _columnsLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            _columnsLabel.Location = new Point(12, 108);
+            _columnsLabel.Location = new Point(12, 140);
             _columnsLabel.Name = "_columnsLabel";
             _columnsLabel.Size = new Size(536, 54);
-            _columnsLabel.TabIndex = 7;
+            _columnsLabel.TabIndex = 9;
             _columnsLabel.Text = "Sensitive information is removed from each text cell (cells stored as numbers are not scanned). Tick a column below to remove its entire contents, useful for name, ID, or number columns:";
-            //
+            // 
             // _selectAll
-            //
-            _selectAll.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            // 
             _selectAll.AutoSize = true;
-            _selectAll.Location = new Point(12, 168);
+            _selectAll.Location = new Point(12, 200);
             _selectAll.Name = "_selectAll";
-            _selectAll.TabIndex = 8;
+            _selectAll.Size = new Size(53, 15);
+            _selectAll.TabIndex = 10;
             _selectAll.TabStop = true;
             _selectAll.Text = "&Select all";
-            //
+            // 
             // _clearAll
-            //
-            _clearAll.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            // 
             _clearAll.AutoSize = true;
-            _clearAll.Location = new Point(82, 168);
+            _clearAll.Location = new Point(82, 200);
             _clearAll.Name = "_clearAll";
-            _clearAll.TabIndex = 9;
+            _clearAll.Size = new Size(34, 15);
+            _clearAll.TabIndex = 11;
             _clearAll.TabStop = true;
             _clearAll.Text = "C&lear";
-            //
+            // 
             // _selectedCount
-            //
+            // 
             _selectedCount.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             _selectedCount.AutoSize = true;
             _selectedCount.ForeColor = SystemColors.GrayText;
-            _selectedCount.Location = new Point(470, 168);
+            _selectedCount.Location = new Point(470, 200);
             _selectedCount.Name = "_selectedCount";
-            _selectedCount.Size = new Size(78, 15);
-            _selectedCount.TabIndex = 10;
+            _selectedCount.Size = new Size(59, 15);
+            _selectedCount.TabIndex = 12;
             _selectedCount.Text = "0 selected";
             _selectedCount.TextAlign = ContentAlignment.MiddleRight;
-            //
+            // 
             // _columns
-            //
+            // 
             _columns.AccessibleName = "Columns to redact entirely";
             _columns.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             _columns.CheckOnClick = true;
             _columns.FormattingEnabled = true;
             _columns.IntegralHeight = false;
-            _columns.Location = new Point(12, 194);
+            _columns.Location = new Point(12, 226);
             _columns.Name = "_columns";
             _columns.Size = new Size(536, 238);
-            _columns.TabIndex = 11;
+            _columns.TabIndex = 13;
             // 
             // _redact
             // 
             _redact.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             _redact.Enabled = false;
-            _redact.Location = new Point(362, 444);
+            _redact.Location = new Point(362, 476);
             _redact.Name = "_redact";
             _redact.Size = new Size(100, 26);
-            _redact.TabIndex = 12;
+            _redact.TabIndex = 14;
             _redact.Text = "&Add to Queue";
             _redact.UseVisualStyleBackColor = true;
             _redact.Click += OnRedact;
@@ -182,10 +202,10 @@ namespace PhilterDesktop
             // 
             _close.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             _close.DialogResult = DialogResult.Cancel;
-            _close.Location = new Point(468, 444);
+            _close.Location = new Point(468, 476);
             _close.Name = "_close";
             _close.Size = new Size(80, 26);
-            _close.TabIndex = 13;
+            _close.TabIndex = 15;
             _close.Text = "&Cancel";
             _close.UseVisualStyleBackColor = true;
             // 
@@ -195,7 +215,7 @@ namespace PhilterDesktop
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = _close;
-            ClientSize = new Size(560, 482);
+            ClientSize = new Size(560, 514);
             Controls.Add(_source);
             Controls.Add(_browse);
             Controls.Add(_sourceLabel);
@@ -203,6 +223,8 @@ namespace PhilterDesktop
             Controls.Add(_policy);
             Controls.Add(_contextLabel);
             Controls.Add(_context);
+            Controls.Add(_worksheetLabel);
+            Controls.Add(_worksheet);
             Controls.Add(_columnsLabel);
             Controls.Add(_selectAll);
             Controls.Add(_clearAll);
@@ -211,7 +233,7 @@ namespace PhilterDesktop
             Controls.Add(_redact);
             Controls.Add(_close);
             MinimizeBox = false;
-            MinimumSize = new Size(576, 521);
+            MinimumSize = new Size(576, 553);
             Name = "SpreadsheetRedactionForm";
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
@@ -230,6 +252,8 @@ namespace PhilterDesktop
         private ComboBox _policy;
         private Label _contextLabel;
         private ComboBox _context;
+        private Label _worksheetLabel;
+        private ComboBox _worksheet;
         private Label _columnsLabel;
         private LinkLabel _selectAll;
         private LinkLabel _clearAll;

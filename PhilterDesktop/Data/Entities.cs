@@ -78,6 +78,12 @@ namespace PhilterData
         /// </summary>
         public List<int> FullyRedactedColumns { get; set; } = new();
 
+        /// <summary>
+        /// For an <c>.xlsx</c> file: the single worksheet (by name) to redact. Empty means the whole
+        /// workbook (legacy) or a non-spreadsheet document.
+        /// </summary>
+        public string Worksheet { get; set; } = string.Empty;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // --- Post-redaction verification (residual-PII self-check) -----------------------------------
@@ -183,6 +189,9 @@ namespace PhilterData
 
         /// <summary>When true, .docx replacements are highlighted.</summary>
         public bool Highlight { get; set; }
+
+        /// <summary>For an <c>.xlsx</c> redaction: the single worksheet (by name) that was redacted.</summary>
+        public string Worksheet { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

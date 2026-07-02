@@ -108,7 +108,7 @@ namespace PhilterDesktop
                 string outputPath = RedactionService.GetUniqueOutputPath(RedactionService.GetOutputPath(entity.Name, settings));
                 List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(
                     entity.Name, outputPath, policy, entity.Context, settings, filterService, entity.Highlight,
-                    fullyRedactedColumns: entity.FullyRedactedColumns);
+                    fullyRedactedColumns: entity.FullyRedactedColumns, worksheet: entity.Worksheet);
 
                 // Self-check: re-scan the written output for residual PII (the false-negative case).
                 // Optionally with a broad "all detectors on" policy to catch types the redaction policy
@@ -125,7 +125,7 @@ namespace PhilterDesktop
                     // Don't re-flag this redaction's own inserted replacements as residual PII.
                     IReadOnlySet<string> knownReplacements = RedactionVerifier.ReplacementsOf(spans);
                     verification = await Task.Run(() =>
-                        RedactionVerifier.Verify(outputPath, verifyPolicy, entity.Context, filterService, knownReplacements, sourcePath: entity.Name));
+                        RedactionVerifier.Verify(outputPath, verifyPolicy, entity.Context, filterService, knownReplacements, sourcePath: entity.Name, worksheet: entity.Worksheet));
                 }
 
                 stopwatch.Stop();

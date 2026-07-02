@@ -20,7 +20,7 @@ using Xunit;
 namespace PhilterDesktop.Tests
 {
     /// <summary>
-    /// First-run EULA acceptance (#505): agreeing once is persisted so the dialog is never re-shown.
+    /// First-run EULA acceptance: agreeing once is persisted so the dialog is never re-shown.
     /// The previous opt-out "Don't show this again" checkbox is gone — leaving it unchecked used to
     /// re-prompt on every launch. Tests use an in-memory acceptance store so the real per-user
     /// registry is never touched.

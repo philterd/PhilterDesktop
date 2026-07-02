@@ -118,8 +118,8 @@ namespace PhilterDesktop.Tests
             DocumentMetadata.ScrubDocx(path);
 
             var after = ReadMetadata(path);
-            Assert.False(after.HasHyperlinkBase); // #534: app.xml hyperlink base (and template/titles) removed
-            Assert.False(after.HasCustomXml);     // #534: data-bound custom XML store removed
+            Assert.False(after.HasHyperlinkBase); // app.xml hyperlink base (and template/titles) removed
+            Assert.False(after.HasCustomXml);     // data-bound custom XML store removed
             Assert.False(WordDocs.AnyPartContains(path, "555-99-1234")); // bound PII physically gone
             Assert.Contains("Visible body stays.", WordDocs.AllBodyText(path)); // body untouched
         }

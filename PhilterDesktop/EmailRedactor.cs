@@ -442,7 +442,7 @@ namespace PhilterDesktop
                 builder.TextBody = msg.BodyText;
             }
             // RTF-only message: no HTML or plain-text body, but there is an RTF body. Recover its text so
-            // the body — and any PII in it — isn't silently dropped from the redacted output (#523).
+            // the body — and any PII in it — isn't silently dropped from the redacted output.
             if (string.IsNullOrEmpty(builder.HtmlBody) && string.IsNullOrEmpty(builder.TextBody)
                 && !string.IsNullOrEmpty(msg.BodyRtf))
             {
