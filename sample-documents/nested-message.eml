@@ -1,0 +1,25 @@
+From: Outer Sender <outer@example.com>
+To: Outer Recipient <outer.rcpt@example.com>
+Subject: FW: Quarterly report
+Date: Tue, 01 Apr 2025 12:00:00 +0000
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="OUTER"
+
+--OUTER
+Content-Type: text/plain; charset=utf-8
+
+Please see the forwarded message below. Reach me at outer-body@example.com.
+--OUTER
+Content-Type: message/rfc822
+
+From: Inner Sender <inner-from@example.com>
+To: Inner Recipient <inner-to@example.com>
+Cc: Inner Cc <inner-cc@example.com>
+Bcc: Hidden Inner <inner-bcc@example.com>
+Subject: Quarterly report for john@example.com
+Date: Mon, 31 Mar 2025 09:00:00 +0000
+Received: from mail.inner.example (10.9.8.7) by mx.example.com; Mon, 31 Mar 2025 09:00:00 +0000
+Content-Type: text/plain; charset=utf-8
+
+Inner body: contact inner-body@example.com or SSN 123-45-6789.
+--OUTER--

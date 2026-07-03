@@ -56,6 +56,8 @@ namespace PhilterDesktop
             chkScrubComments = new CheckBox();
             chkScrubTrackedChanges = new CheckBox();
             chkScrubHiddenText = new CheckBox();
+            chkRedactHeadersFooters = new CheckBox();
+            chkRedactCharts = new CheckBox();
             lblWordInfo = new Label();
             tabWord = new TabPage();
             groupBoxLogging = new GroupBox();
@@ -78,6 +80,10 @@ namespace PhilterDesktop
             chkScrubEmailHeaders = new CheckBox();
             chkRemoveCommonHeaders = new CheckBox();
             lblCommonHeadersInfo = new Label();
+            chkRemoveDateHeader = new CheckBox();
+            lblDateHeaderInfo = new Label();
+            chkRemoveAttachments = new CheckBox();
+            lblAttachmentsInfo = new Label();
             tabNotifications = new TabPage();
             chkShowNotifications = new CheckBox();
             lblNotificationsHint = new Label();
@@ -238,6 +244,26 @@ namespace PhilterDesktop
             chkScrubHiddenText.TabIndex = 4;
             chkScrubHiddenText.Text = "Remove hidden text";
             chkScrubHiddenText.UseVisualStyleBackColor = true;
+            //
+            // chkRedactHeadersFooters
+            //
+            chkRedactHeadersFooters.AutoSize = true;
+            chkRedactHeadersFooters.Location = new Point(13, 200);
+            chkRedactHeadersFooters.Name = "chkRedactHeadersFooters";
+            chkRedactHeadersFooters.Size = new Size(360, 19);
+            chkRedactHeadersFooters.TabIndex = 5;
+            chkRedactHeadersFooters.Text = "Redact text in page headers and footers (Word and Excel)";
+            chkRedactHeadersFooters.UseVisualStyleBackColor = true;
+            //
+            // chkRedactCharts
+            //
+            chkRedactCharts.AutoSize = true;
+            chkRedactCharts.Location = new Point(13, 228);
+            chkRedactCharts.Name = "chkRedactCharts";
+            chkRedactCharts.Size = new Size(360, 19);
+            chkRedactCharts.TabIndex = 6;
+            chkRedactCharts.Text = "Redact charts — titles, labels, and cached data values (Word and Excel)";
+            chkRedactCharts.UseVisualStyleBackColor = true;
             // 
             // lblWordInfo
             // 
@@ -257,6 +283,8 @@ namespace PhilterDesktop
             tabWord.Controls.Add(chkScrubComments);
             tabWord.Controls.Add(chkScrubTrackedChanges);
             tabWord.Controls.Add(chkScrubHiddenText);
+            tabWord.Controls.Add(chkRedactHeadersFooters);
+            tabWord.Controls.Add(chkRedactCharts);
             tabWord.Location = new Point(4, 24);
             tabWord.Name = "tabWord";
             tabWord.Padding = new Padding(3);
@@ -451,6 +479,10 @@ namespace PhilterDesktop
             tabEmail.Controls.Add(chkScrubEmailHeaders);
             tabEmail.Controls.Add(chkRemoveCommonHeaders);
             tabEmail.Controls.Add(lblCommonHeadersInfo);
+            tabEmail.Controls.Add(chkRemoveDateHeader);
+            tabEmail.Controls.Add(lblDateHeaderInfo);
+            tabEmail.Controls.Add(chkRemoveAttachments);
+            tabEmail.Controls.Add(lblAttachmentsInfo);
             tabEmail.Location = new Point(4, 24);
             tabEmail.Name = "tabEmail";
             tabEmail.Padding = new Padding(3);
@@ -500,7 +532,49 @@ namespace PhilterDesktop
             lblCommonHeadersInfo.Size = new Size(519, 45);
             lblCommonHeadersInfo.TabIndex = 3;
             lblCommonHeadersInfo.Text = resources.GetString("lblCommonHeadersInfo.Text");
-            // 
+            //
+            // chkRemoveDateHeader
+            //
+            chkRemoveDateHeader.AutoSize = true;
+            chkRemoveDateHeader.Location = new Point(13, 210);
+            chkRemoveDateHeader.Name = "chkRemoveDateHeader";
+            chkRemoveDateHeader.Size = new Size(306, 19);
+            chkRemoveDateHeader.TabIndex = 4;
+            chkRemoveDateHeader.Text = "Remove the Date header from redacted email";
+            chkRemoveDateHeader.UseVisualStyleBackColor = true;
+            //
+            // lblDateHeaderInfo
+            //
+            lblDateHeaderInfo.AutoSize = true;
+            lblDateHeaderInfo.ForeColor = SystemColors.GrayText;
+            lblDateHeaderInfo.Location = new Point(30, 233);
+            lblDateHeaderInfo.MaximumSize = new Size(520, 0);
+            lblDateHeaderInfo.Name = "lblDateHeaderInfo";
+            lblDateHeaderInfo.Size = new Size(519, 30);
+            lblDateHeaderInfo.TabIndex = 5;
+            lblDateHeaderInfo.Text = "Drops the send date outright, so the time is removed no matter how it is formatted. Off by default.";
+            //
+            // chkRemoveAttachments
+            //
+            chkRemoveAttachments.AutoSize = true;
+            chkRemoveAttachments.Location = new Point(13, 267);
+            chkRemoveAttachments.Name = "chkRemoveAttachments";
+            chkRemoveAttachments.Size = new Size(306, 19);
+            chkRemoveAttachments.TabIndex = 6;
+            chkRemoveAttachments.Text = "Remove attachments from redacted email";
+            chkRemoveAttachments.UseVisualStyleBackColor = true;
+            //
+            // lblAttachmentsInfo
+            //
+            lblAttachmentsInfo.AutoSize = true;
+            lblAttachmentsInfo.ForeColor = SystemColors.GrayText;
+            lblAttachmentsInfo.Location = new Point(30, 290);
+            lblAttachmentsInfo.MaximumSize = new Size(520, 0);
+            lblAttachmentsInfo.Name = "lblAttachmentsInfo";
+            lblAttachmentsInfo.Size = new Size(519, 15);
+            lblAttachmentsInfo.TabIndex = 7;
+            lblAttachmentsInfo.Text = "Deletes attachments entirely without redacting them (their content is never inspected). Off by default.";
+            //
             // tabNotifications
             // 
             tabNotifications.Controls.Add(chkShowNotifications);
@@ -928,6 +1002,8 @@ namespace PhilterDesktop
         private CheckBox chkScrubComments;
         private CheckBox chkScrubTrackedChanges;
         private CheckBox chkScrubHiddenText;
+        private CheckBox chkRedactHeadersFooters;
+        private CheckBox chkRedactCharts;
         private CheckBox chkVerifyAfterRedaction;
         private RadioButton rdoVerifySamePolicy;
         private RadioButton rdoVerifyBroadPolicy;
@@ -972,6 +1048,10 @@ namespace PhilterDesktop
         private Label lblEmailInfo;
         private CheckBox chkRemoveCommonHeaders;
         private Label lblCommonHeadersInfo;
+        private CheckBox chkRemoveDateHeader;
+        private Label lblDateHeaderInfo;
+        private CheckBox chkRemoveAttachments;
+        private Label lblAttachmentsInfo;
         private CheckBox chkStartWithWindows;
     }
 }

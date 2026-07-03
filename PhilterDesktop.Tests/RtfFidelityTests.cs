@@ -126,14 +126,14 @@ namespace PhilterDesktop.Tests
         [Fact]
         public void CombinedRedactionWarning_ContentDroppedOnly_ReturnsRtfWarning()
         {
-            string? warning = MainForm.CombinedRedactionWarning(verification: null, nameDetectionUnavailable: false, contentDropped: true);
+            string? warning = MainForm.CombinedRedactionWarning(verification: null, nameDetectionUnavailable: false, contentDroppedWarning: RtfFidelity.Warning);
             Assert.Equal(RtfFidelity.Warning, warning);
         }
 
         [Fact]
         public void CombinedRedactionWarning_NamesAndContentDropped_IncludesBoth()
         {
-            string? warning = MainForm.CombinedRedactionWarning(verification: null, nameDetectionUnavailable: true, contentDropped: true);
+            string? warning = MainForm.CombinedRedactionWarning(verification: null, nameDetectionUnavailable: true, contentDroppedWarning: RtfFidelity.Warning);
             Assert.NotNull(warning);
             Assert.Contains(PhEyeModel.UnavailableWarning, warning!);
             Assert.Contains(RtfFidelity.Warning, warning!);

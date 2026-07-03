@@ -110,7 +110,7 @@ namespace PhilterDesktop
                 "ResidualsFound" => $"Verification warning: {count} possible item{(count == 1 ? "" : "s")} may remain in the output{when}. Review before sharing.",
                 "Error" => $"Verification could not be completed{when}.",
                 "NamesNotChecked" => $"On-device name detection was unavailable when this was redacted{when}, so person names may remain. Review before sharing.",
-                "ContentDropped" => $"This was an RTF with headers, footers, or footnotes; RTF redaction works on the document body, so those parts may not have been carried into the output{when}. Review before sharing.",
+                "ContentDropped" => $"Some source content may not have been carried into the output — an RTF's headers/footers/footnotes, or a PDF's annotations/form fields{when}. Review before sharing.",
                 _ => null
             };
         }

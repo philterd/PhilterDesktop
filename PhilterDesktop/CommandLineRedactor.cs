@@ -122,13 +122,23 @@ namespace PhilterDesktop
                         PhileasPolicy policy = DeserializePolicy(policyJson);
                         GlobalLists.Apply(policy, settings); // global always-redact/ignore on top of every policy
                         string outputPath = RedactionService.GetUniqueOutputPath(RedactionService.GetOutputPath(path, settings));
-                        RedactionService.RedactFileAsync(path, outputPath, policy, contextName, settings, filterService,
+                        List<RedactionSpanEntity> spans = RedactionService.RedactFileAsync(path, outputPath, policy, contextName, settings, filterService,
                                 highlight: options.Highlight)
                             .GetAwaiter().GetResult();
                         Console.WriteLine($"Redacted: {path} -> {outputPath}");
-                        if (RtfFidelity.HasDroppedContent(path))
+                        string? droppedWarning = DroppedContentWarning.For(path);
+                        if (droppedWarning is not null)
                         {
-                            Console.Error.WriteLine("Warning: " + RtfFidelity.Warning);
+                            Console.Error.WriteLine("Warning: " + droppedWarning);
+                        }
+
+                        // Post-redaction self-check (on by default) — the same residual-PII scan the GUI
+                        // runs, so a headless redaction isn't silently unverified.
+                        string? verifyWarning = RedactionVerifier.WarningFor(
+                            RedactionVerifier.VerifyIfEnabled(settings, outputPath, policy, contextName, filterService, spans, sourcePath: path));
+                        if (verifyWarning is not null)
+                        {
+                            Console.Error.WriteLine("Warning: " + verifyWarning);
                         }
                     }
                     catch (Exception ex)

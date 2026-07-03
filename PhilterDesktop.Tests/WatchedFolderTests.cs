@@ -493,7 +493,7 @@ namespace PhilterDesktop.Tests
 
             // Place the file before starting the watcher so it's picked up by the deterministic initial
             // scan (avoids relying on a live FileSystemWatcher event, which can lag under parallel load).
-            string sample = Path.Combine(AppContext.BaseDirectory, "test-documents", "header-footer.rtf");
+            string sample = Path.Combine(AppContext.BaseDirectory, "sample-documents", "header-footer.rtf");
             Assert.True(File.Exists(sample), $"Sample not found: {sample}");
             File.Copy(sample, Path.Combine(watched, "letter.rtf"));
 
@@ -515,7 +515,7 @@ namespace PhilterDesktop.Tests
             // ...and a Warning is written to the (always-on) activity log, which the folder's Issues
             // indicator reads.
             var entries = await WaitForLogAsync(folder, log => log.Any(e => e.Level == "Warning"), timeoutMs: 30000);
-            Assert.Contains(entries, e => e.Level == "Warning" && e.Message.Contains("headers/footers/footnotes"));
+            Assert.Contains(entries, e => e.Level == "Warning" && e.Message.Contains("footers"));
             Assert.True(_logRepo.CountByLevels(folder.Id, "Warning") >= 1);
         }
 
@@ -562,6 +562,28 @@ namespace PhilterDesktop.Tests
                 waited += 150;
             }
             throw new Xunit.Sdk.XunitException($"Expected log entries did not appear within {timeoutMs} ms.");
+        }
+
+        [Fact]
+        public async Task Watcher_RunsVerification_AndWarnsOnResidualPii()
+        {
+            // Policy "p" redacts EMAIL only; the file also has an SSN it leaves in, which the broad
+            // verification pass (on by default) detects as residual. The watched-folder path must run
+            // verification and surface the warning (previously it silently skipped verification).
+            string watched = Path.Combine(_root, "wverify");
+            string output = Path.Combine(_root, "overify");
+            Directory.CreateDirectory(watched);
+            await File.WriteAllTextAsync(Path.Combine(watched, "doc.txt"), "Contact a@example.com about SSN 123-45-6789.");
+
+            var folder = Folder(watched, output);
+            using var watcher = new FolderWatcherService(_policyRepo, loggingEnabled: false, _logRepo);
+            watcher.Restart(new[] { folder });
+
+            // The email is redacted; the residual SSN is flagged by verification and logged as a warning.
+            var entries = await WaitForLogAsync(folder,
+                log => log.Any(e => e.Level == "Warning" && e.Message.Contains("Verification")));
+            Assert.Contains(entries, e => e.Message.Contains("Verification"));
+            Assert.DoesNotContain("a@example.com", await File.ReadAllTextAsync(Path.Combine(output, "doc_redacted-draft.txt")));
         }
 
         private WatchedFolderEntity Folder(string watched, string output) => new()

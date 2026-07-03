@@ -201,7 +201,11 @@ namespace PhilterDesktop
                 ocrImageCoverage: settings.OcrImageCoverageThreshold,
                 ocrMaxPages: settings.OcrMaxPages,
                 scrubEmailHeaders: settings.ScrubEmailHeaders,
-                removeCommonEmailHeaders: settings.RemoveCommonEmailHeaders);
+                removeCommonEmailHeaders: settings.RemoveCommonEmailHeaders,
+                removeEmailDateHeader: settings.RemoveEmailDateHeader,
+                removeEmailAttachments: settings.RemoveEmailAttachments,
+                redactOfficeHeadersFooters: settings.RedactOfficeHeadersFooters,
+                redactOfficeCharts: settings.RedactOfficeCharts);
 
         /// <summary>
         /// Redacts <paramref name="inputPath"/> to <paramref name="outputPath"/> using
@@ -223,7 +227,11 @@ namespace PhilterDesktop
             double ocrImageCoverage = 0.5,
             int ocrMaxPages = 0,
             bool scrubEmailHeaders = false,
-            bool removeCommonEmailHeaders = false)
+            bool removeCommonEmailHeaders = false,
+            bool removeEmailDateHeader = false,
+            bool removeEmailAttachments = false,
+            bool redactOfficeHeadersFooters = true,
+            bool redactOfficeCharts = true)
         {
             filterService ??= new FilterService();
 
@@ -258,7 +266,9 @@ namespace PhilterDesktop
                     inputPath,
                     outputPath,
                     text => filterService.Filter(policy, context, 0, text),
-                    highlight));
+                    highlight,
+                    redactOfficeHeadersFooters,
+                    redactOfficeCharts));
                 if (wordScrub != WordScrubOptions.None)
                 {
                     await Task.Run(() => DocumentMetadata.ScrubDocx(outputPath, wordScrub));
@@ -274,7 +284,9 @@ namespace PhilterDesktop
                     outputPath,
                     text => filterService.Filter(policy, context, 0, text),
                     scrubEmailHeaders,
-                    removeCommonEmailHeaders));
+                    removeCommonEmailHeaders,
+                    removeEmailDateHeader,
+                    removeEmailAttachments));
             }
 
             if (extension == ".rtf")
@@ -294,7 +306,9 @@ namespace PhilterDesktop
                     outputPath,
                     text => filterService.Filter(policy, context, 0, text),
                     fullyRedactedColumns,
-                    worksheet));
+                    worksheet,
+                    redactOfficeHeadersFooters,
+                    redactOfficeCharts));
                 // Strip identifying document properties so the redacted spreadsheet doesn't leak them
                 // (same "Remove document metadata" setting that governs Word).
                 if (wordScrub.HasFlag(WordScrubOptions.Metadata))
@@ -360,6 +374,10 @@ namespace PhilterDesktop
             WordScrubOptions wordScrub = WordScrubOptions.None,
             bool scrubEmailHeaders = false,
             bool removeCommonEmailHeaders = false,
+            bool removeEmailDateHeader = false,
+            bool removeEmailAttachments = false,
+            bool redactOfficeHeadersFooters = true,
+            bool redactOfficeCharts = true,
             string? worksheet = null)
         {
             filterService ??= new FilterService();
@@ -369,7 +387,7 @@ namespace PhilterDesktop
                     Func<string, TextFilterResult>? docxDrawingFilter = policy is null
                         ? null
                         : text => filterService.Filter(policy, string.Empty, 0, text);
-                    await Task.Run(() => WordDocumentRedactor.ApplySpans(sourcePath, outputPath, spans, highlight, docxDrawingFilter));
+                    await Task.Run(() => WordDocumentRedactor.ApplySpans(sourcePath, outputPath, spans, highlight, docxDrawingFilter, redactOfficeCharts));
                     if (wordScrub != WordScrubOptions.None)
                     {
                         await Task.Run(() => DocumentMetadata.ScrubDocx(outputPath, wordScrub));
@@ -380,13 +398,18 @@ namespace PhilterDesktop
                     break;
                 case ".eml":
                 case ".msg":
-                    await Task.Run(() => EmailRedactor.ApplySpans(sourcePath, outputPath, spans, scrubEmailHeaders, removeCommonEmailHeaders));
+                    await Task.Run(() => EmailRedactor.ApplySpans(sourcePath, outputPath, spans, scrubEmailHeaders, removeCommonEmailHeaders, removeEmailDateHeader, removeEmailAttachments));
                     break;
                 case ".rtf":
                     await Task.Run(() => RtfRedactor.ApplySpans(sourcePath, outputPath, spans));
                     break;
                 case ".xlsx":
-                    await Task.Run(() => XlsxRedactor.ApplySpans(sourcePath, outputPath, spans, worksheet));
+                    // Comments and (optionally) header/footer text aren't stored by position, so re-redact
+                    // them via the policy filter as Modify re-renders the output.
+                    Func<string, TextFilterResult>? xlsxFilter = policy is null
+                        ? null
+                        : text => filterService.Filter(policy, string.Empty, 0, text);
+                    await Task.Run(() => XlsxRedactor.ApplySpans(sourcePath, outputPath, spans, worksheet, xlsxFilter, redactOfficeHeadersFooters, redactOfficeCharts));
                     if (wordScrub.HasFlag(WordScrubOptions.Metadata))
                     {
                         await Task.Run(() => DocumentMetadata.ScrubXlsx(outputPath));

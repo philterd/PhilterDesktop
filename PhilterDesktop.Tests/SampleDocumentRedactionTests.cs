@@ -16,6 +16,7 @@
 
 using Phileas.Policy;
 using Phileas.Policy.Filters;
+using Phileas.Services;
 using PhilterData;
 using Xunit;
 using PhileasPolicy = Phileas.Policy.Policy;
@@ -23,7 +24,7 @@ using PhileasPolicy = Phileas.Policy.Policy;
 namespace PhilterDesktop.Tests
 {
     /// <summary>
-    /// Integration tests that redact the sample documents in <c>test-documents/</c> end-to-end
+    /// Integration tests that redact the sample documents in <c>sample-documents/</c> end-to-end
     /// through <see cref="RedactionService"/> and compare the redacted output to the expected
     /// result. The .txt and .docx samples contain identical text, so they must redact identically.
     /// </summary>
@@ -35,7 +36,7 @@ namespace PhilterDesktop.Tests
         private const string ExpectedRedacted =
             "This is a sample document with an email {{{REDACTED-email-address}}} and SSN {{{REDACTED-ssn}}}.";
 
-        private static readonly string SamplesDir = Path.Combine(AppContext.BaseDirectory, "test-documents");
+        private static readonly string SamplesDir = Path.Combine(AppContext.BaseDirectory, "sample-documents");
 
         private readonly string _tempDir;
 
@@ -280,6 +281,232 @@ namespace PhilterDesktop.Tests
             // The Vendors sheet is left untouched.
             Assert.Contains("bob@vendor.example", all);
             Assert.Contains("alice@vendor.example", all);
+        }
+
+        [Fact]
+        public async Task WordSample_HeaderFooter_RedactsHeaderAndFooterText()
+        {
+            // header-footer.docx: header "…SSN 123-45-6789", footer "…george@fake.com", body "…078-05-1120".
+            string input = Path.Combine(SamplesDir, "header-footer.docx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "header-footer_redacted.docx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            Assert.DoesNotContain("123-45-6789", WordDocs.HeadersText(output)); // header PII gone
+            Assert.DoesNotContain("george@fake.com", WordDocs.FootersText(output)); // footer PII gone
+            Assert.DoesNotContain("078-05-1120", WordDocs.AllBodyText(output)); // body PII gone
+        }
+
+        [Fact]
+        public async Task WordSample_HeaderFooter_OptionOff_KeepsHeaderFooter_StillRedactsBody()
+        {
+            string input = Path.Combine(SamplesDir, "header-footer.docx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "header-footer_keep.docx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx",
+                redactOfficeHeadersFooters: false);
+
+            Assert.Contains("123-45-6789", WordDocs.HeadersText(output)); // gated by the option
+            Assert.Contains("george@fake.com", WordDocs.FootersText(output));
+            Assert.DoesNotContain("078-05-1120", WordDocs.AllBodyText(output)); // body still redacted
+        }
+
+        [Fact]
+        public async Task XlsxSample_HeaderFooter_RedactsHeaderFooterText_KeepsFieldCodes()
+        {
+            // header-footer.xlsx: header "&CConfidential SSN 123-45-6789", footer "&LContact george@fake.com&RPage &P".
+            string input = Path.Combine(SamplesDir, "header-footer.xlsx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "header-footer_redacted.xlsx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            string headerFooter = SpreadsheetTestHelper.HeaderFooterText(output);
+            Assert.DoesNotContain("123-45-6789", headerFooter);     // header PII gone
+            Assert.DoesNotContain("george@fake.com", headerFooter); // footer PII gone
+            Assert.Contains("&C", headerFooter);                    // section field code preserved
+            Assert.Contains("&P", headerFooter);                    // page-number field code preserved
+            Assert.DoesNotContain("078-05-1120", SpreadsheetTestHelper.AllText(output)); // cell PII gone
+        }
+
+        [Fact]
+        public async Task EmailSample_WithAttachment_RemoveOn_DropsAttachment_RedactsBody()
+        {
+            // email-with-attachment.eml: body with george@fake.com + SSN, plus a "john_smith_ssn.pdf" attachment.
+            string input = Path.Combine(SamplesDir, "email-with-attachment.eml");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "email-noattach.eml");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx",
+                removeEmailAttachments: true);
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.DoesNotContain("john_smith_ssn.pdf", eml); // attachment (and its filename) gone
+            Assert.DoesNotContain("U0VDUkVU", eml);           // attachment content gone
+
+            using var stream = File.OpenRead(output);
+            MimeKit.MimeMessage message = MimeKit.MimeMessage.Load(stream);
+            Assert.Empty(message.Attachments);
+            Assert.DoesNotContain(Email, message.TextBody ?? string.Empty); // body still redacted
+            Assert.DoesNotContain(Ssn, message.TextBody ?? string.Empty);
+        }
+
+        [Fact]
+        public async Task EmailSample_WithAttachment_RemoveOff_KeepsAttachment_RedactsBody()
+        {
+            string input = Path.Combine(SamplesDir, "email-with-attachment.eml");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "email-keepattach.eml");
+
+            // Default: attachments are kept (only the message body is redacted).
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.Contains("john_smith_ssn.pdf", eml); // attachment preserved
+            Assert.DoesNotContain(Email, eml);          // body still redacted
+            Assert.DoesNotContain(Ssn, eml);
+        }
+
+        [Fact]
+        public async Task EmailSample_NestedMessage_RedactsForwardedHeadersAndBody()
+        {
+            // nested-message.eml wraps a forwarded message/rfc822 whose own headers and body carry PII.
+            string input = Path.Combine(SamplesDir, "nested-message.eml");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "nested-redacted.eml");
+
+            // Header scrubs on (the app's defaults) so the forwarded Received/Bcc are covered too.
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx",
+                scrubEmailHeaders: true, removeCommonEmailHeaders: true);
+
+            string eml = await File.ReadAllTextAsync(output);
+            // Outer message PII.
+            Assert.DoesNotContain("outer@example.com", eml);
+            Assert.DoesNotContain("outer.rcpt@example.com", eml);
+            Assert.DoesNotContain("outer-body@example.com", eml);
+            // Forwarded (nested) message headers + body — the leak this fixes.
+            Assert.DoesNotContain("inner-from@example.com", eml); // nested From
+            Assert.DoesNotContain("inner-to@example.com", eml);   // nested To
+            Assert.DoesNotContain("inner-cc@example.com", eml);   // nested Cc
+            Assert.DoesNotContain("john@example.com", eml);       // nested Subject
+            Assert.DoesNotContain("inner-body@example.com", eml); // nested body
+            Assert.DoesNotContain("123-45-6789", eml);            // nested body SSN
+            // Nested technical/identity headers removed by the scrubs.
+            Assert.DoesNotContain("10.9.8.7", eml);               // nested Received IP
+            Assert.DoesNotContain("inner-bcc@example.com", eml);  // nested Bcc
+        }
+
+        [Fact]
+        public async Task EmailSample_WithAttachment_KeptAttachment_VerificationWarns()
+        {
+            string input = Path.Combine(SamplesDir, "email-with-attachment.eml");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            var fs = new FilterService();
+
+            // Kept attachments -> verification carries the attachment caveat.
+            string kept = Path.Combine(_tempDir, "email-verify-keep.eml");
+            await RedactionService.RedactFileAsync(input, kept, SamplePolicy(), "ctx");
+            VerificationOutcome keptOutcome = RedactionVerifier.Verify(kept, SamplePolicy(), "ctx", fs);
+            Assert.NotNull(keptOutcome.FidelityNote);
+            Assert.Contains("attachment", keptOutcome.FidelityNote!, StringComparison.OrdinalIgnoreCase);
+
+            // Removed attachments -> no attachment caveat.
+            string removed = Path.Combine(_tempDir, "email-verify-removed.eml");
+            await RedactionService.RedactFileAsync(input, removed, SamplePolicy(), "ctx", removeEmailAttachments: true);
+            VerificationOutcome removedOutcome = RedactionVerifier.Verify(removed, SamplePolicy(), "ctx", fs);
+            Assert.Null(removedOutcome.FidelityNote);
+        }
+
+        [Fact]
+        public async Task WordSample_TrackedDeletion_RedactsDeletedText()
+        {
+            // tracked-deletion.docx hides "george@fake.com" and an SSN inside a tracked deletion (w:delText),
+            // not the visible body. Redaction (with the tracked-changes scrub off, the default here) must
+            // still remove it so it can't be recovered with "Reject Changes".
+            string input = Path.Combine(SamplesDir, "tracked-deletion.docx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "tracked-deletion_redacted.docx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            string deleted = string.Concat(WordDocs.DeletedTexts(output));
+            Assert.NotEmpty(deleted);                       // the deletion is preserved...
+            Assert.DoesNotContain(Email, deleted);          // ...but its PII is redacted
+            Assert.DoesNotContain(Ssn, deleted);
+            Assert.False(WordDocs.AnyPartContains(output, Email)); // nothing anywhere still holds it
+            Assert.False(WordDocs.AnyPartContains(output, Ssn));
+        }
+
+        [Fact]
+        public async Task XlsxSample_Comments_RedactsLegacyAndThreadedCommentPii()
+        {
+            // xlsx-with-comments.xlsx hides an SSN in a legacy comment and an email in a threaded comment
+            // (with an email author), none of which is in any cell.
+            string input = Path.Combine(SamplesDir, "xlsx-with-comments.xlsx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "xlsx-comments_redacted.xlsx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            string commentXml = SpreadsheetTestHelper.AllCommentXml(output);
+            Assert.DoesNotContain(Ssn, commentXml);                 // legacy comment SSN
+            Assert.DoesNotContain(Email, commentXml);               // threaded comment email
+            Assert.DoesNotContain("reviewer@example.com", commentXml); // threaded author display name
+            Assert.NotEmpty(SpreadsheetTestHelper.AllCommentText(output)); // comments preserved (redacted, not dropped)
+        }
+
+        [Fact]
+        public async Task WordSample_Chart_RedactsTitleAndCachedSeriesValues()
+        {
+            // sample-documents/chart-sample.docx embeds a chart whose title, cached series name, and cached
+            // category value carry PII the cells do not.
+            string input = Path.Combine(SamplesDir, "chart-sample.docx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "chart-sample_redacted.docx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            Assert.False(WordDocs.AnyPartContains(output, "john@example.com"));  // chart title
+            Assert.False(WordDocs.AnyPartContains(output, "123-45-6789"));       // cached series name
+            Assert.False(WordDocs.AnyPartContains(output, "alice@example.com")); // cached category
+        }
+
+        [Fact]
+        public async Task XlsxSample_Chart_RedactsTitleAndCachedSeriesValues()
+        {
+            string input = Path.Combine(SamplesDir, "chart-sample.xlsx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "chart-sample_redacted.xlsx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            string chartXml = SpreadsheetTestHelper.AllChartXml(output);
+            Assert.DoesNotContain("john@example.com", chartXml);
+            Assert.DoesNotContain("123-45-6789", chartXml);
+            Assert.DoesNotContain("alice@example.com", chartXml);
+        }
+
+        [Fact]
+        public async Task PdfSample_Annotations_ReportsPiiInAnnotationsAndFormFields()
+        {
+            // pdf-with-annotations.pdf hides an SSN in a FreeText annotation and an email in a form field —
+            // neither is in the page content. They're removed from the image-only output, and must be
+            // detected and reported.
+            string input = Path.Combine(SamplesDir, "pdf-with-annotations.pdf");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "pdf-annot_redacted.pdf");
+
+            List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            Assert.Contains(spans, s => s.Text.Contains(Ssn));   // annotation
+            Assert.Contains(spans, s => s.Text.Contains(Email)); // form field
+
+            // Flattened to images, so the annotation/form text isn't in the output either.
+            string outBytes = System.Text.Encoding.Latin1.GetString(await File.ReadAllBytesAsync(output));
+            Assert.DoesNotContain(Ssn, outBytes);
+            Assert.DoesNotContain(Email, outBytes);
         }
 
         [Fact]

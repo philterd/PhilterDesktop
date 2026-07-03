@@ -53,7 +53,7 @@ namespace PhilterDesktop
         public static List<string> ReadParagraphs(string inputPath)
         {
             using WordprocessingDocument document = WordprocessingDocument.Open(inputPath, isEditable: false);
-            return EnumerateTargets(document).Select(OwnText).ToList();
+            return EnumerateTargets(document).Select(t => OwnText(t.Paragraph)).ToList();
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace PhilterDesktop
         public static List<string> ReadReviewLines(string inputPath)
         {
             using WordprocessingDocument document = WordprocessingDocument.Open(inputPath, isEditable: false);
-            var lines = EnumerateTargets(document).Select(OwnText).ToList();
+            var lines = EnumerateTargets(document).Select(t => OwnText(t.Paragraph)).ToList();
             lines.AddRange(ReadDrawingParagraphText(document));
             return lines;
         }
@@ -113,17 +113,17 @@ namespace PhilterDesktop
         /// writing anything, returning the spans (paragraph-indexed) — the same set <see cref="Redact"/>
         /// would apply. Used for the preview workspace.
         /// </summary>
-        public static List<RedactionSpanEntity> Detect(string inputPath, Func<string, TextFilterResult> filter)
+        public static List<RedactionSpanEntity> Detect(string inputPath, Func<string, TextFilterResult> filter, bool redactHeadersFooters = true, bool redactCharts = true)
         {
             using WordprocessingDocument document = WordprocessingDocument.Open(inputPath, isEditable: false);
 
             var captured = new List<RedactionSpanEntity>();
             int order = 0;
             int paragraphIndex = 0;
-            foreach (Paragraph paragraph in EnumerateTargets(document))
+            foreach ((Paragraph paragraph, bool isHeaderFooter) in EnumerateTargets(document))
             {
                 string original = OwnText(paragraph);
-                if (!string.IsNullOrEmpty(original))
+                if (!string.IsNullOrEmpty(original) && (redactHeadersFooters || !isHeaderFooter))
                 {
                     foreach (Span s in filter(original).Spans
                         .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
@@ -145,6 +145,14 @@ namespace PhilterDesktop
                 }
                 paragraphIndex++;
             }
+            // Deleted tracked-change text (w:delText) isn't a body paragraph, so scan it too — otherwise
+            // the preview/verification would miss residual PII in a tracked deletion.
+            captured.AddRange(ScanDeletedText(document, filter, write: false, ref order));
+            // Chart title/label/cached-value text likewise isn't a body paragraph.
+            if (redactCharts)
+            {
+                captured.AddRange(ScanCharts(document, filter, write: false, ref order));
+            }
             return captured;
         }
 
@@ -153,7 +161,7 @@ namespace PhilterDesktop
         /// the result to <paramref name="outputPath"/>, and returns the applied spans (paragraph-indexed).
         /// The input file is left untouched.
         /// </summary>
-        public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool highlight = false)
+        public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool highlight = false, bool redactHeadersFooters = true, bool redactCharts = true)
         {
             // Redact in memory, then write the output once so a failure never leaves the original or a
             // partial file.
@@ -164,10 +172,10 @@ namespace PhilterDesktop
             using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
             using WordprocessingDocument document = WordprocessingDocument.Open(buffer, isEditable: true);
 
-            foreach (Paragraph paragraph in EnumerateTargets(document).ToList())
+            foreach ((Paragraph paragraph, bool isHeaderFooter) in EnumerateTargets(document).ToList())
             {
                 string original = OwnText(paragraph);
-                if (!string.IsNullOrEmpty(original))
+                if (!string.IsNullOrEmpty(original) && (redactHeadersFooters || !isHeaderFooter))
                 {
                     TextFilterResult result = filter(original);
                     if (!string.Equals(result.FilteredText, original, StringComparison.Ordinal))
@@ -207,6 +215,11 @@ namespace PhilterDesktop
 
             captured.AddRange(RedactDrawingText(document, filter, ref order));
             captured.AddRange(RedactHyperlinkTargets(document, filter, ref order));
+            captured.AddRange(ScanDeletedText(document, filter, write: true, ref order));
+            if (redactCharts)
+            {
+                captured.AddRange(ScanCharts(document, filter, write: true, ref order));
+            }
             RemoveThreadedCommentDuplicate(document);
             document.Save(); // flush into the buffer
             SafeOutput.Write(outputPath, buffer.ToArray());
@@ -220,7 +233,7 @@ namespace PhilterDesktop
         /// start/stop offsets within that paragraph.
         /// </summary>
         public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, bool highlight,
-            Func<string, TextFilterResult>? drawingFilter = null)
+            Func<string, TextFilterResult>? drawingFilter = null, bool redactCharts = true)
         {
             Dictionary<int, List<RedactionSpanEntity>> byParagraph = spans
                 .GroupBy(s => s.ParagraphIndex)
@@ -231,7 +244,7 @@ namespace PhilterDesktop
             using WordprocessingDocument document = WordprocessingDocument.Open(buffer, isEditable: true);
 
             int paragraphIndex = 0;
-            foreach (Paragraph paragraph in EnumerateTargets(document).ToList())
+            foreach ((Paragraph paragraph, bool _) in EnumerateTargets(document).ToList())
             {
                 string original = OwnText(paragraph);
                 if (!string.IsNullOrEmpty(original) && byParagraph.TryGetValue(paragraphIndex, out List<RedactionSpanEntity>? paragraphSpans))
@@ -260,6 +273,11 @@ namespace PhilterDesktop
                 int order = 0;
                 RedactDrawingText(document, drawingFilter, ref order);
                 RedactHyperlinkTargets(document, drawingFilter, ref order);
+                ScanDeletedText(document, drawingFilter, write: true, ref order);
+                if (redactCharts)
+                {
+                    ScanCharts(document, drawingFilter, write: true, ref order);
+                }
             }
             RemoveThreadedCommentDuplicate(document);
             document.Save(); // flush into the buffer
@@ -272,7 +290,7 @@ namespace PhilterDesktop
         /// order must match between <see cref="Redact"/> and <see cref="ApplySpans"/> so a stored
         /// paragraph index re-applies.
         /// </summary>
-        private static IEnumerable<Paragraph> EnumerateTargets(WordprocessingDocument document)
+        private static IEnumerable<(Paragraph Paragraph, bool IsHeaderFooter)> EnumerateTargets(WordprocessingDocument document)
         {
             MainDocumentPart? main = document.MainDocumentPart;
             if (main is null)
@@ -285,7 +303,7 @@ namespace PhilterDesktop
             {
                 foreach (Paragraph p in body.Descendants<Paragraph>())
                 {
-                    yield return p;
+                    yield return (p, false);
                 }
             }
 
@@ -295,7 +313,7 @@ namespace PhilterDesktop
                 {
                     foreach (Paragraph p in root.Descendants<Paragraph>())
                     {
-                        yield return p;
+                        yield return (p, true);
                     }
                 }
             }
@@ -306,14 +324,14 @@ namespace PhilterDesktop
             {
                 foreach (Paragraph p in footnotes.Descendants<Paragraph>())
                 {
-                    yield return p;
+                    yield return (p, false);
                 }
             }
             if (main.EndnotesPart?.Endnotes is Endnotes endnotes)
             {
                 foreach (Paragraph p in endnotes.Descendants<Paragraph>())
                 {
-                    yield return p;
+                    yield return (p, false);
                 }
             }
 
@@ -324,7 +342,7 @@ namespace PhilterDesktop
             {
                 foreach (Paragraph p in comments.Descendants<Paragraph>())
                 {
-                    yield return p;
+                    yield return (p, false);
                 }
             }
         }
@@ -347,6 +365,10 @@ namespace PhilterDesktop
 
             foreach (OpenXmlPart part in AllParts(main))
             {
+                if (part is ChartPart)
+                {
+                    continue; // charts are handled by the (settings-gated) chart pass, incl. cached values
+                }
                 OpenXmlElement? root;
                 try
                 {
@@ -418,6 +440,99 @@ namespace PhilterDesktop
                 SpanExplanation.Populate(entity, s);
                 captured.Add(entity);
             }
+        }
+
+        // Redacts the text of tracked *deletions* (w:delText). Word keeps deleted-but-tracked text in
+        // <w:delText>, not <w:t>, so the body/notes enumeration (which reads only <w:t>) misses it — the PII
+        // would ship verbatim and is recoverable with "Reject Changes". This runs the filter over each
+        // deleted-text element and replaces detected PII in place, keeping the run a tracked deletion, so
+        // the leak is closed regardless of the (toggleable) tracked-changes scrub and on the Modify path.
+        // Each element is filtered on its own (a deletion's text is a contiguous run); spans use
+        // ParagraphIndex -1 (not a body paragraph). With write=false it only detects (preview/verification).
+        // Every part is walked, so deletions in the body, headers/footers, notes, and comments are covered.
+        private static List<RedactionSpanEntity> ScanDeletedText(
+            WordprocessingDocument document, Func<string, TextFilterResult> filter, bool write, ref int order)
+        {
+            var captured = new List<RedactionSpanEntity>();
+            MainDocumentPart? main = document.MainDocumentPart;
+            if (main is null)
+            {
+                return captured;
+            }
+
+            foreach (OpenXmlPart part in AllParts(main))
+            {
+                OpenXmlElement? root;
+                try
+                {
+                    root = part.RootElement; // parses the part; skip parts the SDK can't type
+                }
+                catch
+                {
+                    continue;
+                }
+                if (root is null)
+                {
+                    continue;
+                }
+                foreach (DeletedText deleted in root.Descendants<DeletedText>().ToList())
+                {
+                    string original = deleted.Text ?? string.Empty;
+                    if (string.IsNullOrEmpty(original))
+                    {
+                        continue;
+                    }
+                    TextFilterResult result = filter(original);
+                    if (string.Equals(result.FilteredText, original, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+                    if (write)
+                    {
+                        deleted.Text = result.FilteredText;
+                    }
+                    foreach (Span s in result.Spans
+                                 .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
+                                 .OrderBy(s => s.CharacterStart))
+                    {
+                        var entity = new RedactionSpanEntity
+                        {
+                            Order = order++,
+                            ParagraphIndex = -1,
+                            CharacterStart = s.CharacterStart,
+                            CharacterEnd = s.CharacterEnd,
+                            Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
+                            Replacement = s.Replacement ?? string.Empty,
+                            Classification = s.Classification ?? string.Empty
+                        };
+                        SpanExplanation.Populate(entity, s);
+                        captured.Add(entity);
+                    }
+                }
+            }
+            return captured;
+        }
+
+        // Redacts (write: true) or detects (write: false) PII in embedded charts: title/axis/data-label
+        // text and the cached series/category values (numCache/strCache) that copy the source cells. Chart
+        // parts are excluded from the general drawing pass and handled here so this can be settings-gated.
+        private static List<RedactionSpanEntity> ScanCharts(
+            WordprocessingDocument document, Func<string, TextFilterResult> filter, bool write, ref int order)
+        {
+            var captured = new List<RedactionSpanEntity>();
+            MainDocumentPart? main = document.MainDocumentPart;
+            if (main is null)
+            {
+                return captured;
+            }
+            foreach (OpenXmlPart part in AllParts(main))
+            {
+                if (part is ChartPart chartPart)
+                {
+                    ChartRedactor.RedactChartPart(chartPart, filter, write, captured, ref order);
+                }
+            }
+            return captured;
         }
 
         // Redacts hyperlink URL *targets* — the external addresses stored as relationships and referenced

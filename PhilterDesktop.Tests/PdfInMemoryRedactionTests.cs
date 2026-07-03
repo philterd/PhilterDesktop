@@ -34,7 +34,7 @@ namespace PhilterDesktop.Tests
         private const string Ssn = "123-45-6789";
 
         private static byte[] SamplePdfBytes =>
-            File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "test-documents", "test1.pdf"));
+            File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "sample-documents", "test1.pdf"));
 
         private static string ExtractText(byte[] pdf)
         {

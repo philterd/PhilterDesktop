@@ -30,7 +30,7 @@ namespace PhilterDesktop.Tests
     /// </summary>
     public sealed class PdfBoundingBoxTests : IDisposable
     {
-        private static string SamplesDir => Path.Combine(AppContext.BaseDirectory, "test-documents");
+        private static string SamplesDir => Path.Combine(AppContext.BaseDirectory, "sample-documents");
 
         private readonly string _dir;
 

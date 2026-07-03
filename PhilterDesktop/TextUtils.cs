@@ -18,6 +18,76 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Phileas.Model;
 using PhilterData;
+using UglyToad.PdfPig;
+using UglyToad.PdfPig.AcroForms.Fields;
+
+namespace PhilterDesktop
+{
+    /// <summary>
+    /// PDF redaction flattens each page to an image, and it does <b>not</b> render annotations (sticky
+    /// notes, free-text, highlights) or form-field values into that image — so their text is removed from
+    /// the output. The redaction pass still detects and reports any PII in them, but the user should be
+    /// told the content itself isn't carried over (they may need it, and it isn't re-scanned on the output).
+    /// </summary>
+    internal static class PdfFidelity
+    {
+        /// <summary>The heads-up shown when a PDF has annotation or form-field text.</summary>
+        public const string Warning =
+            "This PDF has annotations or form fields. Their text is not carried into the redacted image, so " +
+            "it is removed from the output (any sensitive information detected in it is still reported). " +
+            "Review the original if you need that content.";
+
+        /// <summary>The caveat added to a <em>verification</em> result for such a PDF.</summary>
+        public const string VerificationCaveat =
+            "This PDF had annotations or form fields. Their text is removed from the redacted image and isn't " +
+            "re-scanned here, so this result covers the page content only. Review the original if you need " +
+            "that content.";
+
+        /// <summary>
+        /// True when <paramref name="inputPath"/> is a <c>.pdf</c> that has annotation text or a non-empty
+        /// AcroForm text field (content that PDF redaction removes without rendering). Non-PDF and unreadable
+        /// files return false.
+        /// </summary>
+        public static bool HasDroppedContent(string inputPath)
+        {
+            if (!string.Equals(Path.GetExtension(inputPath), ".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+            try
+            {
+                using PdfDocument pdf = PdfDocument.Open(File.ReadAllBytes(inputPath));
+                foreach (var page in pdf.GetPages())
+                {
+                    if (page.GetAnnotations().Any(a => !string.IsNullOrWhiteSpace(a.Content)))
+                    {
+                        return true;
+                    }
+                }
+                return pdf.TryGetForm(out var form)
+                    && form.Fields.OfType<AcroTextField>().Any(f => !string.IsNullOrWhiteSpace(f.Value));
+            }
+            catch
+            {
+                return false; // unreadable — let the normal redaction path handle/report it
+            }
+        }
+    }
+
+    /// <summary>
+    /// The fidelity warning for a source whose content may not carry into the redacted output — an RTF's
+    /// non-body parts (<see cref="RtfFidelity"/>) or a PDF's annotations/form fields
+    /// (<see cref="PdfFidelity"/>) — or null when there is none. One place so every redaction path (queue,
+    /// watched folders, CLI) reports the drop consistently.
+    /// </summary>
+    internal static class DroppedContentWarning
+    {
+        public static string? For(string inputPath) =>
+            RtfFidelity.HasDroppedContent(inputPath) ? RtfFidelity.Warning
+            : PdfFidelity.HasDroppedContent(inputPath) ? PdfFidelity.Warning
+            : null;
+    }
+}
 
 namespace PhilterDesktop
 {

@@ -93,7 +93,7 @@ program by hand. This setting is saved with the others when you click **Save**.
 
 Office documents carry information that has nothing to do with the visible text, and a "redacted" file
 that still includes it defeats the purpose. The **Microsoft Office** tab lets you strip these hidden
-channels. All four options are **on by default**:
+channels and control header/footer redaction. All options below are **on by default**:
 
 - **Remove document metadata (author, company, title, keywords, custom fields).** Clears the document's
   properties so the redacted copy doesn't name who wrote it or where it came from. For Word, this also
@@ -108,6 +108,19 @@ channels. All four options are **on by default**:
   *(Word only.)*
 - **Remove hidden text.** Deletes text that was marked hidden, which wouldn't show on screen but is
   still present in the file. *(Word only.)*
+- **Redact text in page headers and footers.** Scans the running header and footer — the lines that
+  repeat at the top and bottom of every page (for example "Confidential — John Doe") — and redacts
+  detected sensitive information there, just like the body. **Only text is redacted**: images, logos,
+  page numbers, and other non-text content in a header or footer are left as they are. Legitimate text
+  such as a printed date is only removed if your policy targets it. Turn this off if a header/footer
+  contains text you don't want scanned. **Applies to both Word (`.docx`) and Excel (`.xlsx`).**
+- **Redact charts.** Scans embedded charts and redacts detected sensitive information in their **titles
+  and labels** and in the **cached data values** — the copy of the plotted series and category values
+  a chart keeps inside the file, which would otherwise remain even after the source cells are redacted.
+  Redacting a cached value can change how a chart looks (a label or bar may show the replacement text),
+  so **review charts in the redacted copy**. Charts are only scanned as text through your policy, so a
+  sensitive value a chart is built from is removed only when the policy detects it. **Applies to both
+  Word (`.docx`) and Excel (`.xlsx`).**
 
 Leave these on unless you have a specific reason to keep that information. They affect only what's
 stored in the redacted copy; your original document is never changed, and you should still review the
@@ -163,7 +176,7 @@ and from where.
 - **Remove technical email headers from redacted email** (on by default). When on, those identifying
   headers are stripped from the redacted `.eml`. The visible fields (**Subject, From, To, Cc, the body,
   and the Date**) are kept (and their PII is still redacted as usual); only the hidden routing/technical
-  headers are removed.
+  headers are removed. (The send **Date** can be removed separately with the option below.)
 - **Remove Bcc and other identity headers (Reply-To, Sender, Resent)** (on by default). These headers
   carry recipient or sender addresses that **aren't** part of the visible **From / To / Cc** fields, so
   they wouldn't otherwise be redacted. **Bcc** is the most important: it names blind-copy recipients and
@@ -173,9 +186,21 @@ and from where.
   and be aware that **when it is off, these headers are kept exactly as they are**. Unlike **From / To /
   Cc**, they are **not** scanned for PII, so any addresses in them — **including Bcc recipients** — remain
   in the redacted email. If you disable this, review those headers yourself before sharing.
+- **Remove the Date header from redacted email** (**off** by default). When on, the **Date** header
+  (the message's send time) is **dropped outright**, so the send time is removed no matter how it is
+  formatted — this does not rely on the policy recognizing a date. It is off by default because the send
+  date is usually wanted and isn't personally identifying on its own; turn it on if your policy needs to
+  remove temporal identifiers. (A timestamp can also appear inside the delivery trail — leave the
+  technical-header option above on to strip that.)
+- **Remove attachments from redacted email** (**off** by default). When on, every attachment is
+  **deleted entirely from the redacted email — not redacted**. Philter Desktop does not open, inspect, or
+  redact attachment content in any case; this option removes the attached files outright, including their
+  **filenames** (which can themselves reveal information, e.g. `john_smith_ssn.pdf`). It is off by default
+  because it discards content you may need; turn it on when an email's attachments could carry sensitive
+  information that must not ship in the redacted copy. The message body is still redacted as usual.
 
-Leave these on unless you specifically need to preserve the original headers (for example, for an
-e-discovery chain-of-custody requirement).
+Leave the first two on unless you specifically need to preserve the original headers (for example, for
+an e-discovery chain-of-custody requirement).
 
 ## Notifications tab
 
@@ -292,7 +317,10 @@ re-processing your data.
 The **Verify each redaction by re-scanning the output for PII that may remain** option (on by default)
 makes Philter Desktop double-check its own work: after each document is redacted, it re-opens the
 finished file and runs the detector again, looking for anything the policy might have missed. If
-something is found, you're warned and shown what and where. It runs entirely on your device.
+something is found, you're warned and shown what and where. It runs entirely on your device. This
+applies to **every** way Philter Desktop redacts — the queue, [watched folders](watched-folders.md)
+(the warning appears in the folder's activity log and notification), and the command line (it's printed
+as a warning) — so an automated redaction is never silently left unchecked.
 
 Two scan choices sit underneath it (they apply to the automatic check):
 

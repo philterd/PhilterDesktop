@@ -15,6 +15,7 @@
  */
 
 using System.Collections.Concurrent;
+using LiteDB;
 using Phileas.Policy;
 using Phileas.Services;
 using PhilterData;
@@ -364,7 +365,9 @@ namespace PhilterDesktop
 
                 string outputPath = Path.Combine(outputDir, RedactionService.ApplySuffix(fullPath, CurrentSuffix()));
 
-                // Skip if we already produced an up-to-date redaction (e.g., on restart re-scan).
+                // Skip if we already produced an up-to-date redaction (e.g., on restart re-scan). Two
+                // watched folders can't share an output folder (the editor enforces a unique output
+                // directory), so this deterministic name can't collide across folders.
                 if (File.Exists(outputPath) &&
                     File.GetLastWriteTimeUtc(outputPath) >= File.GetLastWriteTimeUtc(fullPath))
                 {
@@ -391,12 +394,18 @@ namespace PhilterDesktop
                 // policy.)
                 string? nameWarning = PhEyeModel.RequestedButUnavailable(policy) ? PhEyeModel.UnavailableWarning : null;
 
-                await RedactionService.RedactFileAsync(
+                List<RedactionSpanEntity> spans = await RedactionService.RedactFileAsync(
                     fullPath, outputPath, policy, folder.Context, watcherSettings, _filterService, folder.Highlight)
                     .ConfigureAwait(false);
 
-                // An RTF with headers/footers/footnotes: RTF redaction doesn't carry those into the output.
-                string? rtfWarning = RtfFidelity.HasDroppedContent(fullPath) ? RtfFidelity.Warning : null;
+                // Content the redaction path doesn't carry into the output (RTF non-body parts; PDF
+                // annotations/form fields).
+                string? rtfWarning = DroppedContentWarning.For(fullPath);
+
+                // Post-redaction self-check (on by default) — the same residual-PII scan the GUI queue runs,
+                // so a watched-folder redaction isn't silently unverified.
+                string? verifyWarning = RedactionVerifier.WarningFor(
+                    RedactionVerifier.VerifyIfEnabled(watcherSettings, outputPath, policy, folder.Context, _filterService, spans, sourcePath: fullPath));
 
                 if (nameWarning is not null)
                 {
@@ -410,11 +419,19 @@ namespace PhilterDesktop
                 }
                 if (rtfWarning is not null)
                 {
-                    Log($"Redacted RTF '{fullPath}' -> '{outputPath}': headers/footers/footnotes may not be carried into the output.", warning: true);
-                    Activity(folder, "Warning", $"RTF headers/footers/footnotes may not be carried into the output: {fullPath} → {outputPath}");
+                    Log($"Redacted watched file '{fullPath}' -> '{outputPath}': {rtfWarning}", warning: true);
+                    Activity(folder, "Warning", $"{rtfWarning} ({fullPath})");
                 }
+                if (verifyWarning is not null)
+                {
+                    Log($"Verification of redacted watched file '{fullPath}' -> '{outputPath}': {verifyWarning}", warning: true);
+                    Activity(folder, "Warning", $"Verification: {verifyWarning} ({fullPath})");
+                }
+
+                string? combinedWarning = string.Join("\n",
+                    new[] { nameWarning, rtfWarning, verifyWarning }.Where(w => !string.IsNullOrEmpty(w)));
                 RaiseProcessed(folder, fullPath, outputPath, success: true, error: null,
-                    warning: nameWarning is null ? rtfWarning : (rtfWarning is null ? nameWarning : nameWarning + "\n" + rtfWarning));
+                    warning: string.IsNullOrEmpty(combinedWarning) ? null : combinedWarning);
             }
         }
 
@@ -554,6 +571,58 @@ namespace PhilterDesktop
                 StopWatchersNoLock();
             }
             _redactionGate.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Validation for watched-folder output directories. Two watched folders that write to the same
+    /// output folder can produce same-named redacted files that overwrite each other (data loss), so a
+    /// folder's output directory must be unique. Empty output folders don't conflict — each writes beside
+    /// its own source.
+    /// </summary>
+    internal static class WatchedFolderValidation
+    {
+        /// <summary>A canonical form of a directory path for comparison (absolute, no trailing separator).</summary>
+        internal static string NormalizeDir(string? path) =>
+            string.IsNullOrWhiteSpace(path) ? string.Empty : Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
+
+        /// <summary>
+        /// The existing folder (if any) that already writes to <paramref name="candidateOutput"/>, other
+        /// than the one identified by <paramref name="candidateId"/> (so editing a folder in place isn't a
+        /// self-conflict). Returns null when the output is empty or unique.
+        /// </summary>
+        internal static WatchedFolderEntity? OutputConflict(
+            IEnumerable<WatchedFolderEntity> existing, string candidateOutput, ObjectId candidateId)
+        {
+            string output = NormalizeDir(candidateOutput);
+            if (output.Length == 0)
+            {
+                return null;
+            }
+            return existing.FirstOrDefault(f =>
+                f.Id != candidateId &&
+                string.Equals(NormalizeDir(f.OutputFolder), output, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// The watched folder (other than <paramref name="candidateId"/>) whose watched path overlaps —
+        /// is the same as, nested inside, or contains — <paramref name="candidateOutput"/>. Such an overlap
+        /// would drop redacted output into a watched folder (or watch the output directory), causing the
+        /// redacted files to be redacted again in a loop. The check is recursive (both directions), so a
+        /// nested folder is caught. Returns null when the output is empty or overlaps nothing.
+        /// </summary>
+        internal static WatchedFolderEntity? OutputOverlapsWatchedFolder(
+            IEnumerable<WatchedFolderEntity> folders, string candidateOutput, ObjectId candidateId)
+        {
+            if (NormalizeDir(candidateOutput).Length == 0)
+            {
+                return null;
+            }
+            return folders.FirstOrDefault(f =>
+                f.Id != candidateId &&
+                !string.IsNullOrWhiteSpace(f.FolderPath) &&
+                (PathUtils.IsSameOrInside(candidateOutput, f.FolderPath) ||
+                 PathUtils.IsSameOrInside(f.FolderPath, candidateOutput)));
         }
     }
 

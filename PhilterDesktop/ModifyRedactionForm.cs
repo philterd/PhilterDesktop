@@ -42,6 +42,10 @@ namespace PhilterDesktop
         private readonly WordScrubOptions _wordScrub = WordScrubOptions.None;
         private readonly bool _scrubEmailHeaders;
         private readonly bool _removeCommonEmailHeaders;
+        private readonly bool _removeEmailDateHeader;
+        private readonly bool _removeEmailAttachments;
+        private readonly bool _redactOfficeHeadersFooters = true;
+        private readonly bool _redactOfficeCharts = true;
         private readonly bool _outputToOriginalLocation = true;
         private readonly string _customOutputFolder = string.Empty;
         private readonly string _globalAlwaysRedact = string.Empty;
@@ -64,6 +68,10 @@ namespace PhilterDesktop
             WordScrubOptions wordScrub = WordScrubOptions.None,
             bool scrubEmailHeaders = false,
             bool removeCommonEmailHeaders = false,
+            bool removeEmailDateHeader = false,
+            bool removeEmailAttachments = false,
+            bool redactOfficeHeadersFooters = true,
+            bool redactOfficeCharts = true,
             bool outputToOriginalLocation = true,
             string? customOutputFolder = null,
             string? globalAlwaysRedact = null,
@@ -78,6 +86,10 @@ namespace PhilterDesktop
             _wordScrub = wordScrub;
             _scrubEmailHeaders = scrubEmailHeaders;
             _removeCommonEmailHeaders = removeCommonEmailHeaders;
+            _removeEmailDateHeader = removeEmailDateHeader;
+            _removeEmailAttachments = removeEmailAttachments;
+            _redactOfficeHeadersFooters = redactOfficeHeadersFooters;
+            _redactOfficeCharts = redactOfficeCharts;
             _outputToOriginalLocation = outputToOriginalLocation;
             _customOutputFolder = customOutputFolder ?? string.Empty;
             _globalAlwaysRedact = globalAlwaysRedact ?? string.Empty;
@@ -263,7 +275,9 @@ namespace PhilterDesktop
                 Replacement = RedactionService.DefaultReplacement,
                 ParagraphIndex = kind == SpanPositionKind.Paragraph ? 0 : -1
             };
-            using var dlg = new SpanEditForm("Add Redaction", kind, template, positionEditable: true);
+            using var dlg = new SpanEditForm("Add Redaction", kind, template, positionEditable: true,
+                maxOffset: kind == SpanPositionKind.TextOffset ? SourceTextLength() : 0,
+                paragraphLengths: kind == SpanPositionKind.Paragraph ? SourceParagraphLengths() : null);
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
                 _working.Add(FromDialog(new RedactionSpanEntity { UserAdded = true }, kind, dlg));
@@ -283,7 +297,9 @@ namespace PhilterDesktop
             // spans can have their position changed. Cell/field-indexed formats have no positional UI,
             // so there the replacement is the only editable part. The replacement is always editable.
             bool positionEditable = span.UserAdded && !RedactionService.UsesOrdinalSpanAddressing(_selectedVersion!.FileType);
-            using var dlg = new SpanEditForm("Edit Redaction", kind, span, positionEditable);
+            using var dlg = new SpanEditForm("Edit Redaction", kind, span, positionEditable,
+                maxOffset: kind == SpanPositionKind.TextOffset ? SourceTextLength() : 0,
+                paragraphLengths: kind == SpanPositionKind.Paragraph ? SourceParagraphLengths() : null);
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
                 if (positionEditable)
@@ -305,6 +321,36 @@ namespace PhilterDesktop
             ".pdf" => SpanPositionKind.Pdf,
             _ => SpanPositionKind.TextOffset
         };
+
+        // The redactable text length of the source (for plain-text/RTF span-offset bounds), so a manually
+        // added span can't point past the end and then be silently dropped when applied.
+        private int SourceTextLength()
+        {
+            try
+            {
+                string path = _selectedVersion!.SourcePath;
+                return _selectedVersion.FileType.ToLowerInvariant() == ".rtf"
+                    ? RtfRedactor.ReadText(path).Length
+                    : File.ReadAllText(path).Length;
+            }
+            catch
+            {
+                return 0; // source unreadable — fall back to no cap rather than blocking edits
+            }
+        }
+
+        // The length of each Word paragraph's text (by paragraph index), for the same offset bounds.
+        private IReadOnlyList<int>? SourceParagraphLengths()
+        {
+            try
+            {
+                return WordDocumentRedactor.ReadParagraphs(_selectedVersion!.SourcePath).Select(p => p.Length).ToList();
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         // Copies the dialog's position + replacement onto the span according to the document type.
         private static RedactionSpanEntity FromDialog(RedactionSpanEntity span, SpanPositionKind kind, SpanEditForm dlg)
@@ -402,6 +448,10 @@ namespace PhilterDesktop
                     wordScrub: _wordScrub,
                     scrubEmailHeaders: _scrubEmailHeaders,
                     removeCommonEmailHeaders: _removeCommonEmailHeaders,
+                    removeEmailDateHeader: _removeEmailDateHeader,
+                    removeEmailAttachments: _removeEmailAttachments,
+                    redactOfficeHeadersFooters: _redactOfficeHeadersFooters,
+                    redactOfficeCharts: _redactOfficeCharts,
                     worksheet: version.Worksheet);
             }
             catch (Exception ex)

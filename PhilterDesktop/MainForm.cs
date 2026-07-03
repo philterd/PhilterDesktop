@@ -2030,6 +2030,8 @@ namespace PhilterDesktop
                 id, _redactionVersionRepository, _redactionSpanRepository, _policyRepository,
                 modifySettings.RedactedSuffix, DocumentMetadata.OptionsFor(modifySettings),
                 modifySettings.ScrubEmailHeaders, modifySettings.RemoveCommonEmailHeaders,
+                modifySettings.RemoveEmailDateHeader, modifySettings.RemoveEmailAttachments,
+                modifySettings.RedactOfficeHeadersFooters, modifySettings.RedactOfficeCharts,
                 modifySettings.OutputToOriginalLocation, modifySettings.CustomOutputFolder,
                 modifySettings.GlobalAlwaysRedact, modifySettings.GlobalAlwaysIgnore);
             form.ShowDialog(this);
@@ -2656,13 +2658,13 @@ namespace PhilterDesktop
 
         // The combined "check needed" notification text: the residual-PII warning, the name-model warning,
         // and/or the RTF non-body-content warning (null when none applies).
-        internal static string? CombinedRedactionWarning(VerificationOutcome? verification, bool nameDetectionUnavailable, bool contentDropped = false)
+        internal static string? CombinedRedactionWarning(VerificationOutcome? verification, bool nameDetectionUnavailable, string? contentDroppedWarning = null)
         {
             string?[] parts =
             {
                 ResidualWarning(verification),
                 nameDetectionUnavailable ? PhEyeModel.UnavailableWarning : null,
-                contentDropped ? RtfFidelity.Warning : null
+                contentDroppedWarning
             };
             string combined = string.Join("\n", parts.Where(s => !string.IsNullOrEmpty(s)));
             return combined.Length > 0 ? combined : null;
@@ -2723,7 +2725,7 @@ namespace PhilterDesktop
             // A clean re-scan of an RTF that dropped non-body content must not read as fully "Clean" — keep
             // the review cue, so the report and queue row stay honest after a re-verify.
             entity.VerificationStatus = EffectiveVerificationStatus(
-                entity.VerificationStatus, nameDetectionUnavailable: false, contentDropped: RtfFidelity.HasDroppedContent(entity.Name));
+                entity.VerificationStatus, nameDetectionUnavailable: false, contentDropped: DroppedContentWarning.For(entity.Name) is not null);
             _redactionQueueRepository.Update(entity);
             LoadRedactionQueue();
 
@@ -3015,14 +3017,14 @@ namespace PhilterDesktop
                         ApplyVerificationFields(entity, result.Verification);
                         // Names requested but model missing, or RTF non-body content not carried over:
                         // don't let the row read "Clean" — it needs review.
-                        entity.VerificationStatus = EffectiveVerificationStatus(entity.VerificationStatus, result.NameDetectionUnavailable, result.ContentDropped);
+                        entity.VerificationStatus = EffectiveVerificationStatus(entity.VerificationStatus, result.NameDetectionUnavailable, result.ContentDroppedWarning is not null);
                         UpdateEntityStatus(entity, "Completed");
                         QueueNotification(new WatchedFileProcessedEventArgs
                         {
                             InputPath = entity.Name,
                             OutputPath = result.OutputPath,
                             Success = true,
-                            VerificationWarning = CombinedRedactionWarning(result.Verification, result.NameDetectionUnavailable, result.ContentDropped)
+                            VerificationWarning = CombinedRedactionWarning(result.Verification, result.NameDetectionUnavailable, result.ContentDroppedWarning)
                         });
 
                         if (_loggingEnabled)

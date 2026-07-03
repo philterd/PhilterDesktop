@@ -1,0 +1,18 @@
+From: Alice <alice@example.com>
+To: Bob <bob@example.com>
+Subject: Patient record enclosed
+Date: Tue, 01 Apr 2025 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BND1"
+
+--BND1
+Content-Type: text/plain; charset=utf-8
+
+Please see the attached record. Reachable at george@fake.com or SSN 123-45-6789.
+--BND1
+Content-Type: application/pdf; name="john_smith_ssn.pdf"
+Content-Disposition: attachment; filename="john_smith_ssn.pdf"
+Content-Transfer-Encoding: base64
+
+U0VDUkVULUFUVEFDSE1FTlQtQk9EWQ==
+--BND1--

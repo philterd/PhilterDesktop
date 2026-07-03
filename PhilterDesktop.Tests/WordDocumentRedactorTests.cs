@@ -171,6 +171,64 @@ namespace PhilterDesktop.Tests
             Assert.Contains("yellow", xml);
         }
 
+        // --- Tracked deletions (w:delText) -----------------------------------
+
+        [Fact]
+        public void Redact_RedactsDeletedTrackedText_KeepsTheDeletion()
+        {
+            // A tracked deletion carrying PII: its text lives in w:delText, not w:t.
+            string input = NewPath("del-in.docx");
+            WordDocs.CreateWithTrackedDeletion(input, "removed contact aaa@example.com", "Visible body text.");
+            string output = NewPath("del-out.docx");
+
+            WordDocumentRedactor.Redact(input, output, Filter);
+
+            string[] deleted = WordDocs.DeletedTexts(output);
+            Assert.NotEmpty(deleted); // the deletion is preserved (not dropped)
+            string joined = string.Concat(deleted);
+            Assert.DoesNotContain("aaa@example.com", joined); // its PII is redacted in place
+            Assert.Contains("REDACTED", joined);
+            // And nothing anywhere in the package still holds the address (strong leak check).
+            Assert.False(WordDocs.AnyPartContains(output, "aaa@example.com"));
+        }
+
+        [Fact]
+        public void Redact_ReportsDeletedTextRedactionAsSpan()
+        {
+            string input = NewPath("del-span-in.docx");
+            WordDocs.CreateWithTrackedDeletion(input, "old email aaa@example.com", "Body.");
+            string output = NewPath("del-span-out.docx");
+
+            List<RedactionSpanEntity> spans = WordDocumentRedactor.Redact(input, output, Filter);
+
+            Assert.Contains(spans, s => s.Text.Contains("aaa@example.com"));
+        }
+
+        [Fact]
+        public void Detect_FindsPiiInDeletedText()
+        {
+            string input = NewPath("del-detect.docx");
+            WordDocs.CreateWithTrackedDeletion(input, "hidden aaa@example.com", "Body.");
+
+            List<RedactionSpanEntity> residuals = WordDocumentRedactor.Detect(input, Filter);
+
+            Assert.Contains(residuals, s => s.Text.Contains("aaa@example.com"));
+        }
+
+        [Fact]
+        public void ApplySpans_WithFilter_RedactsDeletedText_LikeModify()
+        {
+            // Modify Redaction re-renders from the original source and passes a policy filter for the
+            // non-positional passes (drawings/hyperlinks/deletions). The deleted text must be redacted.
+            string input = NewPath("del-apply-in.docx");
+            WordDocs.CreateWithTrackedDeletion(input, "old aaa@example.com", "Body.");
+            string output = NewPath("del-apply-out.docx");
+
+            WordDocumentRedactor.ApplySpans(input, output, new List<RedactionSpanEntity>(), highlight: false, drawingFilter: Filter);
+
+            Assert.False(WordDocs.AnyPartContains(output, "aaa@example.com"));
+        }
+
         private static string ReadDocumentXml(string docxPath)
         {
             using ZipArchive zip = ZipFile.OpenRead(docxPath);

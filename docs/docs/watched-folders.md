@@ -46,7 +46,11 @@ Open **Settings** from the main toolbar, go to the **Watched Folder** tab, and c
   watched folder.)
 - **Output folder**: where the redacted copies are saved. This must be a **different** folder from
   the one being watched (otherwise the redacted files would themselves look like new files to
-  redact).
+  redact). It also must be **unique to this watched folder** — two watched folders can't share one
+  output folder (same-named files would overwrite each other) — and it must **not be another watched
+  folder** or sit inside/around one (redacted files dropped into a watched folder would be redacted
+  again). Philter Desktop checks these when you save and asks you to pick a different folder if they're
+  violated.
 
 Each watched folder has its **own** policy, context, highlight setting, and output folder, so you can
 watch several folders at once with completely different rules: for instance, one folder for medical
@@ -151,6 +155,7 @@ resumes watching where it left off.
 - Watching only happens while **you are signed in** to Windows. Unattended, always-on redaction on
   a server (running even when nobody is logged in) would need a Windows service, which Philter
   Desktop does not currently provide.
-- The output folder must always be different from the folder being watched.
+- The output folder must always be different from the folder being watched, unique to that watched
+  folder, and not inside (or the same as) any watched folder.
 - Just like [PDFs you redact by hand](redacting-documents.md), redacted PDFs from a watched folder are
   flattened to images, so the removed text cannot be recovered.

@@ -45,11 +45,34 @@ namespace PhilterDesktop
         private const string DefaultReplacement = "{{{REDACTED-custom}}}";
 
         /// <summary>
+        /// The caveat added to a <em>verification</em> result when the redacted email still carries
+        /// attachments: their content is never inspected or redacted, so a clean body result doesn't cover
+        /// them. Shown when the "Remove attachments" option is off and the message has attachments.
+        /// </summary>
+        public const string AttachmentVerificationCaveat =
+            "This email has one or more attachments. Philter Desktop does not inspect or redact attachment " +
+            "content, so a clean result does not cover them — review each attachment before sharing, or turn " +
+            "on \"Remove attachments from redacted email\" in Settings → Email.";
+
+        /// <summary>True if the email at <paramref name="path"/> has at least one attachment.</summary>
+        public static bool HasAttachments(string path)
+        {
+            try
+            {
+                return Load(path).Attachments.Any();
+            }
+            catch
+            {
+                return false; // best effort — a parse quirk must never fail verification
+            }
+        }
+
+        /// <summary>
         /// Loads <paramref name="inputPath"/>, redacts its text fields with <paramref name="filter"/>,
         /// writes the result as <c>.eml</c> to <paramref name="outputPath"/>, and returns the applied
         /// spans (field-indexed). The input file is left untouched.
         /// </summary>
-        public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool scrubHeaders = false, bool removeCommonHeaders = false)
+        public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool scrubHeaders = false, bool removeCommonHeaders = false, bool removeDateHeader = false, bool removeAttachments = false)
         {
             MimeMessage message = Load(inputPath);
 
@@ -75,6 +98,14 @@ namespace PhilterDesktop
             if (removeCommonHeaders)
             {
                 RemoveCommonHeaders(message);
+            }
+            if (removeDateHeader)
+            {
+                RemoveDateHeader(message);
+            }
+            if (removeAttachments)
+            {
+                RemoveAttachments(message);
             }
             Save(message, outputPath);
             return captured;
@@ -176,7 +207,7 @@ namespace PhilterDesktop
         /// <see cref="RedactionSpanEntity.ParagraphIndex"/> (the field index) plus character start/stop
         /// offsets within that field. Used by the Modify Redaction feature.
         /// </summary>
-        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, bool scrubHeaders = false, bool removeCommonHeaders = false)
+        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, bool scrubHeaders = false, bool removeCommonHeaders = false, bool removeDateHeader = false, bool removeAttachments = false)
         {
             MimeMessage message = Load(inputPath);
 
@@ -217,6 +248,14 @@ namespace PhilterDesktop
             {
                 RemoveCommonHeaders(message);
             }
+            if (removeDateHeader)
+            {
+                RemoveDateHeader(message);
+            }
+            if (removeAttachments)
+            {
+                RemoveAttachments(message);
+            }
             Save(message, outputPath);
         }
 
@@ -232,24 +271,52 @@ namespace PhilterDesktop
 
         private static void RemoveTechnicalHeaders(MimeMessage message)
         {
+            // Also strip these from any nested/forwarded message, whose Received trail etc. would otherwise
+            // survive in the embedded headers.
+            foreach (MimeMessage m in AllMessages(message))
+            {
+                try
+                {
+                    HeaderList headers = m.Headers;
+                    for (int i = headers.Count - 1; i >= 0; i--)
+                    {
+                        string field = headers[i].Field;
+                        if (TechnicalHeaders.Contains(field)
+                            || field.StartsWith("X-", StringComparison.OrdinalIgnoreCase)
+                            || field.StartsWith("ARC-", StringComparison.OrdinalIgnoreCase))
+                        {
+                            headers.RemoveAt(i);
+                        }
+                    }
+                }
+                catch
+                {
+                    // best effort — a header quirk must never fail the redaction
+                }
+            }
+        }
+
+        // The top-level message plus every nested/forwarded message (message/rfc822), at any depth, so the
+        // header scrubs cover embedded messages too.
+        private static List<MimeMessage> AllMessages(MimeMessage message)
+        {
+            var messages = new List<MimeMessage> { message };
             try
             {
-                HeaderList headers = message.Headers;
-                for (int i = headers.Count - 1; i >= 0; i--)
+                var iterator = new MimeIterator(message);
+                while (iterator.MoveNext())
                 {
-                    string field = headers[i].Field;
-                    if (TechnicalHeaders.Contains(field)
-                        || field.StartsWith("X-", StringComparison.OrdinalIgnoreCase)
-                        || field.StartsWith("ARC-", StringComparison.OrdinalIgnoreCase))
+                    if (iterator.Current is MessagePart { Message: not null } part)
                     {
-                        headers.RemoveAt(i);
+                        messages.Add(part.Message);
                     }
                 }
             }
             catch
             {
-                // best effort — a header quirk must never fail the redaction
+                // best effort — a traversal quirk shouldn't lose the top-level scrub
             }
+            return messages;
         }
 
         // Common identity/delivery headers that carry recipient or sender PII but aren't part of the
@@ -264,32 +331,91 @@ namespace PhilterDesktop
 
         private static void RemoveCommonHeaders(MimeMessage message)
         {
+            // Nested/forwarded messages carry their own Bcc/Reply-To/Sender/Resent-* too.
+            foreach (MimeMessage m in AllMessages(message))
+            {
+                try
+                {
+                    m.Bcc.Clear();
+                    m.ReplyTo.Clear();
+                    m.Sender = null;
+                    m.ResentFrom.Clear();
+                    m.ResentReplyTo.Clear();
+                    m.ResentTo.Clear();
+                    m.ResentCc.Clear();
+                    m.ResentBcc.Clear();
+                    m.ResentSender = null;
+
+                    HeaderList headers = m.Headers;
+                    for (int i = headers.Count - 1; i >= 0; i--)
+                    {
+                        string field = headers[i].Field;
+                        if (CommonIdentityHeaders.Contains(field)
+                            || field.StartsWith("Resent-", StringComparison.OrdinalIgnoreCase))
+                        {
+                            headers.RemoveAt(i);
+                        }
+                    }
+                }
+                catch
+                {
+                    // best effort — a header quirk must never fail the redaction
+                }
+            }
+        }
+
+        // Drops the Date header outright when date removal is enabled. The send time is removed regardless
+        // of its format, without relying on the detector to recognize a date string. Resent-Date is left to
+        // RemoveCommonHeaders (it goes with the Resent-* set).
+        private static void RemoveDateHeader(MimeMessage message)
+        {
+            // A forwarded message's own Date is removed too.
+            foreach (MimeMessage m in AllMessages(message))
+            {
+                try
+                {
+                    HeaderList headers = m.Headers;
+                    for (int i = headers.Count - 1; i >= 0; i--)
+                    {
+                        if (headers[i].Id == HeaderId.Date)
+                        {
+                            headers.RemoveAt(i);
+                        }
+                    }
+                }
+                catch
+                {
+                    // best effort — a header quirk must never fail the redaction
+                }
+            }
+        }
+
+        // Deletes attachments outright when attachment removal is enabled. Attachment content is never
+        // inspected or redacted — the whole part (and its filename) is removed from the message tree. Each
+        // attachment is detached from its parent multipart (the documented MimeKit approach).
+        private static void RemoveAttachments(MimeMessage message)
+        {
             try
             {
-                message.Bcc.Clear();
-                message.ReplyTo.Clear();
-                message.Sender = null;
-                message.ResentFrom.Clear();
-                message.ResentReplyTo.Clear();
-                message.ResentTo.Clear();
-                message.ResentCc.Clear();
-                message.ResentBcc.Clear();
-                message.ResentSender = null;
-
-                HeaderList headers = message.Headers;
-                for (int i = headers.Count - 1; i >= 0; i--)
+                var attachments = new List<MimeEntity>();
+                var parents = new List<Multipart>();
+                var iterator = new MimeIterator(message);
+                while (iterator.MoveNext())
                 {
-                    string field = headers[i].Field;
-                    if (CommonIdentityHeaders.Contains(field)
-                        || field.StartsWith("Resent-", StringComparison.OrdinalIgnoreCase))
+                    if (iterator.Parent is Multipart parent && iterator.Current is MimeEntity entity && entity.IsAttachment)
                     {
-                        headers.RemoveAt(i);
+                        parents.Add(parent);
+                        attachments.Add(entity);
                     }
+                }
+                for (int i = 0; i < attachments.Count; i++)
+                {
+                    parents[i].Remove(attachments[i]);
                 }
             }
             catch
             {
-                // best effort — a header quirk must never fail the redaction
+                // best effort — an attachment quirk must never fail the redaction
             }
         }
 
@@ -338,8 +464,9 @@ namespace PhilterDesktop
         private sealed class TextPartField : IEmailField
         {
             private readonly TextPart _part;
-            public TextPartField(TextPart part) => _part = part;
-            public string Label => _part.IsHtml ? "Body (HTML)" : "Body (text)";
+            private readonly string _prefix;
+            public TextPartField(TextPart part, string prefix = "") { _part = part; _prefix = prefix; }
+            public string Label => _prefix + (_part.IsHtml ? "Body (HTML)" : "Body (text)");
             public bool IsBody => true;
             public bool IsHtmlBody => _part.IsHtml;
             public string Get() => _part.Text ?? string.Empty;
@@ -348,14 +475,24 @@ namespace PhilterDesktop
 
         /// <summary>
         /// The canonical, stable order of redactable fields: the Subject, From, To and Cc headers (each
-        /// only if present), then every non-attachment text body part in document order. The order must
-        /// match between <see cref="Redact"/> and <see cref="ApplySpans"/> so a stored field index
-        /// re-applies to the same field.
+        /// only if present), then every non-attachment text body part in document order — <b>recursing
+        /// into any nested/forwarded message</b> (<c>message/rfc822</c>) so a forwarded email's own
+        /// headers and body are redacted too. The order must match between <see cref="Redact"/> and
+        /// <see cref="ApplySpans"/> so a stored field index re-applies to the same field.
         /// </summary>
         private static List<IEmailField> EnumerateFields(MimeMessage message)
         {
             var fields = new List<IEmailField>();
+            AddMessageFields(message, string.Empty, fields);
+            return fields;
+        }
 
+        // Adds one message level's header fields (Subject/From/To/Cc), then walks its body. A forwarded or
+        // attached message (message/rfc822) is recursed into so its From/To/Cc/Subject and body are covered
+        // — otherwise the embedded message's PII (and its Received/Bcc, via the header scrubs) would ship
+        // unredacted. <paramref name="labelPrefix"/> marks nested fields in the preview.
+        private static void AddMessageFields(MimeMessage message, string labelPrefix, List<IEmailField> fields)
+        {
             foreach ((HeaderId id, string label) in new[]
                      {
                          (HeaderId.Subject, "Subject"), (HeaderId.From, "From"),
@@ -365,16 +502,32 @@ namespace PhilterDesktop
                 Header? header = message.Headers.FirstOrDefault(h => h.Id == id);
                 if (header is not null)
                 {
-                    fields.Add(new HeaderField(header, label));
+                    fields.Add(new HeaderField(header, labelPrefix + label));
                 }
             }
 
-            foreach (TextPart part in message.BodyParts.OfType<TextPart>().Where(p => !p.IsAttachment))
-            {
-                fields.Add(new TextPartField(part));
-            }
+            AddBodyFields(message.Body, labelPrefix, fields);
+        }
 
-            return fields;
+        // Walks a body entity in document order, collecting redactable text parts and recursing into any
+        // nested message. Attachments (including a forwarded message's own attachments) are skipped.
+        private static void AddBodyFields(MimeEntity? entity, string labelPrefix, List<IEmailField> fields)
+        {
+            switch (entity)
+            {
+                case Multipart multipart:
+                    foreach (MimeEntity child in multipart)
+                    {
+                        AddBodyFields(child, labelPrefix, fields);
+                    }
+                    break;
+                case MessagePart { Message: not null } messagePart:
+                    AddMessageFields(messagePart.Message, labelPrefix + "Forwarded: ", fields);
+                    break;
+                case TextPart textPart when !textPart.IsAttachment:
+                    fields.Add(new TextPartField(textPart, labelPrefix));
+                    break;
+            }
         }
 
         // --- Load / save ------------------------------------------------------

@@ -4,9 +4,19 @@ Philter Desktop redacts Microsoft Word documents that end in **`.docx`**. The se
 removed from the text and the cleaned-up copy is saved as a new `.docx` file.
 
 Redaction covers the document body and tables, headers and footers, footnotes and endnotes, comments,
-and the text inside **shapes, text boxes, SmartArt, and chart labels**. (One narrow exception: a chart's
-underlying *data values* — the numbers and category names a chart is built from — aren't scanned; if a
-chart is plotted directly from sensitive values, review or remove it by hand.)
+and the text inside **shapes, text boxes, SmartArt, and charts**. Text a reviewer **deleted with
+tracked changes** is scanned too, so detected information there is redacted rather than lingering in the
+file where *Reject Changes* could bring it back.
+
+**Charts** are scanned for their titles, labels, and the **cached data values** a chart stores (its copy
+of the plotted series and category values), which is on by default and controlled in
+[Settings → Microsoft Office](settings.md#microsoft-office-tab). Because a chart is only scanned as text
+through your policy, a sensitive value it's built from is removed only when the policy detects it, and
+redacting a cached value can change how the chart looks — so **review any charts** in the redacted copy.
+
+Header and footer scanning covers the **text** that repeats at the top and bottom of each page (for
+example "Confidential — John Doe"); it does not remove images or logos placed in a header/footer. It is
+on by default and can be turned off in [Settings → Microsoft Office](settings.md#microsoft-office-tab).
 
 Philter Desktop also checks the **address a hyperlink points to**, not just its visible text. If a
 link's target holds sensitive information — an email address in a `mailto:` link, a name or ID in an

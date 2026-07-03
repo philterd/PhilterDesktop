@@ -39,18 +39,19 @@ namespace PhilterDesktop
         /// so names were silently skipped — the caller surfaces this as a warning.</summary>
         public bool NameDetectionUnavailable { get; private init; }
 
-        /// <summary>True when the source was an RTF with header/footer/footnote content that RTF redaction
-        /// does not carry into the output — the caller surfaces this as a fidelity warning.</summary>
-        public bool ContentDropped { get; private init; }
+        /// <summary>The fidelity warning when the source had content the redaction path doesn't carry into
+        /// the output (an RTF's non-body parts, or a PDF's annotations/form fields), else null. The caller
+        /// surfaces it and treats the redaction as "some parts not carried over".</summary>
+        public string? ContentDroppedWarning { get; private init; }
 
         public static QueueRedactionResult Succeeded(
             string outputPath, IReadOnlyList<RedactionSpanEntity> spans, VerificationOutcome? verification = null,
-            long durationMs = 0, bool nameDetectionUnavailable = false, bool contentDropped = false) =>
+            long durationMs = 0, bool nameDetectionUnavailable = false, string? contentDroppedWarning = null) =>
             new()
             {
                 Success = true, OutputPath = outputPath, Spans = spans, Verification = verification,
                 DurationMs = durationMs, NameDetectionUnavailable = nameDetectionUnavailable,
-                ContentDropped = contentDropped
+                ContentDroppedWarning = contentDroppedWarning
             };
 
         public static QueueRedactionResult Failed(string message, Exception? exception = null) =>
@@ -111,26 +112,15 @@ namespace PhilterDesktop
                     fullyRedactedColumns: entity.FullyRedactedColumns, worksheet: entity.Worksheet);
 
                 // Self-check: re-scan the written output for residual PII (the false-negative case).
-                // Optionally with a broad "all detectors on" policy to catch types the redaction policy
-                // didn't cover; otherwise the same policy that performed the redaction.
-                VerificationOutcome? verification = null;
-                if (settings.VerifyAfterRedaction)
-                {
-                    Phileas.Policy.Policy verifyPolicy = policy;
-                    if (settings.VerificationUseBroadPolicy)
-                    {
-                        verifyPolicy = VerificationPolicy.Broad();
-                        GlobalLists.Apply(verifyPolicy, settings);
-                    }
-                    // Don't re-flag this redaction's own inserted replacements as residual PII.
-                    IReadOnlySet<string> knownReplacements = RedactionVerifier.ReplacementsOf(spans);
-                    verification = await Task.Run(() =>
-                        RedactionVerifier.Verify(outputPath, verifyPolicy, entity.Context, filterService, knownReplacements, sourcePath: entity.Name, worksheet: entity.Worksheet));
-                }
+                // Uses the shared helper so the queue, CLI, and watched folders all verify identically.
+                VerificationOutcome? verification = await Task.Run(() =>
+                    RedactionVerifier.VerifyIfEnabled(settings, outputPath, policy, entity.Context, filterService, spans,
+                        sourcePath: entity.Name, worksheet: entity.Worksheet));
 
                 stopwatch.Stop();
-                bool contentDropped = RtfFidelity.HasDroppedContent(entity.Name); // RTF header/footer/footnote loss
-                return QueueRedactionResult.Succeeded(outputPath, spans, verification, stopwatch.ElapsedMilliseconds, nameDetectionUnavailable, contentDropped);
+                // Content the redaction path doesn't carry over (RTF non-body parts, or PDF annotations/form fields).
+                string? contentDroppedWarning = DroppedContentWarning.For(entity.Name);
+                return QueueRedactionResult.Succeeded(outputPath, spans, verification, stopwatch.ElapsedMilliseconds, nameDetectionUnavailable, contentDroppedWarning);
             }
             catch (Exception ex)
             {

@@ -148,7 +148,7 @@ namespace PhilterDesktop.Tests
             QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
 
             Assert.True(result.Success);
-            Assert.True(result.ContentDropped); // header present -> fidelity warning
+            Assert.NotNull(result.ContentDroppedWarning); // header present -> fidelity warning
         }
 
         [Fact]
@@ -166,7 +166,7 @@ namespace PhilterDesktop.Tests
             QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
 
             Assert.True(result.Success);
-            Assert.False(result.ContentDropped);
+            Assert.Null(result.ContentDroppedWarning);
         }
 
         [Fact]

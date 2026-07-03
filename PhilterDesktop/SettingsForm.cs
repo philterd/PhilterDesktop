@@ -395,7 +395,8 @@ namespace PhilterDesktop
                 return;
             }
 
-            using var dialog = new WatchedFolderForm(_policyRepository, _contextRepository);
+            using var dialog = new WatchedFolderForm(_policyRepository, _contextRepository,
+                existingFolders: _watchedFolderRepository.GetAll().ToList());
             if (dialog.ShowDialog(this) == DialogResult.OK)
             {
                 _watchedFolderRepository.Insert(dialog.WatchedFolder);
@@ -416,7 +417,8 @@ namespace PhilterDesktop
                 return;
             }
 
-            using var dialog = new WatchedFolderForm(_policyRepository, _contextRepository, folder);
+            using var dialog = new WatchedFolderForm(_policyRepository, _contextRepository, folder,
+                existingFolders: _watchedFolderRepository.GetAll().ToList());
             if (dialog.ShowDialog(this) == DialogResult.OK)
             {
                 _watchedFolderRepository.Update(dialog.WatchedFolder);
@@ -469,10 +471,14 @@ namespace PhilterDesktop
             chkScrubComments.Checked = _settings.ScrubWordComments;
             chkScrubTrackedChanges.Checked = _settings.ScrubWordTrackedChanges;
             chkScrubHiddenText.Checked = _settings.ScrubWordHiddenText;
+            chkRedactHeadersFooters.Checked = _settings.RedactOfficeHeadersFooters;
+            chkRedactCharts.Checked = _settings.RedactOfficeCharts;
             chkOcrScannedPdfs.Checked = _settings.OcrScannedPdfs;
             btnOcrAdvanced.Enabled = _settings.OcrScannedPdfs;
             chkScrubEmailHeaders.Checked = _settings.ScrubEmailHeaders;
             chkRemoveCommonHeaders.Checked = _settings.RemoveCommonEmailHeaders;
+            chkRemoveDateHeader.Checked = _settings.RemoveEmailDateHeader;
+            chkRemoveAttachments.Checked = _settings.RemoveEmailAttachments;
             chkVerifyAfterRedaction.Checked = _settings.VerifyAfterRedaction;
             rdoVerifyBroadPolicy.Checked = _settings.VerificationUseBroadPolicy;
             rdoVerifySamePolicy.Checked = !_settings.VerificationUseBroadPolicy;
@@ -660,9 +666,13 @@ namespace PhilterDesktop
             _settings.ScrubWordComments = chkScrubComments.Checked;
             _settings.ScrubWordTrackedChanges = chkScrubTrackedChanges.Checked;
             _settings.ScrubWordHiddenText = chkScrubHiddenText.Checked;
+            _settings.RedactOfficeHeadersFooters = chkRedactHeadersFooters.Checked;
+            _settings.RedactOfficeCharts = chkRedactCharts.Checked;
             _settings.OcrScannedPdfs = chkOcrScannedPdfs.Checked;
             _settings.ScrubEmailHeaders = chkScrubEmailHeaders.Checked;
             _settings.RemoveCommonEmailHeaders = chkRemoveCommonHeaders.Checked;
+            _settings.RemoveEmailDateHeader = chkRemoveDateHeader.Checked;
+            _settings.RemoveEmailAttachments = chkRemoveAttachments.Checked;
             _settings.VerifyAfterRedaction = chkVerifyAfterRedaction.Checked;
             _settings.VerificationUseBroadPolicy = rdoVerifyBroadPolicy.Checked;
             _settings.WatchedFolderMaxConcurrency = int.TryParse(cmbConcurrency.Text, out int n) ? Math.Clamp(n, 1, 4) : 1;

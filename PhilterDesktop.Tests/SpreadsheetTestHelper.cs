@@ -15,6 +15,7 @@
  */
 
 using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using PhilterDesktop;
@@ -88,6 +89,262 @@ namespace PhilterDesktop.Tests
             Sheets sheets = wbPart.Workbook.AppendChild(new Sheets());
             sheets.AppendChild(new Sheet { Id = wbPart.GetIdOfPart(wsPart), SheetId = 1, Name = sheetName });
             wbPart.Workbook.Save();
+        }
+
+        /// <summary>
+        /// Creates a single-sheet workbook (shared-string cells) that also has a print header and footer.
+        /// The header/footer strings may contain Excel field codes (e.g. <c>&amp;C</c> centre section,
+        /// <c>&amp;P</c> page number) around the literal text.
+        /// </summary>
+        public static void CreateXlsxWithHeaderFooter(
+            string path, IReadOnlyList<string?[]> rows, string oddHeader, string oddFooter, string sheetName = "Sheet1")
+        {
+            CreateXlsx(path, rows, sheetName);
+
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: true);
+            WorksheetPart wsPart = doc.WorkbookPart!.WorksheetParts.First();
+            Worksheet worksheet = wsPart.Worksheet;
+            // headerFooter follows sheetData in schema order; appending after it is valid here.
+            worksheet.AppendChild(new HeaderFooter(
+                new OddHeader(oddHeader),
+                new OddFooter(oddFooter)));
+            worksheet.Save();
+        }
+
+        /// <summary>Creates a single-sheet workbook with a <b>legacy</b> cell comment (xl/comments1.xml).</summary>
+        public static void CreateXlsxWithLegacyComment(
+            string path, IReadOnlyList<string?[]> rows, string cellRef, string commentText,
+            string author = "Reviewer", string sheetName = "Sheet1")
+        {
+            CreateXlsx(path, rows, sheetName);
+
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: true);
+            WorksheetPart wsPart = doc.WorkbookPart!.WorksheetParts.First();
+            WorksheetCommentsPart commentsPart = wsPart.AddNewPart<WorksheetCommentsPart>();
+            commentsPart.Comments = new Comments(
+                new Authors(new Author(author)),
+                new CommentList(
+                    new Comment(
+                        new CommentText(new Run(new Text(commentText) { Space = SpaceProcessingModeValues.Preserve })))
+                    { Reference = cellRef, AuthorId = 0U }));
+            commentsPart.Comments.Save();
+        }
+
+        /// <summary>Creates a single-sheet workbook with a <b>threaded</b> cell comment (xl/threadedComments + xl/persons).</summary>
+        public static void CreateXlsxWithThreadedComment(
+            string path, IReadOnlyList<string?[]> rows, string cellRef, string commentText,
+            string authorDisplayName = "Reviewer", string sheetName = "Sheet1")
+        {
+            CreateXlsx(path, rows, sheetName);
+
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: true);
+            WorkbookPart wbPart = doc.WorkbookPart!;
+            WorksheetPart wsPart = wbPart.WorksheetParts.First();
+
+            const string personId = "{11111111-1111-1111-1111-111111111111}";
+            WorkbookPersonPart personPart = wbPart.AddNewPart<WorkbookPersonPart>();
+            personPart.PersonList = new PersonList(
+                new Person { DisplayName = authorDisplayName, Id = personId, UserId = "S::demo::abc", ProviderId = "None" });
+            personPart.PersonList.Save();
+
+            WorksheetThreadedCommentsPart tcPart = wsPart.AddNewPart<WorksheetThreadedCommentsPart>();
+            tcPart.ThreadedComments = new ThreadedComments(
+                new ThreadedComment(new ThreadedCommentText(commentText))
+                {
+                    Ref = cellRef,
+                    DT = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PersonId = personId,
+                    Id = "{22222222-2222-2222-2222-222222222222}"
+                });
+            tcPart.ThreadedComments.Save();
+        }
+
+        /// <summary>Creates a workbook that has <b>both</b> a legacy and a threaded comment (as a real
+        /// modern Excel file does), on separate cells, each carrying its own text.</summary>
+        public static void CreateXlsxWithLegacyAndThreadedComments(
+            string path, IReadOnlyList<string?[]> rows,
+            string legacyCellRef, string legacyText,
+            string threadedCellRef, string threadedText, string threadedAuthorDisplayName,
+            string sheetName = "Sheet1")
+        {
+            CreateXlsxWithLegacyComment(path, rows, legacyCellRef, legacyText, sheetName: sheetName);
+
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: true);
+            WorkbookPart wbPart = doc.WorkbookPart!;
+            WorksheetPart wsPart = wbPart.WorksheetParts.First();
+
+            const string personId = "{11111111-1111-1111-1111-111111111111}";
+            WorkbookPersonPart personPart = wbPart.AddNewPart<WorkbookPersonPart>();
+            personPart.PersonList = new PersonList(
+                new Person { DisplayName = threadedAuthorDisplayName, Id = personId, UserId = "S::demo::abc", ProviderId = "None" });
+            personPart.PersonList.Save();
+
+            WorksheetThreadedCommentsPart tcPart = wsPart.AddNewPart<WorksheetThreadedCommentsPart>();
+            tcPart.ThreadedComments = new ThreadedComments(
+                new ThreadedComment(new ThreadedCommentText(threadedText))
+                {
+                    Ref = threadedCellRef,
+                    DT = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PersonId = personId,
+                    Id = "{22222222-2222-2222-2222-222222222222}"
+                });
+            tcPart.ThreadedComments.Save();
+        }
+
+        /// <summary>All comment text and author/person names in the workbook (legacy + threaded), concatenated.</summary>
+        public static string AllCommentText(string path)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            WorkbookPart wbPart = doc.WorkbookPart!;
+            var parts = new List<string>();
+            foreach (WorksheetPart wsPart in wbPart.WorksheetParts)
+            {
+                if (wsPart.WorksheetCommentsPart?.Comments is Comments comments)
+                {
+                    parts.Add(comments.InnerText);
+                }
+                foreach (WorksheetThreadedCommentsPart tc in wsPart.WorksheetThreadedCommentsParts)
+                {
+                    parts.Add(tc.ThreadedComments?.InnerText ?? string.Empty);
+                }
+            }
+            foreach (WorkbookPersonPart personPart in wbPart.WorkbookPersonParts)
+            {
+                foreach (Person p in personPart.PersonList?.Elements<Person>() ?? Enumerable.Empty<Person>())
+                {
+                    parts.Add(p.DisplayName?.Value ?? string.Empty);
+                }
+            }
+            return string.Join("\n", parts);
+        }
+
+        /// <summary>The raw XML of every comment-related part (for strong leak checks).</summary>
+        public static string AllCommentXml(string path)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            WorkbookPart wbPart = doc.WorkbookPart!;
+            var xml = new List<string>();
+            foreach (WorksheetPart wsPart in wbPart.WorksheetParts)
+            {
+                if (wsPart.WorksheetCommentsPart?.Comments is Comments comments)
+                {
+                    xml.Add(comments.OuterXml);
+                }
+                foreach (WorksheetThreadedCommentsPart tc in wsPart.WorksheetThreadedCommentsParts)
+                {
+                    xml.Add(tc.ThreadedComments?.OuterXml ?? string.Empty);
+                }
+            }
+            foreach (WorkbookPersonPart personPart in wbPart.WorkbookPersonParts)
+            {
+                xml.Add(personPart.PersonList?.OuterXml ?? string.Empty);
+            }
+            return string.Concat(xml);
+        }
+
+        // --- Charts -----------------------------------------------------------
+
+        /// <summary>
+        /// The chart part XML (a <c>c:chartSpace</c>) with the given title (DrawingML text), cached series
+        /// name, and cached category value — shared by the Word and Excel chart fixtures.
+        /// </summary>
+        public static string ChartSpaceXml(string title, string seriesName, string category) =>
+            "<c:chartSpace xmlns:c=\"http://schemas.openxmlformats.org/drawingml/2006/chart\" " +
+            "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" " +
+            "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">" +
+            "<c:chart>" +
+            $"<c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>{Escape(title)}</a:t></a:r></a:p></c:rich></c:tx><c:overlay val=\"0\"/></c:title>" +
+            "<c:autoTitleDeleted val=\"0\"/>" +
+            "<c:plotArea><c:layout/>" +
+            "<c:barChart><c:barDir val=\"col\"/><c:grouping val=\"clustered\"/>" +
+            "<c:ser><c:idx val=\"0\"/><c:order val=\"0\"/>" +
+            $"<c:tx><c:strRef><c:f>Sheet1!$B$1</c:f><c:strCache><c:ptCount val=\"1\"/><c:pt idx=\"0\"><c:v>{Escape(seriesName)}</c:v></c:pt></c:strCache></c:strRef></c:tx>" +
+            $"<c:cat><c:strRef><c:f>Sheet1!$A$2</c:f><c:strCache><c:ptCount val=\"1\"/><c:pt idx=\"0\"><c:v>{Escape(category)}</c:v></c:pt></c:strCache></c:strRef></c:cat>" +
+            "<c:val><c:numRef><c:f>Sheet1!$B$2</c:f><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val=\"1\"/><c:pt idx=\"0\"><c:v>42</c:v></c:pt></c:numCache></c:numRef></c:val>" +
+            "</c:ser><c:axId val=\"111111111\"/><c:axId val=\"222222222\"/></c:barChart>" +
+            "<c:catAx><c:axId val=\"111111111\"/><c:scaling><c:orientation val=\"minMax\"/></c:scaling><c:delete val=\"0\"/><c:axPos val=\"b\"/><c:crossAx val=\"222222222\"/></c:catAx>" +
+            "<c:valAx><c:axId val=\"222222222\"/><c:scaling><c:orientation val=\"minMax\"/></c:scaling><c:delete val=\"0\"/><c:axPos val=\"l\"/><c:crossAx val=\"111111111\"/></c:valAx>" +
+            "</c:plotArea><c:plotVisOnly val=\"1\"/></c:chart></c:chartSpace>";
+
+        /// <summary>Creates a single-sheet workbook with an embedded chart (under the worksheet's drawing).</summary>
+        public static void CreateXlsxWithChart(
+            string path, IReadOnlyList<string?[]> rows, string title, string seriesName, string category, string sheetName = "Sheet1")
+        {
+            CreateXlsx(path, rows, sheetName);
+
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: true);
+            WorksheetPart wsPart = doc.WorkbookPart!.WorksheetParts.First();
+
+            DrawingsPart drawingsPart = wsPart.AddNewPart<DrawingsPart>();
+            ChartPart chartPart = drawingsPart.AddNewPart<ChartPart>();
+            WriteXml(chartPart, ChartSpaceXml(title, seriesName, category));
+
+            string chartRelId = drawingsPart.GetIdOfPart(chartPart);
+            string drawingXml =
+                "<xdr:wsDr xmlns:xdr=\"http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing\" " +
+                "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" " +
+                "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" " +
+                "xmlns:c=\"http://schemas.openxmlformats.org/drawingml/2006/chart\">" +
+                "<xdr:twoCellAnchor>" +
+                "<xdr:from><xdr:col>3</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>1</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>" +
+                "<xdr:to><xdr:col>9</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>15</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to>" +
+                "<xdr:graphicFrame macro=\"\"><xdr:nvGraphicFramePr><xdr:cNvPr id=\"2\" name=\"Chart 1\"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr>" +
+                "<xdr:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/></xdr:xfrm>" +
+                $"<a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/chart\"><c:chart r:id=\"{chartRelId}\"/></a:graphicData></a:graphic>" +
+                "</xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor></xdr:wsDr>";
+            WriteXml(drawingsPart, drawingXml);
+
+            wsPart.Worksheet.Append(new Drawing { Id = wsPart.GetIdOfPart(drawingsPart) });
+            wsPart.Worksheet.Save();
+        }
+
+        /// <summary>The concatenated XML of every chart part in the workbook (for redaction checks).</summary>
+        public static string AllChartXml(string path)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            var xml = new List<string>();
+            foreach (WorksheetPart wsPart in doc.WorkbookPart!.WorksheetParts)
+            {
+                if (wsPart.DrawingsPart is null)
+                {
+                    continue;
+                }
+                foreach (ChartPart chartPart in wsPart.DrawingsPart.ChartParts)
+                {
+                    xml.Add(chartPart.RootElement?.OuterXml ?? string.Empty);
+                }
+            }
+            return string.Concat(xml);
+        }
+
+        private static void WriteXml(OpenXmlPart part, string xml)
+        {
+            using Stream s = part.GetStream(FileMode.Create, FileAccess.Write);
+            using var w = new StreamWriter(s, new System.Text.UTF8Encoding(false));
+            w.Write(xml);
+        }
+
+        private static string Escape(string text) =>
+            text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
+
+        /// <summary>The concatenated header/footer text across every worksheet (for redaction checks).</summary>
+        public static string HeaderFooterText(string path)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            var parts = new List<string>();
+            foreach (WorksheetPart wsPart in doc.WorkbookPart!.WorksheetParts)
+            {
+                HeaderFooter? hf = wsPart.Worksheet?.GetFirstChild<HeaderFooter>();
+                if (hf is null)
+                {
+                    continue;
+                }
+                foreach (OpenXmlLeafTextElement element in hf.Elements<OpenXmlLeafTextElement>())
+                {
+                    parts.Add(element.Text ?? string.Empty);
+                }
+            }
+            return string.Join("\n", parts);
         }
 
         internal enum CellKind { Auto, Number, Text, Boolean, Date, Formula, Error }

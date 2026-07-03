@@ -309,7 +309,7 @@ namespace PhilterDesktop.Tests
         {
             // Integration: redact the real header/footer sample, then verify — the body's PII is redacted
             // (clean) but the result is honestly qualified because the source had headers/footers.
-            string input = Path.Combine(AppContext.BaseDirectory, "test-documents", "header-footer.rtf");
+            string input = Path.Combine(AppContext.BaseDirectory, "sample-documents", "header-footer.rtf");
             Assert.True(File.Exists(input), $"Sample not found: {input}");
             string output = Path_("hf_redacted.rtf");
 
@@ -321,6 +321,85 @@ namespace PhilterDesktop.Tests
             Assert.Equal(VerificationStatus.Clean, outcome.Status); // body email/SSN redacted -> no residual
             Assert.NotNull(outcome.FidelityNote);                   // header/footer weren't re-scanned
             Assert.Contains(".docx", outcome.FidelityNote!);
+        }
+
+        // --- VerifyIfEnabled (the shared entry point for queue/CLI/watched folders) ---
+
+        private static readonly IReadOnlyList<RedactionSpanEntity> NoSpans = Array.Empty<RedactionSpanEntity>();
+
+        [Fact]
+        public void VerifyIfEnabled_Disabled_ReturnsNull()
+        {
+            string output = Path_("v-off.txt");
+            File.WriteAllText(output, "Contact leftover@example.com about this.");
+            var settings = new SettingsEntity { VerifyAfterRedaction = false };
+
+            Assert.Null(RedactionVerifier.VerifyIfEnabled(settings, output, EmailPolicy(), "ctx", _fs, NoSpans));
+        }
+
+        [Fact]
+        public void VerifyIfEnabled_Enabled_ResidualPii_IsFlagged()
+        {
+            string output = Path_("v-leak.txt");
+            File.WriteAllText(output, "Contact leftover@example.com about this.");
+            var settings = new SettingsEntity { VerifyAfterRedaction = true, VerificationUseBroadPolicy = false };
+
+            VerificationOutcome? outcome = RedactionVerifier.VerifyIfEnabled(settings, output, EmailPolicy(), "ctx", _fs, NoSpans);
+
+            Assert.NotNull(outcome);
+            Assert.Equal(VerificationStatus.ResidualsFound, outcome!.Status);
+        }
+
+        [Fact]
+        public void VerifyIfEnabled_Enabled_CleanOutput_IsClean()
+        {
+            string output = Path_("v-clean.txt");
+            File.WriteAllText(output, "Nothing sensitive here.");
+            var settings = new SettingsEntity { VerifyAfterRedaction = true, VerificationUseBroadPolicy = false };
+
+            VerificationOutcome? outcome = RedactionVerifier.VerifyIfEnabled(settings, output, EmailPolicy(), "ctx", _fs, NoSpans);
+
+            Assert.NotNull(outcome);
+            Assert.Equal(VerificationStatus.Clean, outcome!.Status);
+        }
+
+        // --- WarningFor (the headless-path message) ---
+
+        [Fact]
+        public void WarningFor_NullOrClean_ReturnsNull()
+        {
+            Assert.Null(RedactionVerifier.WarningFor(null));
+            Assert.Null(RedactionVerifier.WarningFor(new VerificationOutcome { Status = VerificationStatus.Clean }));
+        }
+
+        [Fact]
+        public void WarningFor_Residuals_MentionsTheCount()
+        {
+            var outcome = new VerificationOutcome
+            {
+                Status = VerificationStatus.ResidualsFound,
+                Residuals = new[] { new RedactionSpanEntity { Text = "a@example.com" }, new RedactionSpanEntity { Text = "b@example.com" } }
+            };
+
+            string? warning = RedactionVerifier.WarningFor(outcome);
+
+            Assert.NotNull(warning);
+            Assert.Contains("2 possible items", warning);
+            Assert.Contains("review", warning, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void WarningFor_Error_ReturnsMessage()
+        {
+            string? warning = RedactionVerifier.WarningFor(new VerificationOutcome { Status = VerificationStatus.Error, Error = "boom" });
+            Assert.Contains("could not be completed", warning);
+        }
+
+        [Fact]
+        public void WarningFor_CleanWithFidelityNote_ReturnsTheNote()
+        {
+            var outcome = new VerificationOutcome { Status = VerificationStatus.Clean, FidelityNote = "Some caveat." };
+            Assert.Equal("Some caveat.", RedactionVerifier.WarningFor(outcome));
         }
     }
 }

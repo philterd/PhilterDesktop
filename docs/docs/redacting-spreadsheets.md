@@ -10,6 +10,18 @@ the sensitive information it finds there, leaving the rest of the table (the lay
 numbers, the formulas) intact. An Excel file stays `.xlsx` and a CSV stays `.csv`. (For Excel,
 **formulas** are left alone, since their value is calculated rather than stored.)
 
+For Excel, **cell comments** — both the classic comments and the newer **threaded comments** (with their
+author names) — are scanned and redacted too, so sensitive information tucked into a comment isn't left
+behind. **Embedded charts** are scanned as well — their titles, labels, and the **cached data values**
+a chart keeps (its copy of the plotted series and category values, which would otherwise remain after
+the source cells are redacted); redacting a cached value can change how the chart looks, so review charts
+in the output. The **print header and footer** — the text set to appear at the top and bottom of each
+printed page (for example "Confidential — John Doe") — is scanned and redacted too. **Only text is
+redacted** there: an image or logo placed in a header/footer is left as it is, and Excel field codes
+(page number, date, file name) are preserved. This is on by default and can be turned off in
+[Settings → Microsoft Office](settings.md#microsoft-office-tab). (This is the printed page header, not
+the column header row in the sheet.)
+
 !!! note "Redacted CSVs are safe to open in a spreadsheet"
     A `.csv` is just text, so a spreadsheet program will treat any cell that begins with `=`, `+`, `-`,
     or `@` as a **formula** and run it when the file is opened, a behavior (called "CSV injection") that

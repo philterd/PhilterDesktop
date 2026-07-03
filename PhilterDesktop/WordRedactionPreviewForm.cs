@@ -276,7 +276,7 @@ namespace PhilterDesktop
         {
             using var dlg = new SpanEditForm("Add Redaction", SpanPositionKind.Paragraph,
                 new RedactionSpanEntity { UserAdded = true, Replacement = RedactionService.DefaultReplacement, ParagraphIndex = 0 },
-                positionEditable: true);
+                positionEditable: true, paragraphLengths: _paragraphs.Select(p => p.Length).ToList());
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
                 _spans.Add(new RedactionSpanEntity
@@ -297,7 +297,8 @@ namespace PhilterDesktop
             {
                 return;
             }
-            using var dlg = new SpanEditForm("Edit Redaction", SpanPositionKind.Paragraph, span, positionEditable: span.UserAdded);
+            using var dlg = new SpanEditForm("Edit Redaction", SpanPositionKind.Paragraph, span, positionEditable: span.UserAdded,
+                paragraphLengths: _paragraphs.Select(p => p.Length).ToList());
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
                 if (span.UserAdded)

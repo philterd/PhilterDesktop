@@ -101,12 +101,17 @@ namespace PhilterDesktop
                     residuals = residuals.Where(r => !knownReplacements.Contains(r.Text)).ToList();
                 }
 
-                // For an RTF whose source carried non-body content, note that this pass only re-scanned the
-                // body text — so a "clean" residual-PII result isn't a guarantee the whole document is
-                // intact (headers/footers/footnotes may not have been carried over).
-                string? fidelityNote = ext == ".rtf" && sourcePath is not null && RtfFidelity.HasDroppedContent(sourcePath)
-                    ? RtfFidelity.VerificationCaveat
-                    : null;
+                // A fidelity caveat notes a scope this pass couldn't cover, so a "clean" result isn't
+                // over-read. For RTF: the body only was re-scanned (headers/footers/footnotes may not have
+                // carried over). For email: attachments are never inspected or redacted, so if the redacted
+                // output still has any, warn — their content wasn't checked.
+                string? fidelityNote = ext switch
+                {
+                    ".rtf" when sourcePath is not null && RtfFidelity.HasDroppedContent(sourcePath) => RtfFidelity.VerificationCaveat,
+                    ".pdf" when sourcePath is not null && PdfFidelity.HasDroppedContent(sourcePath) => PdfFidelity.VerificationCaveat,
+                    ".eml" or ".msg" when EmailRedactor.HasAttachments(outputPath) => EmailRedactor.AttachmentVerificationCaveat,
+                    _ => null
+                };
 
                 return new VerificationOutcome
                 {
@@ -125,6 +130,57 @@ namespace PhilterDesktop
         /// <see cref="Verify"/> so its own stand-ins aren't reported as residual PII.</summary>
         public static IReadOnlySet<string> ReplacementsOf(IEnumerable<RedactionSpanEntity> spans) =>
             spans.Select(s => s.Replacement).Where(r => !string.IsNullOrEmpty(r)).ToHashSet(StringComparer.Ordinal);
+
+        /// <summary>
+        /// Runs the post-redaction self-check when <see cref="SettingsEntity.VerifyAfterRedaction"/> is on
+        /// (returns null when off), choosing the broad "all detectors" policy or the redaction policy per
+        /// settings and excluding this redaction's own replacements. Centralizes the check so <b>every</b>
+        /// redaction path — queue, CLI, and watched folders — verifies identically.
+        /// </summary>
+        public static VerificationOutcome? VerifyIfEnabled(
+            SettingsEntity settings, string outputPath, PhileasPolicy policy, string context,
+            FilterService filterService, IReadOnlyList<RedactionSpanEntity> spans,
+            string? sourcePath = null, string? worksheet = null)
+        {
+            if (!settings.VerifyAfterRedaction)
+            {
+                return null;
+            }
+            PhileasPolicy verifyPolicy = policy;
+            if (settings.VerificationUseBroadPolicy)
+            {
+                verifyPolicy = VerificationPolicy.Broad();
+                GlobalLists.Apply(verifyPolicy, settings);
+            }
+            IReadOnlySet<string> knownReplacements = ReplacementsOf(spans);
+            return Verify(outputPath, verifyPolicy, context, filterService, knownReplacements, sourcePath, worksheet);
+        }
+
+        /// <summary>
+        /// A short, user-facing warning for a verification outcome, or null when there's nothing to flag
+        /// (clean with no caveat, or verification didn't run). Used by the headless paths (CLI, watched
+        /// folders), which surface it in their log/output rather than a dialog.
+        /// </summary>
+        public static string? WarningFor(VerificationOutcome? outcome)
+        {
+            if (outcome is null)
+            {
+                return null;
+            }
+            switch (outcome.Status)
+            {
+                case VerificationStatus.ResidualsFound:
+                    string plural = outcome.Count == 1 ? "" : "s";
+                    string note = outcome.FidelityNote is null ? "" : " " + outcome.FidelityNote;
+                    return $"Verification found {outcome.Count} possible item{plural} that may still be present in the output — review before sharing.{note}";
+                case VerificationStatus.Error:
+                    return "Verification could not be completed on the redacted output — review it before sharing.";
+                case VerificationStatus.Clean when outcome.FidelityNote is not null:
+                    return outcome.FidelityNote;
+                default:
+                    return null;
+            }
+        }
 
         // Runs the engine's PDF detection over the output bytes (it extracts the text layer internally),
         // collecting any residual detections. The redacted document the engine also produces is ignored.

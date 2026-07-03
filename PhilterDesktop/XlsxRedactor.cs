@@ -15,6 +15,7 @@
  */
 
 using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Phileas.Model;
@@ -53,7 +54,9 @@ namespace PhilterDesktop
             string outputPath,
             Func<string, TextFilterResult> filter,
             IReadOnlyCollection<int>? fullyRedactedColumns = null,
-            string? worksheet = null)
+            string? worksheet = null,
+            bool redactHeadersFooters = true,
+            bool redactCharts = true)
         {
             var fullColumns = fullyRedactedColumns is { Count: > 0 }
                 ? new HashSet<int>(fullyRedactedColumns)
@@ -143,6 +146,22 @@ namespace PhilterDesktop
                 }
             }
 
+            // Print headers/footers are free text that prints on every page (e.g. "Confidential — John
+            // Doe") but aren't cells, so they need a separate pass.
+            if (redactHeadersFooters)
+            {
+                ScanHeadersFooters(workbookPart, worksheet, filter, write: true, captured, ref order);
+            }
+
+            // Cell comments (legacy and threaded) carry free text that isn't in any cell — redact it too.
+            ScanComments(workbookPart, worksheet, filter, write: true, captured, ref order);
+
+            // Embedded charts cache the plotted cell values (and carry title/label text) — redact those.
+            if (redactCharts)
+            {
+                ScanCharts(workbookPart, worksheet, filter, write: true, captured, ref order);
+            }
+
             // Redacted cells were converted to inline strings; blank any shared-string entries they left
             // orphaned so the original text can't be recovered from xl/sharedStrings.xml.
             PruneUnusedSharedStrings(workbookPart);
@@ -158,7 +177,7 @@ namespace PhilterDesktop
         /// would apply. Used by the post-redaction verification pass to scan a written output. (Whole-
         /// column redaction isn't reproduced here — verification looks for content the detector flags.)
         /// </summary>
-        public static List<RedactionSpanEntity> Detect(string inputPath, Func<string, TextFilterResult> filter, string? worksheet = null)
+        public static List<RedactionSpanEntity> Detect(string inputPath, Func<string, TextFilterResult> filter, string? worksheet = null, bool redactHeadersFooters = true, bool redactCharts = true)
         {
             using SpreadsheetDocument document = SpreadsheetDocument.Open(inputPath, isEditable: false);
             WorkbookPart? workbookPart = document.WorkbookPart;
@@ -203,10 +222,24 @@ namespace PhilterDesktop
                 }
             }
 
+            // Scan the print headers/footers too, so verification catches PII left in them.
+            if (redactHeadersFooters)
+            {
+                ScanHeadersFooters(workbookPart, worksheet, filter, write: false, captured, ref order);
+            }
+            // Scan cell comments too, so verification catches PII left in them.
+            ScanComments(workbookPart, worksheet, filter, write: false, captured, ref order);
+            // Scan embedded charts too.
+            if (redactCharts)
+            {
+                ScanCharts(workbookPart, worksheet, filter, write: false, captured, ref order);
+            }
+
             return captured;
         }
 
-        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, string? worksheet = null)
+        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, string? worksheet = null,
+            Func<string, TextFilterResult>? policyFilter = null, bool redactHeadersFooters = true, bool redactCharts = true)
         {
             Dictionary<int, List<RedactionSpanEntity>> byCell = spans
                 .GroupBy(s => s.ParagraphIndex)
@@ -252,6 +285,22 @@ namespace PhilterDesktop
                 if (resolved.Count > 0)
                 {
                     SetCellText(cell, ApplyRanges(original, resolved));
+                }
+            }
+
+            // Header/footer text and comments aren't stored by position (they're not cells), so re-redact
+            // them via the filter when one is supplied (parity with how Word drawings re-render in Modify).
+            if (policyFilter is not null)
+            {
+                int order = 0;
+                if (redactHeadersFooters)
+                {
+                    ScanHeadersFooters(workbookPart, worksheet, policyFilter, write: true, captured: null, ref order);
+                }
+                ScanComments(workbookPart, worksheet, policyFilter, write: true, captured: null, ref order);
+                if (redactCharts)
+                {
+                    ScanCharts(workbookPart, worksheet, policyFilter, write: true, captured: null, ref order);
                 }
             }
 
@@ -391,6 +440,225 @@ namespace PhilterDesktop
                     }
                     isHeaderRow = false;
                 }
+            }
+        }
+
+        // The worksheet parts redaction processes: a single named sheet, or all of them when the name is
+        // empty. Mirrors the sheet selection in EnumerateCells.
+        private static IEnumerable<WorksheetPart> ProcessedWorksheetParts(WorkbookPart workbookPart, string? worksheet)
+        {
+            Sheets? sheets = workbookPart.Workbook?.Sheets;
+            if (sheets is null)
+            {
+                yield break;
+            }
+            foreach (Sheet sheet in sheets.Elements<Sheet>())
+            {
+                if (!string.IsNullOrEmpty(worksheet) && !string.Equals(sheet.Name?.Value, worksheet, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+                if (sheet.Id?.Value is string relationshipId && workbookPart.GetPartById(relationshipId) is WorksheetPart part)
+                {
+                    yield return part;
+                }
+            }
+        }
+
+        // Redacts (write: true) or detects (write: false) PII in the print header/footer strings of each
+        // processed worksheet. Excel field codes (&P page, &D date, &"font,style", &L/&C/&R section markers)
+        // aren't PII and pass through the filter untouched. Header/footer text isn't a cell, so captured
+        // spans use ParagraphIndex -1 (report-only); Modify re-redacts these via the filter, not by position.
+        private static void ScanHeadersFooters(
+            WorkbookPart workbookPart, string? worksheet, Func<string, TextFilterResult> filter,
+            bool write, List<RedactionSpanEntity>? captured, ref int order)
+        {
+            foreach (WorksheetPart part in ProcessedWorksheetParts(workbookPart, worksheet))
+            {
+                HeaderFooter? headerFooter = part.Worksheet?.GetFirstChild<HeaderFooter>();
+                if (headerFooter is null)
+                {
+                    continue;
+                }
+
+                // The six children (odd/even/first × header/footer) are all leaf text elements.
+                foreach (OpenXmlLeafTextElement element in headerFooter.Elements<OpenXmlLeafTextElement>().ToList())
+                {
+                    string original = element.Text ?? string.Empty;
+                    if (string.IsNullOrEmpty(original))
+                    {
+                        continue;
+                    }
+
+                    TextFilterResult result = filter(original);
+                    if (string.Equals(result.FilteredText, original, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    if (write)
+                    {
+                        element.Text = result.FilteredText;
+                    }
+
+                    if (captured is null)
+                    {
+                        continue;
+                    }
+                    foreach (Span s in result.Spans
+                        .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
+                        .OrderBy(s => s.CharacterStart))
+                    {
+                        var entity = new RedactionSpanEntity
+                        {
+                            Order = order++,
+                            ParagraphIndex = -1, // header/footer, not a cell
+                            CharacterStart = s.CharacterStart,
+                            CharacterEnd = s.CharacterEnd,
+                            Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
+                            Replacement = s.Replacement ?? string.Empty,
+                            Classification = s.Classification ?? string.Empty
+                        };
+                        SpanExplanation.Populate(entity, s);
+                        captured.Add(entity);
+                    }
+                }
+            }
+        }
+
+        // Redacts (write: true) or detects (write: false) PII in cell comments: the legacy comment store
+        // (xl/comments*.xml) and the modern threaded comments (xl/threadedComments/*.xml), plus the
+        // workbook's threaded-comment author list (xl/persons/*.xml). Comment text isn't a cell, so it's
+        // run through the policy filter here (Word redacts comment text the same way) and captured with
+        // ParagraphIndex -1. Author/person names are filtered too, so policy-detected identity PII goes.
+        private static void ScanComments(
+            WorkbookPart workbookPart, string? worksheet, Func<string, TextFilterResult> filter,
+            bool write, List<RedactionSpanEntity>? captured, ref int order)
+        {
+            foreach (WorksheetPart part in ProcessedWorksheetParts(workbookPart, worksheet))
+            {
+                // Legacy cell comments: comment body runs (<t>) and the per-sheet author list.
+                if (part.WorksheetCommentsPart?.Comments is Comments comments)
+                {
+                    foreach (Text text in comments.Descendants<Text>().ToList())
+                    {
+                        RedactCommentLeaf(text, filter, write, captured, ref order);
+                    }
+                    foreach (Author author in comments.Descendants<Author>().ToList())
+                    {
+                        RedactCommentLeaf(author, filter, write, captured, ref order);
+                    }
+                }
+
+                // Modern threaded comments (the source of truth in current Excel).
+                foreach (WorksheetThreadedCommentsPart threadedPart in part.WorksheetThreadedCommentsParts)
+                {
+                    if (threadedPart.ThreadedComments is null)
+                    {
+                        continue;
+                    }
+                    foreach (ThreadedCommentText text in threadedPart.ThreadedComments.Descendants<ThreadedCommentText>().ToList())
+                    {
+                        RedactCommentLeaf(text, filter, write, captured, ref order);
+                    }
+                }
+            }
+
+            // Threaded-comment authors are stored once per workbook (xl/persons/*.xml), shared across sheets.
+            foreach (WorkbookPersonPart personPart in workbookPart.WorkbookPersonParts)
+            {
+                if (personPart.PersonList is not PersonList persons)
+                {
+                    continue;
+                }
+                foreach (Person person in persons.Elements<Person>().ToList())
+                {
+                    string original = person.DisplayName?.Value ?? string.Empty;
+                    if (string.IsNullOrEmpty(original))
+                    {
+                        continue;
+                    }
+                    TextFilterResult result = filter(original);
+                    if (string.Equals(result.FilteredText, original, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+                    if (write)
+                    {
+                        person.DisplayName = result.FilteredText;
+                    }
+                    CaptureCommentSpans(result, original, captured, ref order);
+                }
+            }
+        }
+
+        // Redacts (write: true) or detects (write: false) PII in embedded charts of the processed
+        // worksheets: chart title/label text and the cached series/category values that copy the cells.
+        private static void ScanCharts(
+            WorkbookPart workbookPart, string? worksheet, Func<string, TextFilterResult> filter,
+            bool write, List<RedactionSpanEntity>? captured, ref int order)
+        {
+            foreach (WorksheetPart part in ProcessedWorksheetParts(workbookPart, worksheet))
+            {
+                DrawingsPart? drawings = part.DrawingsPart;
+                if (drawings is null)
+                {
+                    continue;
+                }
+                foreach (ChartPart chartPart in drawings.ChartParts)
+                {
+                    ChartRedactor.RedactChartPart(chartPart, filter, write, captured, ref order);
+                }
+            }
+        }
+
+        // Runs the filter over one comment leaf text element (a comment run, an author, or a threaded-
+        // comment text), replacing detected PII in place when writing and recording the spans.
+        private static void RedactCommentLeaf(
+            OpenXmlLeafTextElement element, Func<string, TextFilterResult> filter,
+            bool write, List<RedactionSpanEntity>? captured, ref int order)
+        {
+            string original = element.Text ?? string.Empty;
+            if (string.IsNullOrEmpty(original))
+            {
+                return;
+            }
+            TextFilterResult result = filter(original);
+            if (string.Equals(result.FilteredText, original, StringComparison.Ordinal))
+            {
+                return;
+            }
+            if (write)
+            {
+                element.Text = result.FilteredText;
+            }
+            CaptureCommentSpans(result, original, captured, ref order);
+        }
+
+        // Records each detection from a comment/author/person redaction (ParagraphIndex -1: not a cell).
+        private static void CaptureCommentSpans(
+            TextFilterResult result, string original, List<RedactionSpanEntity>? captured, ref int order)
+        {
+            if (captured is null)
+            {
+                return;
+            }
+            foreach (Span s in result.Spans
+                .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
+                .OrderBy(s => s.CharacterStart))
+            {
+                var entity = new RedactionSpanEntity
+                {
+                    Order = order++,
+                    ParagraphIndex = -1,
+                    CharacterStart = s.CharacterStart,
+                    CharacterEnd = s.CharacterEnd,
+                    Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
+                    Replacement = s.Replacement ?? string.Empty,
+                    Classification = s.Classification ?? string.Empty
+                };
+                SpanExplanation.Populate(entity, s);
+                captured.Add(entity);
             }
         }
 

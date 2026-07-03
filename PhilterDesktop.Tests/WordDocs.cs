@@ -101,6 +101,30 @@ namespace PhilterDesktop.Tests
         private static Paragraph Para(string text) =>
             new(new Run(new Text(text) { Space = SpaceProcessingModeValues.Preserve }));
 
+        // --- Tracked changes (deletions) ---------------------------------------------
+
+        /// <summary>
+        /// Creates a .docx whose body has a tracked <b>deletion</b> (<c>w:del</c> containing a
+        /// <c>w:delText</c>) carrying <paramref name="deletedText"/>, plus optional visible body paragraphs.
+        /// </summary>
+        public static void CreateWithTrackedDeletion(string path, string deletedText, params string[] bodyParagraphs)
+        {
+            string deletion =
+                "<w:p><w:del w:id=\"1\" w:author=\"Reviewer\" w:date=\"2024-01-01T00:00:00Z\">" +
+                $"<w:r><w:delText xml:space=\"preserve\">{Escape(deletedText)}</w:delText></w:r></w:del></w:p>";
+            CreateRaw(path, string.Concat(bodyParagraphs.Select(ParaXml)) + deletion);
+        }
+
+        /// <summary>The text of every tracked-deletion element (<c>w:delText</c>) in the body, in order.</summary>
+        public static string[] DeletedTexts(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            return doc.MainDocumentPart!.Document!.Body!
+                .Descendants<DeletedText>()
+                .Select(d => d.Text)
+                .ToArray();
+        }
+
         // --- Hyperlinks ---------------------------------------------------------------
 
         /// <summary>
@@ -253,6 +277,34 @@ namespace PhilterDesktop.Tests
         /// <summary>A DrawingML paragraph (&lt;a:p&gt;) with one run per supplied string.</summary>
         public static string AParagraph(params string[] runs) =>
             "<a:p>" + string.Concat(runs.Select(r => $"<a:r><a:t xml:space=\"preserve\">{Escape(r)}</a:t></a:r>")) + "</a:p>";
+
+        /// <summary>
+        /// Creates a .docx that embeds a full chart (title text + a series with cached series-name,
+        /// category, and value) referenced from the body by an inline drawing — so it exercises both the
+        /// chart's DrawingML text (<c>&lt;a:t&gt;</c>) and its cached values (<c>&lt;c:v&gt;</c>).
+        /// </summary>
+        public static void CreateWithChartData(string path, string title, string seriesName, string category, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+
+            ChartPart chartPart = main.AddNewPart<ChartPart>();
+            WritePart(chartPart, SpreadsheetTestHelper.ChartSpaceXml(title, seriesName, category));
+            string relId = main.GetIdOfPart(chartPart);
+
+            string bodyXml = string.Concat(bodyParagraphs.Select(ParaXml)) +
+                "<w:p><w:r><w:drawing>" +
+                "<wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\">" +
+                "<wp:extent cx=\"5000000\" cy=\"3000000\"/>" +
+                "<wp:docPr id=\"1\" name=\"Chart 1\"/>" +
+                "<a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/chart\">" +
+                $"<c:chart xmlns:c=\"http://schemas.openxmlformats.org/drawingml/2006/chart\" r:id=\"{relId}\"/>" +
+                "</a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>";
+            string xml = $"<w:document {DocNamespaces}><w:body>{bodyXml}</w:body></w:document>";
+            using Stream stream = main.GetStream(FileMode.Create, FileAccess.Write);
+            using var writer = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            writer.Write(xml);
+        }
 
         /// <summary>Creates a .docx with a chart part whose title rich-text is the supplied &lt;a:p&gt; XML.</summary>
         public static void CreateWithChart(string path, string titleAParagraphXml, params string[] bodyParagraphs)

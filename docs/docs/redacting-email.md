@@ -8,7 +8,10 @@ programs) and **`.msg`** (the format Microsoft Outlook uses when you save or dra
 When Philter Desktop redacts an email, it cleans up the **subject line**, the **From / To / Cc**
 addresses, and the **message body**, according to your policy, the same way it handles any other
 document. This covers the plain-text and HTML versions of the body; an Outlook message whose body is
-only **rich text (RTF)** is recovered as text and redacted too, rather than being dropped. It also (by default) strips the **technical headers** that
+only **rich text (RTF)** is recovered as text and redacted too, rather than being dropped. If the email
+**forwards or embeds another message** (a `message/rfc822` part), that nested message is redacted the
+same way — its own **Subject, From / To / Cc**, and body are cleaned, and (when the header options below
+are on) its technical and identity headers are stripped too. It also (by default) strips the **technical headers** that
 would otherwise reveal the sender's IP, mail program, and the server delivery trail, and the **common
 identity headers** (**Bcc** for blind-copy recipients, **Reply-To**, **Sender**, and **Resent-…**) that
 aren't part of the visible From / To / Cc fields and so wouldn't otherwise be redacted. Both are on by
@@ -16,14 +19,30 @@ default and can be turned off in [Settings → Email](settings.md#email-tab). If
 header option, those headers (including **Bcc**) are **kept as-is and not redacted**, so their addresses
 will remain in the output — review them before sharing.
 
+You can also choose to **remove the Date header** (the email's send time). This is **off by default** —
+the send date is usually wanted and isn't personally identifying on its own — but if you need to remove
+it, turn it on in [Settings → Email](settings.md#email-tab). When on, the Date header is **dropped
+outright**, so the send time is removed no matter how it is formatted (this does not rely on the policy
+recognizing a date). A timestamp can still appear inside the delivery trail; leave the technical-header
+option on to strip that too.
+
 !!! warning "Attachments are not redacted"
     Philter Desktop redacts the email **message itself**: the subject, the addresses, and the body. It
     does **not** open, inspect, or redact **attachments** (a PDF, Word file, spreadsheet, image, or
-    anything else carried along with the email). Those are copied through **unchanged**, so any
+    anything else carried along with the email). By default they are copied through **unchanged**, so any
     sensitive information inside an attachment is left exactly as it was. If an email has attachments
     that need redacting, **save each one out as its own file and redact it separately** (a `.pdf`,
     `.docx`, or `.txt` attachment can go straight through Philter Desktop). Always review the finished
     email **and** its attachments before sharing it.
+
+    If you would rather the redacted email carry **no attachments at all**, turn on **Remove attachments
+    from redacted email** in [Settings → Email](settings.md#email-tab). When on, attachments are
+    **deleted entirely — not redacted**: their content is never inspected, and the attached files (and
+    their filenames, which can themselves reveal information such as `john_smith_ssn.pdf`) are removed
+    from the output. This option is **off by default**.
+
+    When attachments are **kept** and a redacted email still has any, **verification adds a warning**
+    reminding you that their content wasn't inspected — so review each attachment before sharing.
 
 ## Outlook `.msg` files become `.eml`
 

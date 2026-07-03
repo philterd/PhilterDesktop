@@ -162,5 +162,198 @@ namespace PhilterDesktop.Tests
             string eml = await File.ReadAllTextAsync(output);
             Assert.Contains("hidden@example.com", eml); // gated by the setting
         }
+
+        [Fact]
+        public async Task RemoveDateHeaderEnabled_DropsDate_KeepsOtherFields_AndRedactsPii()
+        {
+            string output = Path.Combine(_dir, "out-nodate.eml");
+            await RedactionService.RedactFileAsync(WriteEml(), output, SsnPolicy(), "ctx",
+                removeEmailDateHeader: true);
+
+            string eml = await File.ReadAllTextAsync(output);
+
+            // The Date header is gone outright, no detector involved. (The identical timestamp in the
+            // Received header survives here because technical-header scrubbing isn't enabled in this test.)
+            Assert.DoesNotContain("Date:", eml);
+
+            // Everything else is preserved and body PII is still redacted.
+            Assert.Contains("Subject: Case notes", eml);
+            Assert.Contains("alice@example.com", eml);
+            Assert.DoesNotContain("123-45-6789", eml);
+        }
+
+        [Fact]
+        public async Task RemoveDateHeaderDisabled_KeepsDate()
+        {
+            string output = Path.Combine(_dir, "out-date-keep.eml");
+            await RedactionService.RedactFileAsync(WriteEml(), output, SsnPolicy(), "ctx",
+                removeEmailDateHeader: false);
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.Contains("Date:", eml);        // gated by the setting
+            Assert.Contains("01 Apr 2025", eml);
+            Assert.DoesNotContain("123-45-6789", eml); // PII still redacted regardless
+        }
+
+        [Fact]
+        public async Task RemoveDateHeaderDefault_KeepsDate()
+        {
+            // Default (option off) leaves the Date header in place.
+            string output = Path.Combine(_dir, "out-date-default.eml");
+            await RedactionService.RedactFileAsync(WriteEml(), output, SsnPolicy(), "ctx");
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.Contains("Date:", eml);
+        }
+
+        // A multipart/mixed .eml with a plain-text body and a PDF attachment whose filename itself carries
+        // PII ("john_smith_ssn.pdf"). "U0VDUkVU..." decodes to "SECRET-ATTACHMENT-BODY".
+        private const string SampleEmlWithAttachment =
+            "From: Alice <alice@example.com>\r\n" +
+            "To: Bob <bob@example.com>\r\n" +
+            "Subject: With attachment\r\n" +
+            "Date: Tue, 01 Apr 2025 10:00:00 +0000\r\n" +
+            "MIME-Version: 1.0\r\n" +
+            "Content-Type: multipart/mixed; boundary=\"BND\"\r\n" +
+            "\r\n" +
+            "--BND\r\n" +
+            "Content-Type: text/plain; charset=utf-8\r\n" +
+            "\r\n" +
+            "Patient SSN 123-45-6789.\r\n" +
+            "--BND\r\n" +
+            "Content-Type: application/pdf; name=\"john_smith_ssn.pdf\"\r\n" +
+            "Content-Disposition: attachment; filename=\"john_smith_ssn.pdf\"\r\n" +
+            "Content-Transfer-Encoding: base64\r\n" +
+            "\r\n" +
+            "U0VDUkVULUFUVEFDSE1FTlQtQk9EWQ==\r\n" +
+            "--BND--\r\n";
+
+        private string WriteAttachmentEml()
+        {
+            string path = Path.Combine(_dir, "attachment.eml");
+            File.WriteAllText(path, SampleEmlWithAttachment);
+            return path;
+        }
+
+        [Fact]
+        public async Task RemoveAttachmentsEnabled_DropsAttachment_KeepsBody_AndRedactsPii()
+        {
+            string output = Path.Combine(_dir, "out-noattach.eml");
+            await RedactionService.RedactFileAsync(WriteAttachmentEml(), output, SsnPolicy(), "ctx",
+                removeEmailAttachments: true);
+
+            string eml = await File.ReadAllTextAsync(output);
+            // The attachment (content and its PII-bearing filename) is gone.
+            Assert.DoesNotContain("john_smith_ssn.pdf", eml);
+            Assert.DoesNotContain("U0VDUkVU", eml);
+            Assert.DoesNotContain("Content-Disposition: attachment", eml);
+
+            // The message body survives and its PII is still redacted.
+            using var stream = File.OpenRead(output);
+            MimeKit.MimeMessage message = MimeKit.MimeMessage.Load(stream);
+            Assert.Empty(message.Attachments);
+            Assert.Contains("REDACTED", message.TextBody ?? string.Empty);
+            Assert.DoesNotContain("123-45-6789", message.TextBody ?? string.Empty);
+        }
+
+        [Fact]
+        public async Task RemoveAttachmentsDisabled_KeepsAttachment()
+        {
+            string output = Path.Combine(_dir, "out-attach-keep.eml");
+            await RedactionService.RedactFileAsync(WriteAttachmentEml(), output, SsnPolicy(), "ctx",
+                removeEmailAttachments: false);
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.Contains("john_smith_ssn.pdf", eml);      // gated by the setting
+            Assert.DoesNotContain("123-45-6789", eml);       // body PII still redacted
+        }
+
+        [Fact]
+        public async Task RemoveAttachmentsDefault_KeepsAttachment()
+        {
+            // Default (option off) leaves attachments in place.
+            string output = Path.Combine(_dir, "out-attach-default.eml");
+            await RedactionService.RedactFileAsync(WriteAttachmentEml(), output, SsnPolicy(), "ctx");
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.Contains("john_smith_ssn.pdf", eml);
+        }
+
+        // An .eml that forwards another message as a message/rfc822 part. The nested message has its own
+        // identifying headers (Bcc, Received) and a body with PII.
+        private const string SampleEmlWithNestedMessage =
+            "From: Alice <alice@example.com>\r\n" +
+            "To: Bob <bob@example.com>\r\n" +
+            "Subject: FW: notes\r\n" +
+            "Date: Tue, 01 Apr 2025 10:00:00 +0000\r\n" +
+            "MIME-Version: 1.0\r\n" +
+            "Content-Type: multipart/mixed; boundary=\"BND\"\r\n" +
+            "\r\n" +
+            "--BND\r\n" +
+            "Content-Type: text/plain; charset=utf-8\r\n" +
+            "\r\n" +
+            "Forwarding the note below.\r\n" +
+            "--BND\r\n" +
+            "Content-Type: message/rfc822\r\n" +
+            "\r\n" +
+            "From: Carol <carol@example.com>\r\n" +
+            "To: Dave <dave@example.com>\r\n" +
+            "Bcc: Secret <secret-inner@example.com>\r\n" +
+            "Subject: notes\r\n" +
+            "Date: Mon, 31 Mar 2025 09:00:00 +0000\r\n" +
+            "Received: from mail.inner (10.1.2.3) by mx; Mon, 31 Mar 2025 09:00:00 +0000\r\n" +
+            "Content-Type: text/plain; charset=utf-8\r\n" +
+            "\r\n" +
+            "Patient SSN 123-45-6789.\r\n" +
+            "--BND--\r\n";
+
+        private string WriteNestedEml()
+        {
+            string path = Path.Combine(_dir, "nested.eml");
+            File.WriteAllText(path, SampleEmlWithNestedMessage);
+            return path;
+        }
+
+        [Fact]
+        public async Task NestedMessage_RedactsInnerBody()
+        {
+            // The forwarded message's body PII is redacted (its parts are enumerated recursively).
+            string output = Path.Combine(_dir, "nested-body.eml");
+            await RedactionService.RedactFileAsync(WriteNestedEml(), output, SsnPolicy(), "ctx");
+
+            Assert.DoesNotContain("123-45-6789", await File.ReadAllTextAsync(output));
+        }
+
+        [Fact]
+        public async Task NestedMessage_ScrubEnabled_RemovesInnerTechnicalHeaders()
+        {
+            string output = Path.Combine(_dir, "nested-scrub.eml");
+            await RedactionService.RedactFileAsync(WriteNestedEml(), output, SsnPolicy(), "ctx",
+                scrubEmailHeaders: true);
+
+            Assert.DoesNotContain("10.1.2.3", await File.ReadAllTextAsync(output)); // nested Received IP
+        }
+
+        [Fact]
+        public async Task NestedMessage_RemoveCommonEnabled_RemovesInnerBcc()
+        {
+            string output = Path.Combine(_dir, "nested-bcc.eml");
+            await RedactionService.RedactFileAsync(WriteNestedEml(), output, SsnPolicy(), "ctx",
+                removeCommonEmailHeaders: true);
+
+            Assert.DoesNotContain("secret-inner@example.com", await File.ReadAllTextAsync(output)); // nested Bcc
+        }
+
+        [Fact]
+        public async Task NestedMessage_ScrubDisabled_KeepsInnerHeaders()
+        {
+            // Gated by the settings: with the scrubs off the nested identity/technical headers remain.
+            string output = Path.Combine(_dir, "nested-keep.eml");
+            await RedactionService.RedactFileAsync(WriteNestedEml(), output, SsnPolicy(), "ctx");
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.Contains("10.1.2.3", eml);
+            Assert.Contains("secret-inner@example.com", eml);
+        }
     }
 }

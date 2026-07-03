@@ -101,6 +101,21 @@ namespace PhilterData
         public bool ScrubWordHiddenText { get; set; } = true;
 
         /// <summary>
+        /// Redact detected PII in the print headers and footers of Word (.docx) and Excel (.xlsx) files.
+        /// Header/footer text (e.g. "Confidential — John Doe" printed on every page) is scanned like body
+        /// text; legitimate content such as page numbers, dates, and logos is preserved. On by default.
+        /// </summary>
+        public bool RedactOfficeHeadersFooters { get; set; } = true;
+
+        /// <summary>
+        /// Redact detected PII inside embedded charts in Word (.docx) and Excel (.xlsx) files: chart
+        /// titles, axis/data labels, and the <b>cached series and category values</b> (numCache/strCache)
+        /// that copy the source cells and would otherwise survive. On by default. Redacting a cached value
+        /// can change how the chart looks, so review charts in the output.
+        /// </summary>
+        public bool RedactOfficeCharts { get; set; } = true;
+
+        /// <summary>
         /// Remove identifying technical headers from redacted email output (the originating IP, the
         /// sending mail client, and the server-hop trail): <c>Received</c>, <c>Return-Path</c>,
         /// <c>Message-Id</c>, <c>User-Agent</c>, <c>DKIM-Signature</c>, authentication results, and all
@@ -115,6 +130,21 @@ namespace PhilterData
         /// blind-copy recipients and is carried through from <c>.msg</c> input). On by default.
         /// </summary>
         public bool RemoveCommonEmailHeaders { get; set; } = true;
+
+        /// <summary>
+        /// Remove the <c>Date</c> header from redacted email output. The header is dropped outright (not
+        /// scanned for a date to redact), so the send time is removed regardless of its format. Off by
+        /// default — the send date is usually wanted and isn't personally identifying on its own.
+        /// </summary>
+        public bool RemoveEmailDateHeader { get; set; } = false;
+
+        /// <summary>
+        /// Remove attachments from redacted email output. Attachments are <b>deleted entirely, not
+        /// redacted</b> — their content is never inspected — so an attached file (and its filename) is gone
+        /// from the output. Off by default, because it discards content the user may need; turn it on when
+        /// an email's attachments could carry sensitive information that must not ship in the redacted copy.
+        /// </summary>
+        public bool RemoveEmailAttachments { get; set; } = false;
 
         /// <summary>
         /// Read scanned (image-only) PDF pages with on-device OCR so their text can be detected and

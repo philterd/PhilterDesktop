@@ -39,6 +39,9 @@ namespace PhilterDesktop
     {
         private SpanPositionKind _kind;
         private int _maxOffset; // document/paragraph length for bounds checking text offsets (0 = unknown)
+        // For Word (Paragraph kind): the length of each paragraph's text, indexed by paragraph. Lets the
+        // offset bounds track the selected paragraph so a manual span can't run past that paragraph's end.
+        private IReadOnlyList<int>? _paragraphLengths;
 
         // The paragraph field is shown 1-based (to match the list's "¶ N"); ParagraphIndex is 0-based.
         public int Paragraph => (int)_paragraph.Value - 1;
@@ -63,17 +66,31 @@ namespace PhilterDesktop
         /// whose position is anchored); only the replacement can change.
         /// </param>
         /// <param name="maxOffset">
-        /// The length of the text the offsets index into (the document for plain text). When &gt; 0, the
-        /// start/stop fields are capped at it and validated so a manual span can't run past the end.
+        /// The length of the text the offsets index into (the whole document, for plain text). When
+        /// &gt; 0, the start/stop fields are capped at it and validated so a manual span can't run past
+        /// the end. For Word, pass <paramref name="paragraphLengths"/> instead.
         /// </param>
-        public SpanEditForm(string title, SpanPositionKind kind, RedactionSpanEntity span, bool positionEditable, int maxOffset = 0)
+        /// <param name="paragraphLengths">
+        /// For Word (<see cref="SpanPositionKind.Paragraph"/>): the length of each paragraph's text, by
+        /// paragraph index. When supplied, the paragraph field is capped at the paragraph count and the
+        /// start/stop bounds follow the selected paragraph, so a manual span can't run past that
+        /// paragraph's end (which would otherwise be silently dropped when the redaction is applied).
+        /// </param>
+        public SpanEditForm(string title, SpanPositionKind kind, RedactionSpanEntity span, bool positionEditable,
+            int maxOffset = 0, IReadOnlyList<int>? paragraphLengths = null)
             : this()
         {
             _kind = kind;
             _maxOffset = maxOffset;
+            _paragraphLengths = paragraphLengths;
             Text = title;
 
-            if (maxOffset > 0)
+            bool perParagraph = kind == SpanPositionKind.Paragraph && paragraphLengths is { Count: > 0 };
+            if (perParagraph)
+            {
+                _paragraph.Maximum = paragraphLengths!.Count; // 1-based field; can't exceed the paragraph count
+            }
+            else if (maxOffset > 0)
             {
                 _start.Maximum = maxOffset;
                 _stop.Maximum = maxOffset;
@@ -90,12 +107,34 @@ namespace PhilterDesktop
             Set(_ury, (decimal)span.UpperRightY);
             _replacement.Text = span.Replacement;
 
+            // Track the selected paragraph's length so the offset bounds/validation follow it.
+            if (perParagraph)
+            {
+                UpdateParagraphOffsetBounds();
+                _paragraph.ValueChanged += (_, _) => UpdateParagraphOffsetBounds();
+            }
+
             foreach (NumericUpDown n in new[] { _paragraph, _start, _stop, _page, _llx, _lly, _urx, _ury })
             {
                 n.Enabled = positionEditable;
             }
 
             ShowFieldsForKind();
+        }
+
+        // Caps the start/stop offset fields at the currently-selected paragraph's length (and updates the
+        // value used for validation), so an offset can't point past that paragraph's text.
+        private void UpdateParagraphOffsetBounds()
+        {
+            if (_paragraphLengths is null)
+            {
+                return;
+            }
+            int index = (int)_paragraph.Value - 1;
+            int length = index >= 0 && index < _paragraphLengths.Count ? _paragraphLengths[index] : 0;
+            _maxOffset = length;
+            _start.Maximum = length; // NumericUpDown clamps its value down if it now exceeds the maximum
+            _stop.Maximum = length;
         }
 
         // Show only the location fields relevant to this document type; the rest collapse (their
@@ -169,7 +208,7 @@ namespace PhilterDesktop
             }
             if (maxOffset > 0 && stop > maxOffset)
             {
-                return $"The stop character can't be past the end of the document (length {maxOffset}).";
+                return $"The stop character can't be past the end of the text (length {maxOffset}).";
             }
             return null;
         }

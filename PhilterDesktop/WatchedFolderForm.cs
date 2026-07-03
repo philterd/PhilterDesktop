@@ -26,6 +26,10 @@ namespace PhilterDesktop
     {
         private WatchedFolderEntity _entity = new();
 
+        // The other watched folders, used to enforce a unique output folder (so two folders can't write
+        // same-named redacted files into one directory and overwrite each other).
+        private IReadOnlyList<WatchedFolderEntity> _existingFolders = Array.Empty<WatchedFolderEntity>();
+
         /// <summary>The configured watched folder (valid after the dialog returns <see cref="DialogResult.OK"/>).</summary>
         public WatchedFolderEntity WatchedFolder => _entity;
 
@@ -37,13 +41,15 @@ namespace PhilterDesktop
             ModernTheme.MakePrimary(_ok);
         }
 
-        public WatchedFolderForm(PolicyRepository policyRepository, ContextRepository contextRepository, WatchedFolderEntity? existing = null)
+        public WatchedFolderForm(PolicyRepository policyRepository, ContextRepository contextRepository,
+            WatchedFolderEntity? existing = null, IReadOnlyList<WatchedFolderEntity>? existingFolders = null)
             : this()
         {
             ArgumentNullException.ThrowIfNull(policyRepository);
             ArgumentNullException.ThrowIfNull(contextRepository);
 
             _entity = existing ?? new WatchedFolderEntity();
+            _existingFolders = existingFolders ?? Array.Empty<WatchedFolderEntity>();
             if (existing is not null)
             {
                 Text = "Edit Watched Folder";
@@ -162,6 +168,21 @@ namespace PhilterDesktop
                 (PathUtils.IsSameOrInside(output, folder) || PathUtils.IsSameOrInside(folder, output)))
             {
                 Warn("When watching subfolders, the output folder must be outside the watched folder (and vice versa).");
+                return;
+            }
+            WatchedFolderEntity? conflict = WatchedFolderValidation.OutputConflict(_existingFolders, output, _entity.Id);
+            if (conflict is not null)
+            {
+                Warn($"Another watched folder ('{conflict.FolderPath}') already writes to this output folder. " +
+                     "Choose a different output folder so redacted files from the two folders can't overwrite each other.");
+                return;
+            }
+            WatchedFolderEntity? overlap = WatchedFolderValidation.OutputOverlapsWatchedFolder(_existingFolders, output, _entity.Id);
+            if (overlap is not null)
+            {
+                Warn($"This output folder is inside (or the same as) another watched folder ('{overlap.FolderPath}'). " +
+                     "Redacted files written there would be watched and redacted again. Choose an output folder that " +
+                     "isn't a watched folder (or nested in one).");
                 return;
             }
 

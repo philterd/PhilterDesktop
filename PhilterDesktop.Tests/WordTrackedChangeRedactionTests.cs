@@ -23,9 +23,10 @@ using PhileasPolicy = Phileas.Policy.Policy;
 namespace PhilterDesktop.Tests
 {
     /// <summary>
-    /// Tracked-change *deleted* text (&lt;w:delText&gt; inside &lt;w:del&gt;) must never be reintroduced
-    /// as normal text when a paragraph is rebuilt during redaction. The
-    /// redactor builds a paragraph's text from its &lt;w:t&gt; runs only, so deleted text is excluded.
+    /// Tracked-change *deleted* text (&lt;w:delText&gt; inside &lt;w:del&gt;) must never be reintroduced as
+    /// normal text when a paragraph is rebuilt (the paragraph view is its &lt;w:t&gt; runs only), and its
+    /// PII must still be redacted in place — a separate pass filters the deleted text so it can't ship
+    /// verbatim and be recovered with "Reject Changes".
     /// </summary>
     public sealed class WordTrackedChangeRedactionTests : IDisposable
     {
@@ -102,9 +103,10 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
-        public void Detect_DoesNotFlagDeletedText()
+        public void Detect_FlagsPiiInDeletedText()
         {
-            // A deletion that itself contains an e-mail must not be detected (it isn't live text).
+            // A deletion that itself contains an e-mail is PII that would ship verbatim, so detection
+            // (used by the preview and post-redaction verification) must flag it.
             string input = NewPath("in.docx");
             string body =
                 "<w:p><w:r><w:t xml:space=\"preserve\">keep </w:t></w:r>" +
@@ -114,7 +116,7 @@ namespace PhilterDesktop.Tests
 
             List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
 
-            Assert.DoesNotContain(spans, s => s.Text.Contains("@example.com"));
+            Assert.Contains(spans, s => s.Text.Contains("@example.com"));
         }
 
         [Fact]

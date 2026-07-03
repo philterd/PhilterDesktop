@@ -34,6 +34,15 @@ be removed — for example, a photograph or signature on a scanned ID — review
 those areas yourself. When the sensitive area is always in the **same place** (as on a form or a
 standard ID), a **PDF region** can black it out automatically; see below.
 
+## Comments, sticky notes, and form fields
+
+A PDF can carry text outside the page itself — **annotations** (sticky notes, comments, free-text
+call-outs, highlights) and **interactive form fields**. Because Philter Desktop flattens each page to a
+picture, this text is **not drawn into the redacted PDF**, so it is removed from the output. Philter
+Desktop still **scans that text and reports** any sensitive information it finds there, and — since the
+content itself isn't carried over — it adds a note after redaction reminding you that the PDF had
+annotations or form fields. If you needed that annotation or form content, go back to the **original**.
+
 ## Always blacking out a fixed area (PDF regions)
 
 Sometimes the same spot on every page should always be covered — a signature block, a photo on an ID
