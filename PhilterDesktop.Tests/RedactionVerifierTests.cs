@@ -309,7 +309,7 @@ namespace PhilterDesktop.Tests
         {
             // Integration: redact the real header/footer sample, then verify — the body's PII is redacted
             // (clean) but the result is honestly qualified because the source had headers/footers.
-            string input = Path.Combine(AppContext.BaseDirectory, "sample-documents", "header-footer.rtf");
+            string input = Path.Combine(AppContext.BaseDirectory, "test-documents", "header-footer.rtf");
             Assert.True(File.Exists(input), $"Sample not found: {input}");
             string output = Path_("hf_redacted.rtf");
 

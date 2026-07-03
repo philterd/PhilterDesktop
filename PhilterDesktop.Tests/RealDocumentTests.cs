@@ -31,14 +31,14 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// Integration tests over <b>real, public-domain documents</b> kept locally in the repo's
-    /// <c>real-documents/</c> folder (which is gitignored, so these documents are never committed).
+    /// <c>test-documents/real-documents/</c> folder (which is gitignored, so these documents are never committed).
     ///
     /// Each document has a sibling <c>&lt;name&gt;.expected.json</c> manifest describing the policy to
     /// run and the detections that must be found (and, for <c>.docx</c>/<c>.pdf</c>, whether the redacted
     /// output must be metadata-free). The test loads the document, runs the real detection/redaction
     /// pipeline, and verifies the result against the manifest.
     ///
-    /// When <c>real-documents/</c> is absent or empty (e.g. CI, a fresh clone), every case
+    /// When <c>test-documents/real-documents/</c> is absent or empty (e.g. CI, a fresh clone), every case
     /// <see cref="Skip"/>s, so the suite stays green without the documents.
     /// </summary>
     public sealed class RealDocumentTests
@@ -66,7 +66,7 @@ namespace PhilterDesktop.Tests
             var dir = new DirectoryInfo(AppContext.BaseDirectory);
             while (dir is not null)
             {
-                string candidate = Path.Combine(dir.FullName, "real-documents");
+                string candidate = Path.Combine(dir.FullName, "test-documents", "real-documents");
                 if (Directory.Exists(candidate))
                 {
                     return candidate;
@@ -96,7 +96,7 @@ namespace PhilterDesktop.Tests
         public async Task RealDocument_MatchesExpectations(string manifestPath)
         {
             Skip.If(string.IsNullOrEmpty(manifestPath),
-                "No documents in real-documents/ (the folder is gitignored; add documents + .expected.json manifests to run these).");
+                "No documents in test-documents/real-documents/ (the folder is gitignored; add documents + .expected.json manifests to run these).");
 
             Manifest manifest = JsonSerializer.Deserialize<Manifest>(File.ReadAllText(manifestPath), JsonOptions)!;
             string docPath = Path.Combine(Path.GetDirectoryName(manifestPath)!, manifest.File);

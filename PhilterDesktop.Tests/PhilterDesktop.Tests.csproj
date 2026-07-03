@@ -26,8 +26,8 @@
 
   <!-- Sample documents redacted by the integration tests. -->
   <ItemGroup>
-    <None Include="..\sample-documents\**\*">
-      <Link>sample-documents\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    <None Include="..\test-documents\**\*" Exclude="..\test-documents\real-documents\**\*">
+      <Link>test-documents\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

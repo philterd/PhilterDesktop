@@ -493,7 +493,7 @@ namespace PhilterDesktop.Tests
 
             // Place the file before starting the watcher so it's picked up by the deterministic initial
             // scan (avoids relying on a live FileSystemWatcher event, which can lag under parallel load).
-            string sample = Path.Combine(AppContext.BaseDirectory, "sample-documents", "header-footer.rtf");
+            string sample = Path.Combine(AppContext.BaseDirectory, "test-documents", "header-footer.rtf");
             Assert.True(File.Exists(sample), $"Sample not found: {sample}");
             File.Copy(sample, Path.Combine(watched, "letter.rtf"));
 

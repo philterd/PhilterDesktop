@@ -29,7 +29,7 @@ namespace PhilterDesktop.Tests
         [Fact]
         public void PdfToImage_RendersSamplePdf()
         {
-            string input = Path.Combine(AppContext.BaseDirectory, "sample-documents", "test1.pdf");
+            string input = Path.Combine(AppContext.BaseDirectory, "test-documents", "test1.pdf");
             Assert.True(File.Exists(input), $"Sample not found: {input}");
 
             byte[] bytes = File.ReadAllBytes(input);

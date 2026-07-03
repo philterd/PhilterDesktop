@@ -37,13 +37,13 @@ namespace PhilterDesktop.Tests
         };
 
         private static string ScannedPdf =>
-            Path.Combine(AppContext.BaseDirectory, "sample-documents", "scanned-medical-record.pdf");
+            Path.Combine(AppContext.BaseDirectory, "test-documents", "scanned-medical-record.pdf");
 
         [SkippableFact]
         public async Task SettingsOverload_WithOcrEnabled_RedactsScannedPdf()
         {
             Skip.If(OcrEngine.TryCreateFromUserProfileLanguages() is null, "No OCR language is available on this machine.");
-            Skip.IfNot(File.Exists(ScannedPdf), "scanned-medical-record.pdf not found in sample-documents.");
+            Skip.IfNot(File.Exists(ScannedPdf), "scanned-medical-record.pdf not found in test-documents.");
 
             string output = Path.Combine(Path.GetTempPath(), "ocr-on-" + Guid.NewGuid().ToString("N") + ".pdf");
             try
@@ -63,7 +63,7 @@ namespace PhilterDesktop.Tests
         [SkippableFact]
         public async Task SettingsOverload_WithOcrDisabled_LeavesScannedPdfUnredacted()
         {
-            Skip.IfNot(File.Exists(ScannedPdf), "scanned-medical-record.pdf not found in sample-documents.");
+            Skip.IfNot(File.Exists(ScannedPdf), "scanned-medical-record.pdf not found in test-documents.");
 
             string output = Path.Combine(Path.GetTempPath(), "ocr-off-" + Guid.NewGuid().ToString("N") + ".pdf");
             try

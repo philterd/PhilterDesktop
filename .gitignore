@@ -89,4 +89,4 @@ screenshots/
 
 # Real public-domain test documents (kept local, not committed). Integration tests that use them
 # skip automatically when the directory is empty/absent.
-real-documents/
+test-documents/real-documents/

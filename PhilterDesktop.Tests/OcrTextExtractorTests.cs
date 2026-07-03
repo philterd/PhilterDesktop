@@ -94,8 +94,8 @@ namespace PhilterDesktop.Tests
             Skip.If(OcrEngine.TryCreateFromUserProfileLanguages() is null,
                 "No OCR language is available on this machine.");
 
-            string path = Path.Combine(AppContext.BaseDirectory, "sample-documents", "scanned-letter.pdf");
-            Skip.IfNot(File.Exists(path), "scanned-letter.pdf not found in sample-documents.");
+            string path = Path.Combine(AppContext.BaseDirectory, "test-documents", "scanned-letter.pdf");
+            Skip.IfNot(File.Exists(path), "scanned-letter.pdf not found in test-documents.");
             byte[] pdf = File.ReadAllBytes(path);
 
             // It must genuinely be image-only: the PDF text layer yields nothing, so OCR is required.
@@ -112,8 +112,8 @@ namespace PhilterDesktop.Tests
             Skip.If(OcrEngine.TryCreateFromUserProfileLanguages() is null,
                 "No OCR language is available on this machine.");
 
-            string source = Path.Combine(AppContext.BaseDirectory, "sample-documents", "scanned-medical-record.pdf");
-            Skip.IfNot(File.Exists(source), "scanned-medical-record.pdf not found in sample-documents.");
+            string source = Path.Combine(AppContext.BaseDirectory, "test-documents", "scanned-medical-record.pdf");
+            Skip.IfNot(File.Exists(source), "scanned-medical-record.pdf not found in test-documents.");
 
             // SSN is a regex filter (no on-device model needed), so it isolates the OCR->detect->redact path.
             var policy = new Phileas.Policy.Policy
@@ -142,8 +142,8 @@ namespace PhilterDesktop.Tests
             Skip.If(OcrEngine.TryCreateFromUserProfileLanguages() is null,
                 "No OCR language is available on this machine.");
 
-            string path = Path.Combine(AppContext.BaseDirectory, "sample-documents", "scanned-201-pages.pdf");
-            Skip.IfNot(File.Exists(path), "scanned-201-pages.pdf not found in sample-documents.");
+            string path = Path.Combine(AppContext.BaseDirectory, "test-documents", "scanned-201-pages.pdf");
+            Skip.IfNot(File.Exists(path), "scanned-201-pages.pdf not found in test-documents.");
             byte[] pdf = File.ReadAllBytes(path);
 
             // The pre-flight count must see all 201 image-only pages as needing OCR.

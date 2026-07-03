@@ -24,7 +24,7 @@ using PhileasPolicy = Phileas.Policy.Policy;
 namespace PhilterDesktop.Tests
 {
     /// <summary>
-    /// Integration tests that redact the sample documents in <c>sample-documents/</c> end-to-end
+    /// Integration tests that redact the sample documents in <c>test-documents/</c> end-to-end
     /// through <see cref="RedactionService"/> and compare the redacted output to the expected
     /// result. The .txt and .docx samples contain identical text, so they must redact identically.
     /// </summary>
@@ -36,7 +36,7 @@ namespace PhilterDesktop.Tests
         private const string ExpectedRedacted =
             "This is a sample document with an email {{{REDACTED-email-address}}} and SSN {{{REDACTED-ssn}}}.";
 
-        private static readonly string SamplesDir = Path.Combine(AppContext.BaseDirectory, "sample-documents");
+        private static readonly string SamplesDir = Path.Combine(AppContext.BaseDirectory, "test-documents");
 
         private readonly string _tempDir;
 
@@ -460,7 +460,7 @@ namespace PhilterDesktop.Tests
         [Fact]
         public async Task WordSample_Chart_RedactsTitleAndCachedSeriesValues()
         {
-            // sample-documents/chart-sample.docx embeds a chart whose title, cached series name, and cached
+            // test-documents/chart-sample.docx embeds a chart whose title, cached series name, and cached
             // category value carry PII the cells do not.
             string input = Path.Combine(SamplesDir, "chart-sample.docx");
             Assert.True(File.Exists(input), $"Sample not found: {input}");
