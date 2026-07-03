@@ -136,6 +136,13 @@ channels and control header/footer redaction. All options below are **on by defa
   the pivot table are scanned and redacted, and the cache is set to **refresh from the (redacted) source
   when the file is opened** in Excel. On by default. Redacting the cache changes what the pivot shows
   until Excel refreshes it. Verification checks the pivot cache either way.
+- **Remove embedded objects Philter Desktop can't inspect** *(Word and Excel)*. A document can **embed
+  another file** (Insert → Object) — an Excel workbook, a Word document, or a legacy/other-program object.
+  An embedded **Word or Excel** document is **redacted in place** (its own content is scanned like any
+  other document); but an object Philter Desktop **can't read** — a legacy OLE object or another
+  program's file — can't be inspected, and would otherwise ship with its original content. When on, those
+  un-inspectable objects are **removed**. On by default. When off, they are kept and **verification warns**
+  that their content wasn't inspected — so you can review them yourself.
 
 Leave these on unless you have a specific reason to keep that information. They affect only what's
 stored in the redacted copy; your original document is never changed, and you should still review the

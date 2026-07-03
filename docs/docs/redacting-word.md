@@ -13,6 +13,16 @@ of the plotted series and category values), which is on by default and controlle
 [Settings → Microsoft Office](settings.md#microsoft-office-tab). Because a chart is only scanned as text
 through your policy, a sensitive value it's built from is removed only when the policy detects it, and
 redacting a cached value can change how the chart looks — so **review any charts** in the redacted copy.
+A chart also carries an **embedded copy of its source spreadsheet** (what opens when you choose "Edit
+Data"), which can hold more than the chart plots — for example a column that isn't shown. Philter Desktop
+redacts that embedded workbook too; if one can't be read as a spreadsheet, it is removed so an unredacted
+copy can't ship.
+
+More generally, a document can **embed another file** (Insert → Object). An embedded **Word or Excel**
+document is redacted in place. An embedded object Philter Desktop **can't read** — a legacy OLE object or
+another program's file — can't be inspected; by default it is **removed** so its original content can't
+ship. You can turn that off in [Settings → Microsoft Office](settings.md#microsoft-office-tab), in which
+case such objects are kept and verification warns you to review them.
 
 Header and footer scanning covers the **text** that repeats at the top and bottom of each page (for
 example "Confidential — John Doe"); it does not remove images or logos placed in a header/footer. It is

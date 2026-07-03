@@ -58,7 +58,32 @@ namespace PhilterDesktop
             bool redactHeadersFooters = true,
             bool redactCharts = true,
             bool redactFormulaValues = true,
-            bool redactPivotCaches = true)
+            bool redactPivotCaches = true,
+            bool removeUninspectableEmbeddedObjects = true)
+        {
+            // Redact in memory, then write once so a failure never leaves the original or a partial file.
+            using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
+            using SpreadsheetDocument document = SpreadsheetDocument.Open(buffer, isEditable: true);
+            List<RedactionSpanEntity> captured = RedactOpenDocument(
+                document, filter, fullyRedactedColumns, worksheet,
+                redactHeadersFooters, redactCharts, redactFormulaValues, redactPivotCaches);
+            // A chart's embedded source workbook holds the FULL source data, not just the plotted cache —
+            // recurse into it. Done only at top level so it can't recurse endlessly through nested embeds.
+            int embedOrder = captured.Count;
+            ScanChartEmbeddings(document.WorkbookPart, worksheet, filter, write: true, captured, ref embedOrder);
+            // General embedded objects (xl/embeddings): recurse into embedded workbooks/docs, remove opaque ones.
+            EmbeddedObjectRedactor.Process(document, filter, removeUninspectableEmbeddedObjects, write: true, captured, ref embedOrder);
+            document.Save();
+            SafeOutput.Write(outputPath, buffer.ToArray());
+            return captured;
+        }
+
+        // The in-memory redaction core, shared by Redact(path) and the embedded-workbook recursion. Does NOT
+        // itself descend into embedded workbooks — that pass runs only at the top level (see ScanChartEmbeddings).
+        private static List<RedactionSpanEntity> RedactOpenDocument(
+            SpreadsheetDocument document, Func<string, TextFilterResult> filter,
+            IReadOnlyCollection<int>? fullyRedactedColumns, string? worksheet,
+            bool redactHeadersFooters, bool redactCharts, bool redactFormulaValues, bool redactPivotCaches)
         {
             var fullColumns = fullyRedactedColumns is { Count: > 0 }
                 ? new HashSet<int>(fullyRedactedColumns)
@@ -69,14 +94,9 @@ namespace PhilterDesktop
             int cellIndex = 0;
             bool anyCellRedacted = false;
 
-            // Redact in memory, then write once so a failure never leaves the original or a partial file.
-            using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
-            using SpreadsheetDocument document = SpreadsheetDocument.Open(buffer, isEditable: true);
             WorkbookPart? workbookPart = document.WorkbookPart;
             if (workbookPart is null)
             {
-                document.Save();
-                SafeOutput.Write(outputPath, buffer.ToArray());
                 return captured;
             }
 
@@ -190,9 +210,6 @@ namespace PhilterDesktop
             // Redacted cells were converted to inline strings; blank any shared-string entries they left
             // orphaned so the original text can't be recovered from xl/sharedStrings.xml.
             PruneUnusedSharedStrings(workbookPart);
-
-            document.Save(); // flush into the buffer
-            SafeOutput.Write(outputPath, buffer.ToArray());
             return captured;
         }
 
@@ -205,6 +222,17 @@ namespace PhilterDesktop
         public static List<RedactionSpanEntity> Detect(string inputPath, Func<string, TextFilterResult> filter, string? worksheet = null, bool redactHeadersFooters = true, bool redactCharts = true)
         {
             using SpreadsheetDocument document = SpreadsheetDocument.Open(inputPath, isEditable: false);
+            List<RedactionSpanEntity> captured = DetectOpenDocument(document, filter, worksheet, redactHeadersFooters, redactCharts);
+            int embedOrder = captured.Count;
+            ScanChartEmbeddings(document.WorkbookPart, worksheet, filter, write: false, captured, ref embedOrder);
+            EmbeddedObjectRedactor.Process(document, filter, removeUninspectable: false, write: false, captured, ref embedOrder);
+            return captured;
+        }
+
+        private static List<RedactionSpanEntity> DetectOpenDocument(
+            SpreadsheetDocument document, Func<string, TextFilterResult> filter, string? worksheet,
+            bool redactHeadersFooters, bool redactCharts)
+        {
             WorkbookPart? workbookPart = document.WorkbookPart;
             var captured = new List<RedactionSpanEntity>();
             if (workbookPart is null)
@@ -269,7 +297,7 @@ namespace PhilterDesktop
         }
 
         public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, string? worksheet = null,
-            Func<string, TextFilterResult>? policyFilter = null, bool redactHeadersFooters = true, bool redactCharts = true, bool redactFormulaValues = true, bool redactPivotCaches = true)
+            Func<string, TextFilterResult>? policyFilter = null, bool redactHeadersFooters = true, bool redactCharts = true, bool redactFormulaValues = true, bool redactPivotCaches = true, bool removeUninspectableEmbeddedObjects = true)
         {
             Dictionary<int, List<RedactionSpanEntity>> byCell = spans
                 .GroupBy(s => s.ParagraphIndex)
@@ -346,6 +374,8 @@ namespace PhilterDesktop
                 {
                     ScanPivotCaches(workbookPart, policyFilter, write: true, captured: null, ref order);
                 }
+                ScanChartEmbeddings(workbookPart, worksheet, policyFilter, write: true, captured: null, ref order);
+                EmbeddedObjectRedactor.Process(document, policyFilter, removeUninspectableEmbeddedObjects, write: true, captured: null, ref order);
             }
 
             PruneUnusedSharedStrings(workbookPart);
@@ -653,6 +683,164 @@ namespace PhilterDesktop
                 {
                     ChartRedactor.RedactChartPart(chartPart, filter, write, captured, ref order);
                 }
+            }
+        }
+
+        // A chart's embedded source workbook (referenced by c:externalData) is the authoritative source data —
+        // it typically holds more than the plotted cache (unplotted PII columns) and ships verbatim. Recurse
+        // the redactor into each. Runs only at the top level, so it can't recurse endlessly through nested embeds.
+        private static void ScanChartEmbeddings(
+            WorkbookPart? workbookPart, string? worksheet, Func<string, TextFilterResult> filter,
+            bool write, List<RedactionSpanEntity>? captured, ref int order)
+        {
+            if (workbookPart is null)
+            {
+                return;
+            }
+            foreach (WorksheetPart part in ProcessedWorksheetParts(workbookPart, worksheet))
+            {
+                DrawingsPart? drawings = part.DrawingsPart;
+                if (drawings is null)
+                {
+                    continue;
+                }
+                foreach (ChartPart chartPart in drawings.ChartParts)
+                {
+                    RedactChartEmbeddedWorkbooks(chartPart, filter, write, captured, ref order);
+                }
+            }
+        }
+
+        // Redacts (write:true) or detects (write:false) each embedded source workbook under a chart part —
+        // shared by the Excel and Word chart passes. On write, an embedded package that can't be parsed as a
+        // spreadsheet is removed (with its chart reference) so the unredacted copy can't ship.
+        internal static void RedactChartEmbeddedWorkbooks(
+            OpenXmlPart chartPart, Func<string, TextFilterResult> filter,
+            bool write, List<RedactionSpanEntity>? captured, ref int order)
+        {
+            foreach (EmbeddedPackagePart pkg in chartPart.GetPartsOfType<EmbeddedPackagePart>().ToList())
+            {
+                byte[] bytes;
+                try
+                {
+                    using Stream s = pkg.GetStream(FileMode.Open, FileAccess.Read);
+                    using var ms = new MemoryStream();
+                    s.CopyTo(ms);
+                    bytes = ms.ToArray();
+                }
+                catch
+                {
+                    continue;
+                }
+                if (bytes.Length == 0)
+                {
+                    continue;
+                }
+
+                if (!write)
+                {
+                    foreach (RedactionSpanEntity span in DetectEmbeddedBytes(bytes, filter))
+                    {
+                        span.Order = order++;
+                        span.ParagraphIndex = -1;
+                        captured?.Add(span);
+                    }
+                    continue;
+                }
+
+                byte[]? redacted = RedactEmbeddedBytes(bytes, filter, out List<RedactionSpanEntity> embSpans);
+                if (redacted is not null)
+                {
+                    try
+                    {
+                        using Stream s = pkg.GetStream(FileMode.Create, FileAccess.Write);
+                        s.Write(redacted, 0, redacted.Length);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                    foreach (RedactionSpanEntity span in embSpans)
+                    {
+                        span.Order = order++;
+                        span.ParagraphIndex = -1;
+                        captured?.Add(span);
+                    }
+                }
+                else
+                {
+                    RemoveChartEmbedding(chartPart, pkg, captured, ref order); // can't parse it -> strip it
+                }
+            }
+        }
+
+        // Redacts an embedded .xlsx's bytes with the standard passes (no further embedded recursion). Returns
+        // the redacted bytes, or null when the package can't be opened as a spreadsheet.
+        internal static byte[]? RedactEmbeddedBytes(byte[] bytes, Func<string, TextFilterResult> filter, out List<RedactionSpanEntity> spans)
+        {
+            spans = new List<RedactionSpanEntity>();
+            try
+            {
+                using var ms = new MemoryStream();
+                ms.Write(bytes, 0, bytes.Length);
+                ms.Position = 0;
+                using (SpreadsheetDocument document = SpreadsheetDocument.Open(ms, isEditable: true))
+                {
+                    spans = RedactOpenDocument(document, filter, null, null, true, true, true, true);
+                    document.Save();
+                }
+                return ms.ToArray();
+            }
+            catch
+            {
+                spans = new List<RedactionSpanEntity>();
+                return null;
+            }
+        }
+
+        internal static List<RedactionSpanEntity> DetectEmbeddedBytes(byte[] bytes, Func<string, TextFilterResult> filter)
+        {
+            try
+            {
+                using var ms = new MemoryStream();
+                ms.Write(bytes, 0, bytes.Length);
+                ms.Position = 0;
+                using SpreadsheetDocument document = SpreadsheetDocument.Open(ms, isEditable: false);
+                return DetectOpenDocument(document, filter, null, true, true);
+            }
+            catch
+            {
+                return new List<RedactionSpanEntity>();
+            }
+        }
+
+        // Fallback when an embedded package can't be redacted: sever the chart's external-data reference and
+        // delete the part, so the unredacted copy is gone (the chart still renders from its redacted cache).
+        private static void RemoveChartEmbedding(OpenXmlPart chartPart, EmbeddedPackagePart pkg, List<RedactionSpanEntity>? captured, ref int order)
+        {
+            try
+            {
+                if (chartPart.RootElement is OpenXmlPartRootElement root)
+                {
+                    foreach (OpenXmlElement ext in root.Descendants().Where(e => e.LocalName == "externalData").ToList())
+                    {
+                        ext.Remove();
+                    }
+                    root.Save();
+                }
+                chartPart.DeletePart(pkg);
+                captured?.Add(new RedactionSpanEntity
+                {
+                    Order = order++,
+                    ParagraphIndex = -1,
+                    Text = "[embedded workbook]",
+                    Replacement = "[removed]",
+                    Classification = "embedded-workbook-removed"
+                });
+            }
+            catch
+            {
+                // best effort — a stripping quirk must never fail the redaction
             }
         }
 

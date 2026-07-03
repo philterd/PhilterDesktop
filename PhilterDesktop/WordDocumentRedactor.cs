@@ -117,7 +117,16 @@ namespace PhilterDesktop
         public static List<RedactionSpanEntity> Detect(string inputPath, Func<string, TextFilterResult> filter, bool redactHeadersFooters = true, bool redactCharts = true)
         {
             using WordprocessingDocument document = WordprocessingDocument.Open(inputPath, isEditable: false);
+            List<RedactionSpanEntity> captured = DetectOpenWordDocument(document, filter, redactHeadersFooters, redactCharts);
+            int embedOrder = captured.Count;
+            EmbeddedObjectRedactor.Process(document, filter, removeUninspectable: false, write: false, captured, ref embedOrder);
+            return captured;
+        }
 
+        private static List<RedactionSpanEntity> DetectOpenWordDocument(
+            WordprocessingDocument document, Func<string, TextFilterResult> filter,
+            bool redactHeadersFooters = true, bool redactCharts = true)
+        {
             var captured = new List<RedactionSpanEntity>();
             int order = 0;
             int paragraphIndex = 0;
@@ -164,16 +173,31 @@ namespace PhilterDesktop
         /// the result to <paramref name="outputPath"/>, and returns the applied spans (paragraph-indexed).
         /// The input file is left untouched.
         /// </summary>
-        public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool highlight = false, bool redactHeadersFooters = true, bool redactCharts = true)
+        public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool highlight = false, bool redactHeadersFooters = true, bool redactCharts = true, bool removeEmbeddedObjects = true)
         {
             // Redact in memory, then write the output once so a failure never leaves the original or a
             // partial file.
+            using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
+            using WordprocessingDocument document = WordprocessingDocument.Open(buffer, isEditable: true);
+            List<RedactionSpanEntity> captured = RedactOpenWordDocument(document, filter, highlight, redactHeadersFooters, redactCharts);
+            // Embedded objects (Insert > Object) carry their own content — recurse into embedded Word/Excel
+            // documents, and remove opaque objects we can't inspect. Top level only, so it can't loop endlessly.
+            int embedOrder = captured.Count;
+            EmbeddedObjectRedactor.Process(document, filter, removeEmbeddedObjects, write: true, captured, ref embedOrder);
+            document.Save(); // flush into the buffer
+            SafeOutput.Write(outputPath, buffer.ToArray());
+            return captured;
+        }
+
+        // The in-memory Word redaction core, shared by Redact(path) and the embedded-document recursion. Does
+        // NOT itself descend into embedded objects — that pass runs only at the top level.
+        internal static List<RedactionSpanEntity> RedactOpenWordDocument(
+            WordprocessingDocument document, Func<string, TextFilterResult> filter, bool highlight,
+            bool redactHeadersFooters, bool redactCharts)
+        {
             var captured = new List<RedactionSpanEntity>();
             int order = 0;
             int paragraphIndex = 0;
-
-            using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
-            using WordprocessingDocument document = WordprocessingDocument.Open(buffer, isEditable: true);
 
             foreach ((Paragraph paragraph, bool isHeaderFooter) in EnumerateTargets(document).ToList())
             {
@@ -225,9 +249,55 @@ namespace PhilterDesktop
                 captured.AddRange(ScanCharts(document, filter, write: true, ref order));
             }
             RemoveThreadedCommentDuplicate(document);
-            document.Save(); // flush into the buffer
-            SafeOutput.Write(outputPath, buffer.ToArray());
             return captured;
+        }
+
+        // Redacts an embedded .docx's bytes with the standard passes (no further embedded-object recursion).
+        // Returns the redacted bytes, or null when the package can't be opened as a Word document.
+        internal static byte[]? RedactEmbeddedBytes(byte[] bytes, Func<string, TextFilterResult> filter, out List<RedactionSpanEntity> spans)
+        {
+            spans = new List<RedactionSpanEntity>();
+            try
+            {
+                using var ms = new MemoryStream();
+                ms.Write(bytes, 0, bytes.Length);
+                ms.Position = 0;
+                using (WordprocessingDocument document = WordprocessingDocument.Open(ms, isEditable: true))
+                {
+                    if (document.MainDocumentPart is null)
+                    {
+                        return null;
+                    }
+                    spans = RedactOpenWordDocument(document, filter, highlight: false, redactHeadersFooters: true, redactCharts: true);
+                    document.Save();
+                }
+                return ms.ToArray();
+            }
+            catch
+            {
+                spans = new List<RedactionSpanEntity>();
+                return null;
+            }
+        }
+
+        internal static List<RedactionSpanEntity> DetectEmbeddedBytes(byte[] bytes, Func<string, TextFilterResult> filter)
+        {
+            try
+            {
+                using var ms = new MemoryStream();
+                ms.Write(bytes, 0, bytes.Length);
+                ms.Position = 0;
+                using WordprocessingDocument document = WordprocessingDocument.Open(ms, isEditable: false);
+                if (document.MainDocumentPart is null)
+                {
+                    return new List<RedactionSpanEntity>();
+                }
+                return DetectOpenWordDocument(document, filter);
+            }
+            catch
+            {
+                return new List<RedactionSpanEntity>();
+            }
         }
 
         /// <summary>
@@ -237,7 +307,7 @@ namespace PhilterDesktop
         /// start/stop offsets within that paragraph.
         /// </summary>
         public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, bool highlight,
-            Func<string, TextFilterResult>? drawingFilter = null, bool redactCharts = true)
+            Func<string, TextFilterResult>? drawingFilter = null, bool redactCharts = true, bool removeEmbeddedObjects = true)
         {
             Dictionary<int, List<RedactionSpanEntity>> byParagraph = spans
                 .GroupBy(s => s.ParagraphIndex)
@@ -283,6 +353,7 @@ namespace PhilterDesktop
                 {
                     ScanCharts(document, drawingFilter, write: true, ref order);
                 }
+                EmbeddedObjectRedactor.Process(document, drawingFilter, removeEmbeddedObjects, write: true, captured: null, ref order);
             }
             RemoveThreadedCommentDuplicate(document);
             document.Save(); // flush into the buffer
@@ -535,6 +606,9 @@ namespace PhilterDesktop
                 if (part is ChartPart chartPart)
                 {
                     ChartRedactor.RedactChartPart(chartPart, filter, write, captured, ref order);
+                    // The chart's embedded source workbook is the authoritative source data (recoverable via
+                    // Edit Data), holding more than the plotted cache — recurse the spreadsheet redactor into it.
+                    XlsxRedactor.RedactChartEmbeddedWorkbooks(chartPart, filter, write, captured, ref order);
                 }
             }
             return captured;

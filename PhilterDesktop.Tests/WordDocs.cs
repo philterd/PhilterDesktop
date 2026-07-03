@@ -352,6 +352,135 @@ namespace PhilterDesktop.Tests
             writer.Write(xml);
         }
 
+        /// <summary>
+        /// Creates a .docx with a native chart whose <b>embedded source workbook</b> (an <c>EmbeddedPackagePart</c>
+        /// referenced by <c>c:externalData</c>) is <paramref name="workbookBytes"/>. The plotted cache holds
+        /// <paramref name="category"/>/42, but the embedded workbook can carry more (e.g. an unplotted PII column).
+        /// </summary>
+        public static void CreateWithChartEmbeddedWorkbook(string path, byte[] workbookBytes, string seriesName, string category)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+
+            ChartPart chartPart = main.AddNewPart<ChartPart>();
+            EmbeddedPackagePart pkg = chartPart.AddNewPart<EmbeddedPackagePart>(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "rIdEmb");
+            using (Stream es = pkg.GetStream(FileMode.Create, FileAccess.Write)) { es.Write(workbookBytes, 0, workbookBytes.Length); }
+
+            string chartXml =
+                "<c:chartSpace xmlns:c=\"http://schemas.openxmlformats.org/drawingml/2006/chart\" " +
+                "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" " +
+                "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">" +
+                "<c:chart><c:plotArea><c:layout/><c:barChart><c:barDir val=\"col\"/>" +
+                "<c:ser><c:idx val=\"0\"/><c:order val=\"0\"/>" +
+                $"<c:tx><c:strRef><c:f>Sheet1!$B$1</c:f><c:strCache><c:ptCount val=\"1\"/><c:pt idx=\"0\"><c:v>{seriesName}</c:v></c:pt></c:strCache></c:strRef></c:tx>" +
+                $"<c:cat><c:strRef><c:f>Sheet1!$A$2</c:f><c:strCache><c:ptCount val=\"1\"/><c:pt idx=\"0\"><c:v>{category}</c:v></c:pt></c:strCache></c:strRef></c:cat>" +
+                "<c:val><c:numRef><c:f>Sheet1!$B$2</c:f><c:numCache><c:ptCount val=\"1\"/><c:pt idx=\"0\"><c:v>42</c:v></c:pt></c:numCache></c:numRef></c:val>" +
+                "</c:ser></c:barChart></c:plotArea></c:chart>" +
+                "<c:externalData r:id=\"rIdEmb\"><c:autoUpdate val=\"0\"/></c:externalData></c:chartSpace>";
+            WritePart(chartPart, chartXml);
+            string relId = main.GetIdOfPart(chartPart);
+
+            string bodyXml =
+                "<w:p><w:r><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\">" +
+                "<wp:extent cx=\"5000000\" cy=\"3000000\"/><wp:docPr id=\"1\" name=\"Chart 1\"/>" +
+                "<a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/chart\">" +
+                $"<c:chart xmlns:c=\"http://schemas.openxmlformats.org/drawingml/2006/chart\" r:id=\"{relId}\"/>" +
+                "</a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>";
+            string xml = $"<w:document {DocNamespaces}><w:body>{bodyXml}</w:body></w:document>";
+            using Stream stream = main.GetStream(FileMode.Create, FileAccess.Write);
+            using var writer = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            writer.Write(xml);
+        }
+
+        /// <summary>True if the first chart part still has an embedded package (source workbook).</summary>
+        public static bool HasChartEmbeddedWorkbook(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            ChartPart? cp = doc.MainDocumentPart!.GetPartsOfType<ChartPart>().FirstOrDefault();
+            return cp?.GetPartsOfType<EmbeddedPackagePart>().Any() == true;
+        }
+
+        /// <summary>All cell text of the embedded source workbook behind the first chart part (empty if none).</summary>
+        public static string EmbeddedChartWorkbookAllText(string path)
+        {
+            byte[]? bytes;
+            using (WordprocessingDocument doc = WordprocessingDocument.Open(path, false))
+            {
+                ChartPart? cp = doc.MainDocumentPart!.GetPartsOfType<ChartPart>().FirstOrDefault();
+                EmbeddedPackagePart? pkg = cp?.GetPartsOfType<EmbeddedPackagePart>().FirstOrDefault();
+                if (pkg is null) { return string.Empty; }
+                using Stream s = pkg.GetStream(FileMode.Open, FileAccess.Read);
+                using var ms = new MemoryStream();
+                s.CopyTo(ms);
+                bytes = ms.ToArray();
+            }
+            string tmp = Path.Combine(Path.GetTempPath(), "emb-" + Guid.NewGuid().ToString("N") + ".xlsx");
+            try { File.WriteAllBytes(tmp, bytes); return SpreadsheetTestHelper.AllText(tmp); }
+            finally { try { File.Delete(tmp); } catch { /* best effort */ } }
+        }
+
+        // --- Embedded objects (Insert > Object) --------------------------------------
+
+        /// <summary>Creates a .docx with an embedded package (an Office document) of the given content type.</summary>
+        public static void CreateWithEmbeddedPackage(string path, byte[] bytes, string contentType, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            var body = new Body();
+            foreach (string t in bodyParagraphs) { body.AppendChild(Para(t)); }
+            main.Document = new Document(body);
+            EmbeddedPackagePart pkg = main.AddNewPart<EmbeddedPackagePart>(contentType, "rIdEmb");
+            using Stream s = pkg.GetStream(FileMode.Create, FileAccess.Write);
+            s.Write(bytes, 0, bytes.Length);
+        }
+
+        /// <summary>
+        /// Creates a .docx with an embedded object Philter Desktop can't inspect — modeled as an embedded
+        /// package with a non-Word/Excel content type (e.g. PowerPoint), which the redactor treats as opaque.
+        /// </summary>
+        public static void CreateWithEmbeddedOleObject(string path, byte[] bytes, params string[] bodyParagraphs) =>
+            CreateWithEmbeddedPackage(path, bytes, "application/vnd.openxmlformats-officedocument.presentationml.presentation", bodyParagraphs);
+
+        /// <summary>True if the document still carries any embedded package or OLE object.</summary>
+        public static bool HasAnyEmbeddedObject(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            MainDocumentPart main = doc.MainDocumentPart!;
+            return main.GetPartsOfType<EmbeddedPackagePart>().Any() || main.GetPartsOfType<EmbeddedObjectPart>().Any();
+        }
+
+        private static byte[]? FirstEmbeddedPackageBytes(string path)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Open(path, false);
+            EmbeddedPackagePart? pkg = doc.MainDocumentPart!.GetPartsOfType<EmbeddedPackagePart>().FirstOrDefault();
+            if (pkg is null) { return null; }
+            using Stream s = pkg.GetStream(FileMode.Open, FileAccess.Read);
+            using var ms = new MemoryStream();
+            s.CopyTo(ms);
+            return ms.ToArray();
+        }
+
+        /// <summary>All cell text of the first embedded package, read as an .xlsx (empty if none).</summary>
+        public static string EmbeddedPackageAllTextAsXlsx(string path)
+        {
+            byte[]? bytes = FirstEmbeddedPackageBytes(path);
+            if (bytes is null) { return string.Empty; }
+            string tmp = Path.Combine(Path.GetTempPath(), "embpkg-" + Guid.NewGuid().ToString("N") + ".xlsx");
+            try { File.WriteAllBytes(tmp, bytes); return SpreadsheetTestHelper.AllText(tmp); }
+            finally { try { File.Delete(tmp); } catch { /* best effort */ } }
+        }
+
+        /// <summary>All body text of the first embedded package, read as a .docx (empty if none).</summary>
+        public static string EmbeddedPackageAllTextAsDocx(string path)
+        {
+            byte[]? bytes = FirstEmbeddedPackageBytes(path);
+            if (bytes is null) { return string.Empty; }
+            string tmp = Path.Combine(Path.GetTempPath(), "embpkg-" + Guid.NewGuid().ToString("N") + ".docx");
+            try { File.WriteAllBytes(tmp, bytes); return AllBodyText(tmp); }
+            finally { try { File.Delete(tmp); } catch { /* best effort */ } }
+        }
+
         /// <summary>Creates a .docx with a chart part whose title rich-text is the supplied &lt;a:p&gt; XML.</summary>
         public static void CreateWithChart(string path, string titleAParagraphXml, params string[] bodyParagraphs)
         {

@@ -110,6 +110,8 @@ namespace PhilterDesktop
                     ".rtf" when sourcePath is not null && RtfFidelity.HasDroppedContent(sourcePath) => RtfFidelity.VerificationCaveat,
                     ".pdf" when sourcePath is not null && PdfFidelity.HasDroppedContent(sourcePath) => PdfFidelity.VerificationCaveat,
                     ".eml" or ".msg" => EmailRedactor.FidelityCaveat(outputPath),
+                    ".docx" when EmbeddedObjectRedactor.DocxHasUninspectable(outputPath) => EmbeddedObjectRedactor.KeptCaveat,
+                    ".xlsx" when EmbeddedObjectRedactor.XlsxHasUninspectable(outputPath) => EmbeddedObjectRedactor.KeptCaveat,
                     _ => null
                 };
 

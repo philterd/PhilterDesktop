@@ -209,7 +209,8 @@ namespace PhilterDesktop
                 redactOfficeHeadersFooters: settings.RedactOfficeHeadersFooters,
                 redactOfficeCharts: settings.RedactOfficeCharts,
                 redactCachedFormulaValues: settings.RedactCachedFormulaValues,
-                redactPivotCaches: settings.RedactPivotCaches);
+                redactPivotCaches: settings.RedactPivotCaches,
+                removeUninspectableEmbeddedObjects: settings.RemoveUninspectableEmbeddedObjects);
 
         /// <summary>
         /// Redacts <paramref name="inputPath"/> to <paramref name="outputPath"/> using
@@ -238,7 +239,8 @@ namespace PhilterDesktop
             bool redactOfficeHeadersFooters = true,
             bool redactOfficeCharts = true,
             bool redactCachedFormulaValues = true,
-            bool redactPivotCaches = true)
+            bool redactPivotCaches = true,
+            bool removeUninspectableEmbeddedObjects = true)
         {
             filterService ??= new FilterService();
 
@@ -275,7 +277,8 @@ namespace PhilterDesktop
                     text => filterService.Filter(policy, context, 0, text),
                     highlight,
                     redactOfficeHeadersFooters,
-                    redactOfficeCharts));
+                    redactOfficeCharts,
+                    removeUninspectableEmbeddedObjects));
                 if (wordScrub != WordScrubOptions.None)
                 {
                     await Task.Run(() => DocumentMetadata.ScrubDocx(outputPath, wordScrub));
@@ -318,7 +321,8 @@ namespace PhilterDesktop
                     redactOfficeHeadersFooters,
                     redactOfficeCharts,
                     redactCachedFormulaValues,
-                    redactPivotCaches));
+                    redactPivotCaches,
+                    removeUninspectableEmbeddedObjects));
                 // Strip identifying document properties so the redacted spreadsheet doesn't leak them
                 // (same "Remove document metadata" setting that governs Word).
                 if (wordScrub.HasFlag(WordScrubOptions.Metadata))
@@ -391,6 +395,7 @@ namespace PhilterDesktop
             bool redactOfficeCharts = true,
             bool redactCachedFormulaValues = true,
             bool redactPivotCaches = true,
+            bool removeUninspectableEmbeddedObjects = true,
             string? worksheet = null)
         {
             filterService ??= new FilterService();
@@ -400,7 +405,7 @@ namespace PhilterDesktop
                     Func<string, TextFilterResult>? docxDrawingFilter = policy is null
                         ? null
                         : text => filterService.Filter(policy, string.Empty, 0, text);
-                    await Task.Run(() => WordDocumentRedactor.ApplySpans(sourcePath, outputPath, spans, highlight, docxDrawingFilter, redactOfficeCharts));
+                    await Task.Run(() => WordDocumentRedactor.ApplySpans(sourcePath, outputPath, spans, highlight, docxDrawingFilter, redactOfficeCharts, removeUninspectableEmbeddedObjects));
                     if (wordScrub != WordScrubOptions.None)
                     {
                         await Task.Run(() => DocumentMetadata.ScrubDocx(outputPath, wordScrub));
@@ -422,7 +427,7 @@ namespace PhilterDesktop
                     Func<string, TextFilterResult>? xlsxFilter = policy is null
                         ? null
                         : text => filterService.Filter(policy, string.Empty, 0, text);
-                    await Task.Run(() => XlsxRedactor.ApplySpans(sourcePath, outputPath, spans, worksheet, xlsxFilter, redactOfficeHeadersFooters, redactOfficeCharts, redactCachedFormulaValues, redactPivotCaches));
+                    await Task.Run(() => XlsxRedactor.ApplySpans(sourcePath, outputPath, spans, worksheet, xlsxFilter, redactOfficeHeadersFooters, redactOfficeCharts, redactCachedFormulaValues, redactPivotCaches, removeUninspectableEmbeddedObjects));
                     if (wordScrub.HasFlag(WordScrubOptions.Metadata))
                     {
                         await Task.Run(() => DocumentMetadata.ScrubXlsx(outputPath));

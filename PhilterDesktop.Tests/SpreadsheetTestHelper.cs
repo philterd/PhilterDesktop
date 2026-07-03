@@ -405,6 +405,51 @@ namespace PhilterDesktop.Tests
                 .Any(p => (p.RootElement as PivotCacheDefinition)?.RefreshOnLoad?.Value == true);
         }
 
+        /// <summary>Creates a workbook with an embedded package (an Office document) on the first worksheet.</summary>
+        public static void CreateXlsxWithEmbeddedPackage(string path, IReadOnlyList<string?[]> rows, byte[] pkgBytes, string contentType)
+        {
+            CreateXlsx(path, rows);
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: true);
+            WorksheetPart wsPart = doc.WorkbookPart!.WorksheetParts.First(); // embeddings hang off the sheet
+            EmbeddedPackagePart pkg = wsPart.AddNewPart<EmbeddedPackagePart>(contentType, "rIdEmb");
+            using Stream s = pkg.GetStream(FileMode.Create, FileAccess.Write);
+            s.Write(pkgBytes, 0, pkgBytes.Length);
+        }
+
+        /// <summary>
+        /// Creates a workbook with an embedded object Philter Desktop can't inspect — modeled as an embedded
+        /// package with a non-Word/Excel content type (e.g. PowerPoint), which the redactor treats as opaque.
+        /// </summary>
+        public static void CreateXlsxWithEmbeddedOleObject(string path, IReadOnlyList<string?[]> rows, byte[] bytes) =>
+            CreateXlsxWithEmbeddedPackage(path, rows, bytes, "application/vnd.openxmlformats-officedocument.presentationml.presentation");
+
+        /// <summary>True if the workbook still carries any embedded package or OLE object (on any worksheet).</summary>
+        public static bool XlsxHasAnyEmbeddedObject(string path)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            return doc.WorkbookPart!.WorksheetParts.Any(ws =>
+                ws.GetPartsOfType<EmbeddedPackagePart>().Any() || ws.GetPartsOfType<EmbeddedObjectPart>().Any());
+        }
+
+        /// <summary>All cell text of the first embedded package on any worksheet, read as an .xlsx (empty if none).</summary>
+        public static string XlsxEmbeddedPackageAllText(string path)
+        {
+            byte[]? bytes;
+            using (SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false))
+            {
+                EmbeddedPackagePart? pkg = doc.WorkbookPart!.WorksheetParts
+                    .SelectMany(ws => ws.GetPartsOfType<EmbeddedPackagePart>()).FirstOrDefault();
+                if (pkg is null) { return string.Empty; }
+                using Stream s = pkg.GetStream(FileMode.Open, FileAccess.Read);
+                using var ms = new MemoryStream();
+                s.CopyTo(ms);
+                bytes = ms.ToArray();
+            }
+            string tmp = Path.Combine(Path.GetTempPath(), "xlemb-" + Guid.NewGuid().ToString("N") + ".xlsx");
+            try { File.WriteAllBytes(tmp, bytes); return AllText(tmp); }
+            finally { try { File.Delete(tmp); } catch { /* best effort */ } }
+        }
+
         /// <summary>The concatenated drawing XML (shapes/text boxes) of every worksheet (for redaction checks).</summary>
         public static string AllDrawingXml(string path)
         {

@@ -49,6 +49,7 @@ namespace PhilterDesktop
         private readonly bool _redactOfficeCharts = true;
         private readonly bool _redactCachedFormulaValues = true;
         private readonly bool _redactPivotCaches = true;
+        private readonly bool _removeUninspectableEmbeddedObjects = true;
         private readonly bool _outputToOriginalLocation = true;
         private readonly string _customOutputFolder = string.Empty;
         private readonly string _globalAlwaysRedact = string.Empty;
@@ -78,6 +79,7 @@ namespace PhilterDesktop
             bool redactOfficeCharts = true,
             bool redactCachedFormulaValues = true,
             bool redactPivotCaches = true,
+            bool removeUninspectableEmbeddedObjects = true,
             bool outputToOriginalLocation = true,
             string? customOutputFolder = null,
             string? globalAlwaysRedact = null,
@@ -99,6 +101,7 @@ namespace PhilterDesktop
             _redactOfficeCharts = redactOfficeCharts;
             _redactCachedFormulaValues = redactCachedFormulaValues;
             _redactPivotCaches = redactPivotCaches;
+            _removeUninspectableEmbeddedObjects = removeUninspectableEmbeddedObjects;
             _outputToOriginalLocation = outputToOriginalLocation;
             _customOutputFolder = customOutputFolder ?? string.Empty;
             _globalAlwaysRedact = globalAlwaysRedact ?? string.Empty;
@@ -464,6 +467,7 @@ namespace PhilterDesktop
                     redactOfficeCharts: _redactOfficeCharts,
                     redactCachedFormulaValues: _redactCachedFormulaValues,
                     redactPivotCaches: _redactPivotCaches,
+                    removeUninspectableEmbeddedObjects: _removeUninspectableEmbeddedObjects,
                     worksheet: version.Worksheet);
             }
             catch (Exception ex)

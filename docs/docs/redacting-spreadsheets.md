@@ -27,7 +27,9 @@ redacted like any cell (text only; a picture placed on the sheet is not read). *
 hidden copy of their source data (the pivot cache); its cached values are scanned and redacted as well,
 and the pivot is set to refresh from the redacted source when the file is next opened in Excel. This is
 on by default and can be turned off in
-[Settings → Microsoft Office](settings.md#microsoft-office-tab). The **print header and
+[Settings → Microsoft Office](settings.md#microsoft-office-tab). A workbook can also **embed another
+file** (Insert → Object): an embedded Excel or Word document is redacted in place, while an object Philter
+Desktop can't read is removed by default (or kept with a warning — see the same settings tab). The **print header and
 footer** — the text set to appear at the top and bottom of each
 printed page (for example "Confidential — John Doe") — is scanned and redacted too. **Only text is
 redacted** there: an image or logo placed in a header/footer is left as it is, and Excel field codes

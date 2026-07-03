@@ -489,6 +489,52 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public async Task DocxSample_EmbeddedWorkbook_IsRedactedInPlace()
+        {
+            // docx-embedded-workbook.docx: a Word doc with an embedded Excel workbook (Insert > Object) with PII.
+            string input = Path.Combine(SamplesDir, "docx-embedded-workbook.docx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "docx-embed_redacted.docx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            string embedded = WordDocs.EmbeddedPackageAllTextAsXlsx(output);
+            Assert.DoesNotContain(Email, embedded);
+            Assert.DoesNotContain("123-45-6789", embedded);
+        }
+
+        [Fact]
+        public async Task XlsxSample_EmbeddedWorkbook_IsRedactedInPlace()
+        {
+            // xlsx-embedded-workbook.xlsx: a workbook with an embedded Excel workbook carrying PII.
+            string input = Path.Combine(SamplesDir, "xlsx-embedded-workbook.xlsx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "xlsx-embed_redacted.xlsx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            string embedded = SpreadsheetTestHelper.XlsxEmbeddedPackageAllText(output);
+            Assert.DoesNotContain(Email, embedded);
+            Assert.DoesNotContain("123-45-6789", embedded);
+        }
+
+        [Fact]
+        public async Task DocxSample_ChartEmbeddedWorkbook_RedactsUnplottedSourcePii()
+        {
+            // docx-chart-embedded-workbook.docx: a chart whose embedded source workbook has an unplotted
+            // email + SSN column — a full copy of source data behind the chart.
+            string input = Path.Combine(SamplesDir, "docx-chart-embedded-workbook.docx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "chart-embed_redacted.docx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            string embedded = WordDocs.EmbeddedChartWorkbookAllText(output);
+            Assert.DoesNotContain(Email, embedded);
+            Assert.DoesNotContain("123-45-6789", embedded);
+        }
+
+        [Fact]
         public async Task DocxSample_FieldCodes_RedactsInstructionEmailAndBodySsn()
         {
             // docx-with-field-codes.docx: a HYPERLINK field whose instruction carries an email + a body SSN.

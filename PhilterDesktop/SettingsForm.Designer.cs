@@ -60,6 +60,7 @@ namespace PhilterDesktop
             chkRedactCharts = new CheckBox();
             chkRedactFormulaValues = new CheckBox();
             chkRedactPivotCaches = new CheckBox();
+            chkRemoveEmbeddedObjects = new CheckBox();
             lblWordInfo = new Label();
             tabWord = new TabPage();
             groupBoxLogging = new GroupBox();
@@ -287,6 +288,16 @@ namespace PhilterDesktop
             chkRedactPivotCaches.TabIndex = 8;
             chkRedactPivotCaches.Text = "Redact pivot table cache (Excel)";
             chkRedactPivotCaches.UseVisualStyleBackColor = true;
+            //
+            // chkRemoveEmbeddedObjects
+            //
+            chkRemoveEmbeddedObjects.AutoSize = true;
+            chkRemoveEmbeddedObjects.Location = new Point(13, 312);
+            chkRemoveEmbeddedObjects.Name = "chkRemoveEmbeddedObjects";
+            chkRemoveEmbeddedObjects.Size = new Size(430, 19);
+            chkRemoveEmbeddedObjects.TabIndex = 9;
+            chkRemoveEmbeddedObjects.Text = "Remove embedded objects Philter Desktop can't inspect (Word and Excel)";
+            chkRemoveEmbeddedObjects.UseVisualStyleBackColor = true;
             // 
             // lblWordInfo
             // 
@@ -310,10 +321,11 @@ namespace PhilterDesktop
             tabWord.Controls.Add(chkRedactCharts);
             tabWord.Controls.Add(chkRedactFormulaValues);
             tabWord.Controls.Add(chkRedactPivotCaches);
+            tabWord.Controls.Add(chkRemoveEmbeddedObjects);
             tabWord.Location = new Point(4, 24);
             tabWord.Name = "tabWord";
             tabWord.Padding = new Padding(3);
-            tabWord.Size = new Size(693, 318);
+            tabWord.Size = new Size(693, 348);
             tabWord.TabIndex = 4;
             tabWord.Text = "Microsoft Office";
             tabWord.UseVisualStyleBackColor = true;
@@ -403,7 +415,7 @@ namespace PhilterDesktop
             tabControl.Margin = new Padding(2);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(701, 346);
+            tabControl.Size = new Size(701, 376);
             tabControl.TabIndex = 0;
             // 
             // tabGeneral
@@ -977,7 +989,7 @@ namespace PhilterDesktop
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCancel; // Esc cancels
-            ClientSize = new Size(712, 396);
+            ClientSize = new Size(712, 426);
             Controls.Add(btnCancel);
             Controls.Add(btnSave);
             Controls.Add(tabControl);
@@ -1043,6 +1055,7 @@ namespace PhilterDesktop
         private CheckBox chkRedactCharts;
         private CheckBox chkRedactFormulaValues;
         private CheckBox chkRedactPivotCaches;
+        private CheckBox chkRemoveEmbeddedObjects;
         private CheckBox chkVerifyAfterRedaction;
         private RadioButton rdoVerifySamePolicy;
         private RadioButton rdoVerifyBroadPolicy;

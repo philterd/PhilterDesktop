@@ -136,6 +136,16 @@ namespace PhilterData
         public bool RedactPivotCaches { get; set; } = true;
 
         /// <summary>
+        /// Remove <b>embedded objects that Philter Desktop can't inspect</b> from redacted Word (.docx) and
+        /// Excel (.xlsx) files. An embedded object (Insert &gt; Object) carries its own full content; an
+        /// embedded Word/Excel document is redacted in place, but an opaque OLE object (a legacy binary
+        /// object, or another program's document) can't be read and would otherwise ship verbatim. When on,
+        /// those un-inspectable objects are deleted. On by default. When off, they are kept and verification
+        /// warns that their content wasn't inspected.
+        /// </summary>
+        public bool RemoveUninspectableEmbeddedObjects { get; set; } = true;
+
+        /// <summary>
         /// Remove identifying technical headers from redacted email output (the originating IP, the
         /// sending mail client, and the server-hop trail): <c>Received</c>, <c>Return-Path</c>,
         /// <c>Message-Id</c>, <c>User-Agent</c>, <c>DKIM-Signature</c>, authentication results, and all
