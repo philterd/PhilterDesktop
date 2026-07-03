@@ -58,6 +58,7 @@ namespace PhilterDesktop
             chkScrubHiddenText = new CheckBox();
             chkRedactHeadersFooters = new CheckBox();
             chkRedactCharts = new CheckBox();
+            chkRedactFormulaValues = new CheckBox();
             lblWordInfo = new Label();
             tabWord = new TabPage();
             groupBoxLogging = new GroupBox();
@@ -264,6 +265,16 @@ namespace PhilterDesktop
             chkRedactCharts.TabIndex = 6;
             chkRedactCharts.Text = "Redact charts — titles, labels, and cached data values (Word and Excel)";
             chkRedactCharts.UseVisualStyleBackColor = true;
+            //
+            // chkRedactFormulaValues
+            //
+            chkRedactFormulaValues.AutoSize = true;
+            chkRedactFormulaValues.Location = new Point(13, 256);
+            chkRedactFormulaValues.Name = "chkRedactFormulaValues";
+            chkRedactFormulaValues.Size = new Size(360, 19);
+            chkRedactFormulaValues.TabIndex = 7;
+            chkRedactFormulaValues.Text = "Redact cached formula values (Excel)";
+            chkRedactFormulaValues.UseVisualStyleBackColor = true;
             // 
             // lblWordInfo
             // 
@@ -285,6 +296,7 @@ namespace PhilterDesktop
             tabWord.Controls.Add(chkScrubHiddenText);
             tabWord.Controls.Add(chkRedactHeadersFooters);
             tabWord.Controls.Add(chkRedactCharts);
+            tabWord.Controls.Add(chkRedactFormulaValues);
             tabWord.Location = new Point(4, 24);
             tabWord.Name = "tabWord";
             tabWord.Padding = new Padding(3);
@@ -1004,6 +1016,7 @@ namespace PhilterDesktop
         private CheckBox chkScrubHiddenText;
         private CheckBox chkRedactHeadersFooters;
         private CheckBox chkRedactCharts;
+        private CheckBox chkRedactFormulaValues;
         private CheckBox chkVerifyAfterRedaction;
         private RadioButton rdoVerifySamePolicy;
         private RadioButton rdoVerifyBroadPolicy;

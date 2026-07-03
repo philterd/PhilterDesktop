@@ -508,6 +508,33 @@ namespace PhilterDesktop.Tests
             return cell is not null && cell.CellFormula is null && cell.DataType is null;
         }
 
+        /// <summary>True if the given cell still holds a formula (an <c>&lt;f&gt;</c> element).</summary>
+        public static bool IsFormulaCell(string path, string cellReference)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            Cell? cell = doc.WorkbookPart!.WorksheetParts
+                .SelectMany(w => w.Worksheet?.Descendants<Cell>() ?? Enumerable.Empty<Cell>())
+                .FirstOrDefault(c => c.CellReference?.Value == cellReference);
+            return cell?.CellFormula is not null;
+        }
+
+        /// <summary>The cell's cached/stored value (<c>&lt;v&gt;</c>), or null when the cell has none.</summary>
+        public static string? CachedValue(string path, string cellReference)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            Cell? cell = doc.WorkbookPart!.WorksheetParts
+                .SelectMany(w => w.Worksheet?.Descendants<Cell>() ?? Enumerable.Empty<Cell>())
+                .FirstOrDefault(c => c.CellReference?.Value == cellReference);
+            return cell?.CellValue?.InnerText;
+        }
+
+        /// <summary>True if the workbook is set to fully recalculate on open.</summary>
+        public static bool FullCalcOnLoad(string path)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            return doc.WorkbookPart!.Workbook?.GetFirstChild<CalculationProperties>()?.FullCalculationOnLoad?.Value == true;
+        }
+
         /// <summary>True if the given cell is still a boolean-typed cell.</summary>
         public static bool IsBooleanCell(string path, string cellReference)
         {

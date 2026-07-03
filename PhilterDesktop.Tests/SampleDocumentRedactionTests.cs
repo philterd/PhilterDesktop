@@ -489,6 +489,38 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public async Task XlsxSample_FormulaCache_Enabled_RedactsCachedResultAndClearsCaches()
+        {
+            // formula-cache.xlsx: A2 = an email, B2 = "=A2" whose cache duplicates it, C2 = a benign formula.
+            string input = Path.Combine(SamplesDir, "formula-cache.xlsx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "formula-cache_redacted.xlsx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx"); // formula redaction on by default
+
+            Assert.DoesNotContain(Email, SpreadsheetTestHelper.AllText(output)); // the cached copy is gone too
+            Assert.False(SpreadsheetTestHelper.IsFormulaCell(output, "B2"));     // redacted cache -> static value
+            Assert.True(string.IsNullOrEmpty(SpreadsheetTestHelper.CachedValue(output, "C2"))); // benign cache cleared
+            Assert.True(SpreadsheetTestHelper.FullCalcOnLoad(output));           // Excel recomputes on open
+        }
+
+        [Fact]
+        public async Task XlsxSample_FormulaCache_Disabled_LeavesCachedResult()
+        {
+            string input = Path.Combine(SamplesDir, "formula-cache.xlsx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "formula-cache_keep.xlsx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx",
+                redactCachedFormulaValues: false);
+
+            // The plain cell is still redacted, but the formula's cached copy of the email survives.
+            Assert.False(SpreadsheetTestHelper.IsFormulaCell(output, "A2"));
+            Assert.Equal(Email, SpreadsheetTestHelper.CachedValue(output, "B2"));
+            Assert.True(SpreadsheetTestHelper.IsFormulaCell(output, "B2"));
+        }
+
+        [Fact]
         public async Task PdfSample_Annotations_ReportsPiiInAnnotationsAndFormFields()
         {
             // pdf-with-annotations.pdf hides an SSN in a FreeText annotation and an email in a form field —

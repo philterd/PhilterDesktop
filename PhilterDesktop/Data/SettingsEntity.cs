@@ -116,6 +116,16 @@ namespace PhilterData
         public bool RedactOfficeCharts { get; set; } = true;
 
         /// <summary>
+        /// Redact the <b>cached results of formula cells</b> in Excel (.xlsx). A formula stores a copy of
+        /// its last computed value, which can duplicate PII from a now-redacted cell and ships as plaintext
+        /// until Excel recalculates. When on, a formula whose cached result holds detected PII becomes a
+        /// static redacted value, and the remaining formula caches are cleared with the workbook set to
+        /// recalculate on open. On by default. A side effect: a program that reads the file <em>without</em>
+        /// recalculating (i.e. not Excel) sees blank formula values until it recalculates.
+        /// </summary>
+        public bool RedactCachedFormulaValues { get; set; } = true;
+
+        /// <summary>
         /// Remove identifying technical headers from redacted email output (the originating IP, the
         /// sending mail client, and the server-hop trail): <c>Received</c>, <c>Return-Path</c>,
         /// <c>Message-Id</c>, <c>User-Agent</c>, <c>DKIM-Signature</c>, authentication results, and all

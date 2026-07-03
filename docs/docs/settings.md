@@ -121,6 +121,15 @@ channels and control header/footer redaction. All options below are **on by defa
   so **review charts in the redacted copy**. Charts are only scanned as text through your policy, so a
   sensitive value a chart is built from is removed only when the policy detects it. **Applies to both
   Word (`.docx`) and Excel (`.xlsx`).**
+- **Redact cached formula values** *(Excel only)*. An Excel formula keeps a **copy of its last computed
+  result** inside the file. That copy can duplicate sensitive information from a cell you're redacting
+  (for example a formula `=A2` that pointed at a redacted address), and it stays in the file as plain
+  text until Excel recalculates. When on, a formula whose cached result holds detected sensitive
+  information becomes a **static redacted value**, and the remaining formula caches are **cleared** with
+  the workbook set to recalculate when it's next opened in Excel. One side effect: a program that reads
+  the file **without recalculating** (i.e. not Excel) sees empty formula results until it recalculates —
+  turn this off if that matters for how the file is consumed, and be aware a formula's cached copy of a
+  redacted value may then remain. Verification checks formula caches either way.
 
 Leave these on unless you have a specific reason to keep that information. They affect only what's
 stored in the redacted copy; your original document is never changed, and you should still review the

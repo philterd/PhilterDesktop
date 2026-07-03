@@ -56,7 +56,8 @@ namespace PhilterDesktop
             IReadOnlyCollection<int>? fullyRedactedColumns = null,
             string? worksheet = null,
             bool redactHeadersFooters = true,
-            bool redactCharts = true)
+            bool redactCharts = true,
+            bool redactFormulaValues = true)
         {
             var fullColumns = fullyRedactedColumns is { Count: > 0 }
                 ? new HashSet<int>(fullyRedactedColumns)
@@ -65,6 +66,7 @@ namespace PhilterDesktop
             var captured = new List<RedactionSpanEntity>();
             int order = 0;
             int cellIndex = 0;
+            bool anyCellRedacted = false;
 
             // Redact in memory, then write once so a failure never leaves the original or a partial file.
             using MemoryStream buffer = SafeOutput.ReadToEditableStream(inputPath);
@@ -81,9 +83,12 @@ namespace PhilterDesktop
             {
                 int currentIndex = cellIndex++;
 
-                if (cell.CellFormula is not null)
+                // A formula cell stores a cached copy of its last computed value, which can duplicate PII
+                // from a now-redacted cell. When the option is off, leave formula cells untouched; when on,
+                // scan (and, below, staticize) the cached value like any other cell.
+                if (cell.CellFormula is not null && !redactFormulaValues)
                 {
-                    continue; // computed value — don't touch
+                    continue;
                 }
 
                 string original = GetCellText(cell, workbookPart);
@@ -100,7 +105,8 @@ namespace PhilterDesktop
                     {
                         continue; // keep the column's header label; only clear the data cells
                     }
-                    SetCellText(cell, ColumnReplacement);
+                    SetCellText(cell, ColumnReplacement); // also drops any formula (RemoveAllChildren)
+                    anyCellRedacted = true;
                     var entity = new RedactionSpanEntity
                     {
                         Order = order++,
@@ -126,7 +132,8 @@ namespace PhilterDesktop
                     continue;
                 }
 
-                SetCellText(cell, result.FilteredText);
+                SetCellText(cell, result.FilteredText); // for a formula cell this drops the formula too
+                anyCellRedacted = true;
                 foreach (Span s in result.Spans
                     .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
                     .OrderBy(s => s.CharacterStart))
@@ -162,6 +169,14 @@ namespace PhilterDesktop
                 ScanCharts(workbookPart, worksheet, filter, write: true, captured, ref order);
             }
 
+            // A formula whose cached result was detected as PII was already staticized above. Any remaining
+            // formula cache could still hold a stale copy derived from a redacted cell, so clear the caches
+            // and make Excel recalculate on open. Only when a cell was actually redacted (else leave intact).
+            if (redactFormulaValues && anyCellRedacted)
+            {
+                ClearFormulaCachesAndForceRecalc(workbookPart, worksheet);
+            }
+
             // Redacted cells were converted to inline strings; blank any shared-string entries they left
             // orphaned so the original text can't be recovered from xl/sharedStrings.xml.
             PruneUnusedSharedStrings(workbookPart);
@@ -192,7 +207,9 @@ namespace PhilterDesktop
             foreach ((Cell cell, bool _, int _) in EnumerateCells(workbookPart, worksheet))
             {
                 int currentIndex = cellIndex++;
-                if (cell.CellFormula is not null || !IsScannableCell(cell))
+                // Scan formula cells' cached results too — regardless of the redaction option — so a
+                // residual PII value left in a formula cache is still caught by verification.
+                if (!IsScannableCell(cell))
                 {
                     continue;
                 }
@@ -239,7 +256,7 @@ namespace PhilterDesktop
         }
 
         public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, string? worksheet = null,
-            Func<string, TextFilterResult>? policyFilter = null, bool redactHeadersFooters = true, bool redactCharts = true)
+            Func<string, TextFilterResult>? policyFilter = null, bool redactHeadersFooters = true, bool redactCharts = true, bool redactFormulaValues = true)
         {
             Dictionary<int, List<RedactionSpanEntity>> byCell = spans
                 .GroupBy(s => s.ParagraphIndex)
@@ -257,10 +274,13 @@ namespace PhilterDesktop
             }
 
             int cellIndex = 0;
+            bool anyCellRedacted = false;
             foreach ((Cell cell, bool _, int _) in EnumerateCells(workbookPart, worksheet))
             {
                 int currentIndex = cellIndex++;
-                if (cell.CellFormula is not null || !byCell.TryGetValue(currentIndex, out List<RedactionSpanEntity>? cellSpans))
+                // Formula cells are re-redacted (their cached value staticized) only when the option is on.
+                if ((cell.CellFormula is not null && !redactFormulaValues) ||
+                    !byCell.TryGetValue(currentIndex, out List<RedactionSpanEntity>? cellSpans))
                 {
                     continue;
                 }
@@ -284,8 +304,14 @@ namespace PhilterDesktop
                 List<ReplacementRange> resolved = RedactionSpanMath.ResolveNonOverlapping(ranges);
                 if (resolved.Count > 0)
                 {
-                    SetCellText(cell, ApplyRanges(original, resolved));
+                    SetCellText(cell, ApplyRanges(original, resolved)); // drops the formula for a formula cell
+                    anyCellRedacted = true;
                 }
+            }
+
+            if (redactFormulaValues && anyCellRedacted)
+            {
+                ClearFormulaCachesAndForceRecalc(workbookPart, worksheet);
             }
 
             // Header/footer text and comments aren't stored by position (they're not cells), so re-redact
@@ -610,6 +636,43 @@ namespace PhilterDesktop
                     ChartRedactor.RedactChartPart(chartPart, filter, write, captured, ref order);
                 }
             }
+        }
+
+        // Clears the cached result (<v>) of every formula cell in the processed worksheets and sets the
+        // workbook to fully recalculate on open. A formula's cache can duplicate a value from a cell that
+        // was just redacted, and that plaintext ships until recalculation — so drop the caches and let Excel
+        // recompute (correct, redacted) values when the file is opened.
+        private static void ClearFormulaCachesAndForceRecalc(WorkbookPart workbookPart, string? worksheet)
+        {
+            foreach ((Cell cell, bool _, int _) in EnumerateCells(workbookPart, worksheet))
+            {
+                if (cell.CellFormula is not null)
+                {
+                    cell.CellValue?.Remove();
+                }
+            }
+
+            Workbook? workbook = workbookPart.Workbook;
+            if (workbook is null)
+            {
+                return;
+            }
+            CalculationProperties? calcPr = workbook.GetFirstChild<CalculationProperties>();
+            if (calcPr is null)
+            {
+                calcPr = new CalculationProperties();
+                // calcPr follows definedNames (or, absent that, the sheets) in the workbook schema.
+                OpenXmlElement? anchor = workbook.GetFirstChild<DefinedNames>() ?? (OpenXmlElement?)workbook.GetFirstChild<Sheets>();
+                if (anchor is not null)
+                {
+                    workbook.InsertAfter(calcPr, anchor);
+                }
+                else
+                {
+                    workbook.AppendChild(calcPr);
+                }
+            }
+            calcPr.FullCalculationOnLoad = true;
         }
 
         // Runs the filter over one comment leaf text element (a comment run, an author, or a threaded-

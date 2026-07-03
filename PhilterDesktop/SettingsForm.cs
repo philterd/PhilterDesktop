@@ -473,6 +473,7 @@ namespace PhilterDesktop
             chkScrubHiddenText.Checked = _settings.ScrubWordHiddenText;
             chkRedactHeadersFooters.Checked = _settings.RedactOfficeHeadersFooters;
             chkRedactCharts.Checked = _settings.RedactOfficeCharts;
+            chkRedactFormulaValues.Checked = _settings.RedactCachedFormulaValues;
             chkOcrScannedPdfs.Checked = _settings.OcrScannedPdfs;
             btnOcrAdvanced.Enabled = _settings.OcrScannedPdfs;
             chkScrubEmailHeaders.Checked = _settings.ScrubEmailHeaders;
@@ -668,6 +669,7 @@ namespace PhilterDesktop
             _settings.ScrubWordHiddenText = chkScrubHiddenText.Checked;
             _settings.RedactOfficeHeadersFooters = chkRedactHeadersFooters.Checked;
             _settings.RedactOfficeCharts = chkRedactCharts.Checked;
+            _settings.RedactCachedFormulaValues = chkRedactFormulaValues.Checked;
             _settings.OcrScannedPdfs = chkOcrScannedPdfs.Checked;
             _settings.ScrubEmailHeaders = chkScrubEmailHeaders.Checked;
             _settings.RemoveCommonEmailHeaders = chkRemoveCommonHeaders.Checked;

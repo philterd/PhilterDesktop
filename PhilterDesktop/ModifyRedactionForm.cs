@@ -46,6 +46,7 @@ namespace PhilterDesktop
         private readonly bool _removeEmailAttachments;
         private readonly bool _redactOfficeHeadersFooters = true;
         private readonly bool _redactOfficeCharts = true;
+        private readonly bool _redactCachedFormulaValues = true;
         private readonly bool _outputToOriginalLocation = true;
         private readonly string _customOutputFolder = string.Empty;
         private readonly string _globalAlwaysRedact = string.Empty;
@@ -72,6 +73,7 @@ namespace PhilterDesktop
             bool removeEmailAttachments = false,
             bool redactOfficeHeadersFooters = true,
             bool redactOfficeCharts = true,
+            bool redactCachedFormulaValues = true,
             bool outputToOriginalLocation = true,
             string? customOutputFolder = null,
             string? globalAlwaysRedact = null,
@@ -90,6 +92,7 @@ namespace PhilterDesktop
             _removeEmailAttachments = removeEmailAttachments;
             _redactOfficeHeadersFooters = redactOfficeHeadersFooters;
             _redactOfficeCharts = redactOfficeCharts;
+            _redactCachedFormulaValues = redactCachedFormulaValues;
             _outputToOriginalLocation = outputToOriginalLocation;
             _customOutputFolder = customOutputFolder ?? string.Empty;
             _globalAlwaysRedact = globalAlwaysRedact ?? string.Empty;
@@ -452,6 +455,7 @@ namespace PhilterDesktop
                     removeEmailAttachments: _removeEmailAttachments,
                     redactOfficeHeadersFooters: _redactOfficeHeadersFooters,
                     redactOfficeCharts: _redactOfficeCharts,
+                    redactCachedFormulaValues: _redactCachedFormulaValues,
                     worksheet: version.Worksheet);
             }
             catch (Exception ex)

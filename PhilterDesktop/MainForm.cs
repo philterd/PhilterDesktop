@@ -2032,6 +2032,7 @@ namespace PhilterDesktop
                 modifySettings.ScrubEmailHeaders, modifySettings.RemoveCommonEmailHeaders,
                 modifySettings.RemoveEmailDateHeader, modifySettings.RemoveEmailAttachments,
                 modifySettings.RedactOfficeHeadersFooters, modifySettings.RedactOfficeCharts,
+                modifySettings.RedactCachedFormulaValues,
                 modifySettings.OutputToOriginalLocation, modifySettings.CustomOutputFolder,
                 modifySettings.GlobalAlwaysRedact, modifySettings.GlobalAlwaysIgnore);
             form.ShowDialog(this);

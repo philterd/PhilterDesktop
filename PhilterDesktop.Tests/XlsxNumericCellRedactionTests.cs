@@ -262,12 +262,12 @@ namespace PhilterDesktop.Tests
             Assert.DoesNotContain("123456789", SpreadsheetTestHelper.WorksheetXml(output));
         }
 
-        // --- Edge cases: cell kinds that must NOT be scanned ----------------------------------------
-
         [Fact]
-        public void FormulaCell_WithPiiLookingCachedValue_IsNotRedacted()
+        public void FormulaCell_WithPiiCachedValue_IsRedacted_AndStaticized()
         {
-            // Formula cells are skipped (their value is computed); even a PII-shaped cached value is left.
+            // A formula cell's cached result is scanned too: a PII-shaped cached value is redacted and the
+            // formula dropped so recalculation can't restore it. (Governed by the "Redact cached formula
+            // values" option, default on — see XlsxFormulaCacheTests for the on/off coverage.)
             string path = Path.Combine(_dir, "formula.xlsx");
             SpreadsheetTestHelper.CreateTyped(path, new SpreadsheetTestHelper.CellSpec?[][]
             {
@@ -277,8 +277,11 @@ namespace PhilterDesktop.Tests
 
             string output = Redact(path);
 
-            Assert.Contains("123456789", SpreadsheetTestHelper.AllText(output)); // formula value untouched
+            Assert.DoesNotContain("123456789", SpreadsheetTestHelper.AllText(output)); // cached PII redacted
+            Assert.False(SpreadsheetTestHelper.IsFormulaCell(output, "A2"));           // formula dropped -> static
         }
+
+        // --- Edge cases: cell kinds that must NOT be scanned ----------------------------------------
 
         [Fact]
         public void BooleanCell_IsLeftUntouched()

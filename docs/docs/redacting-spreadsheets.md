@@ -7,8 +7,15 @@ Philter Desktop redacts Excel files that end in **`.xlsx`** and comma-separated 
 
 Spreadsheets are redacted **cell by cell**: Philter Desktop looks at each cell on its own and removes
 the sensitive information it finds there, leaving the rest of the table (the layout, the columns, the
-numbers, the formulas) intact. An Excel file stays `.xlsx` and a CSV stays `.csv`. (For Excel,
-**formulas** are left alone, since their value is calculated rather than stored.)
+numbers, the formulas) intact. An Excel file stays `.xlsx` and a CSV stays `.csv`. (For Excel, a
+**formula** itself is left in place, since its value is calculated rather than typed in.)
+
+An Excel formula does, however, keep a **cached copy of its last result** inside the file, which can
+duplicate sensitive information from a cell you just redacted. By default Philter Desktop handles this:
+a formula whose cached result holds detected sensitive information is turned into a static redacted
+value, and other formula caches are cleared so Excel recomputes them when you open the file. You can turn
+this off in [Settings → Microsoft Office](settings.md#microsoft-office-tab); see that page for the
+trade-off (a tool that reads the file without recalculating would see empty formula results).
 
 For Excel, **cell comments** — both the classic comments and the newer **threaded comments** (with their
 author names) — are scanned and redacted too, so sensitive information tucked into a comment isn't left
