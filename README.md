@@ -5,6 +5,8 @@ plain text (`.txt`), Microsoft Word (`.docx`), and PDF (`.pdf`) documents.
 
 ![build-and-test](https://github.com/philterd/PhilterDesktop/actions/workflows/ci.yml/badge.svg)
 
+![Philter Desktop main window](images/main-form.png)
+
 ## Get Philter Desktop
 
 Philter Desktop is a **commercial product** from Philterd. The **official, signed build — with
