@@ -1,6 +1,8 @@
 images/*
 # The application icon is referenced by <ApplicationIcon> and must be available to the build (incl. CI).
 !images/PhilterDesktop.ico
+# The main-window screenshot is shown in README.md.
+!images/main-form.png
 *.swp
 *.*~
 project.lock.json
