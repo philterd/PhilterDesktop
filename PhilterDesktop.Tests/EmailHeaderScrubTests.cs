@@ -279,6 +279,66 @@ namespace PhilterDesktop.Tests
             Assert.Contains("john_smith_ssn.pdf", eml);
         }
 
+        // A multipart/related .eml whose HTML body references a cid: inline image (no attachment).
+        private const string SampleEmlWithInlineImage =
+            "From: Alice <alice@example.com>\r\n" +
+            "To: Bob <bob@example.com>\r\n" +
+            "Subject: With inline image\r\n" +
+            "Date: Tue, 01 Apr 2025 10:00:00 +0000\r\n" +
+            "MIME-Version: 1.0\r\n" +
+            "Content-Type: multipart/related; boundary=\"REL\"\r\n" +
+            "\r\n" +
+            "--REL\r\n" +
+            "Content-Type: text/html; charset=utf-8\r\n" +
+            "\r\n" +
+            "<html><body><p>Patient SSN 123-45-6789.</p><img src=\"cid:pic1\"></body></html>\r\n" +
+            "--REL\r\n" +
+            "Content-Type: image/png\r\n" +
+            "Content-Transfer-Encoding: base64\r\n" +
+            "Content-ID: <pic1>\r\n" +
+            "Content-Disposition: inline\r\n" +
+            "\r\n" +
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==\r\n" +
+            "--REL--\r\n";
+
+        private string WriteInlineImageEml()
+        {
+            string path = Path.Combine(_dir, "inline.eml");
+            File.WriteAllText(path, SampleEmlWithInlineImage);
+            return path;
+        }
+
+        [Fact]
+        public void HasInlineImages_TrueForInlineImage_FalseForPlain()
+        {
+            Assert.True(EmailRedactor.HasInlineImages(WriteInlineImageEml()));
+            Assert.False(EmailRedactor.HasInlineImages(WriteEml())); // a plain text-only email
+        }
+
+        [Fact]
+        public async Task InlineImage_RemovalOff_KeepsImage_AndRedactsBody()
+        {
+            string output = Path.Combine(_dir, "inline-keep.eml");
+            await RedactionService.RedactFileAsync(WriteInlineImageEml(), output, SsnPolicy(), "ctx"); // both off
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.Contains("image/png", eml);        // inline image kept
+            Assert.DoesNotContain("123-45-6789", eml); // body PII still redacted
+        }
+
+        [Fact]
+        public async Task InlineImage_RemovalOn_RemovesImage_AndNeutralizesCid()
+        {
+            string output = Path.Combine(_dir, "inline-remove.eml");
+            await RedactionService.RedactFileAsync(WriteInlineImageEml(), output, SsnPolicy(), "ctx",
+                removeEmailAttachments: true, removeEmailInlineImages: true);
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.DoesNotContain("image/png", eml);  // inline image removed
+            Assert.DoesNotContain("cid:pic1", eml);   // dangling reference neutralized...
+            Assert.Contains("about:blank", eml);       // ...to a harmless placeholder
+        }
+
         // An .eml that forwards another message as a message/rfc822 part. The nested message has its own
         // identifying headers (Bcc, Received) and a body with PII.
         private const string SampleEmlWithNestedMessage =

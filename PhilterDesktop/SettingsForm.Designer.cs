@@ -84,6 +84,7 @@ namespace PhilterDesktop
             chkRemoveDateHeader = new CheckBox();
             lblDateHeaderInfo = new Label();
             chkRemoveAttachments = new CheckBox();
+            chkRemoveInlineImages = new CheckBox();
             lblAttachmentsInfo = new Label();
             tabNotifications = new TabPage();
             chkShowNotifications = new CheckBox();
@@ -494,6 +495,7 @@ namespace PhilterDesktop
             tabEmail.Controls.Add(chkRemoveDateHeader);
             tabEmail.Controls.Add(lblDateHeaderInfo);
             tabEmail.Controls.Add(chkRemoveAttachments);
+            tabEmail.Controls.Add(chkRemoveInlineImages);
             tabEmail.Controls.Add(lblAttachmentsInfo);
             tabEmail.Location = new Point(4, 24);
             tabEmail.Name = "tabEmail";
@@ -569,23 +571,34 @@ namespace PhilterDesktop
             // chkRemoveAttachments
             //
             chkRemoveAttachments.AutoSize = true;
-            chkRemoveAttachments.Location = new Point(13, 267);
+            chkRemoveAttachments.Location = new Point(13, 250);
             chkRemoveAttachments.Name = "chkRemoveAttachments";
             chkRemoveAttachments.Size = new Size(306, 19);
             chkRemoveAttachments.TabIndex = 6;
             chkRemoveAttachments.Text = "Remove attachments from redacted email";
             chkRemoveAttachments.UseVisualStyleBackColor = true;
+            chkRemoveAttachments.CheckedChanged += ChkRemoveAttachments_CheckedChanged;
+            //
+            // chkRemoveInlineImages
+            //
+            chkRemoveInlineImages.AutoSize = true;
+            chkRemoveInlineImages.Location = new Point(33, 273);
+            chkRemoveInlineImages.Name = "chkRemoveInlineImages";
+            chkRemoveInlineImages.Size = new Size(306, 19);
+            chkRemoveInlineImages.TabIndex = 7;
+            chkRemoveInlineImages.Text = "Also remove inline images (logos, signatures, embedded pictures)";
+            chkRemoveInlineImages.UseVisualStyleBackColor = true;
             //
             // lblAttachmentsInfo
             //
             lblAttachmentsInfo.AutoSize = true;
             lblAttachmentsInfo.ForeColor = SystemColors.GrayText;
-            lblAttachmentsInfo.Location = new Point(30, 290);
+            lblAttachmentsInfo.Location = new Point(30, 296);
             lblAttachmentsInfo.MaximumSize = new Size(520, 0);
             lblAttachmentsInfo.Name = "lblAttachmentsInfo";
             lblAttachmentsInfo.Size = new Size(519, 15);
-            lblAttachmentsInfo.TabIndex = 7;
-            lblAttachmentsInfo.Text = "Deletes attachments entirely without redacting them (their content is never inspected). Off by default.";
+            lblAttachmentsInfo.TabIndex = 8;
+            lblAttachmentsInfo.Text = "Deletes the content entirely without inspecting it. Off by default; inline-image removal needs the option above.";
             //
             // tabNotifications
             // 
@@ -1064,6 +1077,7 @@ namespace PhilterDesktop
         private CheckBox chkRemoveDateHeader;
         private Label lblDateHeaderInfo;
         private CheckBox chkRemoveAttachments;
+        private CheckBox chkRemoveInlineImages;
         private Label lblAttachmentsInfo;
         private CheckBox chkStartWithWindows;
     }

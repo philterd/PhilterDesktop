@@ -2031,6 +2031,7 @@ namespace PhilterDesktop
                 modifySettings.RedactedSuffix, DocumentMetadata.OptionsFor(modifySettings),
                 modifySettings.ScrubEmailHeaders, modifySettings.RemoveCommonEmailHeaders,
                 modifySettings.RemoveEmailDateHeader, modifySettings.RemoveEmailAttachments,
+                modifySettings.RemoveEmailAttachments && modifySettings.RemoveEmailInlineImages,
                 modifySettings.RedactOfficeHeadersFooters, modifySettings.RedactOfficeCharts,
                 modifySettings.RedactCachedFormulaValues,
                 modifySettings.OutputToOriginalLocation, modifySettings.CustomOutputFolder,

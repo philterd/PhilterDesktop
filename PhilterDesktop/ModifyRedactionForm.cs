@@ -44,6 +44,7 @@ namespace PhilterDesktop
         private readonly bool _removeCommonEmailHeaders;
         private readonly bool _removeEmailDateHeader;
         private readonly bool _removeEmailAttachments;
+        private readonly bool _removeEmailInlineImages;
         private readonly bool _redactOfficeHeadersFooters = true;
         private readonly bool _redactOfficeCharts = true;
         private readonly bool _redactCachedFormulaValues = true;
@@ -71,6 +72,7 @@ namespace PhilterDesktop
             bool removeCommonEmailHeaders = false,
             bool removeEmailDateHeader = false,
             bool removeEmailAttachments = false,
+            bool removeEmailInlineImages = false,
             bool redactOfficeHeadersFooters = true,
             bool redactOfficeCharts = true,
             bool redactCachedFormulaValues = true,
@@ -90,6 +92,7 @@ namespace PhilterDesktop
             _removeCommonEmailHeaders = removeCommonEmailHeaders;
             _removeEmailDateHeader = removeEmailDateHeader;
             _removeEmailAttachments = removeEmailAttachments;
+            _removeEmailInlineImages = removeEmailInlineImages;
             _redactOfficeHeadersFooters = redactOfficeHeadersFooters;
             _redactOfficeCharts = redactOfficeCharts;
             _redactCachedFormulaValues = redactCachedFormulaValues;
@@ -453,6 +456,7 @@ namespace PhilterDesktop
                     removeCommonEmailHeaders: _removeCommonEmailHeaders,
                     removeEmailDateHeader: _removeEmailDateHeader,
                     removeEmailAttachments: _removeEmailAttachments,
+                    removeEmailInlineImages: _removeEmailInlineImages,
                     redactOfficeHeadersFooters: _redactOfficeHeadersFooters,
                     redactOfficeCharts: _redactOfficeCharts,
                     redactCachedFormulaValues: _redactCachedFormulaValues,

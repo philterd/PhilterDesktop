@@ -109,7 +109,7 @@ namespace PhilterDesktop
                 {
                     ".rtf" when sourcePath is not null && RtfFidelity.HasDroppedContent(sourcePath) => RtfFidelity.VerificationCaveat,
                     ".pdf" when sourcePath is not null && PdfFidelity.HasDroppedContent(sourcePath) => PdfFidelity.VerificationCaveat,
-                    ".eml" or ".msg" when EmailRedactor.HasAttachments(outputPath) => EmailRedactor.AttachmentVerificationCaveat,
+                    ".eml" or ".msg" => EmailRedactor.FidelityCaveat(outputPath),
                     _ => null
                 };
 

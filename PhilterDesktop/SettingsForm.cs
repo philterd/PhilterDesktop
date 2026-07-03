@@ -133,6 +133,10 @@ namespace PhilterDesktop
         private void ChkOcrScannedPdfs_CheckedChanged(object? sender, EventArgs e) =>
             btnOcrAdvanced.Enabled = chkOcrScannedPdfs.Checked;
 
+        // "Also remove inline images" is a dependent option of "Remove attachments".
+        private void ChkRemoveAttachments_CheckedChanged(object? sender, EventArgs e) =>
+            chkRemoveInlineImages.Enabled = chkRemoveAttachments.Checked;
+
         // Opens the advanced OCR threshold dialog, seeded from (and writing back to) the in-memory
         // settings; the values are persisted with everything else when the user clicks Save.
         private void BtnOcrAdvanced_Click(object? sender, EventArgs e)
@@ -480,6 +484,8 @@ namespace PhilterDesktop
             chkRemoveCommonHeaders.Checked = _settings.RemoveCommonEmailHeaders;
             chkRemoveDateHeader.Checked = _settings.RemoveEmailDateHeader;
             chkRemoveAttachments.Checked = _settings.RemoveEmailAttachments;
+            chkRemoveInlineImages.Checked = _settings.RemoveEmailInlineImages;
+            chkRemoveInlineImages.Enabled = chkRemoveAttachments.Checked; // dependent on the option above
             chkVerifyAfterRedaction.Checked = _settings.VerifyAfterRedaction;
             rdoVerifyBroadPolicy.Checked = _settings.VerificationUseBroadPolicy;
             rdoVerifySamePolicy.Checked = !_settings.VerificationUseBroadPolicy;
@@ -675,6 +681,7 @@ namespace PhilterDesktop
             _settings.RemoveCommonEmailHeaders = chkRemoveCommonHeaders.Checked;
             _settings.RemoveEmailDateHeader = chkRemoveDateHeader.Checked;
             _settings.RemoveEmailAttachments = chkRemoveAttachments.Checked;
+            _settings.RemoveEmailInlineImages = chkRemoveInlineImages.Checked;
             _settings.VerifyAfterRedaction = chkVerifyAfterRedaction.Checked;
             _settings.VerificationUseBroadPolicy = rdoVerifyBroadPolicy.Checked;
             _settings.WatchedFolderMaxConcurrency = int.TryParse(cmbConcurrency.Text, out int n) ? Math.Clamp(n, 1, 4) : 1;

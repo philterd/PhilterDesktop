@@ -26,11 +26,13 @@ outright**, so the send time is removed no matter how it is formatted (this does
 recognizing a date). A timestamp can still appear inside the delivery trail; leave the technical-header
 option on to strip that too.
 
-!!! warning "Attachments are not redacted"
-    Philter Desktop redacts the email **message itself**: the subject, the addresses, and the body. It
-    does **not** open, inspect, or redact **attachments** (a PDF, Word file, spreadsheet, image, or
-    anything else carried along with the email). By default they are copied through **unchanged**, so any
-    sensitive information inside an attachment is left exactly as it was. If an email has attachments
+!!! warning "Attachments and images are not redacted"
+    Philter Desktop redacts the email **message itself**: the subject, the addresses, and the body text.
+    It does **not** open, inspect, or redact **attachments** (a PDF, Word file, spreadsheet, image, or
+    anything else carried along with the email), and it does **not** read text inside **images** —
+    including **inline images** embedded in the body, such as a logo, a scanned signature, or a pasted
+    screenshot. By default both are copied through **unchanged**, so sensitive information inside an
+    attachment, or shown only inside an image, is left exactly as it was. If an email has attachments
     that need redacting, **save each one out as its own file and redact it separately** (a `.pdf`,
     `.docx`, or `.txt` attachment can go straight through Philter Desktop). Always review the finished
     email **and** its attachments before sharing it.
@@ -39,10 +41,13 @@ option on to strip that too.
     from redacted email** in [Settings → Email](settings.md#email-tab). When on, attachments are
     **deleted entirely — not redacted**: their content is never inspected, and the attached files (and
     their filenames, which can themselves reveal information such as `john_smith_ssn.pdf`) are removed
-    from the output. This option is **off by default**.
+    from the output. This option is **off by default**. Underneath it, **Also remove inline images**
+    (available only when the option above is on) does the same for the pictures embedded in the body:
+    they are deleted and their `cid:` references are neutralized. Leave it off to keep images such as a
+    corporate logo.
 
-    When attachments are **kept** and a redacted email still has any, **verification adds a warning**
-    reminding you that their content wasn't inspected — so review each attachment before sharing.
+    Whenever a redacted email still carries **attachments or inline images**, **verification adds a
+    warning** reminding you that their content wasn't inspected — so review the original before sharing.
 
 ## Outlook `.msg` files become `.eml`
 

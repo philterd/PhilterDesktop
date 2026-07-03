@@ -354,7 +354,7 @@ namespace PhilterDesktop
             try
             {
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                EmailRedactor.ApplySpans(_sourcePath, output, _spans, _settings.ScrubEmailHeaders, _settings.RemoveCommonEmailHeaders, _settings.RemoveEmailDateHeader, _settings.RemoveEmailAttachments);
+                EmailRedactor.ApplySpans(_sourcePath, output, _spans, _settings.ScrubEmailHeaders, _settings.RemoveCommonEmailHeaders, _settings.RemoveEmailDateHeader, _settings.RemoveEmailAttachments, _settings.RemoveEmailAttachments && _settings.RemoveEmailInlineImages);
                 stopwatch.Stop();
                 RedactionDurationMs = stopwatch.ElapsedMilliseconds;
             }

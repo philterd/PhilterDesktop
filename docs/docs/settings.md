@@ -207,6 +207,14 @@ and from where.
   **filenames** (which can themselves reveal information, e.g. `john_smith_ssn.pdf`). It is off by default
   because it discards content you may need; turn it on when an email's attachments could carry sensitive
   information that must not ship in the redacted copy. The message body is still redacted as usual.
+    - **Also remove inline images** (**off** by default; available only when the option above is on).
+      **Inline images** are pictures embedded in the message body — logos, signatures, pasted screenshots
+      — referenced by the HTML with a `cid:` link. Philter Desktop **does not inspect or redact image
+      content**, so sensitive information shown only inside an image would otherwise pass through. When on,
+      inline images are **deleted** and their references in the body are neutralized. Leave it off if you
+      want to keep images such as a corporate logo — but note the caveat below. **Whenever a redacted
+      email still contains attachments or inline images, verification adds a warning** that their content
+      wasn't inspected, so an un-inspected image is never left silently.
 
 Leave the first two on unless you specifically need to preserve the original headers (for example, for
 an e-discovery chain-of-custody requirement).

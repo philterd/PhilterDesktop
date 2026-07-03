@@ -520,6 +520,74 @@ namespace PhilterDesktop.Tests
             Assert.True(SpreadsheetTestHelper.IsFormulaCell(output, "B2"));
         }
 
+        // email-inline-image.eml: an HTML body (with PII) that references a cid: inline image, plus an
+        // attachment. Covers the "Remove attachments" / "Also remove inline images" option matrix.
+        private const string InlineImageSample = "email-inline-image.eml";
+
+        private static string? EmailFidelityNote(string output) =>
+            RedactionVerifier.Verify(output, SamplePolicy(), "ctx", new FilterService(), sourcePath: output).FidelityNote;
+
+        [Fact]
+        public async Task EmailSample_InlineImage_BothOff_KeepsImageAndAttachment_Warns()
+        {
+            string input = Path.Combine(SamplesDir, InlineImageSample);
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "inline-bothoff.eml");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx"); // both off (default)
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.DoesNotContain(Email, eml);              // body PII redacted
+            Assert.DoesNotContain(Ssn, eml);
+            Assert.Contains("image/png", eml);              // inline image kept
+            Assert.Contains("report_sensitive.pdf", eml);   // attachment kept
+
+            string? note = EmailFidelityNote(output);
+            Assert.NotNull(note);
+            Assert.Contains("attachment", note!, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("image", note!, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task EmailSample_InlineImage_AttachmentsOnly_RemovesAttachment_KeepsImage_Warns()
+        {
+            string input = Path.Combine(SamplesDir, InlineImageSample);
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "inline-attachonly.eml");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx",
+                removeEmailAttachments: true, removeEmailInlineImages: false);
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.DoesNotContain("report_sensitive.pdf", eml); // attachment removed
+            Assert.Contains("image/png", eml);                   // inline image kept
+
+            string? note = EmailFidelityNote(output);
+            Assert.NotNull(note);
+            Assert.Contains("image", note!, StringComparison.OrdinalIgnoreCase); // inline-image caveat
+            Assert.DoesNotContain("attachment", note!, StringComparison.OrdinalIgnoreCase); // no attachment caveat
+        }
+
+        [Fact]
+        public async Task EmailSample_InlineImage_BothOn_RemovesBoth_NeutralizesCid_NoWarning()
+        {
+            string input = Path.Combine(SamplesDir, InlineImageSample);
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "inline-bothon.eml");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx",
+                removeEmailAttachments: true, removeEmailInlineImages: true);
+
+            string eml = await File.ReadAllTextAsync(output);
+            Assert.DoesNotContain("report_sensitive.pdf", eml); // attachment removed
+            Assert.DoesNotContain("image/png", eml);             // inline image removed
+            Assert.DoesNotContain("cid:logo001", eml);           // cid reference neutralized
+            Assert.Contains("about:blank", eml);                 // ...to a harmless placeholder
+            Assert.DoesNotContain(Email, eml);                   // body still redacted
+
+            Assert.Null(EmailFidelityNote(output)); // nothing un-inspected remains -> no caveat
+        }
+
         [Fact]
         public async Task PdfSample_Annotations_ReportsPiiInAnnotationsAndFormFields()
         {

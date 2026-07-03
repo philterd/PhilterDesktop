@@ -204,6 +204,8 @@ namespace PhilterDesktop
                 removeCommonEmailHeaders: settings.RemoveCommonEmailHeaders,
                 removeEmailDateHeader: settings.RemoveEmailDateHeader,
                 removeEmailAttachments: settings.RemoveEmailAttachments,
+                // Inline-image removal is a dependent option: only when the parent (remove attachments) is on.
+                removeEmailInlineImages: settings.RemoveEmailAttachments && settings.RemoveEmailInlineImages,
                 redactOfficeHeadersFooters: settings.RedactOfficeHeadersFooters,
                 redactOfficeCharts: settings.RedactOfficeCharts,
                 redactCachedFormulaValues: settings.RedactCachedFormulaValues);
@@ -231,6 +233,7 @@ namespace PhilterDesktop
             bool removeCommonEmailHeaders = false,
             bool removeEmailDateHeader = false,
             bool removeEmailAttachments = false,
+            bool removeEmailInlineImages = false,
             bool redactOfficeHeadersFooters = true,
             bool redactOfficeCharts = true,
             bool redactCachedFormulaValues = true)
@@ -288,7 +291,8 @@ namespace PhilterDesktop
                     scrubEmailHeaders,
                     removeCommonEmailHeaders,
                     removeEmailDateHeader,
-                    removeEmailAttachments));
+                    removeEmailAttachments,
+                    removeEmailInlineImages));
             }
 
             if (extension == ".rtf")
@@ -379,6 +383,7 @@ namespace PhilterDesktop
             bool removeCommonEmailHeaders = false,
             bool removeEmailDateHeader = false,
             bool removeEmailAttachments = false,
+            bool removeEmailInlineImages = false,
             bool redactOfficeHeadersFooters = true,
             bool redactOfficeCharts = true,
             bool redactCachedFormulaValues = true,
@@ -402,7 +407,7 @@ namespace PhilterDesktop
                     break;
                 case ".eml":
                 case ".msg":
-                    await Task.Run(() => EmailRedactor.ApplySpans(sourcePath, outputPath, spans, scrubEmailHeaders, removeCommonEmailHeaders, removeEmailDateHeader, removeEmailAttachments));
+                    await Task.Run(() => EmailRedactor.ApplySpans(sourcePath, outputPath, spans, scrubEmailHeaders, removeCommonEmailHeaders, removeEmailDateHeader, removeEmailAttachments, removeEmailInlineImages));
                     break;
                 case ".rtf":
                     await Task.Run(() => RtfRedactor.ApplySpans(sourcePath, outputPath, spans));

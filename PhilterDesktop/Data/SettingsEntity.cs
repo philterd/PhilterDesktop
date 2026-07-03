@@ -157,6 +157,15 @@ namespace PhilterData
         public bool RemoveEmailAttachments { get; set; } = false;
 
         /// <summary>
+        /// Also remove <b>inline images</b> (cid-referenced pictures embedded in the message body — logos,
+        /// signatures, pasted screenshots) from redacted email output. A dependent option of
+        /// <see cref="RemoveEmailAttachments"/>: it only takes effect when that is on. Image content is
+        /// never inspected or redacted, so the images are deleted outright and their <c>cid:</c> references
+        /// in the HTML body are neutralized. Off by default.
+        /// </summary>
+        public bool RemoveEmailInlineImages { get; set; } = false;
+
+        /// <summary>
         /// Read scanned (image-only) PDF pages with on-device OCR so their text can be detected and
         /// redacted. OCR runs entirely on this computer (nothing is uploaded). On by default; it is
         /// slower and best-effort (it can miss low-quality scans and handwriting), so the redacted

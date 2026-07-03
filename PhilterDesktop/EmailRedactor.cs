@@ -54,6 +54,16 @@ namespace PhilterDesktop
             "content, so a clean result does not cover them — review each attachment before sharing, or turn " +
             "on \"Remove attachments from redacted email\" in Settings → Email.";
 
+        /// <summary>
+        /// The caveat added to a <em>verification</em> result when the redacted email still carries inline
+        /// images (cid-referenced pictures embedded in the body): their content is never inspected or
+        /// redacted, so PII shown only inside an image is left as-is.
+        /// </summary>
+        public const string InlineImageVerificationCaveat =
+            "This email contains inline images. Philter Desktop does not inspect or redact image content, " +
+            "so sensitive information shown only inside an image is left as-is — review the original, or turn " +
+            "on \"Also remove inline images\" in Settings → Email.";
+
         /// <summary>True if the email at <paramref name="path"/> has at least one attachment.</summary>
         public static bool HasAttachments(string path)
         {
@@ -67,12 +77,60 @@ namespace PhilterDesktop
             }
         }
 
+        /// <summary>True if the email at <paramref name="path"/> has at least one inline image.</summary>
+        public static bool HasInlineImages(string path)
+        {
+            try
+            {
+                var iterator = new MimeIterator(Load(path));
+                while (iterator.MoveNext())
+                {
+                    if (IsInlineImage(iterator.Current))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            catch
+            {
+                return false; // best effort — a parse quirk must never fail verification
+            }
+        }
+
+        /// <summary>
+        /// The fidelity caveat for a redacted email that still carries content Philter Desktop can't
+        /// inspect — attachments and/or inline images — or null when it carries neither. Surfaced by
+        /// verification and the headless paths so the un-inspected content is never silent.
+        /// </summary>
+        public static string? FidelityCaveat(string path)
+        {
+            bool attachments = HasAttachments(path);
+            bool inlineImages = HasInlineImages(path);
+            return (attachments, inlineImages) switch
+            {
+                (true, true) => AttachmentVerificationCaveat + "\n" + InlineImageVerificationCaveat,
+                (true, false) => AttachmentVerificationCaveat,
+                (false, true) => InlineImageVerificationCaveat,
+                _ => null
+            };
+        }
+
+        // An inline image is an image part embedded in the body — referenced from HTML by a Content-Id
+        // (cid:) and/or marked inline — as opposed to a file attachment (handled separately).
+        private static bool IsInlineImage(MimeEntity entity) =>
+            entity is MimePart part
+            && part.ContentType.MediaType.Equals("image", StringComparison.OrdinalIgnoreCase)
+            && !part.IsAttachment
+            && (!string.IsNullOrEmpty(part.ContentId)
+                || part.ContentDisposition?.Disposition?.Equals("inline", StringComparison.OrdinalIgnoreCase) == true);
+
         /// <summary>
         /// Loads <paramref name="inputPath"/>, redacts its text fields with <paramref name="filter"/>,
         /// writes the result as <c>.eml</c> to <paramref name="outputPath"/>, and returns the applied
         /// spans (field-indexed). The input file is left untouched.
         /// </summary>
-        public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool scrubHeaders = false, bool removeCommonHeaders = false, bool removeDateHeader = false, bool removeAttachments = false)
+        public static List<RedactionSpanEntity> Redact(string inputPath, string outputPath, Func<string, TextFilterResult> filter, bool scrubHeaders = false, bool removeCommonHeaders = false, bool removeDateHeader = false, bool removeAttachments = false, bool removeInlineImages = false)
         {
             MimeMessage message = Load(inputPath);
 
@@ -106,6 +164,10 @@ namespace PhilterDesktop
             if (removeAttachments)
             {
                 RemoveAttachments(message);
+            }
+            if (removeInlineImages)
+            {
+                RemoveInlineImages(message);
             }
             Save(message, outputPath);
             return captured;
@@ -207,7 +269,7 @@ namespace PhilterDesktop
         /// <see cref="RedactionSpanEntity.ParagraphIndex"/> (the field index) plus character start/stop
         /// offsets within that field. Used by the Modify Redaction feature.
         /// </summary>
-        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, bool scrubHeaders = false, bool removeCommonHeaders = false, bool removeDateHeader = false, bool removeAttachments = false)
+        public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, bool scrubHeaders = false, bool removeCommonHeaders = false, bool removeDateHeader = false, bool removeAttachments = false, bool removeInlineImages = false)
         {
             MimeMessage message = Load(inputPath);
 
@@ -255,6 +317,10 @@ namespace PhilterDesktop
             if (removeAttachments)
             {
                 RemoveAttachments(message);
+            }
+            if (removeInlineImages)
+            {
+                RemoveInlineImages(message);
             }
             Save(message, outputPath);
         }
@@ -416,6 +482,70 @@ namespace PhilterDesktop
             catch
             {
                 // best effort — an attachment quirk must never fail the redaction
+            }
+        }
+
+        // Deletes inline (cid-referenced) images when inline-image removal is enabled. Image content is
+        // never inspected or redacted, so the whole part is removed and any cid: reference to it in the
+        // HTML body is neutralized so the output doesn't dangle. Each image is detached from its parent.
+        private static void RemoveInlineImages(MimeMessage message)
+        {
+            try
+            {
+                var images = new List<MimeEntity>();
+                var parents = new List<Multipart>();
+                var removedCids = new List<string>();
+                var iterator = new MimeIterator(message);
+                while (iterator.MoveNext())
+                {
+                    if (iterator.Parent is Multipart parent && iterator.Current is MimeEntity entity && IsInlineImage(entity))
+                    {
+                        parents.Add(parent);
+                        images.Add(entity);
+                        if (entity is MimePart part && !string.IsNullOrEmpty(part.ContentId))
+                        {
+                            removedCids.Add(part.ContentId);
+                        }
+                    }
+                }
+                for (int i = 0; i < images.Count; i++)
+                {
+                    parents[i].Remove(images[i]);
+                }
+
+                if (removedCids.Count > 0)
+                {
+                    NeutralizeCidReferences(message, removedCids);
+                }
+            }
+            catch
+            {
+                // best effort — an image quirk must never fail the redaction
+            }
+        }
+
+        // Rewrites HTML body cid: references to the removed images so they don't dangle (a removed image's
+        // src="cid:…" would otherwise render as a broken-image icon). Points them at about:blank, which
+        // makes no network request and reveals nothing.
+        private static void NeutralizeCidReferences(MimeMessage message, IReadOnlyList<string> cids)
+        {
+            foreach (TextPart part in message.BodyParts.OfType<TextPart>().Where(p => p.IsHtml))
+            {
+                string html = part.Text ?? string.Empty;
+                bool changed = false;
+                foreach (string cid in cids)
+                {
+                    string needle = "cid:" + cid;
+                    if (html.Contains(needle, StringComparison.OrdinalIgnoreCase))
+                    {
+                        html = html.Replace(needle, "about:blank", StringComparison.OrdinalIgnoreCase);
+                        changed = true;
+                    }
+                }
+                if (changed)
+                {
+                    part.Text = html;
+                }
             }
         }
 

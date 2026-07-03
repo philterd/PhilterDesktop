@@ -1,0 +1,29 @@
+From: Alice <alice@example.com>
+To: Bob <bob@example.com>
+Subject: Report with logo and attachment
+Date: Tue, 01 Apr 2025 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="MIX"
+
+--MIX
+Content-Type: multipart/related; boundary="REL"
+
+--REL
+Content-Type: text/html; charset=utf-8
+
+<html><body><p>Contact george@fake.com about SSN 123-45-6789.</p><img src="cid:logo001" alt="logo"></body></html>
+--REL
+Content-Type: image/png
+Content-Transfer-Encoding: base64
+Content-ID: <logo001>
+Content-Disposition: inline; filename="logo.png"
+
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==
+--REL--
+--MIX
+Content-Type: application/pdf; name="report_sensitive.pdf"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="report_sensitive.pdf"
+
+JVBERi0xLjQgU0VDUkVULUFUVEFDSE1FTlQK
+--MIX--
