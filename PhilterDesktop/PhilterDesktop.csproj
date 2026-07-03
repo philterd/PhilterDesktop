@@ -50,9 +50,7 @@
     <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="MimeKit" Version="4.17.0" />
     <PackageReference Include="MsgReader" Version="6.0.12" />
-    <!-- Local project reference (dev) so the injectable IContextService / durable context service is
-         available before a Phileas package with it is published. Restore the PackageReference for release. -->
-    <ProjectReference Include="..\..\phileas-dotnet\src\Phileas\Phileas.csproj" />
+    <PackageReference Include="Philterd.Phileas" Version="1.5.0" />
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
     <PackageReference Include="DiffPlex" Version="1.9.0" />
     <PackageReference Include="PDFtoImage" Version="5.2.1" />
