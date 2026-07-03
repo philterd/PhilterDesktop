@@ -24,6 +24,13 @@ intranet or `file://` address — that target is neutralized so it can't ship in
 you only see the link's wording on the page. Links whose targets contain nothing sensitive are left
 working as they were.
 
+The same applies to **field codes** — the hidden instructions behind fields such as `HYPERLINK`,
+`INCLUDETEXT`, and mail-merge sources. A field keeps an instruction (for example the `mailto:` address
+or a file path with a name in it) separately from the result you see on the page, so sensitive
+information there is scanned and removed while the field itself is left in place. Only the sensitive text
+inside the instruction is replaced; a field with nothing sensitive (such as a page number or date) is
+untouched.
+
 ## Hidden information is cleaned up too
 
 For Word (`.docx`) files, Philter Desktop also cleans up hidden information in the redacted copy by

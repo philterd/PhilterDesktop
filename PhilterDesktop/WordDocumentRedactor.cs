@@ -44,6 +44,7 @@ namespace PhilterDesktop
         // never resolves; the relationship keeps its id, so the (already redacted) link text stays valid.
         private const string RedactedHyperlinkTarget = "https://redacted.invalid/";
         private const string HyperlinkClassification = "hyperlink-target";
+        private const string FieldInstructionClassification = "field-instruction";
 
         /// <summary>
         /// Returns the text of each redactable paragraph (body, then headers/footers) in the canonical
@@ -148,6 +149,8 @@ namespace PhilterDesktop
             // Deleted tracked-change text (w:delText) isn't a body paragraph, so scan it too — otherwise
             // the preview/verification would miss residual PII in a tracked deletion.
             captured.AddRange(ScanDeletedText(document, filter, write: false, ref order));
+            // Field instruction text (HYPERLINK/INCLUDETEXT/merge sources) isn't a body paragraph either.
+            captured.AddRange(RedactFieldInstructions(document, filter, write: false, ref order));
             // Chart title/label/cached-value text likewise isn't a body paragraph.
             if (redactCharts)
             {
@@ -215,6 +218,7 @@ namespace PhilterDesktop
 
             captured.AddRange(RedactDrawingText(document, filter, ref order));
             captured.AddRange(RedactHyperlinkTargets(document, filter, ref order));
+            captured.AddRange(RedactFieldInstructions(document, filter, write: true, ref order));
             captured.AddRange(ScanDeletedText(document, filter, write: true, ref order));
             if (redactCharts)
             {
@@ -273,6 +277,7 @@ namespace PhilterDesktop
                 int order = 0;
                 RedactDrawingText(document, drawingFilter, ref order);
                 RedactHyperlinkTargets(document, drawingFilter, ref order);
+                RedactFieldInstructions(document, drawingFilter, write: true, ref order);
                 ScanDeletedText(document, drawingFilter, write: true, ref order);
                 if (redactCharts)
                 {
@@ -593,6 +598,142 @@ namespace PhilterDesktop
             }
 
             return captured;
+        }
+
+        // Redacts (write: true) or detects (write: false) PII in Word field instruction text — the part that
+        // isn't the visible result and so survives the body pass. Two forms: a simple field's w:instr
+        // attribute (SimpleField.Instruction), and a complex field's <w:instrText> runs (FieldCode). Field
+        // instructions carry PII in HYPERLINK "mailto:…"/URL targets, INCLUDETEXT file paths, merge sources.
+        private static List<RedactionSpanEntity> RedactFieldInstructions(
+            WordprocessingDocument document, Func<string, TextFilterResult> filter, bool write, ref int order)
+        {
+            var captured = new List<RedactionSpanEntity>();
+            MainDocumentPart? main = document.MainDocumentPart;
+            if (main is null)
+            {
+                return captured;
+            }
+
+            foreach (OpenXmlPart part in AllParts(main))
+            {
+                OpenXmlElement? root;
+                try
+                {
+                    root = part.RootElement; // parses the part; skip parts the SDK can't type
+                }
+                catch
+                {
+                    continue;
+                }
+                if (root is null)
+                {
+                    continue;
+                }
+
+                // Simple fields: the instruction is an attribute (SimpleField.Instruction).
+                foreach (SimpleField field in root.Descendants<SimpleField>().ToList())
+                {
+                    string original = field.Instruction?.Value ?? string.Empty;
+                    if (string.IsNullOrEmpty(original))
+                    {
+                        continue;
+                    }
+                    TextFilterResult result = filter(original);
+                    if (string.Equals(result.FilteredText, original, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+                    if (write)
+                    {
+                        field.Instruction = result.FilteredText;
+                    }
+                    CaptureFieldSpans(original, result, ref order, captured);
+                }
+
+                // Complex fields: instruction is one or more <w:instrText> runs; merge a field's runs so PII
+                // split across them is caught, then flatten the result into the first run.
+                foreach (List<FieldCode> group in GroupFieldCodes(root))
+                {
+                    string original = string.Concat(group.Select(c => c.Text));
+                    if (string.IsNullOrEmpty(original))
+                    {
+                        continue;
+                    }
+                    TextFilterResult result = filter(original);
+                    if (string.Equals(result.FilteredText, original, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+                    if (write)
+                    {
+                        group[0].Text = result.FilteredText;
+                        for (int i = 1; i < group.Count; i++)
+                        {
+                            group[i].Text = string.Empty;
+                        }
+                    }
+                    CaptureFieldSpans(original, result, ref order, captured);
+                }
+            }
+
+            return captured;
+        }
+
+        // Groups a complex field's contiguous <w:instrText> runs by walking the field-character state
+        // machine (begin … [instruction] … separate/end) so each field's instruction is merged as a unit.
+        private static IEnumerable<List<FieldCode>> GroupFieldCodes(OpenXmlElement root)
+        {
+            var fields = new List<List<FieldCode>>();
+            List<FieldCode>? current = null;
+            foreach (Run run in root.Descendants<Run>())
+            {
+                FieldChar? fldChar = run.GetFirstChild<FieldChar>();
+                if (fldChar?.FieldCharType?.Value is FieldCharValues type)
+                {
+                    if (type == FieldCharValues.Begin)
+                    {
+                        current = new List<FieldCode>();
+                    }
+                    else // separate or end closes the instruction portion
+                    {
+                        if (current is { Count: > 0 })
+                        {
+                            fields.Add(current);
+                        }
+                        current = null;
+                    }
+                }
+                if (current is not null)
+                {
+                    current.AddRange(run.Elements<FieldCode>());
+                }
+            }
+            if (current is { Count: > 0 }) // an unterminated field (malformed, but be safe)
+            {
+                fields.Add(current);
+            }
+            return fields;
+        }
+
+        private static void CaptureFieldSpans(string original, TextFilterResult result, ref int order, List<RedactionSpanEntity> captured)
+        {
+            foreach (Span s in result.Spans
+                         .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
+                         .OrderBy(s => s.CharacterStart))
+            {
+                var entity = new RedactionSpanEntity
+                {
+                    Order = order++,
+                    ParagraphIndex = -1, // a field instruction, not a paragraph offset
+                    CharacterStart = s.CharacterStart,
+                    CharacterEnd = s.CharacterEnd,
+                    Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
+                    Replacement = s.Replacement ?? string.Empty,
+                    Classification = string.IsNullOrEmpty(s.Classification) ? FieldInstructionClassification : s.Classification
+                };
+                SpanExplanation.Populate(entity, s);
+                captured.Add(entity);
+            }
         }
 
         // Every distinct part reachable from the main document part (itself included), breadth-first.

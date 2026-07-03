@@ -130,6 +130,12 @@ channels and control header/footer redaction. All options below are **on by defa
   the file **without recalculating** (i.e. not Excel) sees empty formula results until it recalculates —
   turn this off if that matters for how the file is consumed, and be aware a formula's cached copy of a
   redacted value may then remain. Verification checks formula caches either way.
+- **Redact pivot table cache** *(Excel only)*. A pivot table keeps a **denormalized copy of its source
+  data** inside the file — the pivot cache — so redacting the sheet cells alone leaves an intact copy of
+  the sensitive values. When on, the cached values in the pivot cache (its definition and records) and in
+  the pivot table are scanned and redacted, and the cache is set to **refresh from the (redacted) source
+  when the file is opened** in Excel. On by default. Redacting the cache changes what the pivot shows
+  until Excel refreshes it. Verification checks the pivot cache either way.
 
 Leave these on unless you have a specific reason to keep that information. They affect only what's
 stored in the redacted copy; your original document is never changed, and you should still review the

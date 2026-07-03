@@ -53,10 +53,7 @@ namespace PhilterDesktop
             }
 
             // Title, axis titles, and data-label rich text.
-            foreach (A.Paragraph paragraph in root.Descendants<A.Paragraph>().ToList())
-            {
-                RedactDrawingParagraph(paragraph, filter, write, captured, ref order);
-            }
+            RedactDrawingText(root, filter, write, captured, ref order);
 
             // Cached series/category values and cached series names (<c:v>). Cell references (<c:f>) and
             // numeric formats are left alone.
@@ -64,6 +61,20 @@ namespace PhilterDesktop
                          .Where(e => e.LocalName == "v" && e.NamespaceUri == ChartNamespace).ToList())
             {
                 RedactLeaf(value, filter, write, captured, ref order);
+            }
+        }
+
+        /// <summary>
+        /// Redacts every DrawingML paragraph (<c>&lt;a:p&gt;</c>) under <paramref name="root"/> — the shared
+        /// text path for charts (title/axis/labels) and worksheet shapes/text boxes, since both store text as
+        /// <c>&lt;a:t&gt;</c> runs. With <paramref name="write"/> false it only detects.
+        /// </summary>
+        public static void RedactDrawingText(OpenXmlElement root, Func<string, TextFilterResult> filter,
+            bool write, List<RedactionSpanEntity>? captured, ref int order)
+        {
+            foreach (A.Paragraph paragraph in root.Descendants<A.Paragraph>().ToList())
+            {
+                RedactDrawingParagraph(paragraph, filter, write, captured, ref order);
             }
         }
 

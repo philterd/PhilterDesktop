@@ -132,6 +132,52 @@ namespace PhilterDesktop.Tests
         /// <paramref name="displayText"/> and whose external target (stored as a relationship, referenced
         /// by r:id) is <paramref name="targetUri"/>, plus optional extra body paragraphs.
         /// </summary>
+        // --- Field codes -------------------------------------------------------------
+
+        /// <summary>
+        /// Creates a .docx with a simple field (<c>w:fldSimple</c>) whose instruction is
+        /// <paramref name="instruction"/> and whose cached (visible) result is <paramref name="resultText"/>.
+        /// </summary>
+        public static void CreateWithSimpleField(string path, string instruction, string resultText, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            var body = new Body();
+            body.AppendChild(new Paragraph(
+                new SimpleField(new Run(new Text(resultText) { Space = SpaceProcessingModeValues.Preserve }))
+                { Instruction = instruction }));
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+            main.Document = new Document(body);
+        }
+
+        /// <summary>
+        /// Creates a .docx with a complex field — begin / <c>w:instrText</c> run(s) / separate / result / end.
+        /// Pass more than one <paramref name="instructionRuns"/> entry to split the instruction across runs.
+        /// </summary>
+        public static void CreateWithComplexField(string path, string[] instructionRuns, string resultText, params string[] bodyParagraphs)
+        {
+            using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+            MainDocumentPart main = doc.AddMainDocumentPart();
+            var para = new Paragraph();
+            para.AppendChild(new Run(new FieldChar { FieldCharType = FieldCharValues.Begin }));
+            foreach (string t in instructionRuns)
+            {
+                para.AppendChild(new Run(new FieldCode(t) { Space = SpaceProcessingModeValues.Preserve }));
+            }
+            para.AppendChild(new Run(new FieldChar { FieldCharType = FieldCharValues.Separate }));
+            para.AppendChild(new Run(new Text(resultText) { Space = SpaceProcessingModeValues.Preserve }));
+            para.AppendChild(new Run(new FieldChar { FieldCharType = FieldCharValues.End }));
+            var body = new Body(para);
+            foreach (string text in bodyParagraphs)
+            {
+                body.AppendChild(Para(text));
+            }
+            main.Document = new Document(body);
+        }
+
         public static void CreateWithHyperlink(string path, string displayText, string targetUri, params string[] bodyParagraphs)
         {
             using WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);

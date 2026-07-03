@@ -208,7 +208,8 @@ namespace PhilterDesktop
                 removeEmailInlineImages: settings.RemoveEmailAttachments && settings.RemoveEmailInlineImages,
                 redactOfficeHeadersFooters: settings.RedactOfficeHeadersFooters,
                 redactOfficeCharts: settings.RedactOfficeCharts,
-                redactCachedFormulaValues: settings.RedactCachedFormulaValues);
+                redactCachedFormulaValues: settings.RedactCachedFormulaValues,
+                redactPivotCaches: settings.RedactPivotCaches);
 
         /// <summary>
         /// Redacts <paramref name="inputPath"/> to <paramref name="outputPath"/> using
@@ -236,7 +237,8 @@ namespace PhilterDesktop
             bool removeEmailInlineImages = false,
             bool redactOfficeHeadersFooters = true,
             bool redactOfficeCharts = true,
-            bool redactCachedFormulaValues = true)
+            bool redactCachedFormulaValues = true,
+            bool redactPivotCaches = true)
         {
             filterService ??= new FilterService();
 
@@ -315,7 +317,8 @@ namespace PhilterDesktop
                     worksheet,
                     redactOfficeHeadersFooters,
                     redactOfficeCharts,
-                    redactCachedFormulaValues));
+                    redactCachedFormulaValues,
+                    redactPivotCaches));
                 // Strip identifying document properties so the redacted spreadsheet doesn't leak them
                 // (same "Remove document metadata" setting that governs Word).
                 if (wordScrub.HasFlag(WordScrubOptions.Metadata))
@@ -387,6 +390,7 @@ namespace PhilterDesktop
             bool redactOfficeHeadersFooters = true,
             bool redactOfficeCharts = true,
             bool redactCachedFormulaValues = true,
+            bool redactPivotCaches = true,
             string? worksheet = null)
         {
             filterService ??= new FilterService();
@@ -418,7 +422,7 @@ namespace PhilterDesktop
                     Func<string, TextFilterResult>? xlsxFilter = policy is null
                         ? null
                         : text => filterService.Filter(policy, string.Empty, 0, text);
-                    await Task.Run(() => XlsxRedactor.ApplySpans(sourcePath, outputPath, spans, worksheet, xlsxFilter, redactOfficeHeadersFooters, redactOfficeCharts, redactCachedFormulaValues));
+                    await Task.Run(() => XlsxRedactor.ApplySpans(sourcePath, outputPath, spans, worksheet, xlsxFilter, redactOfficeHeadersFooters, redactOfficeCharts, redactCachedFormulaValues, redactPivotCaches));
                     if (wordScrub.HasFlag(WordScrubOptions.Metadata))
                     {
                         await Task.Run(() => DocumentMetadata.ScrubXlsx(outputPath));

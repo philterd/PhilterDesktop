@@ -57,7 +57,8 @@ namespace PhilterDesktop
             string? worksheet = null,
             bool redactHeadersFooters = true,
             bool redactCharts = true,
-            bool redactFormulaValues = true)
+            bool redactFormulaValues = true,
+            bool redactPivotCaches = true)
         {
             var fullColumns = fullyRedactedColumns is { Count: > 0 }
                 ? new HashSet<int>(fullyRedactedColumns)
@@ -163,10 +164,19 @@ namespace PhilterDesktop
             // Cell comments (legacy and threaded) carry free text that isn't in any cell — redact it too.
             ScanComments(workbookPart, worksheet, filter, write: true, captured, ref order);
 
+            // Shapes and text boxes drawn on the sheet carry free text in the drawing XML — redact it too.
+            ScanShapes(workbookPart, worksheet, filter, write: true, captured, ref order);
+
             // Embedded charts cache the plotted cell values (and carry title/label text) — redact those.
             if (redactCharts)
             {
                 ScanCharts(workbookPart, worksheet, filter, write: true, captured, ref order);
+            }
+
+            // A pivot cache is a denormalized copy of the source data — redacting cells alone leaves it intact.
+            if (redactPivotCaches)
+            {
+                ScanPivotCaches(workbookPart, filter, write: true, captured, ref order);
             }
 
             // A formula whose cached result was detected as PII was already staticized above. Any remaining
@@ -246,17 +256,20 @@ namespace PhilterDesktop
             }
             // Scan cell comments too, so verification catches PII left in them.
             ScanComments(workbookPart, worksheet, filter, write: false, captured, ref order);
-            // Scan embedded charts too.
+            // Scan worksheet shapes/text boxes and embedded charts too.
+            ScanShapes(workbookPart, worksheet, filter, write: false, captured, ref order);
             if (redactCharts)
             {
                 ScanCharts(workbookPart, worksheet, filter, write: false, captured, ref order);
             }
+            // Scan the pivot cache regardless of the option so verification flags any residual copy there.
+            ScanPivotCaches(workbookPart, filter, write: false, captured, ref order);
 
             return captured;
         }
 
         public static void ApplySpans(string inputPath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans, string? worksheet = null,
-            Func<string, TextFilterResult>? policyFilter = null, bool redactHeadersFooters = true, bool redactCharts = true, bool redactFormulaValues = true)
+            Func<string, TextFilterResult>? policyFilter = null, bool redactHeadersFooters = true, bool redactCharts = true, bool redactFormulaValues = true, bool redactPivotCaches = true)
         {
             Dictionary<int, List<RedactionSpanEntity>> byCell = spans
                 .GroupBy(s => s.ParagraphIndex)
@@ -324,9 +337,14 @@ namespace PhilterDesktop
                     ScanHeadersFooters(workbookPart, worksheet, policyFilter, write: true, captured: null, ref order);
                 }
                 ScanComments(workbookPart, worksheet, policyFilter, write: true, captured: null, ref order);
+                ScanShapes(workbookPart, worksheet, policyFilter, write: true, captured: null, ref order);
                 if (redactCharts)
                 {
                     ScanCharts(workbookPart, worksheet, policyFilter, write: true, captured: null, ref order);
+                }
+                if (redactPivotCaches)
+                {
+                    ScanPivotCaches(workbookPart, policyFilter, write: true, captured: null, ref order);
                 }
             }
 
@@ -635,6 +653,123 @@ namespace PhilterDesktop
                 {
                     ChartRedactor.RedactChartPart(chartPart, filter, write, captured, ref order);
                 }
+            }
+        }
+
+        // Scans free text in worksheet shapes and text boxes, whose <a:t> runs live in the DrawingsPart's own
+        // drawing XML (xl/drawings/drawing*.xml) — separate from the ChartParts handled above. Grouped shapes
+        // are covered by the recursive descendant walk.
+        private static void ScanShapes(
+            WorkbookPart workbookPart, string? worksheet, Func<string, TextFilterResult> filter,
+            bool write, List<RedactionSpanEntity>? captured, ref int order)
+        {
+            foreach (WorksheetPart part in ProcessedWorksheetParts(workbookPart, worksheet))
+            {
+                if (part.DrawingsPart?.WorksheetDrawing is OpenXmlElement drawing)
+                {
+                    ChartRedactor.RedactDrawingText(drawing, filter, write, captured, ref order);
+                }
+            }
+        }
+
+        // Redacts (write: true) or detects (write: false) PII in the pivot cache — a denormalized copy of the
+        // source data that survives redacting the sheet cells. String values live as <s v="…"> items in the
+        // cache definition's shared items and the cache records (records that use <x> indices inherit the
+        // redaction of their shared item); pivot table parts may hold cached captions too. When a cache is
+        // redacted its definition is set to refresh on open, so Excel rebuilds it from the redacted source.
+        private static void ScanPivotCaches(
+            WorkbookPart workbookPart, Func<string, TextFilterResult> filter,
+            bool write, List<RedactionSpanEntity>? captured, ref int order)
+        {
+            foreach (PivotTableCacheDefinitionPart defPart in workbookPart.PivotTableCacheDefinitionParts)
+            {
+                bool redacted = false;
+                OpenXmlElement? defRoot = TryGetRoot(defPart, out OpenXmlElement r) ? r : null;
+                if (defRoot is not null)
+                {
+                    foreach (StringItem item in defRoot.Descendants<StringItem>().ToList())
+                    {
+                        redacted |= RedactPivotString(item, filter, write, captured, ref order);
+                    }
+                }
+                if (defPart.PivotTableCacheRecordsPart is PivotTableCacheRecordsPart recPart && TryGetRoot(recPart, out OpenXmlElement recRoot))
+                {
+                    foreach (StringItem item in recRoot.Descendants<StringItem>().ToList())
+                    {
+                        redacted |= RedactPivotString(item, filter, write, captured, ref order);
+                    }
+                }
+                if (write && redacted && defRoot is PivotCacheDefinition def)
+                {
+                    def.RefreshOnLoad = true; // rebuild from the redacted source when opened
+                }
+            }
+
+            foreach (WorksheetPart wsPart in workbookPart.WorksheetParts)
+            {
+                foreach (PivotTablePart ptPart in wsPart.PivotTableParts)
+                {
+                    if (TryGetRoot(ptPart, out OpenXmlElement ptRoot))
+                    {
+                        foreach (StringItem item in ptRoot.Descendants<StringItem>().ToList())
+                        {
+                            RedactPivotString(item, filter, write, captured, ref order);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Filters one pivot string item's value (<s v="…">) and, when it changes, rewrites it (write: true)
+        // and records the spans. Returns true if the value was redacted.
+        private static bool RedactPivotString(
+            StringItem item, Func<string, TextFilterResult> filter, bool write, List<RedactionSpanEntity>? captured, ref int order)
+        {
+            string original = item.Val?.Value ?? string.Empty;
+            if (string.IsNullOrEmpty(original))
+            {
+                return false;
+            }
+            TextFilterResult result = filter(original);
+            if (string.Equals(result.FilteredText, original, StringComparison.Ordinal))
+            {
+                return false;
+            }
+            if (write)
+            {
+                item.Val = result.FilteredText;
+            }
+            foreach (Span s in result.Spans
+                         .Where(s => s.CharacterStart >= 0 && s.CharacterEnd <= original.Length && s.CharacterEnd > s.CharacterStart)
+                         .OrderBy(s => s.CharacterStart))
+            {
+                var entity = new RedactionSpanEntity
+                {
+                    Order = order++,
+                    ParagraphIndex = -1, // a pivot cache value, not a cell offset
+                    CharacterStart = s.CharacterStart,
+                    CharacterEnd = s.CharacterEnd,
+                    Text = original.Substring(s.CharacterStart, s.CharacterEnd - s.CharacterStart),
+                    Replacement = s.Replacement ?? string.Empty,
+                    Classification = string.IsNullOrEmpty(s.Classification) ? "pivot-cache" : s.Classification
+                };
+                SpanExplanation.Populate(entity, s);
+                captured?.Add(entity);
+            }
+            return true;
+        }
+
+        private static bool TryGetRoot(OpenXmlPart part, out OpenXmlElement root)
+        {
+            try
+            {
+                root = part.RootElement!;
+                return root is not null;
+            }
+            catch
+            {
+                root = null!;
+                return false;
             }
         }
 

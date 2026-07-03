@@ -22,7 +22,13 @@ author names) — are scanned and redacted too, so sensitive information tucked 
 behind. **Embedded charts** are scanned as well — their titles, labels, and the **cached data values**
 a chart keeps (its copy of the plotted series and category values, which would otherwise remain after
 the source cells are redacted); redacting a cached value can change how the chart looks, so review charts
-in the output. The **print header and footer** — the text set to appear at the top and bottom of each
+in the output. **Text boxes and shapes** drawn on a sheet are scanned too — the free text inside them is
+redacted like any cell (text only; a picture placed on the sheet is not read). **Pivot tables** keep a
+hidden copy of their source data (the pivot cache); its cached values are scanned and redacted as well,
+and the pivot is set to refresh from the redacted source when the file is next opened in Excel. This is
+on by default and can be turned off in
+[Settings → Microsoft Office](settings.md#microsoft-office-tab). The **print header and
+footer** — the text set to appear at the top and bottom of each
 printed page (for example "Confidential — John Doe") — is scanned and redacted too. **Only text is
 redacted** there: an image or logo placed in a header/footer is left as it is, and Excel field codes
 (page number, date, file name) are preserved. This is on by default and can be turned off in

@@ -489,6 +489,51 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public async Task DocxSample_FieldCodes_RedactsInstructionEmailAndBodySsn()
+        {
+            // docx-with-field-codes.docx: a HYPERLINK field whose instruction carries an email + a body SSN.
+            string input = Path.Combine(SamplesDir, "docx-with-field-codes.docx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "field-codes_redacted.docx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            Assert.False(WordDocs.AnyPartContains(output, Email));           // field-instruction email
+            Assert.False(WordDocs.AnyPartContains(output, "123-45-6789"));    // body SSN
+            Assert.True(WordDocs.AnyPartContains(output, "HYPERLINK"));       // field keyword preserved
+        }
+
+        [Fact]
+        public async Task XlsxSample_PivotCache_RedactsDenormalizedCopy()
+        {
+            // xlsx-with-pivot-cache.xlsx: a pivot cache whose shared items/records hold an email + an SSN.
+            string input = Path.Combine(SamplesDir, "xlsx-with-pivot-cache.xlsx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "pivot_redacted.xlsx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            string pivot = SpreadsheetTestHelper.AllPivotXml(output);
+            Assert.DoesNotContain(Email, pivot);           // shared item
+            Assert.DoesNotContain("123-45-6789", pivot);    // inline record value
+            Assert.True(SpreadsheetTestHelper.AnyPivotRefreshOnLoad(output));
+        }
+
+        [Fact]
+        public async Task XlsxSample_TextBox_RedactsShapeTextAndCell()
+        {
+            // xlsx-with-textbox.xlsx: an email in a cell + an SSN inside a text box (drawing XML).
+            string input = Path.Combine(SamplesDir, "xlsx-with-textbox.xlsx");
+            Assert.True(File.Exists(input), $"Sample not found: {input}");
+            string output = Path.Combine(_tempDir, "textbox_redacted.xlsx");
+
+            await RedactionService.RedactFileAsync(input, output, SamplePolicy(), "ctx");
+
+            Assert.DoesNotContain(Email, SpreadsheetTestHelper.AllText(output));       // the cell
+            Assert.DoesNotContain("123-45-6789", SpreadsheetTestHelper.AllDrawingXml(output)); // the text box
+        }
+
+        [Fact]
         public async Task XlsxSample_FormulaCache_Enabled_RedactsCachedResultAndClearsCaches()
         {
             // formula-cache.xlsx: A2 = an email, B2 = "=A2" whose cache duplicates it, C2 = a benign formula.

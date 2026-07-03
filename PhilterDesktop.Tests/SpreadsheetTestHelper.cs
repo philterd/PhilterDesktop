@@ -298,6 +298,128 @@ namespace PhilterDesktop.Tests
             wsPart.Worksheet.Save();
         }
 
+        /// <summary>
+        /// Creates a single-sheet workbook with a text box (an <c>xdr:sp</c> shape) on the sheet whose one
+        /// paragraph holds the given runs. Pass more than one run to exercise PII split across <c>a:t</c> runs.
+        /// </summary>
+        public static void CreateXlsxWithTextBox(
+            string path, IReadOnlyList<string?[]> rows, params string[] runs)
+        {
+            CreateXlsx(path, rows);
+
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: true);
+            WorksheetPart wsPart = doc.WorkbookPart!.WorksheetParts.First();
+
+            DrawingsPart drawingsPart = wsPart.AddNewPart<DrawingsPart>();
+            string runsXml = string.Concat(runs.Select(r => $"<a:r><a:t>{Escape(r)}</a:t></a:r>"));
+            string drawingXml =
+                "<xdr:wsDr xmlns:xdr=\"http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing\" " +
+                "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" +
+                "<xdr:twoCellAnchor>" +
+                "<xdr:from><xdr:col>1</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>1</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>" +
+                "<xdr:to><xdr:col>5</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>6</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to>" +
+                "<xdr:sp macro=\"\" textlink=\"\">" +
+                "<xdr:nvSpPr><xdr:cNvPr id=\"2\" name=\"TextBox 1\"/><xdr:cNvSpPr txBox=\"1\"/></xdr:nvSpPr>" +
+                "<xdr:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"1000000\" cy=\"500000\"/></a:xfrm>" +
+                "<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></xdr:spPr>" +
+                $"<xdr:txBody><a:bodyPr/><a:lstStyle/><a:p>{runsXml}</a:p></xdr:txBody>" +
+                "</xdr:sp><xdr:clientData/></xdr:twoCellAnchor></xdr:wsDr>";
+            WriteXml(drawingsPart, drawingXml);
+
+            wsPart.Worksheet.Append(new Drawing { Id = wsPart.GetIdOfPart(drawingsPart) });
+            wsPart.Worksheet.Save();
+        }
+
+        private const string SsmlMain = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+        private const string RelNs = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+
+        /// <summary>
+        /// Creates a workbook with a pivot cache: a cache definition whose one field's shared items hold
+        /// <paramref name="sharedItems"/>, cache records (an index into a shared item plus an optional inline
+        /// <paramref name="recordInlineString"/>), and a minimal pivot table part referencing the cache.
+        /// </summary>
+        public static void CreateXlsxWithPivotCache(
+            string path, IReadOnlyList<string?[]> rows, string[] sharedItems, string? recordInlineString = null)
+        {
+            CreateXlsx(path, rows);
+
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: true);
+            WorkbookPart wbPart = doc.WorkbookPart!;
+            WorksheetPart wsPart = wbPart.WorksheetParts.First();
+
+            PivotTableCacheDefinitionPart defPart = wbPart.AddNewPart<PivotTableCacheDefinitionPart>();
+            string sharedXml = string.Concat(sharedItems.Select(s => $"<s v=\"{Escape(s)}\"/>"));
+            WriteXml(defPart,
+                $"<pivotCacheDefinition xmlns=\"{SsmlMain}\" xmlns:r=\"{RelNs}\" recordCount=\"2\">" +
+                "<cacheSource type=\"worksheet\"><worksheetSource ref=\"A1:A3\" sheet=\"Sheet1\"/></cacheSource>" +
+                "<cacheFields count=\"1\">" +
+                $"<cacheField name=\"Name\" numFmtId=\"0\"><sharedItems count=\"{sharedItems.Length}\">{sharedXml}</sharedItems></cacheField>" +
+                "</cacheFields></pivotCacheDefinition>");
+
+            PivotTableCacheRecordsPart recPart = defPart.AddNewPart<PivotTableCacheRecordsPart>();
+            string inlineRecord = recordInlineString is null ? string.Empty : $"<r><s v=\"{Escape(recordInlineString)}\"/></r>";
+            WriteXml(recPart,
+                $"<pivotCacheRecords xmlns=\"{SsmlMain}\" xmlns:r=\"{RelNs}\" count=\"2\"><r><x v=\"0\"/></r>{inlineRecord}</pivotCacheRecords>");
+
+            PivotTablePart ptPart = wsPart.AddNewPart<PivotTablePart>();
+            string cacheRelId = wbPart.GetIdOfPart(defPart);
+            WriteXml(ptPart,
+                $"<pivotTableDefinition xmlns=\"{SsmlMain}\" name=\"PivotTable1\" cacheId=\"1\" dataOnRows=\"1\">" +
+                "<location ref=\"A5:B7\" firstHeaderRow=\"1\" firstDataRow=\"1\" firstDataCol=\"1\"/>" +
+                "<pivotFields count=\"1\"><pivotField axis=\"axisRow\" showAll=\"0\"><items count=\"1\"><item x=\"0\"/></items></pivotField></pivotFields>" +
+                "</pivotTableDefinition>");
+
+            wbPart.Workbook.AppendChild(new PivotCaches(new PivotCache { CacheId = 1U, Id = cacheRelId }));
+            wbPart.Workbook.Save();
+        }
+
+        /// <summary>The concatenated XML of every pivot cache/table part (for redaction checks).</summary>
+        public static string AllPivotXml(string path)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            WorkbookPart wbPart = doc.WorkbookPart!;
+            var xml = new List<string>();
+            foreach (PivotTableCacheDefinitionPart defPart in wbPart.PivotTableCacheDefinitionParts)
+            {
+                xml.Add(defPart.RootElement?.OuterXml ?? string.Empty);
+                if (defPart.PivotTableCacheRecordsPart?.RootElement is OpenXmlElement rec)
+                {
+                    xml.Add(rec.OuterXml);
+                }
+            }
+            foreach (WorksheetPart wsPart in wbPart.WorksheetParts)
+            {
+                foreach (PivotTablePart ptPart in wsPart.PivotTableParts)
+                {
+                    xml.Add(ptPart.RootElement?.OuterXml ?? string.Empty);
+                }
+            }
+            return string.Concat(xml);
+        }
+
+        /// <summary>True if any pivot cache definition is set to refresh on load.</summary>
+        public static bool AnyPivotRefreshOnLoad(string path)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            return doc.WorkbookPart!.PivotTableCacheDefinitionParts
+                .Any(p => (p.RootElement as PivotCacheDefinition)?.RefreshOnLoad?.Value == true);
+        }
+
+        /// <summary>The concatenated drawing XML (shapes/text boxes) of every worksheet (for redaction checks).</summary>
+        public static string AllDrawingXml(string path)
+        {
+            using SpreadsheetDocument doc = SpreadsheetDocument.Open(path, isEditable: false);
+            var xml = new List<string>();
+            foreach (WorksheetPart wsPart in doc.WorkbookPart!.WorksheetParts)
+            {
+                if (wsPart.DrawingsPart?.RootElement is OpenXmlElement root)
+                {
+                    xml.Add(root.OuterXml);
+                }
+            }
+            return string.Concat(xml);
+        }
+
         /// <summary>The concatenated XML of every chart part in the workbook (for redaction checks).</summary>
         public static string AllChartXml(string path)
         {

@@ -126,6 +126,16 @@ namespace PhilterData
         public bool RedactCachedFormulaValues { get; set; } = true;
 
         /// <summary>
+        /// Redact the <b>pivot cache</b> in Excel (.xlsx). A pivot table keeps a denormalized snapshot of its
+        /// source data (the cache definition's shared items and the cache records), so redacting the source
+        /// cells alone leaves an intact copy of the PII. When on, the cached string values in the pivot cache
+        /// definition, cache records, and pivot table captions are scanned and redacted, and the cache is set
+        /// to refresh on open. On by default. Redacting the cache changes what the pivot shows until Excel
+        /// refreshes it from the (redacted) source.
+        /// </summary>
+        public bool RedactPivotCaches { get; set; } = true;
+
+        /// <summary>
         /// Remove identifying technical headers from redacted email output (the originating IP, the
         /// sending mail client, and the server-hop trail): <c>Received</c>, <c>Return-Path</c>,
         /// <c>Message-Id</c>, <c>User-Agent</c>, <c>DKIM-Signature</c>, authentication results, and all

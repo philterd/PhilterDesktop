@@ -59,6 +59,7 @@ namespace PhilterDesktop
             chkRedactHeadersFooters = new CheckBox();
             chkRedactCharts = new CheckBox();
             chkRedactFormulaValues = new CheckBox();
+            chkRedactPivotCaches = new CheckBox();
             lblWordInfo = new Label();
             tabWord = new TabPage();
             groupBoxLogging = new GroupBox();
@@ -276,6 +277,16 @@ namespace PhilterDesktop
             chkRedactFormulaValues.TabIndex = 7;
             chkRedactFormulaValues.Text = "Redact cached formula values (Excel)";
             chkRedactFormulaValues.UseVisualStyleBackColor = true;
+            //
+            // chkRedactPivotCaches
+            //
+            chkRedactPivotCaches.AutoSize = true;
+            chkRedactPivotCaches.Location = new Point(13, 284);
+            chkRedactPivotCaches.Name = "chkRedactPivotCaches";
+            chkRedactPivotCaches.Size = new Size(360, 19);
+            chkRedactPivotCaches.TabIndex = 8;
+            chkRedactPivotCaches.Text = "Redact pivot table cache (Excel)";
+            chkRedactPivotCaches.UseVisualStyleBackColor = true;
             // 
             // lblWordInfo
             // 
@@ -298,6 +309,7 @@ namespace PhilterDesktop
             tabWord.Controls.Add(chkRedactHeadersFooters);
             tabWord.Controls.Add(chkRedactCharts);
             tabWord.Controls.Add(chkRedactFormulaValues);
+            tabWord.Controls.Add(chkRedactPivotCaches);
             tabWord.Location = new Point(4, 24);
             tabWord.Name = "tabWord";
             tabWord.Padding = new Padding(3);
@@ -1030,6 +1042,7 @@ namespace PhilterDesktop
         private CheckBox chkRedactHeadersFooters;
         private CheckBox chkRedactCharts;
         private CheckBox chkRedactFormulaValues;
+        private CheckBox chkRedactPivotCaches;
         private CheckBox chkVerifyAfterRedaction;
         private RadioButton rdoVerifySamePolicy;
         private RadioButton rdoVerifyBroadPolicy;
