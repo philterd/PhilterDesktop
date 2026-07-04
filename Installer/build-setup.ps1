@@ -7,7 +7,7 @@
 #   3. compile Installer\PhilterDesktop.iss with Inno Setup's ISCC, and
 #   4. (optional) sign the generated setup .exe.
 #
-# The version comes from the project's <Version> (PhilterDesktop.csproj) — bump it there and the
+# The version comes from the project's <Version> (PhilterDesktop.csproj) - bump it there and the
 # installer filename follows automatically. Pass -Version only to override it for a one-off build.
 #
 # By default the publish is self-contained (no .NET runtime prerequisite on the target machine).
@@ -23,10 +23,10 @@
 #   -SigningAccount      TRUSTED_SIGNING_ACCOUNT     CodeSigningAccountName
 #   -SigningProfile      TRUSTED_SIGNING_PROFILE     CertificateProfileName
 # The Trusted Signing dlib (Azure.CodeSigning.Dlib.dll) is auto-restored from the
-# Microsoft.Trusted.Signing.Client NuGet package into Installer\tools\ — no need to configure it.
+# Microsoft.Trusted.Signing.Client NuGet package into Installer\tools\ - no need to configure it.
 # (Override with -SigningDlib / TRUSTED_SIGNING_DLIB if you want a specific copy.)
 # Copy signing.local.json.example to signing.local.json (gitignored) to use the file. Azure auth
-# uses DefaultAzureCredential — sign in first (az login) or set AZURE_TENANT_ID / AZURE_CLIENT_ID /
+# uses DefaultAzureCredential - sign in first (az login) or set AZURE_TENANT_ID / AZURE_CLIENT_ID /
 # AZURE_CLIENT_SECRET (or use a managed identity on a build agent).
 #
 # Usage:
@@ -166,7 +166,7 @@ if ($Sign) {
         CodeSigningAccountName = $SigningAccount
         CertificateProfileName = $SigningProfile
     } | ConvertTo-Json
-    # Write UTF-8 WITHOUT a BOM — the Trusted Signing dlib's JSON parser rejects a leading BOM
+    # Write UTF-8 WITHOUT a BOM - the Trusted Signing dlib's JSON parser rejects a leading BOM
     # ("'0xEF' is an invalid start of a value"). Set-Content -Encoding utf8 adds a BOM in PS 5.1.
     [System.IO.File]::WriteAllText($script:SigningMetadata, $metadataJson, (New-Object System.Text.UTF8Encoding($false)))
     Write-Host "Code signing enabled (Azure Trusted Signing) via $script:Signtool"
@@ -190,7 +190,7 @@ function Invoke-Sign {
 # ----- Publish ----------------------------------------------------------------------------------
 
 # Guard: the in-app update check compares versions with System.Version (Major.Minor.Build) and can
-# only handle plain numeric versions — a pre-release/metadata suffix like 1.2.0-beta or 1.2.0+meta
+# only handle plain numeric versions - a pre-release/metadata suffix like 1.2.0-beta or 1.2.0+meta
 # would make clients unable to tell whether the published build is newer. Refuse to build one.
 function Assert-ComparableVersion {
     param([string]$V)
@@ -250,7 +250,7 @@ catch {
     Write-Warning "Could not download the EULA from $eulaUrl ($($_.Exception.Message)); shipping the bundled snapshot."
 }
 if (-not (Test-Path $eulaPath)) {
-    throw "No EULA file in the publish output ($eulaPath) — the app would show only a fallback pointer. Ensure Resources\philterd-eula.txt is present, or fix the download."
+    throw "No EULA file in the publish output ($eulaPath) - the app would show only a fallback pointer. Ensure Resources\philterd-eula.txt is present, or fix the download."
 }
 
 if (-not $Version) {
@@ -292,7 +292,7 @@ $isccArgs = @("/DAppVersion=$Version", "/DPublishDir=$publishDir")
 if ($Sign) {
     # Register the "philtersign" sign tool with ISCC and enable the SignTool directive in the .iss
     # (/DSign). Inno then signs the installer AND the embedded uninstaller. $q (a literal quote) and
-    # $f (the file being signed) are Inno tokens — single-quoted here so PowerShell leaves them alone.
+    # $f (the file being signed) are Inno tokens - single-quoted here so PowerShell leaves them alone.
     $signToolCmd = '$q' + $script:Signtool + '$q sign /v /fd SHA256 /tr ' + $TimestampUrl +
         ' /td SHA256 /dlib $q' + $SigningDlib + '$q /dmdf $q' + $script:SigningMetadata + '$q $f'
     $isccArgs += "/DSign"
