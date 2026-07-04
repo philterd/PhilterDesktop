@@ -114,6 +114,20 @@ PhEye model is not bundled.
 The same build-and-test flow runs in CI on every push and pull request
 (`.github/workflows/ci.yml`).
 
+### Testing before release
+
+Before publishing a release, run the manual checklist in [`RELEASE_TESTING.md`](RELEASE_TESTING.md): it
+covers installing on a clean Windows machine and smoke-testing the app. Most of the functional
+verification is automated by the built-in self-test — run it against the installed (or built) binary:
+
+```
+PhilterDesktop.exe --selftest
+```
+
+It redacts a small built-in corpus (generated at runtime — nothing is bundled) across every supported
+text-based format and verifies each output is free of residual PII, printing `Result: PASS (n/n)` and
+exiting `0` on success. PDF is not covered by the self-test and is checked manually per the checklist.
+
 ## License
 
 The **source code** is open source under the **Apache License, Version 2.0** — you may inspect,

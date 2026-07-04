@@ -30,6 +30,13 @@ namespace PhilterDesktop
 
             CommandLineOptions options = CommandLineOptions.Parse(args);
 
+            // Post-install smoke test: redact a small built-in corpus and verify it, then exit. Self-contained
+            // (needs no user data or database) — see RELEASE_TESTING.md.
+            if (args.Any(a => a.Equals("--selftest", StringComparison.OrdinalIgnoreCase) || a.Equals("/selftest", StringComparison.OrdinalIgnoreCase)))
+            {
+                return SelfTest.Run();
+            }
+
             // Explorer right-click menu: show the "Redact with Philter Desktop" dialog (pick policy +
             // context, then queue the files). Coalesces a multi-file selection into one instance.
             if (options.ShellInvoked && options.Files.Count > 0)
