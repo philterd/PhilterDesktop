@@ -229,6 +229,7 @@ namespace PhilterDesktop
             helpToolStripMenuItem1 = new ToolStripMenuItem();
             toolStripSeparator1 = new ToolStripSeparator();
             checkForUpdatesToolStripMenuItem = new ToolStripMenuItem();
+            viewLicenseToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
 
             menuStrip1.SuspendLayout();
@@ -260,7 +261,7 @@ namespace PhilterDesktop
             exitToolStripMenuItem.Text = "Exit";
             exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
 
-            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { helpToolStripMenuItem1, toolStripSeparator1, checkForUpdatesToolStripMenuItem, aboutToolStripMenuItem });
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { helpToolStripMenuItem1, toolStripSeparator1, checkForUpdatesToolStripMenuItem, viewLicenseToolStripMenuItem, aboutToolStripMenuItem });
             helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             helpToolStripMenuItem.Size = new Size(44, 22);
             helpToolStripMenuItem.Text = "Help";
@@ -276,6 +277,11 @@ namespace PhilterDesktop
             checkForUpdatesToolStripMenuItem.Size = new Size(180, 22);
             checkForUpdatesToolStripMenuItem.Text = "Check for Updates...";
             checkForUpdatesToolStripMenuItem.Click += checkForUpdatesToolStripMenuItem_Click;
+
+            viewLicenseToolStripMenuItem.Name = "viewLicenseToolStripMenuItem";
+            viewLicenseToolStripMenuItem.Size = new Size(180, 22);
+            viewLicenseToolStripMenuItem.Text = "View License...";
+            viewLicenseToolStripMenuItem.Click += viewLicenseToolStripMenuItem_Click;
 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
             aboutToolStripMenuItem.Size = new Size(180, 22);
@@ -1870,6 +1876,12 @@ namespace PhilterDesktop
 
             var aboutForm = new AboutForm();
             aboutForm.ShowDialog();
+        }
+
+        private void viewLicenseToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            using var licenseForm = new LicenseForm(viewOnly: true);
+            licenseForm.ShowDialog(this);
         }
 
         // Adds a "More from Philterd" submenu to the Help menu, linking to the other Philterd offerings.

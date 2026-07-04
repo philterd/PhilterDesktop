@@ -41,6 +41,12 @@ experience, a real PDF, and a couple of GUI interactions.
 
 - [ ] It prints a PASS line for each format and ends with **`Result: PASS (6/6)`**, and the process exit
       code is `0`. (Covers txt, csv, rtf, eml, docx, xlsx end-to-end: redact + verify.)
+- [ ] Confirm the shipped license agreement is current (needs network):
+
+      .\PhilterDesktop.exe --smoketest
+
+      It prints **`PASS: the bundled EULA matches ...`** (exit `0`). A FAIL means the installer shipped a
+      stale `philterd-eula.txt` — rebuild so it re-downloads the current EULA.
 
 ## Part 3 — Functional smoke (manual GUI + PDF)
 

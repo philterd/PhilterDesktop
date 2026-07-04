@@ -44,6 +44,14 @@
        (ModernTheme.Apply loads it via this logical name). -->
   <ItemGroup>
     <EmbeddedResource Include="..\images\PhilterDesktop.ico" LogicalName="PhilterDesktop.AppIcon.ico" />
+    <!-- The Apache license never changes, so it's embedded. -->
+    <EmbeddedResource Include="Resources\apache-license.txt" LogicalName="PhilterDesktop.ApacheLicense.txt" />
+    <!-- The EULA ships as a loose file next to the exe (philterd-eula.txt) so the installer build can
+         refresh it from https://philterd.ai/philterd-eula.txt at packaging time. A checked-in snapshot is
+         copied to the output so dev builds (and a failed download) still have it. -->
+    <None Include="Resources\philterd-eula.txt" Link="philterd-eula.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

@@ -37,54 +37,54 @@ namespace PhilterDesktop.Tests
 
         private static void WithStore(Action<InMemoryStore> test)
         {
-            IEulaAcceptanceStore original = WelcomeForm.AcceptanceStore;
+            IEulaAcceptanceStore original = LicenseForm.AcceptanceStore;
             try
             {
                 var store = new InMemoryStore();
-                WelcomeForm.AcceptanceStore = store;
+                LicenseForm.AcceptanceStore = store;
                 test(store);
             }
             finally
             {
-                WelcomeForm.AcceptanceStore = original;
+                LicenseForm.AcceptanceStore = original;
             }
         }
 
         [Fact]
         public void ShouldShow_IsTrue_BeforeAcceptance() =>
-            WithStore(store => Assert.True(WelcomeForm.ShouldShow()));
+            WithStore(store => Assert.True(LicenseForm.ShouldShow()));
 
         [Fact]
         public void RememberAccepted_PersistsAcceptance_AndStopsReprompting() => WithStore(store =>
         {
-            Assert.True(WelcomeForm.ShouldShow());
+            Assert.True(LicenseForm.ShouldShow());
 
-            WelcomeForm.RememberAccepted();
+            LicenseForm.RememberAccepted();
 
             Assert.True(store.Accepted);
-            Assert.False(WelcomeForm.ShouldShow()); // never shown again once accepted
+            Assert.False(LicenseForm.ShouldShow()); // never shown again once accepted
         });
 
         [Fact]
         public void AlreadyAccepted_DoesNotShowOnLaunch() => WithStore(store =>
         {
             store.Accepted = true;
-            Assert.False(WelcomeForm.ShouldShow());
+            Assert.False(LicenseForm.ShouldShow());
         });
 
         // Regression guard for the actual bug: there must be no opt-out checkbox/property whose unchecked
         // state would skip persisting acceptance.
         [Fact]
-        public void WelcomeForm_HasNoOptOutControl()
+        public void LicenseForm_HasNoOptOutControl()
         {
             const BindingFlags flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
-            Assert.Null(typeof(WelcomeForm).GetField("_doNotShowAgain", flags));
-            Assert.Null(typeof(WelcomeForm).GetProperty("DoNotShowAgain", flags));
+            Assert.Null(typeof(LicenseForm).GetField("_doNotShowAgain", flags));
+            Assert.Null(typeof(LicenseForm).GetProperty("DoNotShowAgain", flags));
         }
 
         // The default (production) store is the registry-backed one.
         [Fact]
         public void DefaultStore_IsRegistryBacked() =>
-            Assert.IsType<RegistryEulaAcceptanceStore>(WelcomeForm.AcceptanceStore);
+            Assert.IsType<RegistryEulaAcceptanceStore>(LicenseForm.AcceptanceStore);
     }
 }

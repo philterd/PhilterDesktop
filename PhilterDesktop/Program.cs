@@ -37,6 +37,13 @@ namespace PhilterDesktop
                 return SelfTest.Run();
             }
 
+            // Release check: confirm the bundled EULA still matches the live copy on philterd.ai (network
+            // required), then exit — catches a build that shipped a stale agreement.
+            if (args.Any(a => a.Equals("--smoketest", StringComparison.OrdinalIgnoreCase) || a.Equals("/smoketest", StringComparison.OrdinalIgnoreCase)))
+            {
+                return EulaSmokeTest.Run();
+            }
+
             // Explorer right-click menu: show the "Redact with Philter Desktop" dialog (pick policy +
             // context, then queue the files). Coalesces a multi-file selection into one instance.
             if (options.ShellInvoked && options.Files.Count > 0)
@@ -85,16 +92,16 @@ namespace PhilterDesktop
 
             // First-run license / EULA acknowledgement. Skipped during a silent tray auto-start;
             // if the user disagrees, the application exits without starting.
-            if (!startMinimized && WelcomeForm.ShouldShow())
+            if (!startMinimized && LicenseForm.ShouldShow())
             {
-                using var welcome = new WelcomeForm();
-                if (welcome.ShowDialog() != DialogResult.OK)
+                using var licenseForm = new LicenseForm();
+                if (licenseForm.ShowDialog() != DialogResult.OK)
                 {
                     return 0;
                 }
                 // Once the user agrees, persist acceptance so the dialog is never shown again. (There is
                 // no opt-out checkbox to leave unchecked, which previously caused it to re-prompt forever.)
-                WelcomeForm.RememberAccepted();
+                LicenseForm.RememberAccepted();
             }
 
             // Unlock the database key. If it's passphrase-protected, prompt now (cancel = exit);

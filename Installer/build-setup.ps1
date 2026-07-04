@@ -236,6 +236,23 @@ foreach ($modelFile in @('model.onnx', 'gliner_config.json', 'spm.model')) {
     }
 }
 Write-Host "Verified PhEye name-detection model is present in the publish output."
+
+# Refresh the EULA the app shows from the live copy on philterd.ai, overwriting the checked-in snapshot in
+# the publish output. A network failure is non-fatal: the bundled snapshot ships instead (the app reads
+# whichever philterd-eula.txt is next to the exe).
+$eulaUrl = 'https://philterd.ai/philterd-eula.txt'
+$eulaPath = Join-Path $publishDir 'philterd-eula.txt'
+try {
+    Invoke-WebRequest -Uri $eulaUrl -OutFile $eulaPath -UseBasicParsing -TimeoutSec 30
+    Write-Host "Downloaded the current EULA from $eulaUrl."
+}
+catch {
+    Write-Warning "Could not download the EULA from $eulaUrl ($($_.Exception.Message)); shipping the bundled snapshot."
+}
+if (-not (Test-Path $eulaPath)) {
+    throw "No EULA file in the publish output ($eulaPath) — the app would show only a fallback pointer. Ensure Resources\philterd-eula.txt is present, or fix the download."
+}
+
 if (-not $Version) {
     $fileVersion = [version]((Get-Item $exe).VersionInfo.FileVersion)
     $Version = "{0}.{1}.{2}" -f $fileVersion.Major, $fileVersion.Minor, $fileVersion.Build

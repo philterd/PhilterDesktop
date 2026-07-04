@@ -291,7 +291,33 @@ namespace PhilterDesktop.Tests
         public void AboutForm_Constructs() => Sta(() => { using var f = new AboutForm(); _ = f.Handle; });
 
         [Fact]
-        public void WelcomeForm_Constructs() => Sta(() => { using var f = new WelcomeForm(); _ = f.Handle; });
+        public void LicenseForm_Constructs() => Sta(() => { using var f = new LicenseForm(); _ = f.Handle; });
+
+        [Fact]
+        public void LicenseForm_LoadsBothLicenseTexts() => Sta(() =>
+        {
+            using var f = new LicenseForm();
+            _ = f.Handle;
+            const System.Reflection.BindingFlags Flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var apache = (System.Windows.Forms.TextBox)typeof(LicenseForm).GetField("_licenseBody", Flags)!.GetValue(f)!;
+            var eula = (System.Windows.Forms.TextBox)typeof(LicenseForm).GetField("_eulaBody", Flags)!.GetValue(f)!;
+            Assert.Contains("Apache License", apache.Text);                    // the embedded Apache 2.0 text
+            // The EULA is loaded from the loose philterd-eula.txt next to the exe; either the agreement
+            // text or the fallback pointer mentions Philterd, so the box is never empty.
+            Assert.Contains("Philterd", eula.Text, StringComparison.OrdinalIgnoreCase);
+        });
+
+        [Fact]
+        public void LicenseForm_ViewOnly_HidesDisagree_AndShowsClose() => Sta(() =>
+        {
+            using var f = new LicenseForm(viewOnly: true);
+            _ = f.Handle;
+            const System.Reflection.BindingFlags Flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var disagree = (System.Windows.Forms.Button)typeof(LicenseForm).GetField("_disagree", Flags)!.GetValue(f)!;
+            var agree = (System.Windows.Forms.Button)typeof(LicenseForm).GetField("_agree", Flags)!.GetValue(f)!;
+            Assert.False(disagree.Visible);         // no "I Disagree" when just viewing
+            Assert.Contains("Close", agree.Text);   // the primary button just closes
+        });
 
         [Fact]
         public void PassphraseForm_Constructs() => Sta(() =>

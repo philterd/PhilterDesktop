@@ -128,6 +128,10 @@ It redacts a small built-in corpus (generated at runtime — nothing is bundled)
 text-based format and verifies each output is free of residual PII, printing `Result: PASS (n/n)` and
 exiting `0` on success. PDF is not covered by the self-test and is checked manually per the checklist.
 
+`PhilterDesktop.exe --smoketest` is a separate release check that confirms the bundled license agreement
+(`philterd-eula.txt`, refreshed by the installer build) still matches the live copy at
+`https://philterd.ai/philterd-eula.txt` (requires network); it exits `0` on a match.
+
 ## License
 
 The **source code** is open source under the **Apache License, Version 2.0** — you may inspect,

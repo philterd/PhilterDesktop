@@ -220,6 +220,7 @@ namespace PhilterDesktop
             Console.WriteLine("  /c, --context  Redaction context name to use (default: \"default\").");
             Console.WriteLine("  --highlight    Highlight replacements in Word (.docx) output (ignored for other types).");
             Console.WriteLine("  --selftest     Redact a built-in sample set and verify it, then exit (post-install smoke test).");
+            Console.WriteLine("  --smoketest    Check the bundled EULA still matches philterd.ai (network), then exit.");
             Console.WriteLine("  /h, --help     Show this help.");
             Console.WriteLine();
             Console.WriteLine("Each file is redacted to a copy with the configured suffix (default \"_redacted-draft\"); the original is not changed.");
