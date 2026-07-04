@@ -14,7 +14,10 @@ experience, a real PDF, and a couple of GUI interactions.
 - A **clean** Windows 10 or 11 (x64) environment — a fresh VM snapshot, or a Windows Sandbox — with no
   prior Philter Desktop install and no development tools. (The "clean" part matters: it's what catches a
   missing runtime or bundled dependency.)
-- The release installer: **`PhilterDesktop-Setup-<version>.exe`**.
+- The release installer: **`PhilterDesktop-Setup-<version>.exe`**, built with `Installer\build-setup.ps1`.
+  Use the **default self-contained** build — do **not** pass `-FrameworkDependent` for a release, so the
+  installer bundles .NET 10 and does not require the user to install the .NET runtime (Windows does not
+  ship modern .NET).
 - One real **PDF** with obvious PII in it (an email address and/or an SSN) for the manual PDF check, since
   the self-test does not cover PDF.
 
