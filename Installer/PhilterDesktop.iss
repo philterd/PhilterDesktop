@@ -41,6 +41,10 @@ OutputBaseFilename=PhilterDesktop-Setup-{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+; Show the Philterd Commercial License Agreement (EULA) and require acceptance before installing. The file
+; is the one build-setup.ps1 downloads from philterd.ai into the publish dir (a checked-in snapshot is
+; present as a fallback), so it always exists when ISCC runs.
+LicenseFile={#PublishDir}\philterd-eula.txt
 ; When the build passes /DSign, sign the installer AND the generated uninstaller. The "philtersign"
 ; sign tool is registered on the ISCC command line by build-setup.ps1 (/Sphiltersign=...).
 #ifdef Sign
