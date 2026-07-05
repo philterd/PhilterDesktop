@@ -848,13 +848,22 @@ namespace PhilterDesktop
             // Persistent safety reminder: automated redaction is imperfect and output must be reviewed.
             // Sits after the spring summary label, so it stays pinned to the right of the status bar,
             // shown in bold amber so it stays visible.
+            // Clickable so it opens the full redaction-review notice; keep the amber warning colour as the
+            // link colour (only underline on hover) so it still reads as a warning, not a plain hyperlink.
+            Color reviewAmber = Color.FromArgb(176, 92, 0);
             _reviewWarningLabel = new ToolStripStatusLabel
             {
                 Text = "Redaction can include mistakes. Always carefully review redacted documents before sharing.",
                 Font = new Font(ModernTheme.UiFont, FontStyle.Bold),
-                ForeColor = Color.FromArgb(176, 92, 0),
-                AccessibleName = "Important: redaction can include mistakes. Always carefully review redacted documents before sharing."
+                ForeColor = reviewAmber,
+                IsLink = true,
+                LinkColor = reviewAmber,
+                ActiveLinkColor = reviewAmber,
+                LinkBehavior = LinkBehavior.HoverUnderline,
+                ToolTipText = "Click to read about reviewing redacted documents",
+                AccessibleName = "Important: redaction can include mistakes. Always carefully review redacted documents before sharing. Click to read more."
             };
+            _reviewWarningLabel.Click += (_, _) => ShowRedactionNotice();
             statusStrip1.Items.Add(_reviewWarningLabel);
 
             // --- Wire the previously-dead Help buttons ---
@@ -1882,6 +1891,13 @@ namespace PhilterDesktop
         {
             using var licenseForm = new LicenseForm(viewOnly: true);
             licenseForm.ShowDialog(this);
+        }
+
+        // Opens the redaction-review notice for reference (from the status-bar reminder link).
+        private void ShowRedactionNotice()
+        {
+            using var noticeForm = new RedactionNoticeForm(viewOnly: true);
+            noticeForm.ShowDialog(this);
         }
 
         // Adds a "More from Philterd" submenu to the Help menu, linking to the other Philterd offerings.

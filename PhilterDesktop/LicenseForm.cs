@@ -15,7 +15,6 @@
  */
 
 using System.Reflection;
-using Microsoft.Win32;
 
 namespace PhilterDesktop
 {
@@ -37,12 +36,6 @@ namespace PhilterDesktop
         /// build output so it is present in development too.
         /// </summary>
         private const string EulaFileName = "philterd-eula.txt";
-
-        /// <summary>
-        /// Where acceptance is persisted. Defaults to the Windows registry; tests can swap in an
-        /// in-memory store so they don't touch the real per-user registry.
-        /// </summary>
-        internal static IEulaAcceptanceStore AcceptanceStore { get; set; } = new RegistryEulaAcceptanceStore();
 
         public LicenseForm() : this(viewOnly: false)
         {
@@ -74,13 +67,13 @@ namespace PhilterDesktop
         }
 
         /// <summary>Whether the license dialog should be shown on this launch (i.e. not yet accepted).</summary>
-        public static bool ShouldShow() => !AcceptanceStore.HasAccepted();
+        public static bool ShouldShow() => !Acknowledgements.Store.HasAccepted(Acknowledgements.LicenseKey);
 
         /// <summary>
-        /// Persists that the user accepted the agreement. Called unconditionally once the user agrees, so
-        /// acceptance is remembered and the dialog is never re-shown after that (no opt-out to leave off).
+        /// Persists that the user accepted the license. Called once the user agrees, so acceptance is
+        /// remembered and the dialog is never re-shown after that (no opt-out to leave off).
         /// </summary>
-        public static void RememberAccepted() => AcceptanceStore.RememberAccepted();
+        public static void RememberAccepted() => Acknowledgements.Store.RememberAccepted(Acknowledgements.LicenseKey);
 
         // Reads an embedded license text (the Apache license). Returns a short fallback rather than throwing
         // if a resource is somehow missing, so the acceptance gate always renders.
@@ -118,39 +111,6 @@ namespace PhilterDesktop
             {
                 return "The Philterd Commercial License Agreement is available at https://philterd.ai/philterd-eula.txt.";
             }
-        }
-    }
-
-    /// <summary>Stores whether the user has accepted the first-run agreement.</summary>
-    internal interface IEulaAcceptanceStore
-    {
-        bool HasAccepted();
-        void RememberAccepted();
-    }
-
-    /// <summary>Default acceptance store: a per-user value under HKCU\Software\PhilterDesktop.</summary>
-    internal sealed class RegistryEulaAcceptanceStore : IEulaAcceptanceStore
-    {
-        private const string PrefsKeyPath = @"Software\PhilterDesktop";
-        private const string AcceptedValueName = "EulaAccepted";
-
-        public bool HasAccepted()
-        {
-            try
-            {
-                using RegistryKey? key = Registry.CurrentUser.OpenSubKey(PrefsKeyPath, writable: false);
-                return key?.GetValue(AcceptedValueName) is int value && value == 1;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public void RememberAccepted()
-        {
-            using RegistryKey key = Registry.CurrentUser.CreateSubKey(PrefsKeyPath, writable: true);
-            key.SetValue(AcceptedValueName, 1, RegistryValueKind.DWord);
         }
     }
 }

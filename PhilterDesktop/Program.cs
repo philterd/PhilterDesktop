@@ -90,18 +90,30 @@ namespace PhilterDesktop
                 a.Equals(StartupManager.MinimizedSwitch, StringComparison.OrdinalIgnoreCase) ||
                 a.Equals("-m", StringComparison.OrdinalIgnoreCase));
 
-            // First-run license / EULA acknowledgement. Skipped during a silent tray auto-start;
-            // if the user disagrees, the application exits without starting.
-            if (!startMinimized && LicenseForm.ShouldShow())
+            // First-run acknowledgements, gated in two independent steps: the license/EULA, then the
+            // redaction-review notice. Each is tracked by its own persisted flag and shown only if not yet
+            // accepted, so declining one doesn't re-prompt the other. Skipped during a silent tray auto-start;
+            // disagreeing at either step exits without starting (and without persisting that step).
+            if (!startMinimized)
             {
-                using var licenseForm = new LicenseForm();
-                if (licenseForm.ShowDialog() != DialogResult.OK)
+                if (LicenseForm.ShouldShow())
                 {
-                    return 0;
+                    using var licenseForm = new LicenseForm();
+                    if (licenseForm.ShowDialog() != DialogResult.OK)
+                    {
+                        return 0;
+                    }
+                    LicenseForm.RememberAccepted();
                 }
-                // Once the user agrees, persist acceptance so the dialog is never shown again. (There is
-                // no opt-out checkbox to leave unchecked, which previously caused it to re-prompt forever.)
-                LicenseForm.RememberAccepted();
+                if (RedactionNoticeForm.ShouldShow())
+                {
+                    using var noticeForm = new RedactionNoticeForm();
+                    if (noticeForm.ShowDialog() != DialogResult.OK)
+                    {
+                        return 0;
+                    }
+                    RedactionNoticeForm.RememberAccepted();
+                }
             }
 
             // Unlock the database key. If it's passphrase-protected, prompt now (cancel = exit);

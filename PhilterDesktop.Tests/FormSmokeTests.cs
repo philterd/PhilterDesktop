@@ -294,6 +294,21 @@ namespace PhilterDesktop.Tests
         public void LicenseForm_Constructs() => Sta(() => { using var f = new LicenseForm(); _ = f.Handle; });
 
         [Fact]
+        public void RedactionNoticeForm_Constructs() => Sta(() => { using var f = new RedactionNoticeForm(); _ = f.Handle; });
+
+        [Fact]
+        public void RedactionNoticeForm_ViewOnly_HidesDisagree_AndShowsClose() => Sta(() =>
+        {
+            using var f = new RedactionNoticeForm(viewOnly: true);
+            _ = f.Handle;
+            const System.Reflection.BindingFlags Flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var disagree = (System.Windows.Forms.Button)typeof(RedactionNoticeForm).GetField("_disagree", Flags)!.GetValue(f)!;
+            var agree = (System.Windows.Forms.Button)typeof(RedactionNoticeForm).GetField("_agree", Flags)!.GetValue(f)!;
+            Assert.False(disagree.Visible);
+            Assert.Contains("Close", agree.Text);
+        });
+
+        [Fact]
         public void LicenseForm_LoadsBothLicenseTexts() => Sta(() =>
         {
             using var f = new LicenseForm();

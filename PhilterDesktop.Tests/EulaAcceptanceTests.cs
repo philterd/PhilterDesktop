@@ -27,26 +27,25 @@ namespace PhilterDesktop.Tests
     /// </summary>
     public sealed class EulaAcceptanceTests
     {
-        private sealed class InMemoryStore : IEulaAcceptanceStore
+        private sealed class InMemoryStore : IAcceptanceStore
         {
-            public int RememberCalls { get; private set; }
-            public bool Accepted { get; set; }
-            public bool HasAccepted() => Accepted;
-            public void RememberAccepted() { Accepted = true; RememberCalls++; }
+            private readonly HashSet<string> _accepted = new();
+            public bool HasAccepted(string key) => _accepted.Contains(key);
+            public void RememberAccepted(string key) => _accepted.Add(key);
         }
 
         private static void WithStore(Action<InMemoryStore> test)
         {
-            IEulaAcceptanceStore original = LicenseForm.AcceptanceStore;
+            IAcceptanceStore original = Acknowledgements.Store;
             try
             {
                 var store = new InMemoryStore();
-                LicenseForm.AcceptanceStore = store;
+                Acknowledgements.Store = store;
                 test(store);
             }
             finally
             {
-                LicenseForm.AcceptanceStore = original;
+                Acknowledgements.Store = original;
             }
         }
 
@@ -61,16 +60,44 @@ namespace PhilterDesktop.Tests
 
             LicenseForm.RememberAccepted();
 
-            Assert.True(store.Accepted);
+            Assert.True(store.HasAccepted(Acknowledgements.LicenseKey));
             Assert.False(LicenseForm.ShouldShow()); // never shown again once accepted
         });
 
         [Fact]
         public void AlreadyAccepted_DoesNotShowOnLaunch() => WithStore(store =>
         {
-            store.Accepted = true;
+            store.RememberAccepted(Acknowledgements.LicenseKey);
             Assert.False(LicenseForm.ShouldShow());
         });
+
+        // The redaction-review notice is a second, independent gate.
+        [Fact]
+        public void RedactionNotice_HasItsOwnAcceptance() => WithStore(store =>
+        {
+            Assert.True(RedactionNoticeForm.ShouldShow());
+
+            RedactionNoticeForm.RememberAccepted();
+
+            Assert.True(store.HasAccepted(Acknowledgements.RedactionNoticeKey));
+            Assert.False(RedactionNoticeForm.ShouldShow());
+        });
+
+        // The two gates are tracked by separate flags — accepting one must not satisfy the other.
+        [Fact]
+        public void LicenseAndNotice_AreIndependent() => WithStore(store =>
+        {
+            LicenseForm.RememberAccepted();
+            Assert.False(LicenseForm.ShouldShow());
+            Assert.True(RedactionNoticeForm.ShouldShow()); // still owed the notice
+
+            RedactionNoticeForm.RememberAccepted();
+            Assert.False(RedactionNoticeForm.ShouldShow());
+        });
+
+        [Fact]
+        public void LicenseAndNotice_UseDistinctKeys() =>
+            Assert.NotEqual(Acknowledgements.LicenseKey, Acknowledgements.RedactionNoticeKey);
 
         // Regression guard for the actual bug: there must be no opt-out checkbox/property whose unchecked
         // state would skip persisting acceptance.
@@ -85,6 +112,6 @@ namespace PhilterDesktop.Tests
         // The default (production) store is the registry-backed one.
         [Fact]
         public void DefaultStore_IsRegistryBacked() =>
-            Assert.IsType<RegistryEulaAcceptanceStore>(LicenseForm.AcceptanceStore);
+            Assert.IsType<RegistryAcceptanceStore>(Acknowledgements.Store);
     }
 }

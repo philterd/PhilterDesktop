@@ -43,7 +43,6 @@ namespace PhilterDesktop
             _licenseBody = new TextBox();
             _eulaHeading = new Label();
             _eulaBody = new TextBox();
-            _reviewNotice = new Label();
             _agree = new Button();
             _disagree = new Button();
             SuspendLayout();
@@ -90,32 +89,23 @@ namespace PhilterDesktop
             _eulaBody.TabIndex = 3;
             _eulaBody.TabStop = false;
             //
-            // _reviewNotice
-            //
-            _reviewNotice.ForeColor = SystemColors.GrayText;
-            _reviewNotice.Location = new Point(14, 540);
-            _reviewNotice.Name = "_reviewNotice";
-            _reviewNotice.Size = new Size(592, 44);
-            _reviewNotice.TabIndex = 4;
-            _reviewNotice.Text = "Philter Desktop identifies sensitive information using statistical and machine-learning methods that can miss or over-flag it. Always have a qualified person review every redacted document before sharing or relying on it.";
-            //
             // _agree
             //
             _agree.DialogResult = DialogResult.OK;
-            _agree.Location = new Point(380, 592);
+            _agree.Location = new Point(380, 542);
             _agree.Name = "_agree";
             _agree.Size = new Size(110, 34);
-            _agree.TabIndex = 5;
+            _agree.TabIndex = 4;
             _agree.Text = "I &Agree";
             _agree.UseVisualStyleBackColor = true;
             //
             // _disagree
             //
             _disagree.DialogResult = DialogResult.Cancel;
-            _disagree.Location = new Point(496, 592);
+            _disagree.Location = new Point(496, 542);
             _disagree.Name = "_disagree";
             _disagree.Size = new Size(110, 34);
-            _disagree.TabIndex = 6;
+            _disagree.TabIndex = 5;
             _disagree.Text = "I &Disagree";
             _disagree.UseVisualStyleBackColor = true;
             //
@@ -125,12 +115,11 @@ namespace PhilterDesktop
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = _disagree;
-            ClientSize = new Size(620, 640);
+            ClientSize = new Size(620, 590);
             Controls.Add(_licenseHeading);
             Controls.Add(_licenseBody);
             Controls.Add(_eulaHeading);
             Controls.Add(_eulaBody);
-            Controls.Add(_reviewNotice);
             Controls.Add(_agree);
             Controls.Add(_disagree);
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -149,7 +138,6 @@ namespace PhilterDesktop
         private TextBox _licenseBody;
         private Label _eulaHeading;
         private TextBox _eulaBody;
-        private Label _reviewNotice;
         private Button _agree;
         private Button _disagree;
     }
