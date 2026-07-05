@@ -11,7 +11,7 @@
     <!-- Single source of truth for the app version. Bump this for each release; it flows to the
          About dialog, the in-app update check, and the installer filename (build-setup.ps1 reads it
          from the built exe). -->
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <!-- Embed the Philter brand icon into the .exe so Windows (taskbar, Explorer, the file icon, and
          the right-click "Redact with Philter Desktop" menu, which points its Icon at the exe) shows
          it instead of a generic icon. -->

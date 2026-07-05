@@ -34,9 +34,14 @@ namespace PhilterDesktop
 
         private void LoadVersionInfo()
         {
-            // Get version information from assembly
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
-            lblVersion.Text = $"Version {version?.Major}.{version?.Minor}.{version?.Build}";
+            // Prefer the informational version so a pre-release suffix (e.g. "1.1.0-preview") is shown; the
+            // numeric AssemblyVersion can't carry it. Strip any build metadata the SDK appends after '+'.
+            Assembly asm = Assembly.GetExecutingAssembly();
+            string? informational = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            string display = string.IsNullOrEmpty(informational)
+                ? (asm.GetName().Version is { } v ? $"{v.Major}.{v.Minor}.{v.Build}" : "?")
+                : informational.Split('+')[0];
+            lblVersion.Text = $"Version {display}";
         }
 
         private void btnOK_Click(object sender, EventArgs e)
