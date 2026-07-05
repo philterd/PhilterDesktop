@@ -265,6 +265,7 @@ namespace PhilterDesktop
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "AboutForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "About Philter Desktop";
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();

@@ -46,19 +46,19 @@ namespace PhilterDesktop
             _agree = new Button();
             _disagree = new Button();
             SuspendLayout();
-            //
+            // 
             // _licenseHeading
-            //
+            // 
             _licenseHeading.AutoSize = true;
             _licenseHeading.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             _licenseHeading.Location = new Point(14, 12);
             _licenseHeading.Name = "_licenseHeading";
-            _licenseHeading.Size = new Size(60, 19);
+            _licenseHeading.Size = new Size(57, 19);
             _licenseHeading.TabIndex = 0;
             _licenseHeading.Text = "License";
-            //
+            // 
             // _licenseBody
-            //
+            // 
             _licenseBody.Location = new Point(14, 34);
             _licenseBody.Multiline = true;
             _licenseBody.Name = "_licenseBody";
@@ -67,19 +67,19 @@ namespace PhilterDesktop
             _licenseBody.Size = new Size(592, 232);
             _licenseBody.TabIndex = 1;
             _licenseBody.TabStop = false;
-            //
+            // 
             // _eulaHeading
-            //
+            // 
             _eulaHeading.AutoSize = true;
             _eulaHeading.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             _eulaHeading.Location = new Point(14, 276);
             _eulaHeading.Name = "_eulaHeading";
-            _eulaHeading.Size = new Size(190, 19);
+            _eulaHeading.Size = new Size(198, 19);
             _eulaHeading.TabIndex = 2;
             _eulaHeading.Text = "End User License Agreement";
-            //
+            // 
             // _eulaBody
-            //
+            // 
             _eulaBody.Location = new Point(14, 298);
             _eulaBody.Multiline = true;
             _eulaBody.Name = "_eulaBody";
@@ -88,9 +88,9 @@ namespace PhilterDesktop
             _eulaBody.Size = new Size(592, 232);
             _eulaBody.TabIndex = 3;
             _eulaBody.TabStop = false;
-            //
+            // 
             // _agree
-            //
+            // 
             _agree.DialogResult = DialogResult.OK;
             _agree.Location = new Point(380, 542);
             _agree.Name = "_agree";
@@ -98,9 +98,9 @@ namespace PhilterDesktop
             _agree.TabIndex = 4;
             _agree.Text = "I &Agree";
             _agree.UseVisualStyleBackColor = true;
-            //
+            // 
             // _disagree
-            //
+            // 
             _disagree.DialogResult = DialogResult.Cancel;
             _disagree.Location = new Point(496, 542);
             _disagree.Name = "_disagree";
@@ -108,9 +108,9 @@ namespace PhilterDesktop
             _disagree.TabIndex = 5;
             _disagree.Text = "I &Disagree";
             _disagree.UseVisualStyleBackColor = true;
-            //
+            // 
             // LicenseForm
-            //
+            // 
             AcceptButton = _agree;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -126,6 +126,7 @@ namespace PhilterDesktop
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "LicenseForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Philter Desktop License";
             ResumeLayout(false);

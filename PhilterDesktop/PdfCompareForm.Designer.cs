@@ -79,6 +79,7 @@ namespace PhilterDesktop
             MinimizeBox = false;
             MinimumSize = new Size(820, 460);
             Name = "PdfCompareForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Compare PDF";
             _bottom.ResumeLayout(false);

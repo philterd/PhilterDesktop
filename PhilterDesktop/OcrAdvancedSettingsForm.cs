@@ -43,6 +43,7 @@ namespace PhilterDesktop
             StartPosition = FormStartPosition.CenterParent;
             MaximizeBox = false;
             MinimizeBox = false;
+            ShowInTaskbar = false;
             ClientSize = new Size(440, 320);
 
             var intro = new Label

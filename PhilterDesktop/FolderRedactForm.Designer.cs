@@ -186,6 +186,7 @@ namespace PhilterDesktop
             MinimizeBox = false;
             MinimumSize = new Size(480, 322);
             Name = "FolderRedactForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Redact Folder";
             Load += FolderRedactForm_Load;

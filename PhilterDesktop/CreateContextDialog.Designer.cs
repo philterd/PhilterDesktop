@@ -88,6 +88,7 @@ namespace PhilterDesktop
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "CreateContextDialog";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Create Redaction Context";
             ResumeLayout(false);

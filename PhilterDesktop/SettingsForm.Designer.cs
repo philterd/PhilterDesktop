@@ -997,6 +997,7 @@ namespace PhilterDesktop
             MinimizeBox = false;
             MinimumSize = new Size(728, 405);
             Name = "SettingsForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Settings";
             Load += SettingsForm_Load;

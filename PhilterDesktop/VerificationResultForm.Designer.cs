@@ -114,6 +114,7 @@ namespace PhilterDesktop
             MinimizeBox = false;
             MinimumSize = new Size(520, 380);
             Name = "VerificationResultForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Verification";
             ResumeLayout(false);

@@ -97,6 +97,7 @@ namespace PhilterDesktop
             MinimizeBox = false;
             MinimumSize = new Size(560, 360);
             Name = "DiffViewerForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Redaction Diff";
             ((System.ComponentModel.ISupportInitialize)_grid).EndInit();

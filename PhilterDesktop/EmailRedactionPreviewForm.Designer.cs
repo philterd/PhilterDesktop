@@ -362,6 +362,7 @@ namespace PhilterDesktop
             Controls.Add(_bottomPanel);
             MinimumSize = new Size(720, 460);
             Name = "EmailRedactionPreviewForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Redact Email (Preview)";
             Load += EmailRedactionPreviewForm_Load;

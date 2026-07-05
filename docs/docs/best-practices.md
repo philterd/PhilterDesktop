@@ -7,7 +7,8 @@ a companion to the feature pages, gathered in one place so you can build a relia
     Redaction is **statistical**: Philter Desktop recognizes many kinds of sensitive information, but it
     can miss something unusual or remove too much. The suggestions here **improve** your results — they do
     **not** guarantee that every piece of sensitive information is found or removed. **Always review a
-    redacted file before you rely on it or share it.** You are responsible for the final document.
+    redacted file before you rely on it or share it.** You are responsible for the final document. See
+    [Redaction Accuracy](mistakes.md) to understand why redaction can make mistakes and how to reduce them.
 
 ## Always review the redacted draft
 

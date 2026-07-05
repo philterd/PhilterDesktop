@@ -42,21 +42,19 @@ namespace PhilterDesktop
 
         /// <param name="viewOnly">
         /// When true, the notice is shown for reference (e.g. from the main-window status bar) rather than
-        /// as the first-run gate: the Agree/Disagree choice is replaced with a single Close button.
+        /// as the first-run acknowledgement: the OK button is labelled Close and Esc dismisses it.
         /// </param>
         public RedactionNoticeForm(bool viewOnly)
         {
             InitializeComponent();
             ModernTheme.Apply(this);
-            ModernTheme.MakePrimary(_agree);
+            ModernTheme.MakePrimary(_ok);
             _body.Text = NoticeText;
 
             if (viewOnly)
             {
-                _disagree.Visible = false;
-                _agree.Text = "&Close";
-                _agree.DialogResult = DialogResult.OK;
-                CancelButton = _agree; // Esc / the window close button just closes
+                _ok.Text = "&Close";
+                CancelButton = _ok; // Esc / the window close button just closes
             }
         }
 

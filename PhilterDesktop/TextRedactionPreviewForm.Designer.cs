@@ -383,6 +383,7 @@ namespace PhilterDesktop
             Controls.Add(_bottomPanel);
             MinimumSize = new Size(720, 460);
             Name = "TextRedactionPreviewForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Redact (Preview)";
             Load += TextRedactionPreviewForm_Load;

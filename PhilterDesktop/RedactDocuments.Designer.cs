@@ -263,6 +263,7 @@ namespace PhilterDesktop
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "RedactDocuments";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Redact Documents";
             Load += RedactDocumentsForm_Load;

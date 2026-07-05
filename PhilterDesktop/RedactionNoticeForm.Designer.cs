@@ -36,74 +36,62 @@ namespace PhilterDesktop
             _heading = new Label();
             _body = new Label();
             _learnMore = new LinkLabel();
-            _agree = new Button();
-            _disagree = new Button();
+            _ok = new Button();
             SuspendLayout();
-            //
+            // 
             // _heading
-            //
+            // 
             _heading.AutoSize = true;
             _heading.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             _heading.Location = new Point(16, 16);
             _heading.Name = "_heading";
-            _heading.Size = new Size(230, 19);
+            _heading.Size = new Size(238, 19);
             _heading.TabIndex = 0;
             _heading.Text = "Important — reviewing redactions";
-            //
+            // 
             // _body
-            //
+            // 
             _body.Location = new Point(16, 48);
             _body.Name = "_body";
             _body.Size = new Size(508, 148);
             _body.TabIndex = 1;
-            //
+            // 
             // _learnMore
-            //
+            // 
             _learnMore.AutoSize = true;
             _learnMore.Location = new Point(16, 204);
             _learnMore.Name = "_learnMore";
-            _learnMore.Size = new Size(230, 15);
+            _learnMore.Size = new Size(204, 15);
             _learnMore.TabIndex = 2;
             _learnMore.TabStop = true;
             _learnMore.Text = "Learn more about redaction accuracy";
             _learnMore.LinkClicked += OnLearnMoreClicked;
-            //
-            // _agree
-            //
-            _agree.DialogResult = DialogResult.OK;
-            _agree.Location = new Point(298, 240);
-            _agree.Name = "_agree";
-            _agree.Size = new Size(110, 34);
-            _agree.TabIndex = 3;
-            _agree.Text = "I &Agree";
-            _agree.UseVisualStyleBackColor = true;
-            //
-            // _disagree
-            //
-            _disagree.DialogResult = DialogResult.Cancel;
-            _disagree.Location = new Point(414, 240);
-            _disagree.Name = "_disagree";
-            _disagree.Size = new Size(110, 34);
-            _disagree.TabIndex = 4;
-            _disagree.Text = "I &Disagree";
-            _disagree.UseVisualStyleBackColor = true;
-            //
+            // 
+            // _ok
+            // 
+            _ok.DialogResult = DialogResult.OK;
+            _ok.Location = new Point(414, 240);
+            _ok.Name = "_ok";
+            _ok.Size = new Size(110, 34);
+            _ok.TabIndex = 3;
+            _ok.Text = "OK";
+            _ok.UseVisualStyleBackColor = true;
+            // 
             // RedactionNoticeForm
-            //
-            AcceptButton = _agree;
+            // 
+            AcceptButton = _ok;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            CancelButton = _disagree;
             ClientSize = new Size(540, 288);
             Controls.Add(_heading);
             Controls.Add(_body);
             Controls.Add(_learnMore);
-            Controls.Add(_agree);
-            Controls.Add(_disagree);
+            Controls.Add(_ok);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "RedactionNoticeForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Philter Desktop";
             ResumeLayout(false);
@@ -115,7 +103,6 @@ namespace PhilterDesktop
         private Label _heading;
         private Label _body;
         private LinkLabel _learnMore;
-        private Button _agree;
-        private Button _disagree;
+        private Button _ok;
     }
 }

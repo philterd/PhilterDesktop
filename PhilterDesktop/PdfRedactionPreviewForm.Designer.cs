@@ -174,6 +174,7 @@ namespace PhilterDesktop
             MinimizeBox = false;
             MinimumSize = new Size(820, 460);
             Name = "PdfRedactionPreviewForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Redact with Preview";
             Load += PdfRedactionPreviewForm_Load;

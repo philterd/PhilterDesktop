@@ -297,15 +297,13 @@ namespace PhilterDesktop.Tests
         public void RedactionNoticeForm_Constructs() => Sta(() => { using var f = new RedactionNoticeForm(); _ = f.Handle; });
 
         [Fact]
-        public void RedactionNoticeForm_ViewOnly_HidesDisagree_AndShowsClose() => Sta(() =>
+        public void RedactionNoticeForm_ViewOnly_ShowsClose() => Sta(() =>
         {
             using var f = new RedactionNoticeForm(viewOnly: true);
             _ = f.Handle;
             const System.Reflection.BindingFlags Flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
-            var disagree = (System.Windows.Forms.Button)typeof(RedactionNoticeForm).GetField("_disagree", Flags)!.GetValue(f)!;
-            var agree = (System.Windows.Forms.Button)typeof(RedactionNoticeForm).GetField("_agree", Flags)!.GetValue(f)!;
-            Assert.False(disagree.Visible);
-            Assert.Contains("Close", agree.Text);
+            var ok = (System.Windows.Forms.Button)typeof(RedactionNoticeForm).GetField("_ok", Flags)!.GetValue(f)!;
+            Assert.Contains("Close", ok.Text); // the single button just closes in view-only mode
         });
 
         [Fact]

@@ -298,6 +298,7 @@ namespace PhilterDesktop
             Controls.Add(_bottom);
             MinimumSize = new Size(716, 459);
             Name = "ModifyRedactionForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Modify Redaction";
             _split.ResumeLayout(false);

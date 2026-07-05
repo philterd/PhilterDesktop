@@ -155,6 +155,7 @@ namespace PhilterDesktop
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "Contexts";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Redaction Contexts";
             Load += RedctionContextsForm_Load;
