@@ -1,6 +1,6 @@
 # Philter Desktop
 
-**[Philter Desktop](https://philterd.ai/philter-desktop/)** is a Windows program that removes sensitive personal information from your
+**[Philter Desktop](https://philterd.ai/philter-desktop/)** is a Windows application that removes sensitive personal information from your
 documents. You give it a file (a plain-text note, a Microsoft Word document, or a PDF) and
 it produces a new, cleaned-up copy with things like names, Social Security numbers, phone numbers,
 addresses, and account numbers blacked out or replaced. Your original file is never touched; Philter
