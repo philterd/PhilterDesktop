@@ -5,7 +5,7 @@ removing the program again.
 
 ## What you need
 
-- A computer running **Windows 10 or Windows 11**.
+- A computer running **Windows 10 (version 1809 or later) or Windows 11**, 64-bit.
 
 Philter Desktop is a **per-user subscription that
 includes support** (see [Licensing & Support](licensing.md)); with your subscription you get the
@@ -56,10 +56,17 @@ install for all users, which does require an administrator.)
 
 ## Your first time opening the program
 
-The very first time you run Philter Desktop, it shows a short **welcome and license agreement** screen.
-Read it and click **I Agree** to continue. Once you've agreed, it won't appear again on future launches.
-It also reminds you that automated redaction can miss things, so
-always review each cleaned-up document before sharing it.
+The very first time you run Philter Desktop, it shows two short screens you need to accept before the
+main window opens:
+
+1. A **license** screen showing the **Apache License 2.0** (the open-source code license) and the
+   **Philterd Commercial License Agreement** (the license for the official build), each in its own
+   panel. Read it and click **I Agree** to continue (or **I Disagree** to close the program).
+2. A short **redaction notice** reminding you that automated redaction is not perfect and can miss
+   things, so you should always review each cleaned-up document before sharing it. Click **OK** to
+   acknowledge it.
+
+Once you've accepted both, they won't appear again on future launches.
 
 After that, you see the main window. The top of the window has a row of buttons
 (a **toolbar**), and most of the window is taken up by the **redaction queue**, the list of

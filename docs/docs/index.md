@@ -6,6 +6,12 @@ it produces a new, cleaned-up copy with things like names, Social Security numbe
 addresses, and account numbers blacked out or replaced. Your original file is never touched; Philter
 Desktop always works on a separate copy.
 
+!!! note "This documentation is for the latest version of Philter Desktop"
+    These pages always describe the **newest release** of Philter Desktop. If you are running an older
+    version, you can read the documentation that shipped with it on GitHub: open the
+    [tags page](https://github.com/philterd/PhilterDesktop/tags), choose the tag that matches your
+    version (shown in **Help → About**), and browse its `docs/docs` folder.
+
 ![Philter Desktop main window with a queue of documents, each showing its redaction status, policy, and context](img/main-form.png)
 
 *The main window: add documents and Philter Desktop redacts them in the background, showing each file's status.*

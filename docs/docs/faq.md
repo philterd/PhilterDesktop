@@ -92,5 +92,5 @@ machine, with optional passphrase protection for stronger control. See
 
 ## What are the system requirements?
 
-Windows 10 (version 2004, build 19041) or later, or Windows 11, 64-bit. See
+Windows 10 (version 1809, build 17763) or later, or Windows 11, 64-bit. See
 [Getting Started](getting-started.md).

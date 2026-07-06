@@ -7,8 +7,6 @@ on:
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yml'
-      # A version bump publishes a new docs version (and moves "latest").
-      - 'PhilterDesktop/PhilterDesktop.csproj'
   workflow_dispatch:
 
 permissions:
@@ -40,15 +38,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r docs/requirements.txt
 
-      # Publish versioned docs with mike. The docs version is the app's major.minor (read from the
-      # .csproj <Version>), so bumping the app version publishes a new docs version. The "latest" alias is
-      # moved to the newest version and kept as the default, so the site root redirects to it. mike writes
-      # to the gh-pages branch that GitHub Pages serves; the Material theme renders the version selector
-      # (extra.version.provider: mike in mkdocs.yml).
-      - name: Deploy versioned docs
-        run: |
-          VERSION="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' PhilterDesktop/PhilterDesktop.csproj | head -1)"
-          DOCS_VERSION="${VERSION%.*}"
-          echo "App version $VERSION -> docs version $DOCS_VERSION"
-          mike deploy --config-file docs/mkdocs.yml --push --update-aliases "$DOCS_VERSION" latest
-          mike set-default --config-file docs/mkdocs.yml --push latest
+      # mkdocs.yml lives in docs/; docs_dir defaults to docs/docs. gh-deploy builds
+      # the site and pushes it to the gh-pages branch, which GitHub Pages serves.
+      - name: Build and deploy
+        run: mkdocs gh-deploy --force --config-file docs/mkdocs.yml
