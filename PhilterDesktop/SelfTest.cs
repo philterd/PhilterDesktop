@@ -30,9 +30,11 @@ namespace PhilterDesktop
 {
     /// <summary>
     /// A self-contained smoke test (<c>PhilterDesktop.exe --selftest</c>): generates small documents that
-    /// carry a known email and SSN in each supported text-based format, runs the real redaction pipeline over
-    /// them, and verifies each redacted output is free of residual PII. Prints PASS/FAIL per format and exits
-    /// 0 (all passed) or 1 (any failed) — a quick post-install confidence check that needs no user data.
+    /// carry a known email and SSN in each supported format (including PDF), runs the real redaction pipeline
+    /// over them, and verifies each redacted output is free of residual PII. For every format it first confirms
+    /// the planted PII is detectable in the input, so a clean result is meaningful (a redacted PDF is flattened
+    /// to an image, so its output would otherwise verify clean even with no redaction). Prints PASS/FAIL per
+    /// format and exits 0 (all passed) or 1 (any failed) — a post-install confidence check that needs no user data.
     /// </summary>
     internal static class SelfTest
     {
@@ -70,6 +72,7 @@ namespace PhilterDesktop
                 ("eml", WriteEml),
                 ("docx", WriteDocx),
                 ("xlsx", WriteXlsx),
+                ("pdf", WritePdf),
             };
 
             int passed = 0;
@@ -91,7 +94,6 @@ namespace PhilterDesktop
             Console.WriteLine();
             bool ok = passed == cases.Length;
             Console.WriteLine($"Result: {(ok ? "PASS" : "FAIL")} ({passed}/{cases.Length})");
-            Console.WriteLine("Note: PDF is not covered here — redact a real PDF manually (see RELEASE_TESTING.md).");
             return ok ? 0 : 1;
         }
 
@@ -102,6 +104,14 @@ namespace PhilterDesktop
             {
                 input = generate(Path.Combine(dir, "in." + label));
                 string output = Path.Combine(dir, "out." + label);
+
+                // Confirm the planted PII is detectable in the input first, so a clean output means something.
+                VerificationOutcome before = RedactionVerifier.Verify(input, policy, "selftest", filterService, sourcePath: null);
+                if (before.Status != VerificationStatus.ResidualsFound)
+                {
+                    Console.WriteLine($"  FAIL  {label} (planted PII not detected in the input)");
+                    return false;
+                }
 
                 RedactionService.RedactFileAsync(input, output, policy, "selftest", filterService).GetAwaiter().GetResult();
 
@@ -188,6 +198,18 @@ namespace PhilterDesktop
                 sheetData.Append(new X.Row(cell));
                 wbPart.Workbook.Save();
             }
+            return path;
+        }
+
+        private static string WritePdf(string path)
+        {
+            // Author a one-page PDF with a real, extractable text layer (Standard-14 Helvetica) carrying the
+            // email + SSN, so the redactor detects and redacts them like any text PDF.
+            var builder = new UglyToad.PdfPig.Writer.PdfDocumentBuilder();
+            var font = builder.AddStandard14Font(UglyToad.PdfPig.Fonts.Standard14Fonts.Standard14Font.Helvetica);
+            var page = builder.AddPage(595, 842); // A4 in points
+            page.AddText(Body, 12, new UglyToad.PdfPig.Core.PdfPoint(50, 750), font);
+            File.WriteAllBytes(path, builder.Build());
             return path;
         }
     }
