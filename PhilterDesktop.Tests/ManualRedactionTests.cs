@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using Phileas.Services.Office;
 
 using PhilterData;
 using PhilterDesktop;
@@ -148,7 +149,7 @@ namespace PhilterDesktop.Tests
 
                 List<RedactionSpanEntity> spans =
                     ManualRedaction.FromParagraphSelection(paragraphs, idx, "alice".Length, Environment.NewLine.Length);
-                WordDocumentRedactor.ApplySpans(input, output, spans, highlight: false);
+                WordDocumentRedactor.ApplySpans(input, output, PhilterDesktop.OfficeSpanMapping.ToOfficeSpans(spans), highlight: false);
 
                 string allText = string.Concat(WordDocs.BodyParagraphs(output));
                 Assert.DoesNotContain("alice", allText);

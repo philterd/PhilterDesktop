@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using Phileas.Services.Office;
 
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments;

@@ -2,6 +2,11 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
+## Unreleased
+
+- **Internal:** Word (`.docx`) and Excel (`.xlsx`) redaction now runs from the shared Phileas library
+  (`Phileas.Services.Office`) instead of app-local code. No change to redaction behavior or output.
+
 ## 1.0.0 — 2026-07-04
 
 Initial release of Philter Desktop — an offline Windows application for finding and redacting personally

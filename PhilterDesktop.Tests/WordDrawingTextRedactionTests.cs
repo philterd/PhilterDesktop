@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using Phileas.Services.Office;
 
 using Phileas.Model;
 using Phileas.Services;
@@ -147,7 +148,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("apply_out.docx");
             WordDocs.CreateWithChart(input, WordDocs.AParagraph("chart c@example.com"), "body b@example.com");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
             WordDocumentRedactor.ApplySpans(input, output, spans, highlight: false, drawingFilter: Filter);
 
             Assert.False(WordDocs.AnyPartContains(output, "@example.com"));
@@ -162,7 +163,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("nofilter_out.docx");
             WordDocs.CreateWithChart(input, WordDocs.AParagraph("chart c@example.com"), "body");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
             WordDocumentRedactor.ApplySpans(input, output, spans, highlight: false);
 
             Assert.True(WordDocs.AnyPartContains(output, "c@example.com"));
@@ -188,8 +189,8 @@ namespace PhilterDesktop.Tests
             string output = NewPath("modify_out.docx");
             WordDocs.CreateWithChart(input, WordDocs.AParagraph("chart c@example.com"), "body b@example.com");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
-            await RedactionService.ApplySpansAsync(input, output, ".docx", highlight: false, spans, EmailPolicy, new FilterService());
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
+            await RedactionService.ApplySpansAsync(input, output, ".docx", highlight: false, PhilterDesktop.OfficeSpanMapping.ToEntities(spans), EmailPolicy, new FilterService());
 
             Assert.False(WordDocs.AnyPartContains(output, "@example.com"));
         }
@@ -273,7 +274,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("cap-chart_out.docx");
             WordDocs.CreateWithChart(input, WordDocs.AParagraph("Sales chart@example.com"), "body plain");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Redact(input, output, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Redact(input, output, Filter);
 
             Assert.Contains(spans, s => s.Text == "chart@example.com"); // the drawing redaction is recorded
         }
@@ -285,7 +286,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("cap-sa_out.docx");
             WordDocs.CreateWithSmartArt(input, WordDocs.AParagraph("node smart@example.com"), "body");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Redact(input, output, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Redact(input, output, Filter);
 
             Assert.Contains(spans, s => s.Text == "smart@example.com" && s.ParagraphIndex == -1);
         }
@@ -297,7 +298,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("cap-both_out.docx");
             WordDocs.CreateWithChart(input, WordDocs.AParagraph("chart c@example.com"), "body b@example.com");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Redact(input, output, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Redact(input, output, Filter);
 
             Assert.Contains(spans, s => s.Text == "b@example.com"); // body paragraph span
             Assert.Contains(spans, s => s.Text == "c@example.com"); // drawing (chart) span
@@ -311,11 +312,11 @@ namespace PhilterDesktop.Tests
             string output = NewPath("rep_out.docx");
             WordDocs.CreateWithChart(input, WordDocs.AParagraph("chart c@example.com"), "body b@example.com");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Redact(input, output, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Redact(input, output, Filter);
 
             var version = new RedactionVersionEntity { Version = 1, FileType = ".docx", Policy = "p", Context = "ctx" };
             RedactionReportModel model = RedactionReport.Build(
-                version, spans, "1.0.0", new DateTimeOffset(2026, 6, 27, 12, 0, 0, TimeSpan.Zero), "h1", "h2",
+                version, PhilterDesktop.OfficeSpanMapping.ToEntities(spans), "1.0.0", new DateTimeOffset(2026, 6, 27, 12, 0, 0, TimeSpan.Zero), "h1", "h2",
                 new RedactionReportOptions { IncludeDetailTable = true });
 
             Assert.Equal(2, model.TotalRedactions);                       // body + chart both counted

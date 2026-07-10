@@ -18,6 +18,7 @@ using System.Text;
 using Phileas.Model;
 using Phileas.Services;
 using Phileas.Services.Pdf;
+using Phileas.Services.Office;
 using PhilterData;
 using PhileasPolicy = Phileas.Policy.Policy;
 
@@ -271,14 +272,14 @@ namespace PhilterDesktop
             {
                 // Word redaction is synchronous; run it off the calling thread. highlight applies
                 // only to Word documents. Returns the paragraph-indexed spans it applied.
-                List<RedactionSpanEntity> docxSpans = await Task.Run(() => WordDocumentRedactor.Redact(
+                List<RedactionSpanEntity> docxSpans = await Task.Run(() => OfficeSpanMapping.ToEntities(WordDocumentRedactor.Redact(
                     inputPath,
                     outputPath,
                     text => filterService.Filter(policy, context, 0, text),
                     highlight,
                     redactOfficeHeadersFooters,
                     redactOfficeCharts,
-                    removeUninspectableEmbeddedObjects));
+                    removeUninspectableEmbeddedObjects)));
                 if (wordScrub != WordScrubOptions.None)
                 {
                     await Task.Run(() => DocumentMetadata.ScrubDocx(outputPath, wordScrub));
@@ -312,7 +313,7 @@ namespace PhilterDesktop
             if (extension == ".xlsx")
             {
                 // Spreadsheet: redact per cell; optionally fully redact selected columns.
-                List<RedactionSpanEntity> xlsxSpans = await Task.Run(() => XlsxRedactor.Redact(
+                List<RedactionSpanEntity> xlsxSpans = await Task.Run(() => OfficeSpanMapping.ToEntities(XlsxRedactor.Redact(
                     inputPath,
                     outputPath,
                     text => filterService.Filter(policy, context, 0, text),
@@ -322,7 +323,7 @@ namespace PhilterDesktop
                     redactOfficeCharts,
                     redactCachedFormulaValues,
                     redactPivotCaches,
-                    removeUninspectableEmbeddedObjects));
+                    removeUninspectableEmbeddedObjects)));
                 // Strip identifying document properties so the redacted spreadsheet doesn't leak them
                 // (same "Remove document metadata" setting that governs Word).
                 if (wordScrub.HasFlag(WordScrubOptions.Metadata))
@@ -405,7 +406,7 @@ namespace PhilterDesktop
                     Func<string, TextFilterResult>? docxDrawingFilter = policy is null
                         ? null
                         : text => filterService.Filter(policy, string.Empty, 0, text);
-                    await Task.Run(() => WordDocumentRedactor.ApplySpans(sourcePath, outputPath, spans, highlight, docxDrawingFilter, redactOfficeCharts, removeUninspectableEmbeddedObjects));
+                    await Task.Run(() => WordDocumentRedactor.ApplySpans(sourcePath, outputPath, OfficeSpanMapping.ToOfficeSpans(spans), highlight, docxDrawingFilter, redactOfficeCharts, removeUninspectableEmbeddedObjects));
                     if (wordScrub != WordScrubOptions.None)
                     {
                         await Task.Run(() => DocumentMetadata.ScrubDocx(outputPath, wordScrub));
@@ -427,7 +428,7 @@ namespace PhilterDesktop
                     Func<string, TextFilterResult>? xlsxFilter = policy is null
                         ? null
                         : text => filterService.Filter(policy, string.Empty, 0, text);
-                    await Task.Run(() => XlsxRedactor.ApplySpans(sourcePath, outputPath, spans, worksheet, xlsxFilter, redactOfficeHeadersFooters, redactOfficeCharts, redactCachedFormulaValues, redactPivotCaches, removeUninspectableEmbeddedObjects));
+                    await Task.Run(() => XlsxRedactor.ApplySpans(sourcePath, outputPath, OfficeSpanMapping.ToOfficeSpans(spans), worksheet, xlsxFilter, redactOfficeHeadersFooters, redactOfficeCharts, redactCachedFormulaValues, redactPivotCaches, removeUninspectableEmbeddedObjects));
                     if (wordScrub.HasFlag(WordScrubOptions.Metadata))
                     {
                         await Task.Run(() => DocumentMetadata.ScrubXlsx(outputPath));

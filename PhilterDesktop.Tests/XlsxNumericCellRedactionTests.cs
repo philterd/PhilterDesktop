@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using Phileas.Services.Office;
 
 using Phileas.Policy;
 using Phileas.Policy.Filters;
@@ -172,7 +173,7 @@ namespace PhilterDesktop.Tests
             var fs = new FilterService();
             PhileasPolicy p = Policy();
 
-            List<RedactionSpanEntity> spans = XlsxRedactor.Detect(input, text => fs.Filter(p, "ctx", 0, text));
+            List<OfficeRedactionSpan> spans = XlsxRedactor.Detect(input, text => fs.Filter(p, "ctx", 0, text));
 
             Assert.Contains(spans, s => s.Text == "123456789");
         }
@@ -187,7 +188,7 @@ namespace PhilterDesktop.Tests
             });
             var fs = new FilterService();
             PhileasPolicy p = Policy();
-            List<RedactionSpanEntity> spans = XlsxRedactor.Detect(input, text => fs.Filter(p, "ctx", 0, text));
+            List<OfficeRedactionSpan> spans = XlsxRedactor.Detect(input, text => fs.Filter(p, "ctx", 0, text));
             Assert.NotEmpty(spans);
 
             string output = Path.Combine(_dir, "applied.xlsx");

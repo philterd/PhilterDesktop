@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using Phileas.Services.Office;
 
 using Phileas.Model;
 using Phileas.Services;
@@ -125,9 +126,9 @@ namespace PhilterDesktop.Tests
             string input = NewPath("detect.docx");
             WordDocs.CreateWithComplexField(input, new[] { " HYPERLINK \"mailto:john@example.com\" " }, "Contact");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, EmailFilter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, EmailFilter);
 
-            RedactionSpanEntity? field = spans.FirstOrDefault(s => s.Classification == "field-instruction");
+            OfficeRedactionSpan? field = spans.FirstOrDefault(s => s.Classification == "field-instruction");
             Assert.NotNull(field);
             Assert.Contains("john@example.com", field!.Text);
         }
@@ -139,7 +140,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("apply_out.docx");
             WordDocs.CreateWithComplexField(input, new[] { " HYPERLINK \"mailto:john@example.com\" " }, "Contact");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, EmailFilter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, EmailFilter);
             WordDocumentRedactor.ApplySpans(input, output, spans, highlight: false, drawingFilter: EmailFilter);
 
             Assert.False(WordDocs.AnyPartContains(output, "john@example.com"));

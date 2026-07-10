@@ -20,6 +20,7 @@ using DiffPlex.DiffBuilder.Model;
 using Phileas.Model;
 using Phileas.Policy;
 using Phileas.Services;
+using Phileas.Services.Office;
 using PhilterData;
 using PhileasPolicy = Phileas.Policy.Policy;
 
@@ -137,7 +138,7 @@ namespace PhilterDesktop
             {
                 string sourcePath = _sourcePath;
                 Func<string, TextFilterResult> filter = BuildFilter();
-                _spans = await Task.Run(() => WordDocumentRedactor.Detect(sourcePath, filter));
+                _spans = await Task.Run(() => OfficeSpanMapping.ToEntities(WordDocumentRedactor.Detect(sourcePath, filter)));
             }
             catch (Exception ex)
             {
@@ -356,7 +357,7 @@ namespace PhilterDesktop
             try
             {
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                WordDocumentRedactor.ApplySpans(_sourcePath, output, _spans, _highlight.Checked, BuildFilter());
+                WordDocumentRedactor.ApplySpans(_sourcePath, output, OfficeSpanMapping.ToOfficeSpans(_spans), _highlight.Checked, BuildFilter());
                 WordScrubOptions scrub = DocumentMetadata.OptionsFor(_settings);
                 if (scrub != WordScrubOptions.None)
                 {

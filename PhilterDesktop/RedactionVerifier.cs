@@ -17,6 +17,7 @@
 using Phileas.Model;
 using Phileas.Services;
 using Phileas.Services.Pdf;
+using Phileas.Services.Office;
 using PhilterData;
 using PhileasPolicy = Phileas.Policy.Policy;
 
@@ -85,9 +86,9 @@ namespace PhilterDesktop
                 string ext = Path.GetExtension(outputPath).ToLowerInvariant();
                 List<RedactionSpanEntity> residuals = ext switch
                 {
-                    ".docx" => WordDocumentRedactor.Detect(outputPath, Filter),
+                    ".docx" => OfficeSpanMapping.ToEntities(WordDocumentRedactor.Detect(outputPath, Filter)),
                     ".eml" or ".msg" => EmailRedactor.Detect(outputPath, Filter),
-                    ".xlsx" => XlsxRedactor.Detect(outputPath, Filter, worksheet),
+                    ".xlsx" => OfficeSpanMapping.ToEntities(XlsxRedactor.Detect(outputPath, Filter, worksheet)),
                     ".csv" => CsvRedactor.Detect(outputPath, Filter), // per-field, matching how CSV is redacted
                     ".rtf" => MapTextSpans(Filter(RtfRedactor.ReadText(outputPath)).Spans),
                     ".pdf" => DetectPdf(outputPath, policy, context, filterService),

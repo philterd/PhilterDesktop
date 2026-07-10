@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using Phileas.Services.Office;
 
 using DocumentFormat.OpenXml.Packaging;
 using Phileas.Model;
@@ -109,7 +110,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("out.docx");
             WordDocs.CreateWithThreadedComment(input, "threaded@example.com", "classic@example.com", "body");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
             WordDocumentRedactor.ApplySpans(input, output, spans, highlight: false);
 
             Assert.False(WordDocs.HasThreadedComments(output));

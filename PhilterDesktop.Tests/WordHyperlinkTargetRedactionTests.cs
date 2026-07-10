@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using Phileas.Services.Office;
 
 using Phileas.Model;
 using Phileas.Services;
@@ -195,9 +196,9 @@ namespace PhilterDesktop.Tests
             string output = NewPath("cap_out.docx");
             WordDocs.CreateWithHyperlink(input, "Email", "mailto:john@example.com", "body");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Redact(input, output, EmailFilter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Redact(input, output, EmailFilter);
 
-            RedactionSpanEntity? link = spans.FirstOrDefault(s => s.Classification == "hyperlink-target");
+            OfficeRedactionSpan? link = spans.FirstOrDefault(s => s.Classification == "hyperlink-target");
             Assert.NotNull(link);
             Assert.Equal("mailto:john@example.com", link!.Text);
             Assert.Equal("https://redacted.invalid/", link.Replacement);
@@ -211,7 +212,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("nocap_out.docx");
             WordDocs.CreateWithHyperlink(input, "Help", "https://example.com/help", "body");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Redact(input, output, EmailFilter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Redact(input, output, EmailFilter);
 
             Assert.DoesNotContain(spans, s => s.Classification == "hyperlink-target");
         }
@@ -268,7 +269,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("apply_out.docx");
             WordDocs.CreateWithHyperlink(input, "Email", "mailto:john@example.com", "body");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, EmailFilter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, EmailFilter);
             WordDocumentRedactor.ApplySpans(input, output, spans, highlight: false, drawingFilter: EmailFilter);
 
             Assert.DoesNotContain(WordDocs.HyperlinkTargets(output), t => t.Contains("john@example.com"));
@@ -283,7 +284,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("nofilter_out.docx");
             WordDocs.CreateWithHyperlink(input, "Email", "mailto:john@example.com", "body");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, EmailFilter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, EmailFilter);
             WordDocumentRedactor.ApplySpans(input, output, spans, highlight: false);
 
             Assert.Contains("mailto:john@example.com", WordDocs.HyperlinkTargets(output));

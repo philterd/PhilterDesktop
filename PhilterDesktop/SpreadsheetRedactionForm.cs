@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using Phileas.Services.Office;
 using PhilterData;
 
 namespace PhilterDesktop

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using Phileas.Services.Office;
 
 using Phileas.Policy;
 using Phileas.Policy.Filters;
@@ -183,7 +184,7 @@ namespace PhilterDesktop.Tests
                 "Body SSN 123-45-6789");
 
             string redacted = Path.Combine(_dir, "redacted.docx");
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Redact(
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Redact(
                 input, redacted, t => _fs.Filter(SsnPolicy(), "ctx", 0, t), highlight: false,
                 redactHeadersFooters: false);
 

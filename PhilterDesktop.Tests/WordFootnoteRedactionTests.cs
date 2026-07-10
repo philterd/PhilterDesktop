@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using Phileas.Services.Office;
 
 using DocumentFormat.OpenXml.Packaging;
 using Phileas.Model;
@@ -113,7 +114,7 @@ namespace PhilterDesktop.Tests
             string input = NewPath("detect.docx");
             WordDocs.CreateWithNotes(input, "foot fa@example.com", "end ea@example.com", "body ba@example.com");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
 
             Assert.Contains(spans, s => s.Text == "fa@example.com");
             Assert.Contains(spans, s => s.Text == "ea@example.com");
@@ -139,10 +140,10 @@ namespace PhilterDesktop.Tests
             string input = NewPath("idx.docx");
             WordDocs.CreateWithNotes(input, "foot fa@example.com", null, "body ba@example.com");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
 
-            RedactionSpanEntity body = Assert.Single(spans, s => s.Text == "ba@example.com");
-            RedactionSpanEntity foot = Assert.Single(spans, s => s.Text == "fa@example.com");
+            OfficeRedactionSpan body = Assert.Single(spans, s => s.Text == "ba@example.com");
+            OfficeRedactionSpan foot = Assert.Single(spans, s => s.Text == "fa@example.com");
             Assert.Equal(0, body.ParagraphIndex);
             Assert.True(foot.ParagraphIndex > body.ParagraphIndex);
         }
@@ -154,7 +155,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("apply_out.docx");
             WordDocs.CreateWithNotes(input, "foot fa@example.com", "end ea@example.com", "body");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
             WordDocumentRedactor.ApplySpans(input, output, spans, highlight: false);
 
             Assert.False(WordDocs.AnyPartContains(output, "@example.com"));
@@ -303,12 +304,12 @@ namespace PhilterDesktop.Tests
             WordDocs.CreateWithHeaderFooterAndNotes(
                 input, "hdr h@example.com", "ftr f@example.com", "fn fn@example.com", "en en@example.com", "body b@example.com");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
 
             // Body first (index 0), then header/footer, then notes — strictly increasing indexes.
-            RedactionSpanEntity body = Assert.Single(spans, s => s.Text == "b@example.com");
-            RedactionSpanEntity footnote = Assert.Single(spans, s => s.Text == "fn@example.com");
-            RedactionSpanEntity endnote = Assert.Single(spans, s => s.Text == "en@example.com");
+            OfficeRedactionSpan body = Assert.Single(spans, s => s.Text == "b@example.com");
+            OfficeRedactionSpan footnote = Assert.Single(spans, s => s.Text == "fn@example.com");
+            OfficeRedactionSpan endnote = Assert.Single(spans, s => s.Text == "en@example.com");
             Assert.Equal(0, body.ParagraphIndex);
             Assert.True(footnote.ParagraphIndex > body.ParagraphIndex);
             Assert.True(endnote.ParagraphIndex > footnote.ParagraphIndex);
@@ -326,7 +327,7 @@ namespace PhilterDesktop.Tests
             WordDocs.CreateWithHeaderFooterAndNotes(
                 input, "hdr h@example.com", "ftr f@example.com", "fn fn@example.com", "en en@example.com", "body b@example.com");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
             WordDocumentRedactor.ApplySpans(input, output, spans, highlight: false);
 
             Assert.False(WordDocs.AnyPartContains(output, "@example.com"));

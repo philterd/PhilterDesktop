@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using Phileas.Services.Office;
 
 using DocumentFormat.OpenXml.Packaging;
 using Phileas.Model;
@@ -203,7 +204,7 @@ namespace PhilterDesktop.Tests
             string input = NewPath("detect.docx");
             WordDocs.CreateRaw(input, WordDocs.TextBoxParaXml("box@example.com", before: "outer alice@example.com "));
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
 
             // Exactly two e-mails, on two different paragraph indexes (outer own text + box), none repeated.
             Assert.Equal(2, spans.Count);
@@ -221,7 +222,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("apply_out.docx");
             WordDocs.CreateRaw(input, WordDocs.TextBoxParaXml("box@example.com", before: "outer alice@example.com "));
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
             WordDocumentRedactor.ApplySpans(input, output, spans, highlight: false);
 
             Assert.DoesNotContain("@example.com", WordDocs.DocumentXml(output));
@@ -239,7 +240,7 @@ namespace PhilterDesktop.Tests
             WordDocumentRedactor.Redact(input, viaRedact, Filter);
 
             string viaApply = NewPath("via_apply.docx");
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
             WordDocumentRedactor.ApplySpans(input, viaApply, spans, highlight: false);
 
             Assert.Equal(WordDocs.TextBoxTexts(viaRedact), WordDocs.TextBoxTexts(viaApply));

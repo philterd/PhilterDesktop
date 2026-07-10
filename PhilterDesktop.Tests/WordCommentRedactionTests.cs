@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using Phileas.Services.Office;
 
 using Phileas.Model;
 using Phileas.Services;
@@ -87,7 +88,7 @@ namespace PhilterDesktop.Tests
             string input = NewPath("in.docx");
             WordDocs.CreateWithComment(input, "see reviewer@example.com", "body has body@example.com");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
 
             Assert.Contains(spans, s => s.Text == "reviewer@example.com");
             Assert.Contains(spans, s => s.Text == "body@example.com");
@@ -112,10 +113,10 @@ namespace PhilterDesktop.Tests
             string input = NewPath("in.docx");
             WordDocs.CreateWithComment(input, "note note@example.com", "body body@example.com");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
 
-            RedactionSpanEntity bodySpan = Assert.Single(spans, s => s.Text == "body@example.com");
-            RedactionSpanEntity commentSpan = Assert.Single(spans, s => s.Text == "note@example.com");
+            OfficeRedactionSpan bodySpan = Assert.Single(spans, s => s.Text == "body@example.com");
+            OfficeRedactionSpan commentSpan = Assert.Single(spans, s => s.Text == "note@example.com");
             Assert.Equal(0, bodySpan.ParagraphIndex);
             Assert.True(commentSpan.ParagraphIndex > bodySpan.ParagraphIndex);
         }
@@ -127,7 +128,7 @@ namespace PhilterDesktop.Tests
             string output = NewPath("out.docx");
             WordDocs.CreateWithComment(input, "call reviewer@example.com", "body text");
 
-            List<RedactionSpanEntity> spans = WordDocumentRedactor.Detect(input, Filter);
+            List<OfficeRedactionSpan> spans = WordDocumentRedactor.Detect(input, Filter);
             WordDocumentRedactor.ApplySpans(input, output, spans, highlight: false);
 
             Assert.True(WordDocs.HasComments(output));

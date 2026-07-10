@@ -17,6 +17,7 @@
 using LiteDB;
 using Phileas.Policy;
 using Phileas.Services;
+using Phileas.Services.Office;
 using PhilterData;
 using PhilterDesktop.PolicyEditing;
 using System.Diagnostics;
