@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+using Phileas.Policy;
+using Phileas.Policy.Filters;
 using PhilterDesktop;
 using Xunit;
+using PhileasPolicy = Phileas.Policy.Policy;
 
 namespace PhilterDesktop.Tests
 {
@@ -43,6 +46,37 @@ namespace PhilterDesktop.Tests
             // The starter policy we generate must conform to the engine's schema.
             PolicyValidationResult result = PolicyValidator.Validate(DefaultPolicy.Json());
             Assert.True(result.IsValid, "Default policy failed schema validation: " + string.Join(" | ", result.Errors));
+        }
+
+        [Fact]
+        public void PolicyWithUserLocalPhEyeModel_ValidatesAgainstPhiSqlSchema()
+        {
+            // A policy authored on the new PhEye tab (a local model with an explicit path + entity types)
+            // must save cleanly — the editor refuses to persist anything the engine's schema rejects.
+            var policy = new PhileasPolicy
+            {
+                Name = "local-pheye",
+                Identifiers = new Identifiers
+                {
+                    PhEyes = new List<PhEye>
+                    {
+                        new()
+                        {
+                            Enabled = true,
+                            PhEyeConfiguration = new PhEyeConfiguration
+                            {
+                                ModelPath = @"C:\models\gliner-multi",
+                                Labels = new List<string> { "person", "location", "organization" },
+                                Threshold = 0.4
+                            },
+                            Strategies = new List<Phileas.Policy.Filters.Strategies.PhEyeFilterStrategy> { new() }
+                        }
+                    }
+                }
+            };
+
+            PolicyValidationResult result = PolicyValidator.Validate(PolicySerializer.SerializeToJson(policy));
+            Assert.True(result.IsValid, "User local PhEye model policy failed schema validation: " + string.Join(" | ", result.Errors));
         }
 
         [Fact]

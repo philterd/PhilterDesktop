@@ -74,6 +74,19 @@ namespace PhilterDesktop.Tests
             OnForm(form => Assert.Null(form.AcceptButton));
         }
 
+        // The theme makes list headers non-clickable for a flat look; the span list re-enables clickable
+        // headers so its click-to-sort works. Guards the fix for headers doing nothing when clicked.
+        [Fact]
+        public void SpanListHeaders_AreClickable_ForColumnSorting()
+        {
+            OnForm(form =>
+            {
+                FieldInfo field = typeof(ModifyRedactionForm).GetField("_spanList", BindingFlags.Instance | BindingFlags.NonPublic)!;
+                var list = (ListView)field.GetValue(form)!;
+                Assert.Equal(ColumnHeaderStyle.Clickable, list.HeaderStyle);
+            });
+        }
+
         // The form must carry the configured output location so its re-redaction writes there (not always
         // next to the source). This guards the constructor wiring the OnRedact path relies on.
         [Fact]

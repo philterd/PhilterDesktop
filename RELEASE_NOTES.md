@@ -4,11 +4,23 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 ## Unreleased
 
+- **New:** a **PhEye** tab in the Policy Editor for on-device AI models. The built-in person-names model
+  now lives here, and you can **add your own local (GLiNER) models** — point Philter Desktop at a model
+  folder and list the entity types it should detect.
+- **New:** in **Modify Redaction**, a **Show low-confidence (not redacted)** option lists entities the
+  on-device AI detected but left in because their confidence fell below the threshold, so you can review
+  the near-misses.
+- **New:** PDF fixed regions now accept an **all-but-the-first-page** range — enter `2-` (page 2 to the
+  end) to cover a logo or footer that appears on every page except the cover.
+- **Improved:** the **Modify Redaction** list now shows each item's detection **confidence** and lets you
+  **sort by any column** (click a heading; click again to reverse).
+- **Improved:** the Policy Editor window is now resizable and opens larger.
+- **Fixed:** the main window now always opens **centered** instead of reappearing in a stale, possibly
+  off-screen position.
 - **Fixed:** the Modify Redaction window's **Type** column now shows each redaction's entity type
   (e.g. *First Name*, *Email Address*) instead of a generic "Detected".
 - **Fixed:** the **Save** and **Cancel** buttons on the Settings window no longer overlap the tab
   control — they now sit below it.
-- **Improved:** the Policy Editor window is now resizable and opens larger.
 - **Internal:** Word (`.docx`) and Excel (`.xlsx`) redaction now runs from the shared Phileas library
   (`Phileas.Services.Office`) instead of app-local code. No change to redaction behavior or output.
 

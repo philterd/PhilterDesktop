@@ -264,9 +264,11 @@ The window that opens shows two things:
 
 - A **Versions** list. The first, automatic redaction is **Version 1**. Each version is a snapshot of
   a particular set of redaction choices.
-- The **list of redactions** for the selected version. For each item you'll see its
-  type, the original text, what it was replaced with, the exact character positions it covers, and
-  where in the document it sits.
+- The **list of redactions** for the selected version. For each item you'll see its **Type**, the
+  detector's **Confidence** in the match (as a percentage; blank for items you added by hand), the
+  original **Text**, what it was **Replaced** with, the exact character positions it covers
+  (**Start**/**Stop**), and the **Location** in the document. **Click any column heading to sort by it**
+  — click again to reverse.
 
 ### How versions work
 
@@ -302,6 +304,29 @@ To open a single redaction for editing, **double-click it** in the list. You can
     cell-by-cell "add here" to choose). If you need to remove the entire contents of a column in a
     spreadsheet, use **Redact Spreadsheet…** and tick that column instead. The location column shows
     which **Cell** or **Field** each redaction sits in.
+
+### Seeing what was *not* redacted (low-confidence candidates)
+
+The on-device AI ([name detection](policies.md#detecting-names-with-on-device-ai) and any custom local
+models) scores every candidate it finds and only redacts the ones that clear its confidence threshold.
+Sometimes it spots something that *looks* like a name but scores just below the line, so it's left in.
+To review those near-misses, tick **Show low-confidence (not redacted)** below the list.
+
+Philter Desktop re-scans your original document with the threshold lowered and adds the extra
+candidates to the list, shown **greyed out** with **"(not redacted)"** in the Replacement column and
+their (low) confidence score. These rows are **review-only** — they weren't redacted, so they can't be
+edited or removed. If one *should* be hidden, either **Add** it as a redaction by hand, or raise your
+policy's coverage (lower its threshold) and redact again.
+
+A few things to know:
+
+- It only surfaces candidates from the **on-device AI** detectors. Pattern-based filters (email, SSN,
+  phone, and so on) use a fixed confidence, so they have nothing "just below the line" to show.
+- It **re-runs detection**, so it takes a moment and needs the **original document** still in place. It's
+  behind the toggle so opening the window stays fast; switching versions turns it back off.
+- It looks a set amount **below each detector's own threshold**, so the list stays to plausible
+  near-misses rather than noise. On a very busy document it shows the highest-confidence candidates and
+  tells you the total.
 
 Redactions are tracked **by their position in the document**, not by searching for their text. Every
 redaction, whether Philter Desktop found it automatically or you added it by hand, is re-applied to

@@ -73,6 +73,40 @@ namespace PhilterDesktop.Tests
         public void MainForm_Constructs() =>
             ConstructWithDb(db => new MainForm(db, startMinimized: false));
 
+        // The main window always opens centered — a stale/off-screen saved position must never resurface —
+        // while still restoring the remembered *size* (clamped to the screen).
+        [Fact]
+        public void MainForm_AlwaysStartsCentered_RestoringSizeOnly() => Sta(() =>
+        {
+            string path = Path.Combine(Path.GetTempPath(), "smoke-" + Guid.NewGuid().ToString("N") + ".db");
+            try
+            {
+                using var db = new LiteDatabase(path);
+
+                // Seed a remembered window far off-screen (the "weird place") with a valid size.
+                var settingsRepo = new SettingsRepository(db);
+                SettingsEntity s = settingsRepo.GetSettings();
+                s.WindowX = -20000;
+                s.WindowY = -20000;
+                s.WindowWidth = 900;
+                s.WindowHeight = 700;
+                s.WindowMaximized = false;
+                settingsRepo.SaveSettings(s);
+
+                using var form = new MainForm(db, startMinimized: false);
+                _ = form.Handle;
+
+                // CenterScreen (not Manual) => the window centers instead of reopening off-screen.
+                Assert.Equal(FormStartPosition.CenterScreen, form.StartPosition);
+
+                // The saved size is still honored (clamped to the primary screen's working area).
+                Rectangle wa = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1024, 768);
+                Assert.Equal(Math.Min(900, wa.Width), form.Width);
+                Assert.Equal(Math.Min(700, wa.Height), form.Height);
+            }
+            finally { try { File.Delete(path); } catch { /* best effort */ } }
+        });
+
         // the empty-queue hint overlay must accept dropped files (it had no AllowDrop, so dropping
         // onto the hint — the exact onboarding gesture it invites — silently failed).
         [Fact]

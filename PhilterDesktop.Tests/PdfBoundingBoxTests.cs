@@ -177,15 +177,17 @@ namespace PhilterDesktop.Tests
         }
 
         [Theory]
-        [InlineData("0", true, new int[0])]
-        [InlineData("3", false, new[] { 3 })]
-        [InlineData("2-5", false, new[] { 2, 3, 4, 5 })]
-        [InlineData("1,2,5", false, new[] { 1, 2, 5 })]
-        [InlineData("2-4,8", false, new[] { 2, 3, 4, 8 })]
-        public void ParsePages_ResolvesSpec(string spec, bool expectAll, int[] expectPages)
+        [InlineData("0", 1, new int[0])]           // 0 = all pages (open from 1)
+        [InlineData("2-", 2, new int[0])]          // open-ended: all but the first page
+        [InlineData("3-", 3, new int[0])]          // open-ended: from page 3 to the end
+        [InlineData("3", 0, new[] { 3 })]
+        [InlineData("2-5", 0, new[] { 2, 3, 4, 5 })]
+        [InlineData("1,2,5", 0, new[] { 1, 2, 5 })]
+        [InlineData("2-4,8", 0, new[] { 2, 3, 4, 8 })]
+        public void ParsePages_ResolvesSpec(string spec, int expectOpenFrom, int[] expectPages)
         {
-            Assert.True(AddRegionForm.ParsePages(spec, out List<int> pages, out bool allPages, out _));
-            Assert.Equal(expectAll, allPages);
+            Assert.True(AddRegionForm.ParsePages(spec, out List<int> pages, out int openFrom, out _));
+            Assert.Equal(expectOpenFrom, openFrom);
             Assert.Equal(expectPages, pages.ToArray());
         }
 
@@ -193,13 +195,43 @@ namespace PhilterDesktop.Tests
         [InlineData("")]
         [InlineData("   ")]
         [InlineData("0,3")]
+        [InlineData("2-,8")]  // an open-ended range can't be combined with other pages
         [InlineData("5-2")]
-        [InlineData("2-")]
+        [InlineData("-")]     // open-ended range needs a start page
         [InlineData("abc")]
         public void ParsePages_Invalid_ReturnsError(string spec)
         {
             Assert.False(AddRegionForm.ParsePages(spec, out _, out _, out string? error));
             Assert.False(string.IsNullOrEmpty(error));
+        }
+
+        [Fact]
+        public void TryParse_AllButFirst_ShowsFriendlyLabel_AndYieldsOneDeferredBox()
+        {
+            Assert.True(AddRegionForm.TryParse("2-", "1", "2", "3", "4", "", out PdfRegionEntry? entry, out _));
+            Assert.Equal("2-", entry!.PageSpec);
+            Assert.Equal("All but first", entry.PageDisplay);
+            // Stays one deferred box (page -2 = "from page 2 to the end"), expanded at redaction time.
+            Assert.Equal(-2, Assert.Single(entry.ToBoundingBoxes()).Page);
+        }
+
+        [Fact]
+        public void ExpandAllPagesBoundingBoxes_AllButFirst_CoversPagesTwoOnward()
+        {
+            var policy = new Policy { Name = "p" };
+            policy.Graphical.BoundingBoxes.Add(new BoundingBox { Page = -2, X = 5, Y = 6, W = 7, H = 8 }); // 2- (all but first)
+
+            RedactionService.ExpandAllPagesBoundingBoxes(policy, 4);
+
+            Assert.Equal(new[] { 2, 3, 4 }, policy.Graphical.BoundingBoxes.Select(b => b.Page).OrderBy(p => p).ToArray());
+        }
+
+        [Fact]
+        public void FromBox_NegativePage_RoundTripsToOpenEndedSpec()
+        {
+            PdfRegionEntry entry = PdfRegionEntry.FromBox(new BoundingBox { Page = -2, X = 1, Y = 2, W = 3, H = 4 });
+            Assert.Equal("2-", entry.PageSpec);
+            Assert.Equal("All but first", entry.PageDisplay);
         }
 
         // The dialog validates on OK: valid input populates Entry (the invalid path shows a modal message

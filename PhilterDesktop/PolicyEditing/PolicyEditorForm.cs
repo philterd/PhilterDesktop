@@ -112,6 +112,23 @@ namespace PhilterDesktop.PolicyEditing
             Dock = DockStyle.Fill
         };
 
+        // PhEye tab: user-added local (on-device) models, each a PhEye entry with its own model path.
+        private readonly ListView _phEyeModelList = new()
+        {
+            Dock = DockStyle.Fill,
+            View = View.Details,
+            FullRowSelect = true,
+            HideSelection = false
+        };
+        private readonly Button _addPhEyeModel = new() { Text = "Add…", AutoSize = true, Margin = new Padding(0, 0, 8, 0), Padding = new Padding(10, 4, 10, 4) };
+        private readonly Button _editPhEyeModel = new() { Text = "Edit…", AutoSize = true, Enabled = false, Margin = new Padding(0, 0, 8, 0), Padding = new Padding(10, 4, 10, 4) };
+        private readonly Button _removePhEyeModel = new() { Text = "Remove", AutoSize = true, Enabled = false, Margin = new Padding(0, 0, 8, 0), Padding = new Padding(10, 4, 10, 4) };
+        // "Add" offers either the built-in person-names model or a user-provided local model.
+        private readonly ContextMenuStrip _addPhEyeMenu = new();
+        private readonly ToolStripMenuItem _addBundledName = new() { Text = "Person Names (on-device)" };
+        private readonly ToolStripMenuItem _addLocalModel = new() { Text = "Custom Local Model…" };
+        private const string BundledNameModelLabel = "Person Names (on-device)";
+
         // Free-text, editor-only description (stored on the policy record, not in the engine JSON).
         private readonly Panel _descPanel = new() { Dock = DockStyle.Top, Height = 30, Padding = new Padding(8, 4, 8, 2) };
         private readonly Label _descLabel = new() { Text = "Description:", AutoSize = true, Dock = DockStyle.Left, Padding = new Padding(0, 4, 6, 0) };
@@ -251,8 +268,7 @@ namespace PhilterDesktop.PolicyEditing
 
                 if (category == "Personal")
                 {
-                    // On-device AI name detection belongs with the other personal-name filters.
-                    AddPhEyeRow(inner);
+                    // On-device AI name detection lives on the dedicated PhEye tab (see BuildPhEyeModelsTab).
                     // The Personal group is short; stack Custom Identifiers beneath it to fill the column.
                     AddCustomIdentifiersRow(NewGroup("Custom"));
                 }
@@ -271,6 +287,9 @@ namespace PhilterDesktop.PolicyEditing
                     AddFilterRow(inner, prop);
                 }
             }
+
+            // A dedicated tab for user-added local PhEye models (list + Add/Edit/Remove).
+            BuildPhEyeModelsTab();
         }
 
         private FlowLayoutPanel NewGroup(string title)
@@ -468,71 +487,215 @@ namespace PhilterDesktop.PolicyEditing
             });
         }
 
-        private void AddPhEyeRow(FlowLayoutPanel inner)
+        // Returns the policy's bundled on-device name entry (empty model path), creating it if absent.
+        private PhEye GetOrAddBundledNameEntry()
         {
-            const string name = "Names (on-device AI)";
-            (Panel row, CheckBox checkBox, Button configure) = NewRow(name, "person names, detected on your device");
-            inner.Controls.Add(row);
-            _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = inner.Parent! });
-
-            var tip = new ToolTip();
-            tip.SetToolTip(checkBox,
-                "Detects person names using the bundled on-device PhEye model.\n" +
-                "Runs locally with no network call; complements the pattern-based filters.");
-
-            checkBox.CheckedChanged += (_, _) =>
+            _policy!.Identifiers.PhEyes ??= new List<PhEye>();
+            PhEye? bundled = _policy.Identifiers.PhEyes.FirstOrDefault(PhEyeModel.IsBundledNameEntry);
+            if (bundled is null)
             {
-                if (!_loading && _policy is not null)
-                {
-                    _policy.Identifiers.PhEyes = checkBox.Checked
-                        ? new List<PhEye> { PhEyeModel.CreateDefaultFilter() }
-                        : null;
-                    if (checkBox.Checked)
-                    {
-                        FilterStrategyDefaults.MaterializeMissing(_policy); // give Names its visible default
-                    }
-                    _dirty = true;
-                }
-                configure.Visible = checkBox.Checked;
-                configure.Enabled = checkBox.Checked;
+                bundled = PhEyeModel.CreateDefaultFilter();
+                _policy.Identifiers.PhEyes.Add(bundled);
+            }
+            return bundled;
+        }
+
+        // --- PhEye tab: on-device models (bundled person-names + user-added local models) ----
+
+        private void BuildPhEyeModelsTab()
+        {
+            var page = new TabPage("PhEye") { UseVisualStyleBackColor = true, Padding = new Padding(8) };
+
+            var intro = new Label
+            {
+                Dock = DockStyle.Top,
+                AutoSize = false,
+                Height = 48,
+                Padding = new Padding(2, 2, 2, 6),
+                Text = "PhEye models detect entities on-device (GLiNER), with no network call. Add the built-in " +
+                       "person-names model, or your own local models (a model folder on this machine plus the " +
+                       "entity types it detects)."
             };
 
-            configure.Click += (_, _) =>
+            _phEyeModelList.ShowItemToolTips = true;
+            _phEyeModelList.Columns.Add("Model", 200);
+            _phEyeModelList.Columns.Add("Entity Types", 240);
+            _phEyeModelList.Columns.Add("Threshold", 80);
+            _phEyeModelList.SelectedIndexChanged += (_, _) => UpdatePhEyeModelButtons();
+            _phEyeModelList.DoubleClick += OnEditPhEyeModel;
+
+            _addBundledName.Click += OnAddBundledNameModel;
+            _addLocalModel.Click += OnAddLocalModel;
+            _addPhEyeMenu.Items.AddRange(new ToolStripItem[] { _addBundledName, _addLocalModel });
+
+            var buttons = new FlowLayoutPanel
             {
-                if (_policy is null)
+                Dock = DockStyle.Bottom,
+                FlowDirection = FlowDirection.LeftToRight,
+                Height = 44,
+                Padding = new Padding(0, 6, 0, 0)
+            };
+            buttons.Controls.AddRange(new Control[] { _addPhEyeModel, _editPhEyeModel, _removePhEyeModel });
+
+            var listHost = new Panel { Dock = DockStyle.Fill };
+            listHost.Controls.Add(_phEyeModelList);
+
+            // z-order: list fills the remaining space, buttons dock to the bottom, intro to the top.
+            page.Controls.Add(listHost);
+            page.Controls.Add(buttons);
+            page.Controls.Add(intro);
+            _tabs.TabPages.Add(page);
+
+            _addPhEyeModel.Click += (_, _) =>
+            {
+                // The built-in names model is a singleton — offer it only when it isn't already added.
+                _addBundledName.Enabled = _policy is not null
+                    && _policy.Identifiers.PhEyes?.Any(PhEyeModel.IsBundledNameEntry) != true;
+                _addPhEyeMenu.Show(_addPhEyeModel, new Point(0, _addPhEyeModel.Height));
+            };
+            _editPhEyeModel.Click += OnEditPhEyeModel;
+            _removePhEyeModel.Click += OnRemovePhEyeModel;
+
+            _loaders.Add(RefreshPhEyeModelList);
+        }
+
+        private void RefreshPhEyeModelList()
+        {
+            _phEyeModelList.BeginUpdate();
+            _phEyeModelList.Items.Clear();
+            if (_policy?.Identifiers.PhEyes is { } phEyes)
+            {
+                foreach (PhEye phEye in phEyes)
+                {
+                    PhEyeConfiguration config = phEye.PhEyeConfiguration;
+                    bool bundled = PhEyeModel.IsBundledNameEntry(phEye);
+                    string path = config?.ModelPath ?? string.Empty;
+                    var item = new ListViewItem(bundled
+                        ? BundledNameModelLabel
+                        : Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)))
+                    {
+                        Tag = phEye,
+                        ToolTipText = bundled ? "Built-in on-device person-names model." : path
+                    };
+                    item.SubItems.Add(string.Join(", ", config?.Labels ?? new List<string>()));
+                    item.SubItems.Add((config?.Threshold ?? PhEyeModel.DefaultThreshold).ToString("0.00"));
+                    _phEyeModelList.Items.Add(item);
+                }
+            }
+            _phEyeModelList.EndUpdate();
+            UpdatePhEyeModelButtons();
+        }
+
+        private void UpdatePhEyeModelButtons()
+        {
+            bool hasSelection = _phEyeModelList.SelectedItems.Count > 0;
+            _editPhEyeModel.Enabled = hasSelection;
+            _removePhEyeModel.Enabled = hasSelection;
+        }
+
+        private void OnAddBundledNameModel(object? sender, EventArgs e)
+        {
+            if (_policy is null)
+            {
+                return;
+            }
+            GetOrAddBundledNameEntry();
+            FilterStrategyDefaults.MaterializeMissing(_policy); // give Names its visible default REDACT strategy
+            RefreshPhEyeModelList();
+            _dirty = true;
+        }
+
+        private void OnAddLocalModel(object? sender, EventArgs e)
+        {
+            if (_policy is null)
+            {
+                return;
+            }
+            var phEye = new PhEye
+            {
+                Enabled = true,
+                PhEyeConfiguration = new PhEyeConfiguration
+                {
+                    Labels = new List<string>(),
+                    Threshold = PhEyeModel.DefaultThreshold
+                }
+            };
+            using var dlg = new PhEyeModelForm(phEye);
+            if (dlg.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+            _policy.Identifiers.PhEyes ??= new List<PhEye>();
+            _policy.Identifiers.PhEyes.Add(phEye);
+            FilterStrategyDefaults.MaterializeMissing(_policy); // give the new model a default REDACT strategy
+            RefreshPhEyeModelList();
+            _dirty = true;
+        }
+
+        private void OnEditPhEyeModel(object? sender, EventArgs e)
+        {
+            if (_policy is null || _phEyeModelList.SelectedItems.Count == 0
+                || _phEyeModelList.SelectedItems[0].Tag is not PhEye phEye)
+            {
+                return;
+            }
+
+            // The bundled names model has a fixed model and label ("name"); editing it configures how the
+            // detected names are redacted. A user model edits its folder, entity types, and threshold.
+            if (PhEyeModel.IsBundledNameEntry(phEye))
+            {
+                EditPhEyeStrategies(phEye, BundledNameModelLabel);
+            }
+            else
+            {
+                using var dlg = new PhEyeModelForm(phEye);
+                if (dlg.ShowDialog(this) != DialogResult.OK)
                 {
                     return;
                 }
-                _policy.Identifiers.PhEyes ??= new List<PhEye>();
-                if (_policy.Identifiers.PhEyes.Count == 0)
-                {
-                    _policy.Identifiers.PhEyes.Add(PhEyeModel.CreateDefaultFilter());
-                }
-                checkBox.Checked = true;
+                _dirty = true;
+            }
+            RefreshPhEyeModelList();
+        }
 
-                // Ensure the default REDACT strategy is present so the list is never empty.
-                FilterStrategyDefaults.MaterializeMissing(_policy);
-                PhEye phEye = _policy.Identifiers.PhEyes[0];
-
-                IEnumerable existing = (IEnumerable?)phEye.Strategies ?? Array.Empty<object>();
-                using var dlg = new FilterStrategiesForm(name, existing, typeof(Phileas.Policy.Filters.Strategies.PhEyeFilterStrategy));
-                if (dlg.ShowDialog(this) == DialogResult.OK)
-                {
-                    IList result = dlg.BuildResultList();
-                    phEye.Strategies = result.Count > 0
-                        ? result.Cast<Phileas.Policy.Filters.Strategies.PhEyeFilterStrategy>().ToList()
-                        : null;
-                    _dirty = true;
-                }
-            };
-
-            _loaders.Add(() =>
+        private void OnRemovePhEyeModel(object? sender, EventArgs e)
+        {
+            if (_policy is null || _phEyeModelList.SelectedItems.Count == 0
+                || _phEyeModelList.SelectedItems[0].Tag is not PhEye phEye)
             {
-                bool enabled = _policy?.Identifiers.PhEyes is { Count: > 0 };
-                checkBox.Checked = enabled;
-                configure.Visible = enabled;
-                configure.Enabled = enabled;
-            });
+                return;
+            }
+            bool bundled = PhEyeModel.IsBundledNameEntry(phEye);
+            string prompt = bundled
+                ? "Turn off the built-in person-names model?"
+                : "Remove the selected PhEye model?";
+            if (MessageBox.Show(this, prompt, "PhEye", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            {
+                return;
+            }
+            _policy.Identifiers.PhEyes?.Remove(phEye);
+            if (_policy.Identifiers.PhEyes is { Count: 0 })
+            {
+                _policy.Identifiers.PhEyes = null;
+            }
+            RefreshPhEyeModelList();
+            _dirty = true;
+        }
+
+        // Edits the redaction strategies (how detections are replaced) for a PhEye entry.
+        private void EditPhEyeStrategies(PhEye phEye, string title)
+        {
+            FilterStrategyDefaults.MaterializeMissing(_policy); // ensure the default REDACT strategy is present
+            IEnumerable existing = (IEnumerable?)phEye.Strategies ?? Array.Empty<object>();
+            using var dlg = new FilterStrategiesForm(title, existing, typeof(Phileas.Policy.Filters.Strategies.PhEyeFilterStrategy));
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+            {
+                IList result = dlg.BuildResultList();
+                phEye.Strategies = result.Count > 0
+                    ? result.Cast<Phileas.Policy.Filters.Strategies.PhEyeFilterStrategy>().ToList()
+                    : null;
+                _dirty = true;
+            }
         }
 
         private static AbstractPolicyFilter CreateFilter(Type filterType)

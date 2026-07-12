@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
+using System.Collections;
 using System.Diagnostics;
 using LiteDB;
 using Phileas.Policy;
+using Phileas.Policy.Filters;
+using Phileas.Services;
 using Phileas.Services.Office;
 using PhilterData;
 using PhileasPolicy = Phileas.Policy.Policy;
@@ -39,6 +42,21 @@ namespace PhilterDesktop
 
         private List<RedactionSpanEntity> _working = new();
         private RedactionVersionEntity? _selectedVersion;
+
+        // Detections the policy found but did NOT redact because their confidence was below the threshold
+        // (shown greyed and read-only when "Show low-confidence" is on). Populated by re-scanning the
+        // source with the PhEye threshold lowered; empty when the toggle is off.
+        private List<RedactionSpanEntity> _lowConfidence = new();
+        private HashSet<RedactionSpanEntity> _lowConfidenceSet = new();
+        private bool _suppressLowConfidenceScan;
+
+        // How far below each PhEye filter's own threshold to scan for not-redacted candidates, so the band
+        // adapts per policy rather than using one fixed value. Clamped to a safety floor so a near-0
+        // threshold can't make the model return a candidate for almost every span (which floods the UI).
+        private const double LowConfidenceMargin = 0.25;
+        private const double MinLowConfidenceScanThreshold = 0.1;
+        // Backstop so a busy page can't flood the list; the highest-confidence candidates are kept.
+        private const int MaxLowConfidenceRows = 500;
         private readonly string _redactedSuffix = RedactionService.DefaultSuffix;
         private readonly WordScrubOptions _wordScrub = WordScrubOptions.None;
         private readonly bool _scrubEmailHeaders;
@@ -56,12 +74,21 @@ namespace PhilterDesktop
         private readonly string _globalAlwaysRedact = string.Empty;
         private readonly string _globalAlwaysIgnore = string.Empty;
 
+        // Click-a-header column sorting for the span list, plus the original header captions so the
+        // active column's sort-direction arrow can be appended and stripped cleanly.
+        private readonly SpanColumnSorter _sorter = new();
+        private readonly string[] _baseColumnText;
+
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public ModifyRedactionForm()
         {
             InitializeComponent();
+            _baseColumnText = _spanList.Columns.Cast<ColumnHeader>().Select(c => c.Text).ToArray();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_redact);
+            // ModernTheme makes list headers non-clickable for a flat look; this list sorts on header
+            // click, so opt back into clickable headers here.
+            _spanList.HeaderStyle = ColumnHeaderStyle.Clickable;
         }
 
         public ModifyRedactionForm(
@@ -162,16 +189,30 @@ namespace PhilterDesktop
             _working = version is null
                 ? new List<RedactionSpanEntity>()
                 : _spans.GetForVersion(version.Id).Select(Clone).ToList();
+
+            // Low-confidence candidates are per-version and costly to compute, so reset the toggle on a
+            // version switch rather than silently re-scanning; the user re-enables it when they want it.
+            _lowConfidence = new List<RedactionSpanEntity>();
+            _lowConfidenceSet = new HashSet<RedactionSpanEntity>();
+            _suppressLowConfidenceScan = true;
+            _showLowConfidence.Checked = false;
+            _suppressLowConfidenceScan = false;
+
             RefreshSpanList();
         }
 
         private void RefreshSpanList()
         {
             _spanList.BeginUpdate();
+            // Add in natural (stored) order without the sorter re-running on every insert; re-apply the
+            // active column sort once at the end. Items are laid out in _working order when unsorted.
+            IComparer? sorter = _spanList.ListViewItemSorter;
+            _spanList.ListViewItemSorter = null;
             _spanList.Items.Clear();
             foreach (RedactionSpanEntity s in _working)
             {
                 var item = new ListViewItem(s.UserAdded ? "Added" : SpanTypeLabel.For(s)) { Tag = s };
+                item.SubItems.Add(ConfidenceText(s));
                 item.SubItems.Add(s.Text);
                 item.SubItems.Add(s.Replacement);
                 item.SubItems.Add(StartText(s));
@@ -179,8 +220,59 @@ namespace PhilterDesktop
                 item.SubItems.Add(DescribeLocation(s));
                 _spanList.Items.Add(item);
             }
+
+            // Low-confidence (not-redacted) candidates: greyed and read-only, with "(not redacted)" in the
+            // Replacement column so it's clear they were detected but left in.
+            foreach (RedactionSpanEntity s in _lowConfidence)
+            {
+                var item = new ListViewItem(SpanTypeLabel.For(s)) { Tag = s, ForeColor = ModernTheme.SubtleText };
+                item.SubItems.Add(ConfidenceText(s));
+                item.SubItems.Add(s.Text);
+                item.SubItems.Add("(not redacted)");
+                item.SubItems.Add(StartText(s));
+                item.SubItems.Add(StopText(s));
+                item.SubItems.Add(DescribeLocation(s));
+                _spanList.Items.Add(item);
+            }
+
+            _spanList.ListViewItemSorter = sorter;
+            if (sorter is not null)
+            {
+                _spanList.Sort();
+            }
             _spanList.EndUpdate();
             UpdateButtons();
+        }
+
+        // Click a column header to sort by it; click again to reverse. The clicked header shows a
+        // direction arrow. Sorting is by the span's underlying value (confidence, offsets) where the
+        // displayed text wouldn't order correctly.
+        private void SpanList_ColumnClick(object? sender, ColumnClickEventArgs e)
+        {
+            if (_sorter.Column == e.Column)
+            {
+                _sorter.Descending = !_sorter.Descending;
+            }
+            else
+            {
+                _sorter.Column = e.Column;
+                _sorter.Descending = false;
+            }
+
+            _spanList.ListViewItemSorter = _sorter;
+            _spanList.Sort();
+            UpdateSortIndicators();
+        }
+
+        // Appends a ▲/▼ arrow to the active column's caption and restores the others.
+        private void UpdateSortIndicators()
+        {
+            for (int i = 0; i < _spanList.Columns.Count && i < _baseColumnText.Length; i++)
+            {
+                _spanList.Columns[i].Text = i == _sorter.Column
+                    ? _baseColumnText[i] + (_sorter.Descending ? "  ▼" : "  ▲")
+                    : _baseColumnText[i];
+            }
         }
 
         private void UpdateButtons()
@@ -198,9 +290,14 @@ namespace PhilterDesktop
             // silent no-op, since a hand-placed span can't be matched back to a cell/field).
             bool indexed = hasVersion && RedactionService.UsesOrdinalSpanAddressing(_selectedVersion!.FileType);
 
+            // A low-confidence (not-redacted) candidate is display-only — it can't be edited or removed.
+            bool lowConfSelected = hasSpan
+                && _spanList.SelectedItems[0].Tag is RedactionSpanEntity sel
+                && _lowConfidenceSet.Contains(sel);
+
             _add.Enabled = editable && !indexed;
-            _edit.Enabled = hasSpan && editable;
-            _remove.Enabled = hasSpan && editable;
+            _edit.Enabled = hasSpan && editable && !lowConfSelected;
+            _remove.Enabled = hasSpan && editable && !lowConfSelected;
             _redact.Enabled = hasVersion;
             _deleteVersion.Enabled = editable;
         }
@@ -305,6 +402,10 @@ namespace PhilterDesktop
             {
                 return;
             }
+            if (_lowConfidenceSet.Contains(span))
+            {
+                return; // low-confidence candidates are display-only; they were never redacted
+            }
             SpanPositionKind kind = KindFor(_selectedVersion!.FileType);
             // A detected span's position is fixed (anchored to where it was found); only user-added
             // spans can have their position changed. Cell/field-indexed formats have no positional UI,
@@ -398,6 +499,10 @@ namespace PhilterDesktop
             {
                 return;
             }
+            if (_lowConfidenceSet.Contains(span))
+            {
+                return; // not a redaction — nothing to remove
+            }
             _working.Remove(span);
             SaveWorking();
             RefreshSpanList();
@@ -410,6 +515,7 @@ namespace PhilterDesktop
             UseWaitCursor = busy;
             _versionTree.Enabled = !busy;
             _spanList.Enabled = !busy;
+            _showLowConfidence.Enabled = !busy;
             _newVersion.Enabled = !busy;
             _close.Enabled = !busy;
             if (busy)
@@ -527,6 +633,144 @@ namespace PhilterDesktop
             }
         }
 
+        // --- Low-confidence (not-redacted) candidates -------------------------
+
+        // Toggling on re-scans the source with the PhEye threshold lowered and lists the detections that
+        // were found but fell below the threshold (so weren't redacted). Off clears them.
+        private async void OnToggleLowConfidence(object? sender, EventArgs e)
+        {
+            if (_suppressLowConfidenceScan)
+            {
+                return;
+            }
+            if (!_showLowConfidence.Checked)
+            {
+                _lowConfidence = new List<RedactionSpanEntity>();
+                _lowConfidenceSet = new HashSet<RedactionSpanEntity>();
+                RefreshSpanList();
+                return;
+            }
+
+            RedactionVersionEntity? version = _selectedVersion;
+            if (version is null)
+            {
+                return;
+            }
+            if (!File.Exists(version.SourcePath))
+            {
+                MessageBox.Show(this,
+                    "The original document was not found, so low-confidence candidates can't be shown:\n" + version.SourcePath,
+                    "Modify Redaction", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UncheckLowConfidence();
+                return;
+            }
+
+            SetBusy(true);
+            try
+            {
+                List<RedactionSpanEntity> low = await Task.Run(() => DetectLowConfidence(version));
+
+                // The user may have switched versions or toggled off while the scan ran.
+                if (!ReferenceEquals(_selectedVersion, version) || !_showLowConfidence.Checked)
+                {
+                    return;
+                }
+
+                // Cap the list so a busy document can't flood it; keep the highest-confidence candidates.
+                bool truncated = low.Count > MaxLowConfidenceRows;
+                _lowConfidence = truncated ? low.Take(MaxLowConfidenceRows).ToList() : low;
+                _lowConfidenceSet = new HashSet<RedactionSpanEntity>(_lowConfidence);
+                RefreshSpanList();
+
+                if (low.Count == 0)
+                {
+                    MessageBox.Show(this,
+                        "No additional low-confidence candidates were found for this document.",
+                        "Modify Redaction", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else if (truncated)
+                {
+                    MessageBox.Show(this,
+                        $"Found {low.Count} low-confidence candidates; showing the {MaxLowConfidenceRows} highest-confidence.",
+                        "Modify Redaction", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "Could not scan for low-confidence candidates: " + ex.Message,
+                    "Modify Redaction", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UncheckLowConfidence();
+            }
+            finally
+            {
+                SetBusy(false);
+            }
+        }
+
+        private void UncheckLowConfidence()
+        {
+            _suppressLowConfidenceScan = true;
+            _showLowConfidence.Checked = false;
+            _suppressLowConfidenceScan = false;
+        }
+
+        // Re-detects on the source with the PhEye threshold lowered, and returns the detections that the
+        // policy's real threshold would NOT redact (everything found by the lowered scan that the normal
+        // scan doesn't). Runs off the UI thread. Empty when the policy uses no PhEye (AI) detection —
+        // pattern/dictionary filters use a fixed confidence, so they have no sub-threshold candidates.
+        private List<RedactionSpanEntity> DetectLowConfidence(RedactionVersionEntity version)
+        {
+            PhileasPolicy? normalPolicy = LoadPolicy(version.Policy);
+            PhileasPolicy? loweredPolicy = LoadPolicy(version.Policy);
+            if (normalPolicy is null || loweredPolicy is null
+                || loweredPolicy.Identifiers?.PhEyes is not { Count: > 0 })
+            {
+                return new List<RedactionSpanEntity>();
+            }
+
+            LowerPhEyeThresholds(loweredPolicy);
+
+            string ctx = string.IsNullOrWhiteSpace(version.Context) ? "context" : version.Context;
+            FilterService filterService = SharedFilterService.Instance;
+            string source = version.SourcePath;
+
+            // Verify() mutates the policy it's given (PhEyeModel.Prepare), so each pass gets its own copy.
+            var redacted = RedactionVerifier.Verify(source, normalPolicy, ctx, filterService,
+                sourcePath: source, worksheet: version.Worksheet).Residuals;
+            var everything = RedactionVerifier.Verify(source, loweredPolicy, ctx, filterService,
+                sourcePath: source, worksheet: version.Worksheet).Residuals;
+
+            var redactedKeys = redacted.Select(SpanKey).ToHashSet();
+            return everything
+                .Where(r => !redactedKeys.Contains(SpanKey(r)))
+                .OrderByDescending(r => r.Confidence)
+                .ToList();
+        }
+
+        private static void LowerPhEyeThresholds(PhileasPolicy policy)
+        {
+            foreach (PhEye phEye in policy.Identifiers!.PhEyes!)
+            {
+                if (phEye.PhEyeConfiguration is { } config)
+                {
+                    // Scan a margin below this filter's own threshold — never below the safety floor, and
+                    // never stricter than the real threshold — so the band adapts to each policy.
+                    double original = config.Threshold;
+                    config.Threshold = Math.Min(original, Math.Max(MinLowConfidenceScanThreshold, original - LowConfidenceMargin));
+                }
+                phEye.Thresholds = new Dictionary<string, double>(); // drop any per-label confidence gates
+            }
+        }
+
+        // Identity of a detection independent of which run produced it, for diffing the two scans.
+        private static string SpanKey(RedactionSpanEntity s) =>
+            $"{s.PageNumber}|{s.ParagraphIndex}|{s.CharacterStart}|{s.CharacterEnd}|{s.Text}";
+
+        // The engine's confidence in a detection, shown as a percentage. Blank for user-added spans
+        // (which carry no detection) and any span with no recorded confidence.
+        private static string ConfidenceText(RedactionSpanEntity s) =>
+            s.UserAdded || s.Confidence <= 0 ? string.Empty : $"{s.Confidence * 100:0}%";
+
         private string DescribeLocation(RedactionSpanEntity s)
         {
             if (s.PageNumber > 0)
@@ -577,5 +821,52 @@ namespace PhilterDesktop
             UpperRightX = s.UpperRightX,
             UpperRightY = s.UpperRightY
         };
+
+        // Sorts span-list rows by a chosen column. Numeric columns (confidence, character offsets, the
+        // location ordinal) compare by the row's underlying RedactionSpanEntity value so they order
+        // numerically; the rest compare by displayed text. Equal keys keep their natural (stored) order.
+        private sealed class SpanColumnSorter : IComparer
+        {
+            public int Column { get; set; } = -1;
+            public bool Descending { get; set; }
+
+            public int Compare(object? a, object? b)
+            {
+                var xi = (ListViewItem)a!;
+                var yi = (ListViewItem)b!;
+                int cmp = CompareCore(xi, yi);
+                if (cmp == 0 && xi.Tag is RedactionSpanEntity xs && yi.Tag is RedactionSpanEntity ys)
+                {
+                    cmp = xs.Order.CompareTo(ys.Order);
+                }
+                return Descending ? -cmp : cmp;
+            }
+
+            private int CompareCore(ListViewItem xi, ListViewItem yi)
+            {
+                if (xi.Tag is not RedactionSpanEntity x || yi.Tag is not RedactionSpanEntity y)
+                {
+                    return CompareText(xi, yi);
+                }
+                return Column switch
+                {
+                    1 => x.Confidence.CompareTo(y.Confidence),          // Confidence
+                    4 => x.CharacterStart.CompareTo(y.CharacterStart),  // Start
+                    5 => x.CharacterEnd.CompareTo(y.CharacterEnd),      // Stop
+                    6 => LocationKey(x).CompareTo(LocationKey(y)),      // Location
+                    _ => CompareText(xi, yi)                            // Type, Text, Replacement
+                };
+            }
+
+            private int CompareText(ListViewItem xi, ListViewItem yi) =>
+                string.Compare(CellText(xi), CellText(yi), StringComparison.CurrentCultureIgnoreCase);
+
+            private string CellText(ListViewItem item) =>
+                Column >= 0 && Column < item.SubItems.Count ? item.SubItems[Column].Text : string.Empty;
+
+            // Location shows a PDF page or a paragraph/cell/field ordinal; order by that number.
+            private static long LocationKey(RedactionSpanEntity s) =>
+                s.PageNumber > 0 ? s.PageNumber : s.ParagraphIndex;
+        }
     }
 }

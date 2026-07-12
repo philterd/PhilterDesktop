@@ -30,9 +30,10 @@ Desktop can detect, organized into **tabs** (one category per tab):
   or sharing with a colleague); **Import** loads a policy `.json` file back in as a new policy. Imported
   files are checked against the engine's policy schema first, so an invalid file cannot be brought in.
 - **The detector tabs**: categories such as Personal, Contact, Location, Financial,
-  Identifiers, Technical, Medical, and Other. Click a tab to see the kinds of information in that
-  category you can remove. Selections on every tab are saved together as one policy; switching tabs
-  doesn't lose anything.
+  Identifiers, Technical, Medical, and Other, plus a **PhEye** tab for on-device AI models (see
+  [Detecting names with on-device AI](#detecting-names-with-on-device-ai)). Click a tab to see the
+  kinds of information in that category you can remove. Selections on every tab are saved together as
+  one policy; switching tabs doesn't lose anything.
 
 (The word **filter** is another word for one of these detectors: "the email-address filter,"
 "the Social Security number filter," and so on.)
@@ -190,30 +191,51 @@ firm's name (ignore) or a standing confidential codename (always redact), in the
 
 ## Detecting names with on-device AI
 
-On the **Personal** tab is an entry called **Names (on-device AI)**. Checking it turns on a
-names-specific detector.
+Names, and other entities that depend on context, are handled on the **PhEye** tab. PhEye models are
+**artificial-intelligence** detectors that run **entirely on your own computer** — no part of your
+document is uploaded or sent over the internet.
+
+### The built-in person-names model
+
+On the **PhEye** tab, click **Add → Person Names (on-device)** to turn on the built-in names detector,
+then save the policy. (It's included in the **Common PII** starting point and the **default** policy,
+so it's often already there.) To turn it off again, select it and click **Remove**.
 
 Why is this separate from the other detectors? Most sensitive information has a recognizable shape (a
 Social Security number is always nine digits in a familiar pattern, an email address always has an
 "@"), so a simple rule can spot it. **Names are different.** "April," "Hope," and "Mason" can be names
-or ordinary words; whether something is a name depends on the surrounding sentence. Philter Desktop
-uses **artificial intelligence**, a trained model that reads the context and decides what is a name,
-more reliably than a fixed rule could.
+or ordinary words; whether something is a name depends on the surrounding sentence. The model reads the
+context and decides what is a name, more reliably than a fixed rule could.
 
-For confidentiality, **this AI runs entirely on your own computer.** No part of your document is
-uploaded or sent over the internet.
+There's little to configure: add it and save the policy. Select it and click **Edit…** if you want to
+change how detected names are replaced. The first document you redact after turning it on takes a
+moment longer while the model loads; after that it's quick.
 
-There's nothing to configure: check the box and save the policy. The first document you redact after
-turning it on takes a moment longer while the model loads; after that it's quick.
+### Adding your own local models
 
-!!! warning "If name detection is unavailable"
+You can also point Philter Desktop at **your own on-device models**. On the **PhEye** tab, click
+**Add → Custom Local Model…** and provide:
+
+- **Model folder** — a folder on this machine holding an on-device (GLiNER) model: the model file
+  (`model.onnx`), the tokenizer (`spm.model`), and its `gliner_config.json`.
+- **Entity types** — the kinds of things the model should find, separated by commas (for example
+  `person, location, organization`). These are the labels the model was trained to detect.
+- **Threshold** — the minimum confidence (0–1) for a detection to count. 0.5 is a sensible default;
+  raise it to be stricter, lower it to catch more.
+
+Each model you add runs on-device alongside the built-in detectors. Use **Edit…** to change a model's
+folder, entity types, or threshold, and **Remove** to delete it. Custom models run locally, so they
+work even if the built-in names model isn't installed.
+
+!!! warning "If the built-in name detection is unavailable"
     If the names model is missing for any reason (an unusual or damaged installation, or antivirus
     quarantining it), Philter Desktop will **not** quietly pretend to redact names. It shows a yellow
     warning banner across the top of the main window and of every **Redact with Preview**
     window (and a message on the command line), telling you that **person names will not be redacted**
     by policies that look for them. Pattern-based detection (Social Security numbers, email, phone, and
-    so on) still works. If you see this warning, **reinstall Philter Desktop** to restore name
-    detection, and re-redact anything that was processed while it was unavailable.
+    so on) and any **custom local models** you added still work. If you see this warning, **reinstall
+    Philter Desktop** to restore the built-in name detection, and re-redact anything that was processed
+    while it was unavailable.
 
 ## Redacting your own special identifiers (Custom Identifiers)
 

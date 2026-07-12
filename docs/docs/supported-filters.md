@@ -15,10 +15,10 @@ Information about who a person is.
 - **First Name**: a person's given name (e.g., *Jane*).
 - **Surname**: a person's family or last name (e.g., *Doe*).
 - **Age**: a stated age (e.g., *42 years old*).
-- **Names (on-device AI)**: a context-aware detector for full person names, powered by artificial
-  intelligence that runs entirely on your computer. Because the same word can be a name or an ordinary
-  word depending on the sentence, this detector is more reliable than a simple rule. See
-  [AI name detection](#ai-name-detection) below.
+- **Person Names (on-device AI)**: a context-aware detector for full person names, powered by
+  artificial intelligence that runs entirely on your computer. Because the same word can be a name or
+  an ordinary word depending on the sentence, this detector is more reliable than a simple rule. It's
+  configured on the **PhEye** tab rather than here — see [AI name detection](#ai-name-detection) below.
 
 ## Contact
 
@@ -84,13 +84,14 @@ produced in discovery.
 
 ## AI name detection
 
-The **Names (on-device AI)** detector (in the **Personal** group above) finds person names using a
-trained artificial-intelligence model (called **PhEye**) that runs **entirely on your own computer,
-with no connection to the internet**. Your documents are never uploaded or sent anywhere.
+The **Person Names (on-device AI)** detector, on the policy editor's **PhEye** tab, finds person names
+using a trained artificial-intelligence model (called **PhEye**) that runs **entirely on your own
+computer, with no connection to the internet**. Your documents are never uploaded or sent anywhere.
 
 Names benefit from this approach because they have no fixed shape and depend on the surrounding words;
-the pattern-based detectors above handle everything else. For the full explanation and how to turn it
-on, see [Policies → AI name detection](policies.md#detecting-names-with-on-device-ai).
+the pattern-based detectors above handle everything else. The PhEye tab also lets you add **your own
+local (on-device) models** to detect other kinds of entities. For the full explanation and how to turn
+it on, see [Policies → AI name detection](policies.md#detecting-names-with-on-device-ai).
 
 ## Your own identifiers (Custom Identifiers)
 

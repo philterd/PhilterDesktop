@@ -726,15 +726,16 @@ namespace PhilterDesktop
                     }
                 }
 
-                // Window size/position, guarded against an unplugged/changed monitor.
+                // Restore the remembered *size* only — the window always opens centered (StartPosition
+                // stays CenterScreen, set in BuildUi) so it never reappears in a stale or off-screen spot.
+                // This runs before the form is shown, so the centering accounts for the restored size.
                 if (s.WindowWidth > 0 && s.WindowHeight > 0)
                 {
-                    var bounds = new Rectangle(s.WindowX, s.WindowY, s.WindowWidth, s.WindowHeight);
-                    if (UiState.IsBoundsVisible(bounds, Screen.AllScreens.Select(sc => sc.WorkingArea)))
-                    {
-                        StartPosition = FormStartPosition.Manual;
-                        Bounds = bounds;
-                    }
+                    // Clamp to the primary screen so a size saved on a larger monitor still fits.
+                    Rectangle workingArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1024, 768);
+                    Size = new Size(
+                        Math.Min(s.WindowWidth, workingArea.Width),
+                        Math.Min(s.WindowHeight, workingArea.Height));
 
                     if (s.WindowMaximized && !_startMinimized)
                     {

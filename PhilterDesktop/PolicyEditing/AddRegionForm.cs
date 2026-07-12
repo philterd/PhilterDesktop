@@ -21,8 +21,8 @@ namespace PhilterDesktop.PolicyEditing
 {
     /// <summary>
     /// Enters or edits a fixed PDF redaction region (a bounding box). Coordinates are PDF points (1/72"),
-    /// origin bottom-left. The page field accepts 0 (all pages), a single page, a range (2-5), or a list
-    /// (1,2,5) — producing one box per resolved page. Color is optional.
+    /// origin bottom-left. The page field accepts 0 (all pages), 2- (all but the first — an open-ended
+    /// range to the last page), a single page, a range (2-5), or a list (1,2,5). Color is optional.
     /// </summary>
     internal sealed class AddRegionForm : Form
     {
@@ -45,10 +45,10 @@ namespace PhilterDesktop.PolicyEditing
             StartPosition = FormStartPosition.CenterParent;
             MinimizeBox = false;
             MaximizeBox = false;
-            ClientSize = new System.Drawing.Size(380, 290);
+            ClientSize = new System.Drawing.Size(480, 290);
 
             var table = new TableLayoutPanel { AutoSize = true, ColumnCount = 2, Padding = new Padding(10), Dock = DockStyle.Top };
-            AddRow(table, "Pages (0 = all; e.g. 2-5, 1,2,5)", _page);
+            AddRow(table, "Pages (0 = all; 2- = all but first; e.g. 2-5, 1,2,5)", _page);
             AddRow(table, "X", _x);
             AddRow(table, "Y", _y);
             AddRow(table, "Width", _w);
@@ -109,9 +109,9 @@ namespace PhilterDesktop.PolicyEditing
 
         /// <summary>
         /// Parses region fields into a single <see cref="PdfRegionEntry"/> (kept as entered — one list
-        /// row). The page spec is 0 (all pages), a single page, a range (2-5), or a comma list (1,2,5, and
-        /// mixes like 2-5,8); X/Y/W/H must be numbers with W and H positive; Color is optional. Returns
-        /// false with a message on bad input.
+        /// row). The page spec is 0 (all pages), 2- (all but the first page), a single page, a range (2-5),
+        /// or a comma list (1,2,5, and mixes like 2-5,8); X/Y/W/H must be numbers with W and H positive;
+        /// Color is optional. Returns false with a message on bad input.
         /// </summary>
         internal static bool TryParse(string page, string x, string y, string w, string h, string color,
             out PdfRegionEntry? entry, out string? error)
@@ -143,19 +143,24 @@ namespace PhilterDesktop.PolicyEditing
         }
 
         /// <summary>
-        /// Parses a page spec into a distinct, sorted page list. Accepts 0 (all pages, only on its own), a
-        /// single page (3), a range (2-5), a comma list (1,2,5), or a mix (2-5,8). Pages are 1-based.
+        /// Parses a page spec into a distinct, sorted page list. Accepts 0 (all pages), an open-ended range
+        /// like 2- (from page 2 to the last page — so 2- is "all but the first page"), a single page (3), a
+        /// closed range (2-5), a comma list (1,2,5), or a mix (2-5,8). Pages are 1-based.
+        ///
+        /// <paramref name="openFrom"/> is 0 for an explicit page list (use <paramref name="pages"/>), or the
+        /// first page of an open-ended "to the end" spec (1 = all pages, 2 = all but the first, and so on),
+        /// which stays a single deferred box until the page count is known at redaction time.
         /// </summary>
-        internal static bool ParsePages(string spec, out List<int> pages, out bool allPages, out string? error)
+        internal static bool ParsePages(string spec, out List<int> pages, out int openFrom, out string? error)
         {
             pages = new List<int>();
-            allPages = false;
+            openFrom = 0;
             error = null;
 
             string[] parts = (spec ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (parts.Length == 0)
             {
-                error = "Enter a page: 0 (all pages), a page like 3, a range like 2-5, or a list like 1,2,5.";
+                error = "Enter a page: 0 (all pages), 2- (all but the first), a page like 3, a range like 2-5, or a list like 1,2,5.";
                 return false;
             }
 
@@ -169,8 +174,25 @@ namespace PhilterDesktop.PolicyEditing
                         error = "Page 0 means all pages and can't be combined with other pages.";
                         return false;
                     }
-                    allPages = true;
+                    openFrom = 1; // all pages
                     return true;
+                }
+
+                // An open-ended range "N-" means page N through the last page (N- with N=2 is "all but first").
+                if (part.EndsWith('-'))
+                {
+                    if (parts.Length > 1)
+                    {
+                        error = "An open-ended range like \"2-\" runs to the last page and can't be combined with other pages.";
+                        return false;
+                    }
+                    if (int.TryParse(part[..^1].Trim(), out int from) && from >= 1)
+                    {
+                        openFrom = from;
+                        return true;
+                    }
+                    error = $"'{part}' is not a valid open-ended range (use e.g. 2- for page 2 to the last page).";
+                    return false;
                 }
 
                 int dash = part.IndexOf('-');

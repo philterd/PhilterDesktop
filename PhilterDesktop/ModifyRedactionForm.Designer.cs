@@ -43,6 +43,7 @@ namespace PhilterDesktop
             _rightPanel = new Panel();
             _spanList = new ListView();
             _columnType = new ColumnHeader();
+            _columnConfidence = new ColumnHeader();
             _columnText = new ColumnHeader();
             _columnReplacement = new ColumnHeader();
             _columnStart = new ColumnHeader();
@@ -52,6 +53,7 @@ namespace PhilterDesktop
             _add = new Button();
             _edit = new Button();
             _remove = new Button();
+            _showLowConfidence = new CheckBox();
             _treePanel = new Panel();
             _versionTree = new TreeView();
             _treeButtons = new FlowLayoutPanel();
@@ -92,7 +94,7 @@ namespace PhilterDesktop
             // 
             // _spanList
             // 
-            _spanList.Columns.AddRange(new ColumnHeader[] { _columnType, _columnText, _columnReplacement, _columnStart, _columnStop, _columnLocation });
+            _spanList.Columns.AddRange(new ColumnHeader[] { _columnType, _columnConfidence, _columnText, _columnReplacement, _columnStart, _columnStop, _columnLocation });
             _spanList.Dock = DockStyle.Fill;
             _spanList.FullRowSelect = true;
             _spanList.GridLines = true;
@@ -105,12 +107,19 @@ namespace PhilterDesktop
             _spanList.View = View.Details;
             _spanList.SelectedIndexChanged += SpanList_SelectedIndexChanged;
             _spanList.DoubleClick += OnEdit;
+            _spanList.ColumnClick += SpanList_ColumnClick;
             // 
             // _columnType
             // 
             _columnType.Text = "Type";
             _columnType.Width = 150;
-            // 
+            //
+            // _columnConfidence
+            //
+            _columnConfidence.Text = "Confidence";
+            _columnConfidence.TextAlign = HorizontalAlignment.Right;
+            _columnConfidence.Width = 80;
+            //
             // _columnText
             // 
             _columnText.Text = "Text";
@@ -143,6 +152,7 @@ namespace PhilterDesktop
             _spanButtons.Controls.Add(_add);
             _spanButtons.Controls.Add(_edit);
             _spanButtons.Controls.Add(_remove);
+            _spanButtons.Controls.Add(_showLowConfidence);
             _spanButtons.Dock = DockStyle.Bottom;
             _spanButtons.Location = new Point(8, 312);
             _spanButtons.Name = "_spanButtons";
@@ -182,6 +192,15 @@ namespace PhilterDesktop
             _remove.Text = "&Remove";
             _remove.UseVisualStyleBackColor = true;
             _remove.Click += OnRemove;
+            //
+            // _showLowConfidence
+            //
+            _showLowConfidence.AutoSize = true;
+            _showLowConfidence.Margin = new Padding(16, 13, 0, 0);
+            _showLowConfidence.Name = "_showLowConfidence";
+            _showLowConfidence.Text = "Show low-confidence (not redacted)";
+            _showLowConfidence.UseVisualStyleBackColor = true;
+            _showLowConfidence.CheckedChanged += OnToggleLowConfidence;
             // 
             // _treePanel
             // 
@@ -316,6 +335,7 @@ namespace PhilterDesktop
         private Panel _rightPanel;
         private ListView _spanList;
         private ColumnHeader _columnType;
+        private ColumnHeader _columnConfidence;
         private ColumnHeader _columnText;
         private ColumnHeader _columnReplacement;
         private ColumnHeader _columnStart;
@@ -325,6 +345,7 @@ namespace PhilterDesktop
         private Button _add;
         private Button _edit;
         private Button _remove;
+        private CheckBox _showLowConfidence;
         private Panel _treePanel;
         private TreeView _versionTree;
         private FlowLayoutPanel _treeButtons;

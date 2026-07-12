@@ -66,11 +66,29 @@ namespace PhilterDesktop
 
         /// <summary>
         /// True when <paramref name="policy"/> asks for on-device name detection but the model is not
-        /// available — i.e. names the policy expects to catch would silently be left in. Check this
-        /// <b>before</b> <see cref="Prepare"/>, which strips the PhEye filters when the model is missing.
+        /// available — i.e. names the policy expects to catch would silently be left in. Only the bundled
+        /// name entry needs the app's model; user-added local models carry their own path and are ignored
+        /// here. Check this <b>before</b> <see cref="Prepare"/>, which strips the bundled entry when the
+        /// model is missing.
         /// </summary>
         public static bool RequestedButUnavailable(PhileasPolicy policy) =>
-            policy.Identifiers?.PhEyes is { Count: > 0 } && !IsAvailable;
+            !IsAvailable
+            && policy.Identifiers?.PhEyes is { } phEyes
+            && phEyes.Any(IsBundledNameEntry);
+
+        /// <summary>
+        /// True for the bundled on-device name entry: it has no explicit model path, so <see cref="Prepare"/>
+        /// injects the app's bundled model directory at redaction time (kept out of the stored policy so it
+        /// stays portable).
+        /// </summary>
+        public static bool IsBundledNameEntry(PhEye phEye) =>
+            string.IsNullOrWhiteSpace(phEye.PhEyeConfiguration?.ModelPath);
+
+        /// <summary>
+        /// True for a user-added local model entry: it carries its own on-disk model path (and its own
+        /// entity types), and runs independently of the bundled name model.
+        /// </summary>
+        public static bool IsUserLocalModel(PhEye phEye) => !IsBundledNameEntry(phEye);
 
         /// <summary>
         /// Returns true if <paramref name="dir"/> contains the files a <c>GlinerModel</c>
@@ -111,12 +129,12 @@ namespace PhilterDesktop
         };
 
         /// <summary>
-        /// Prepares <paramref name="policy"/> for redaction: injects the bundled model path into
-        /// every PhEye entry that lacks one and fills in default labels/threshold. If no model is
-        /// available, the PhEye filters are removed so redaction still runs (with the remaining
-        /// filters) instead of failing on a missing model directory.
+        /// Prepares <paramref name="policy"/> for redaction. The bundled name entry (no model path) has the
+        /// app's model directory injected and default labels/threshold filled in; if the bundled model is
+        /// unavailable that entry is dropped so redaction still runs with the remaining filters. User-added
+        /// local models (their own model path) are kept as-is and run independently of the bundled model.
         /// </summary>
-        /// <returns>True if on-device PhEye name detection will run for this policy.</returns>
+        /// <returns>True if the bundled on-device name detection will run for this policy.</returns>
         public static bool Prepare(PhileasPolicy policy)
         {
             List<PhEye>? phEyes = policy.Identifiers?.PhEyes;
@@ -125,13 +143,11 @@ namespace PhilterDesktop
                 return false;
             }
 
-            if (!IsAvailable)
-            {
-                policy.Identifiers!.PhEyes = null;
-                return false;
-            }
+            bool bundledAvailable = IsAvailable;
+            string bundledDir = ModelDirectory;
+            bool bundledWillRun = false;
 
-            string dir = ModelDirectory;
+            var kept = new List<PhEye>(phEyes.Count);
             foreach (PhEye phEye in phEyes)
             {
                 phEye.PhEyeConfiguration ??= new PhEyeConfiguration();
@@ -139,19 +155,34 @@ namespace PhilterDesktop
 
                 if (string.IsNullOrWhiteSpace(config.ModelPath))
                 {
-                    config.ModelPath = dir;
+                    // Bundled on-device name model: inject the app's model path. Without it, drop the entry
+                    // so redaction still runs (instead of failing on a missing model directory).
+                    if (!bundledAvailable)
+                    {
+                        continue;
+                    }
+                    config.ModelPath = bundledDir;
+                    if (config.Labels is null || config.Labels.Count == 0)
+                    {
+                        config.Labels = new List<string>(DefaultLabels);
+                    }
+                    if (config.Threshold <= 0)
+                    {
+                        config.Threshold = DefaultThreshold;
+                    }
+                    bundledWillRun = true;
                 }
-                if (config.Labels is null || config.Labels.Count == 0)
+                else if (config.Threshold <= 0)
                 {
-                    config.Labels = new List<string>(DefaultLabels);
-                }
-                if (config.Threshold <= 0)
-                {
+                    // User-added local model: keep its own path and labels; only supply a threshold default.
                     config.Threshold = DefaultThreshold;
                 }
+
+                kept.Add(phEye);
             }
 
-            return true;
+            policy.Identifiers!.PhEyes = kept.Count > 0 ? kept : null;
+            return bundledWillRun;
         }
     }
 }

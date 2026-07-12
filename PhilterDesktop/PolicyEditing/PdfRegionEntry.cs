@@ -21,25 +21,43 @@ namespace PhilterDesktop.PolicyEditing
 {
     /// <summary>
     /// One region as the user entered it: a page <b>spec</b> (a single page, a range like <c>2-5</c>, a
-    /// list like <c>1,2,5</c>, or <c>0</c> for all pages) plus the rectangle. It stays a single list row;
-    /// it's expanded into one <see cref="BoundingBox"/> per page only when the policy is saved.
+    /// list like <c>1,2,5</c>, <c>0</c> for all pages, or an open-ended range like <c>2-</c> for "all but
+    /// the first page") plus the rectangle. It stays a single list row; it's expanded into one
+    /// <see cref="BoundingBox"/> per page only when the policy is saved (open-ended specs stay a single
+    /// deferred box, expanded at redaction time when the page count is known).
     /// </summary>
     internal sealed record PdfRegionEntry(string PageSpec, float X, float Y, float W, float H, string Color)
     {
-        /// <summary>How the pages read in the list: "All" for every page, otherwise the spec as entered.</summary>
-        public string PageDisplay =>
-            AddRegionForm.ParsePages(PageSpec, out _, out bool allPages, out _) && allPages ? "All" : PageSpec;
+        /// <summary>How the pages read in the list: a friendly label for open-ended specs, else the spec as entered.</summary>
+        public string PageDisplay
+        {
+            get
+            {
+                if (!AddRegionForm.ParsePages(PageSpec, out _, out int openFrom, out _))
+                {
+                    return PageSpec;
+                }
+                return openFrom switch
+                {
+                    0 => PageSpec,          // an explicit page/range/list — show as entered
+                    1 => "All",             // 0 spec
+                    2 => "All but first",   // 2- spec
+                    _ => $"From {openFrom}" // N- spec
+                };
+            }
+        }
 
-        /// <summary>One box per resolved page (an all-pages spec yields a single page-0 box).</summary>
+        /// <summary>One box per resolved page; an open-ended spec yields a single deferred sentinel box.</summary>
         public IEnumerable<BoundingBox> ToBoundingBoxes()
         {
-            if (!AddRegionForm.ParsePages(PageSpec, out List<int> pages, out bool allPages, out _))
+            if (!AddRegionForm.ParsePages(PageSpec, out List<int> pages, out int openFrom, out _))
             {
                 yield break;
             }
-            if (allPages)
+            if (openFrom > 0)
             {
-                yield return MakeBox(0);
+                // Deferred: page 0 = all pages; a negative page -N = "from page N to the last page".
+                yield return MakeBox(openFrom == 1 ? 0 : -openFrom);
             }
             else
             {
@@ -55,8 +73,15 @@ namespace PhilterDesktop.PolicyEditing
 
         /// <summary>Builds an entry for a single existing box (e.g. a drawn region).</summary>
         public static PdfRegionEntry FromBox(BoundingBox b) =>
-            new(b.Page < 1 ? "0" : b.Page.ToString(CultureInfo.InvariantCulture),
-                b.X, b.Y, b.W, b.H, b.Color ?? PdfRegionPickerForm.DefaultRegionColor);
+            new(PageSpecFor(b.Page), b.X, b.Y, b.W, b.H, b.Color ?? PdfRegionPickerForm.DefaultRegionColor);
+
+        // Turns a stored box page back into a spec: 0 = all, -N = open-ended "N-", otherwise the number.
+        private static string PageSpecFor(int page) => page switch
+        {
+            0 => "0",
+            < 0 => $"{-page}-",
+            _ => page.ToString(CultureInfo.InvariantCulture)
+        };
 
         /// <summary>
         /// Rebuilds entries from a saved policy's boxes: boxes with an identical rectangle and color are
@@ -69,7 +94,10 @@ namespace PhilterDesktop.PolicyEditing
             foreach (var group in boxes.GroupBy(b => (b.X, b.Y, b.W, b.H, Color: b.Color ?? PdfRegionPickerForm.DefaultRegionColor)))
             {
                 List<int> pages = group.Select(b => b.Page).Distinct().OrderBy(p => p).ToList();
-                string spec = pages.Any(p => p < 1) ? "0" : FormatPageSpec(pages);
+                int negative = pages.FirstOrDefault(p => p < 0); // pages are sorted, so negatives come first
+                string spec = pages.Contains(0) ? "0"
+                    : negative < 0 ? $"{-negative}-"
+                    : FormatPageSpec(pages);
                 BoundingBox first = group.First();
                 entries.Add(new PdfRegionEntry(spec, first.X, first.Y, first.W, first.H,
                     first.Color ?? PdfRegionPickerForm.DefaultRegionColor));

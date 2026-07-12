@@ -611,8 +611,9 @@ namespace PhilterDesktop
             policy.Config.Pdf.Scale = 1.0f;
             policy.Config.Pdf.Dpi = Math.Max(policy.Config.Pdf.Dpi, 200);
 
-            // A bounding box with page < 1 means "all pages". The engine matches an exact page, so expand
-            // it into one box per page using the document's real page count.
+            // A bounding box with page < 1 is a deferred "to the last page" spec (0 = all pages, -N = from
+            // page N on). The engine matches an exact page, so expand it into one box per covered page using
+            // the document's real page count.
             if (policy.Graphical.BoundingBoxes.Any(b => b.Page < 1))
             {
                 ExpandAllPagesBoundingBoxes(policy, ReadPageCount(input));
@@ -633,8 +634,9 @@ namespace PhilterDesktop
         }
 
         /// <summary>
-        /// Replaces each "all pages" bounding box (page &lt; 1) with one box per page of a
-        /// <paramref name="pageCount"/>-page document; boxes pinned to a specific page are kept as-is.
+        /// Replaces each deferred "to the last page" bounding box (page &lt; 1: <c>0</c> = all pages,
+        /// <c>-N</c> = from page N onward) with one box per covered page of a <paramref name="pageCount"/>-page
+        /// document; boxes pinned to a specific page are kept as-is.
         /// </summary>
         internal static void ExpandAllPagesBoundingBoxes(PhileasPolicy policy, int pageCount)
         {
@@ -646,7 +648,9 @@ namespace PhilterDesktop
                     expanded.Add(b);
                     continue;
                 }
-                for (int page = 1; page <= pageCount; page++)
+                // 0 -> all pages (from 1); -N -> from page N to the last page ("all but first" is -2).
+                int startPage = b.Page == 0 ? 1 : -b.Page;
+                for (int page = Math.Max(1, startPage); page <= pageCount; page++)
                 {
                     expanded.Add(new Phileas.Policy.BoundingBox
                     {
