@@ -4,6 +4,11 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 ## Unreleased
 
+- **Fixed:** the Modify Redaction window's **Type** column now shows each redaction's entity type
+  (e.g. *First Name*, *Email Address*) instead of a generic "Detected".
+- **Fixed:** the **Save** and **Cancel** buttons on the Settings window no longer overlap the tab
+  control — they now sit below it.
+- **Improved:** the Policy Editor window is now resizable and opens larger.
 - **Internal:** Word (`.docx`) and Excel (`.xlsx`) redaction now runs from the shared Phileas library
   (`Phileas.Services.Office`) instead of app-local code. No change to redaction behavior or output.
 

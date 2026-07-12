@@ -381,7 +381,7 @@ namespace PhilterDesktop
             // btnSave
             // 
             btnSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnSave.Location = new Point(474, 356);
+            btnSave.Location = new Point(474, 384);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(110, 34);
             btnSave.TabIndex = 1;
@@ -392,7 +392,7 @@ namespace PhilterDesktop
             // btnCancel
             // 
             btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnCancel.Location = new Point(590, 356);
+            btnCancel.Location = new Point(590, 384);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(110, 34);
             btnCancel.TabIndex = 2;
@@ -415,7 +415,7 @@ namespace PhilterDesktop
             tabControl.Margin = new Padding(2);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(701, 376);
+            tabControl.Size = new Size(701, 369);
             tabControl.TabIndex = 0;
             // 
             // tabGeneral

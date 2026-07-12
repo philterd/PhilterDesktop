@@ -246,7 +246,7 @@ namespace PhilterDesktop
             _spanList.Items.Clear();
             foreach (RedactionSpanEntity s in _spans.OrderBy(s => s.ParagraphIndex).ThenBy(s => s.CharacterStart))
             {
-                var item = new ListViewItem(s.UserAdded ? "Added" : Display(s.Classification)) { Tag = s };
+                var item = new ListViewItem(s.UserAdded ? "Added" : SpanTypeLabel.For(s)) { Tag = s };
                 item.SubItems.Add(s.Text);
                 item.SubItems.Add(s.Replacement);
                 item.SubItems.Add(FieldLabel(s.ParagraphIndex));
@@ -401,8 +401,5 @@ namespace PhilterDesktop
             ChangeType.Imaginary => ImaginaryColor,
             _ => Color.White
         };
-
-        private static string Display(string classification) =>
-            string.IsNullOrEmpty(classification) ? "Detected" : classification;
     }
 }

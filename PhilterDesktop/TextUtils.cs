@@ -328,4 +328,25 @@ namespace PhilterDesktop
             entity.Window = span.Window is { Length: > 0 } ? new List<string>(span.Window) : new List<string>();
         }
     }
+
+    /// <summary>
+    /// The "Type" label shown for a captured span. Prefers the engine's classification (e.g. "name"
+    /// from the on-device model), then the humanized filter that matched (e.g. "First Name"), and only
+    /// falls back to a generic "Detected" when neither is known (older records missing both).
+    /// </summary>
+    internal static class SpanTypeLabel
+    {
+        public static string For(RedactionSpanEntity span)
+        {
+            if (!string.IsNullOrEmpty(span.Classification))
+            {
+                return span.Classification;
+            }
+            if (!string.IsNullOrEmpty(span.FilterType))
+            {
+                return PolicyEditing.FilterLabel.Humanize(span.FilterType);
+            }
+            return "Detected";
+        }
+    }
 }

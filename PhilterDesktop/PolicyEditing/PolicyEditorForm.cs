@@ -127,12 +127,12 @@ namespace PhilterDesktop.PolicyEditing
 
             Text = "Policy Editor";
             StartPosition = FormStartPosition.CenterScreen;
-            // Compact window: filters are split across tabs (one category at a time), and each tab
-            // scrolls if its content doesn't fit — so the editor fits comfortably on a small screen.
-            ClientSize = new Size(720, 430);
+            // Resizable window: filters are split across tabs (one category at a time), and each tab
+            // scrolls if its content doesn't fit — but the user can grow the window to see more at once.
+            ClientSize = new Size(860, 560);
             MinimumSize = new Size(560, 380);
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            MaximizeBox = false;
+            FormBorderStyle = FormBorderStyle.Sizable;
+            MaximizeBox = true;
 
             // Don't open larger than the screen on smaller displays (each tab still scrolls).
             Rectangle workingArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1024, 768);

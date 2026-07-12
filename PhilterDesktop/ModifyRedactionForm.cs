@@ -171,7 +171,7 @@ namespace PhilterDesktop
             _spanList.Items.Clear();
             foreach (RedactionSpanEntity s in _working)
             {
-                var item = new ListViewItem(s.UserAdded ? "Added" : Display(s.Classification)) { Tag = s };
+                var item = new ListViewItem(s.UserAdded ? "Added" : SpanTypeLabel.For(s)) { Tag = s };
                 item.SubItems.Add(s.Text);
                 item.SubItems.Add(s.Replacement);
                 item.SubItems.Add(StartText(s));
@@ -527,9 +527,6 @@ namespace PhilterDesktop
             }
         }
 
-        private static string Display(string classification) =>
-            string.IsNullOrEmpty(classification) ? "Detected" : classification;
-
         private string DescribeLocation(RedactionSpanEntity s)
         {
             if (s.PageNumber > 0)
@@ -564,6 +561,12 @@ namespace PhilterDesktop
             Text = s.Text,
             Replacement = s.Replacement,
             Classification = s.Classification,
+            // Carry the explanation detail too — the Type column reads FilterType when there's no
+            // classification, and a re-saved version must keep the "why was this flagged" data.
+            FilterType = s.FilterType,
+            Confidence = s.Confidence,
+            Pattern = s.Pattern,
+            Window = new List<string>(s.Window),
             UserAdded = s.UserAdded,
             CharacterStart = s.CharacterStart,
             CharacterEnd = s.CharacterEnd,
