@@ -5,18 +5,19 @@ documentation.
 
 ## How do I get Philter Desktop?
 
-The **official, signed build** is provided to subscribers from
-[philterd.ai](https://www.philterd.ai). Because the software is open source under the Apache License
-2.0, you can also read the [source code](https://github.com/philterd/PhilterDesktop) and build it
-yourself. See [Licensing & Support](licensing.md) for how the free open-source software and the paid
-official product fit together.
+The **official, signed build** is **free to download** from [philterd.ai](https://www.philterd.ai),
+and free for personal use and evaluation; using it for commercial purposes requires a subscription.
+Because the software is open source under the Apache License 2.0, you can also read the
+[source code](https://github.com/philterd/PhilterDesktop) and build it yourself. See
+[Licensing & Support](licensing.md) for how the free open-source software and the paid official product
+fit together.
 
 ## What do I get, and what happens after I purchase?
 
 Subscribers receive the **same official signed build** as everyone else; there are no separate
-downloads or license keys. The subscription covers the official, code-signed, maintained build,
-**support** from the team that makes it, and **maintained releases**. Keep your receipt as proof of
-purchase. See [Licensing & Support](licensing.md).
+downloads or license keys. The subscription permits **commercial use** of the official build and
+covers **support** from the team that makes it and **maintained releases**. Keep your receipt as proof
+of purchase. See [Licensing & Support](licensing.md).
 
 ## Do my documents leave my computer?
 
@@ -32,7 +33,8 @@ their contents.
 
 Philter Desktop is released under the **Apache License 2.0**, so you can audit the
 [source code](https://github.com/philterd/PhilterDesktop) and build it yourself at no cost. The
-subscription is for the official signed build, support, and maintained releases. See
+official signed build is free for personal use and evaluation; a subscription is required for
+commercial use and includes support and maintained releases. See
 [Licensing & Support](licensing.md).
 
 ## What file types does it redact?

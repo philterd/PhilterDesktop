@@ -7,12 +7,13 @@ removing the program again.
 
 - A computer running **Windows 10 (version 1809 or later) or Windows 11**, 64-bit.
 
-Philter Desktop is a **per-user subscription that
-includes support** (see [Licensing & Support](licensing.md)); with your subscription you get the
-official, signed installer from [philterd.ai](https://www.philterd.ai). There is no product key to type
-in, and every supported document type (plain text, Microsoft Word, PDF, Rich
-Text, spreadsheets, and email) redacts out of the box. You do **not** need administrator rights: Philter Desktop installs just for
-your own user account by default.
+Philter Desktop's official, signed installer is **free to download** from
+[philterd.ai](https://www.philterd.ai) and **free for personal use and evaluation**; using it for
+commercial purposes requires a **per-user subscription that includes support** (see
+[Licensing & Support](licensing.md)). There is no product key to type in, and every supported document
+type (plain text, Microsoft Word, PDF, Rich Text, spreadsheets, and email) redacts out of the box. You
+do **not** need administrator rights: Philter Desktop installs just for your own user account by
+default.
 
 ## Installing Philter Desktop
 

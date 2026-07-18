@@ -10,8 +10,12 @@ explains how the **free and open-source software** and the **paid official produ
   [source code](https://github.com/philterd/PhilterDesktop) is published under the **Apache License,
   Version 2.0**, so you (or your IT department) can inspect exactly what it does, and anyone may use,
   modify, and build it.
-- **The official product is what Philterd sells.** The **official, signed build, with support, is a
-  per-user subscription** (**$100 per user, per year**) from [philterd.ai](https://www.philterd.ai).
+- **The official build is free for personal use and evaluation.** You can download the official,
+  signed build from [philterd.ai](https://www.philterd.ai) and use it at no charge for personal use or
+  to try it out.
+- **Commercial use requires a subscription.** Using the official build for commercial purposes needs a
+  **per-user subscription** (**$100 per user, per year**), with an active subscription for each person
+  who uses it that way. The subscription also includes **support** and **maintained updates**.
 - **"Philter" is a trademark of Philterd.** Anyone may build the open-source code, but the official
   builds are distributed under the Philter brand by Philterd.
 - For the current, definitive pricing and terms, see **[philterd.ai](https://www.philterd.ai)**.
@@ -22,21 +26,23 @@ explains how the **free and open-source software** and the **paid official produ
     [Philterd Commercial License Agreement](https://www.philterd.ai/philterd-eula) on the website.) The
     same About box also has a **View the Apache License 2.0** link for the open-source code license.
 
-## What the subscription gives you
+## When you need a subscription
 
-The Apache license gives you the *code*. It does **not** give you support, an official build, or the
-right to use Philterd's name. The subscription provides exactly those:
+The official, signed build is **free to download, and free for personal use and evaluation.** You need
+a **per-user subscription** ($100 per user, per year, from [philterd.ai](https://www.philterd.ai)) to
+use the **official build for commercial purposes** (your work for an employer, a client, or a
+business), with an active subscription for each person who does so. The subscription permits that
+commercial use and includes:
 
-- **The official, signed build** from Philterd: tested, code-signed, and maintained, so it installs
-  cleanly and you know it genuinely came from Philterd.
 - **Support**: a direct line to the people who build Philter Desktop, for setup, policy, or workflow
   questions. Email **[support@philterd.ai](mailto:support@philterd.ai)**.
 - **Maintained releases**: ongoing updates, fixes, and improvements.
 
-This is the common commercial open-source model: the
-[source](https://github.com/philterd/PhilterDesktop) is open for transparency, and Philterd sustains
-the project by providing the official, supported product. A technical user is always free to build
-their own copy from the source under the Apache license.
+The **Apache license** covers the *source code*: anyone may inspect, modify, and build it, and a
+technical user is always free to build and run their own copy under that license. What it does not
+provide is support or the right to use Philterd's **Philter** trademark and branding. This is the
+common commercial open-source model: the [source](https://github.com/philterd/PhilterDesktop) is open
+for transparency, and commercial subscriptions to the official product sustain it.
 
 To subscribe, renew, or ask about pricing for a team or firm, visit
 **[philterd.ai](https://www.philterd.ai)**.
