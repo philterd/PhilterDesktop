@@ -1,0 +1,1797 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="User documentation for Philter Desktop, a Windows application for redacting PII from documents">
+      
+      
+        <meta name="author" content="philterd">
+      
+      
+        <link rel="canonical" href="https://philterd.github.io/PhilterDesktop/settings/">
+      
+      
+        <link rel="prev" href="../contexts/">
+      
+      
+        <link rel="next" href="../faq/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Settings - Philter Desktop</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="red" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#settings" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="https://www.philterd.ai" title="Philter Desktop" class="md-header__button md-logo" aria-label="Philter Desktop" data-md-component="logo">
+      
+  <img src="../img/philterd.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Philter Desktop
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Settings
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://www.github.com/philterd/PhilterDesktop" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Www
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://www.philterd.ai" title="Philter Desktop" class="md-nav__button md-logo" aria-label="Philter Desktop" data-md-component="logo">
+      
+  <img src="../img/philterd.png" alt="logo">
+
+    </a>
+    Philter Desktop
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://www.github.com/philterd/PhilterDesktop" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Www
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best Practices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mistakes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redaction Accuracy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redacting Documents
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Redacting Documents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../redacting-documents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redacting Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../redacting-text/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plain Text and Rich Text
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../redacting-word/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Microsoft Word
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../redacting-pdf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PDF
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../redacting-spreadsheets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spreadsheets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../redacting-email/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Email
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../watched-folders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Watched Folders
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redaction Policies
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Redaction Policies
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redaction Policies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../filter-strategies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter Strategies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../supported-filters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supported Filters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contexts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#general-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-your-cleaned-up-files-are-saved-output-location" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where your cleaned-up files are saved (Output location)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#explorer-right-click-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explorer right-click menu
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-automatically-at-sign-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start automatically at sign-in
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#microsoft-office-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Microsoft Office tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pdf-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PDF tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PDF tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#advanced-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#email-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Email tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notifications-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#watched-folder-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Watched Folder tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-tab-protecting-your-stored-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security tab: protecting your stored information
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security tab: protecting your stored information">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-philter-desktop-stores-and-why-its-protected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Philter Desktop stores, and why it's protected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-passphrase-for-stronger-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a passphrase for stronger protection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verifying-redactions-automatically" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifying redactions automatically
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clearing-your-saved-redaction-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clearing your saved redaction history
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../licensing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Licensing & Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#general-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-your-cleaned-up-files-are-saved-output-location" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where your cleaned-up files are saved (Output location)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#explorer-right-click-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explorer right-click menu
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-automatically-at-sign-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start automatically at sign-in
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#microsoft-office-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Microsoft Office tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pdf-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PDF tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PDF tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#advanced-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#email-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Email tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notifications-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#watched-folder-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Watched Folder tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits tab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-tab-protecting-your-stored-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security tab: protecting your stored information
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security tab: protecting your stored information">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-philter-desktop-stores-and-why-its-protected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Philter Desktop stores, and why it's protected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-passphrase-for-stronger-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a passphrase for stronger protection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verifying-redactions-automatically" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifying redactions automatically
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clearing-your-saved-redaction-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clearing your saved redaction history
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="settings">Settings</h1>
+<p>Open <strong>Settings</strong> from the main toolbar to control where your cleaned-up files are saved and how the
+program behaves. The Settings window is divided into tabs: <strong>General</strong>, <strong>Microsoft Office</strong>, <strong>PDF</strong>,
+<strong>Email</strong>, <strong>Notifications</strong>, <strong>Watched Folder</strong>, <strong>Limits</strong>, and <strong>Security</strong>.</p>
+<p><img alt="The Settings window showing the output location, logging, and Windows Explorer integration options" src="../img/settings.png" /></p>
+<p><em>The Settings window, where you choose the output location and tune how Philter Desktop behaves.</em></p>
+<h2 id="general-tab">General tab</h2>
+<p>The <strong>General</strong> tab is where you set the output location (where cleaned-up files go), turn logging on
+or off, switch on the Windows Explorer right-click menu, and choose whether Philter Desktop starts
+automatically when you sign in to Windows.</p>
+<h2 id="where-your-cleaned-up-files-are-saved-output-location">Where your cleaned-up files are saved (Output location)</h2>
+<p>You choose where Philter Desktop puts the cleaned-up copies it creates:</p>
+<ul>
+<li><strong>Original location</strong>: the cleaned-up copy is saved in the <strong>same folder</strong> as the document it came
+  from.</li>
+<li><strong>Custom folder</strong>: every cleaned-up copy is saved into <strong>one folder that you pick</strong>, no matter
+  where the original came from.</li>
+</ul>
+<p>Either way, the cleaned-up file is always a <strong>new copy</strong>: your original document is never changed.</p>
+<p><strong>Duplicate file names are never overwritten.</strong> If a cleaned-up copy would have the same name as a file
+already in the output folder — for example, two documents called <code>invoice.pdf</code> from different folders,
+both sent to one custom output folder — Philter Desktop adds a number so nothing is clobbered:
+<code>invoice_redacted-draft.pdf</code>, then <code>invoice_redacted-draft (2).pdf</code>, then <code>(3)</code>, and so on. (This also
+means redacting the same document again produces a new numbered copy rather than replacing the previous
+one.) When you use <strong>Redact with Preview</strong> and save with the <strong>Save</strong> dialog, Windows asks before
+overwriting instead.</p>
+<p>You can also set the <strong>Redacted file name suffix</strong>, the label that's added to the end of each
+cleaned-up file's name (just before the file extension). By default it is <strong><code>_redacted-draft</code></strong>, so
+<code>report.docx</code> becomes <code>report_redacted-draft.docx</code>.</p>
+<p>The default says "draft" because <strong>automatic redaction can miss things</strong>: the file still needs <strong>your
+review</strong> before you share it and should never be assumed safe just because the computer produced it.
+Change the suffix to match your own naming habits. (If you clear the box and leave it empty, it resets
+to the default.)</p>
+<h2 id="logging">Logging</h2>
+<p>Turning on <strong>logging</strong> tells Philter Desktop to keep a running record of what it does in a log file,
+useful if something goes wrong and you (or technical support) need to look into it. The <strong>Open Log
+File</strong> button shows you the log. Logging is <strong>off</strong> by default.</p>
+<p>Use <strong>Clear Log File</strong> to permanently delete that log. The log records application activity for
+troubleshooting (errors and the names of files that were processed); it does <strong>not</strong> contain the
+detected or redacted text from your documents. Since the file names themselves can be sensitive, you
+can wipe it whenever you like. A new log starts the next time something is logged.</p>
+<p>Once the log reaches about 5 MB it's rolled over to a backup (a few older backups are kept and the
+oldest is discarded), so it never fills up your disk.</p>
+<h2 id="explorer-right-click-menu">Explorer right-click menu</h2>
+<p>This option lets you redact files <strong>straight from a Windows folder</strong>, without opening Philter Desktop
+first.</p>
+<p>Turn on <strong>Add "Redact with Philter Desktop" to the Explorer right-click menu</strong>. Once it's on, you can
+go to any folder, select one or more <code>.pdf</code>, <code>.docx</code>, <code>.txt</code>, <code>.rtf</code>, <code>.xlsx</code>, <code>.csv</code>, <code>.eml</code>, or
+<code>.msg</code> files, <strong>right-click</strong> them, and choose <strong>Redact with Philter Desktop</strong>. A small window appears listing the files you picked and
+letting you choose the <strong>policy</strong> and <strong>context</strong> to use (and whether to highlight redactions in Word
+documents). When you click <strong>Redact</strong>, the files are handed to Philter Desktop's
+<a href="../redacting-documents/">redaction queue</a> and processed just like any other document. Philter Desktop
+starts up on its own if it isn't already running. If you select several files at once, you get a single
+window for the whole group.</p>
+<p>A few practical notes:</p>
+<ul>
+<li>Switching this option <strong>on</strong> adds the right-click command for your user account; switching it
+  <strong>off</strong> removes it again. The change happens <strong>immediately</strong>; there's no need to click a separate
+  Save button.</li>
+<li>Uninstalling Philter Desktop always cleans up the right-click command for you.</li>
+<li>The option is <strong>off</strong> by default.</li>
+<li>If you're a technical user who'd rather automate redaction without the pop-up window, you can use
+  the <a href="../redacting-documents/#for-advanced-users-and-it-redacting-from-a-command-line">command line</a>
+  directly.</li>
+</ul>
+<h2 id="start-automatically-at-sign-in">Start automatically at sign-in</h2>
+<p>Turn on <strong>Start Philter Desktop at sign-in</strong> to have Philter Desktop launch on its own each time you
+sign in to Windows. It starts <strong>minimized to the system tray</strong> (the small icons near the clock) and
+keeps working quietly in the background, which is what makes <a href="../watched-folders/">watched folders</a>
+useful even when you haven't opened the window yourself. Leave it <strong>off</strong> if you'd rather start the
+program by hand. This setting is saved with the others when you click <strong>Save</strong>.</p>
+<h2 id="microsoft-office-tab">Microsoft Office tab</h2>
+<p>Office documents carry information that has nothing to do with the visible text, and a "redacted" file
+that still includes it defeats the purpose. The <strong>Microsoft Office</strong> tab lets you strip these hidden
+channels and control header/footer redaction. All options below are <strong>on by default</strong>:</p>
+<ul>
+<li><strong>Remove document metadata (author, company, title, keywords, custom fields).</strong> Clears the document's
+  properties so the redacted copy doesn't name who wrote it or where it came from. For Word, this also
+  <strong>anonymizes the reviewer names on any comments you keep</strong> — each author becomes a neutral label such
+  as "Reviewer 1" (kept consistent so a back-and-forth still reads as separate people) — and removes the
+  stored list of reviewer identities. <strong>Applies to both Word (<code>.docx</code>) and Excel (<code>.xlsx</code>).</strong></li>
+<li><strong>Remove reviewer comments.</strong> Deletes all comments (and the reviewer names attached to them). When
+  this is <strong>off</strong>, comments are kept but their text is still redacted, and their author names are
+  anonymized if <strong>Remove document metadata</strong> is on (above). <em>(Word only.)</em></li>
+<li><strong>Accept and remove tracked changes (revisions).</strong> Accepts every insertion and deletion and removes
+  the revision history, so no record of who changed what (or what the earlier text was) remains.
+  <em>(Word only.)</em></li>
+<li><strong>Remove hidden text.</strong> Deletes text that was marked hidden, which wouldn't show on screen but is
+  still present in the file. <em>(Word only.)</em></li>
+<li><strong>Redact text in page headers and footers.</strong> Scans the running header and footer — the lines that
+  repeat at the top and bottom of every page (for example "Confidential — John Doe") — and redacts
+  detected sensitive information there, just like the body. <strong>Only text is redacted</strong>: images, logos,
+  page numbers, and other non-text content in a header or footer are left as they are. Legitimate text
+  such as a printed date is only removed if your policy targets it. Turn this off if a header/footer
+  contains text you don't want scanned. <strong>Applies to both Word (<code>.docx</code>) and Excel (<code>.xlsx</code>).</strong></li>
+<li><strong>Redact charts.</strong> Scans embedded charts and redacts detected sensitive information in their <strong>titles
+  and labels</strong> and in the <strong>cached data values</strong> — the copy of the plotted series and category values
+  a chart keeps inside the file, which would otherwise remain even after the source cells are redacted.
+  Redacting a cached value can change how a chart looks (a label or bar may show the replacement text),
+  so <strong>review charts in the redacted copy</strong>. Charts are only scanned as text through your policy, so a
+  sensitive value a chart is built from is removed only when the policy detects it. <strong>Applies to both
+  Word (<code>.docx</code>) and Excel (<code>.xlsx</code>).</strong></li>
+<li><strong>Redact cached formula values</strong> <em>(Excel only)</em>. An Excel formula keeps a <strong>copy of its last computed
+  result</strong> inside the file. That copy can duplicate sensitive information from a cell you're redacting
+  (for example a formula <code>=A2</code> that pointed at a redacted address), and it stays in the file as plain
+  text until Excel recalculates. When on, a formula whose cached result holds detected sensitive
+  information becomes a <strong>static redacted value</strong>, and the remaining formula caches are <strong>cleared</strong> with
+  the workbook set to recalculate when it's next opened in Excel. One side effect: a program that reads
+  the file <strong>without recalculating</strong> (i.e. not Excel) sees empty formula results until it recalculates —
+  turn this off if that matters for how the file is consumed, and be aware a formula's cached copy of a
+  redacted value may then remain. Verification checks formula caches either way.</li>
+<li><strong>Redact pivot table cache</strong> <em>(Excel only)</em>. A pivot table keeps a <strong>denormalized copy of its source
+  data</strong> inside the file — the pivot cache — so redacting the sheet cells alone leaves an intact copy of
+  the sensitive values. When on, the cached values in the pivot cache (its definition and records) and in
+  the pivot table are scanned and redacted, and the cache is set to <strong>refresh from the (redacted) source
+  when the file is opened</strong> in Excel. On by default. Redacting the cache changes what the pivot shows
+  until Excel refreshes it. Verification checks the pivot cache either way.</li>
+<li><strong>Remove embedded objects Philter Desktop can't inspect</strong> <em>(Word and Excel)</em>. A document can <strong>embed
+  another file</strong> (Insert → Object) — an Excel workbook, a Word document, or a legacy/other-program object.
+  An embedded <strong>Word or Excel</strong> document is <strong>redacted in place</strong> (its own content is scanned like any
+  other document); but an object Philter Desktop <strong>can't read</strong> — a legacy OLE object or another
+  program's file — can't be inspected, and would otherwise ship with its original content. When on, those
+  un-inspectable objects are <strong>removed</strong>. On by default. When off, they are kept and <strong>verification warns</strong>
+  that their content wasn't inspected — so you can review them yourself.</li>
+</ul>
+<p>Leave these on unless you have a specific reason to keep that information. They affect only what's
+stored in the redacted copy; your original document is never changed, and you should still review the
+finished file.</p>
+<h2 id="pdf-tab">PDF tab</h2>
+<p>Some PDFs are <strong>scanned</strong>: each page is a <em>picture</em> of a document rather than real, selectable text.
+Such a file has no text for Philter Desktop to read, so on its own it would have nothing to detect and
+redact. The <strong>PDF</strong> tab controls whether Philter Desktop uses <strong>OCR</strong> (optical character recognition)
+to read those scanned pages.</p>
+<ul>
+<li><strong>Read scanned (image-only) PDF pages with on-device OCR</strong> (on by default). When on, Philter Desktop
+  recognizes the text on scanned pages <strong>entirely on your own computer</strong> (nothing is uploaded), so the
+  PII on them can be found and redacted like any other document. Pages that already contain real text
+  are read normally; OCR is used only where it's needed. A page that has <em>both</em> real text and a large
+  scanned image (for example, a scan beneath a typed letterhead) is read both ways, so nothing slips
+  through.</li>
+</ul>
+<p>OCR is <strong>best-effort</strong>: it is slower than reading normal text, and it can miss low-quality scans,
+unusual fonts, and <strong>handwriting</strong>. As always, review the redacted file before sharing it, and the
+<a href="../redacting-documents/#adjusting-what-was-removed-modify-redaction">Modify Redaction</a> tools let you
+cover anything OCR didn't catch.</p>
+<h3 id="advanced-settings">Advanced settings</h3>
+<p>The <strong>Advanced…</strong> button (available when OCR is on) exposes two thresholds that decide <em>when</em> a page is
+read with OCR. <strong>Most people should never change these.</strong> The defaults suit virtually all documents, and
+the wrong value can make redaction slower or cause pages to be read the wrong way. Change them only if
+you have a specific problem and understand the trade-off.</p>
+<ul>
+<li><strong>Treat a page as scanned when its text covers under … %</strong> (default <strong>1%</strong>). If the real text on a
+  page fills less than this share of the page, the page is treated as scanned and read with OCR. Raise
+  it to OCR more pages (slower, but less likely to miss a mostly-scanned page); lower it to OCR fewer.</li>
+<li><strong>Also OCR a text page when images cover at least … %</strong> (default <strong>50%</strong>). Even when a page has real
+  text, if pictures cover at least this share of it, Philter Desktop also OCRs the page to catch any
+  text inside those pictures. Lower it to OCR more pages that contain large images.</li>
+<li><strong>Maximum pages to OCR in one PDF</strong> (default <strong>200</strong>). A safety limit: if a single PDF needs OCR on
+  more pages than this, Philter Desktop <strong>stops with an error</strong> instead of partly processing it, so a
+  document is never saved looking finished while sensitive text on the un-OCR'd pages survives. Raise it
+  to handle larger scanned documents, or set it to <strong>0</strong> for no limit.</li>
+</ul>
+<p>To return to normal behavior, set these back to <strong>1%</strong>, <strong>50%</strong>, and <strong>200</strong>.</p>
+<ul>
+<li><strong>Redact recurring images (experimental)</strong> (off by default). When on, redacting a PDF also blacks out
+  <strong>images that repeat across its pages</strong> — the hallmark of a logo, watermark, or stamp — wherever they
+  appear, without drawing a fixed region. It is <strong>experimental</strong>: it only covers <strong>raster (picture)
+  images</strong> (not logos drawn as vector lines), may <strong>miss</strong> some or <strong>cover more than intended</strong> (any image
+  that legitimately repeats is redacted too), and it leaves full-page backgrounds alone so it doesn't
+  black out whole pages. <strong>Review the redacted PDF</strong> when this is on. See
+  <a href="../redacting-pdf/#automatically-covering-recurring-images-experimental">Redacting PDF documents</a>.</li>
+</ul>
+<h2 id="email-tab">Email tab</h2>
+<p>A redacted email keeps more than the message you can see. Email files carry <strong>technical headers</strong> that
+can identify the sender and how the message travelled: the <strong>originating IP address</strong>, the <strong>mail
+program</strong> that sent it, and the <strong>server-by-server delivery trail</strong> (the <code>Received</code>, <code>X-…</code>, and <code>ARC-…</code>
+headers, <code>Message-ID</code>, and similar). A "redacted" email that still includes these can leak who sent it
+and from where.</p>
+<ul>
+<li><strong>Remove technical email headers from redacted email</strong> (on by default). When on, those identifying
+  headers are stripped from the redacted <code>.eml</code>. The visible fields (<strong>Subject, From, To, Cc, the body,
+  and the Date</strong>) are kept (and their PII is still redacted as usual); only the hidden routing/technical
+  headers are removed. (The send <strong>Date</strong> can be removed separately with the option below.)</li>
+<li><strong>Remove Bcc and other identity headers (Reply-To, Sender, Resent)</strong> (on by default). These headers
+  carry recipient or sender addresses that <strong>aren't</strong> part of the visible <strong>From / To / Cc</strong> fields, so
+  they wouldn't otherwise be redacted. <strong>Bcc</strong> is the most important: it names blind-copy recipients and
+  is carried over when an Outlook <code>.msg</code> is converted, so without this it would survive into the
+  redacted email. When on, these headers are <strong>removed entirely</strong> (not just scanned): both their value
+  and the fact that they were present are gone. Turn it off only if you specifically need to keep them —
+  and be aware that <strong>when it is off, these headers are kept exactly as they are</strong>. Unlike <strong>From / To /
+  Cc</strong>, they are <strong>not</strong> scanned for PII, so any addresses in them — <strong>including Bcc recipients</strong> — remain
+  in the redacted email. If you disable this, review those headers yourself before sharing.</li>
+<li><strong>Remove the Date header from redacted email</strong> (<strong>off</strong> by default). When on, the <strong>Date</strong> header
+  (the message's send time) is <strong>dropped outright</strong>, so the send time is removed no matter how it is
+  formatted — this does not rely on the policy recognizing a date. It is off by default because the send
+  date is usually wanted and isn't personally identifying on its own; turn it on if your policy needs to
+  remove temporal identifiers. (A timestamp can also appear inside the delivery trail — leave the
+  technical-header option above on to strip that.)</li>
+<li><strong>Remove attachments from redacted email</strong> (<strong>off</strong> by default). When on, every attachment is
+  <strong>deleted entirely from the redacted email — not redacted</strong>. Philter Desktop does not open, inspect, or
+  redact attachment content in any case; this option removes the attached files outright, including their
+  <strong>filenames</strong> (which can themselves reveal information, e.g. <code>john_smith_ssn.pdf</code>). It is off by default
+  because it discards content you may need; turn it on when an email's attachments could carry sensitive
+  information that must not ship in the redacted copy. The message body is still redacted as usual.<ul>
+<li><strong>Also remove inline images</strong> (<strong>off</strong> by default; available only when the option above is on).
+  <strong>Inline images</strong> are pictures embedded in the message body — logos, signatures, pasted screenshots
+  — referenced by the HTML with a <code>cid:</code> link. Philter Desktop <strong>does not inspect or redact image
+  content</strong>, so sensitive information shown only inside an image would otherwise pass through. When on,
+  inline images are <strong>deleted</strong> and their references in the body are neutralized. Leave it off if you
+  want to keep images such as a corporate logo — but note the caveat below. <strong>Whenever a redacted
+  email still contains attachments or inline images, verification adds a warning</strong> that their content
+  wasn't inspected, so an un-inspected image is never left silently.</li>
+</ul>
+</li>
+</ul>
+<p>Leave the first two on unless you specifically need to preserve the original headers (for example, for
+an e-discovery chain-of-custody requirement).</p>
+<h2 id="notifications-tab">Notifications tab</h2>
+<p>The <strong>Notifications</strong> tab controls the small pop-up messages (sometimes called "balloon" or "toast"
+notifications) that appear near the Windows clock when a document finishes redacting.</p>
+<ul>
+<li><strong>Show a tray notification when a document finishes redacting</strong>: turn this on or off. It is <strong>on by
+  default</strong>. Click <strong>Save</strong> to apply your choice.</li>
+</ul>
+<p>A few things worth knowing about these notifications:</p>
+<ul>
+<li>They appear <strong>only when you're not already looking at Philter Desktop</strong>: when its window is hidden
+  in the system tray or minimized. While the window is open in front of you, Philter Desktop never
+  interrupts you with a pop-up, because you can already see the results in the queue.</li>
+<li>When several documents finish at once (for example, files dropped into a
+  <a href="../watched-folders/">watched folder</a>), they're combined into a <strong>single</strong> notification rather than
+  one per file.</li>
+<li><strong>Clicking the notification</strong> opens the folder containing the finished files.</li>
+<li>Turning this option <strong>off</strong> stops these pop-ups entirely. It does not affect anything else: your
+  documents are still redacted, and the <a href="../redacting-documents/">queue</a> still shows each document's
+  status.</li>
+</ul>
+<p>This setting is the <strong>master switch</strong> for all completion notifications. <a href="../watched-folders/">Watched
+folders</a> have their <em>own</em> per-folder notification checkbox, but that only has an
+effect while this master switch is on: if you turn notifications off here, no pop-ups appear for
+watched folders either, regardless of each folder's setting.</p>
+<h2 id="watched-folder-tab">Watched Folder tab</h2>
+<p>The <strong>Watched Folder</strong> tab lets you set up folders that Philter Desktop <strong>watches automatically</strong>:
+any document dropped into a watched folder is redacted on its own, without you adding it to the queue
+by hand. So that watching keeps working even when the window is closed, the program can run quietly
+from the system tray; to have it available automatically, turn on <strong>Start Philter Desktop at sign-in</strong>
+on the <a href="#start-automatically-at-sign-in">General tab</a>. This feature has its own detailed page; see
+<a href="../watched-folders/">Watched Folders</a>.</p>
+<p>It also has a <strong>"Watched-folder files to redact at once"</strong> setting. Leave this at <strong>1</strong> (the default)
+unless you have a specific reason to change it: redacting several files at once uses more memory and
+processor, so a higher number should be chosen only with careful consideration. See <a href="../watched-folders/#processing-more-than-one-file-at-a-time">Processing more
+than one file at a time</a> for guidance.</p>
+<h2 id="limits-tab">Limits tab</h2>
+<p>The <strong>Limits</strong> tab holds safeguards that keep very large or unusual inputs from using up all of your
+computer's memory.</p>
+<ul>
+<li><strong>Skip input files larger than … MB</strong> (default <strong>500</strong>). Redacting a file loads it into memory, so an
+  extremely large file can be slow or fail. <strong>Any</strong> file larger than this is not redacted, however it was
+  added: on the <strong>automatic</strong> paths (watched folders and the command line) it is <strong>skipped</strong> and noted in
+  the log, and a file you add yourself (drag-and-drop, <strong>Add Files</strong>, or <strong>Redact Spreadsheet</strong>) is marked
+  <strong>failed</strong> in the queue with a note — rather than being loaded whole and risking running your computer
+  out of memory. Set it to <strong>0</strong> for no limit. Separately, when you add files yourself, Philter Desktop
+  also shows a proceed/cancel heads-up above <strong>50 MB</strong> for large (but still under-the-limit) files, since
+  those can be slow.</li>
+<li><strong>Maximum time for one detection pattern (seconds)</strong> (default <strong>5</strong>, adjustable from <strong>5 to 15</strong>).
+  Detection patterns can come from a <a href="../policies/">policy</a>, including your own
+  <a href="../policies/#redacting-your-own-special-identifiers-custom-identifiers">custom-identifier</a> regular
+  expressions, which may also arrive in a policy someone shared with you. A badly written or overly
+  complex pattern can take an extremely long time on certain text, which would otherwise make redaction
+  appear to hang. This limit aborts any single pattern that runs longer than the chosen number of
+  seconds: that document reports an error (so you know to fix the pattern) instead of freezing. The
+  default of 5 seconds is far more than a normal pattern ever needs; raise it only if a genuinely huge
+  document needs more time.</li>
+</ul>
+<h2 id="security-tab-protecting-your-stored-information">Security tab: protecting your stored information</h2>
+<p>This tab controls how the information Philter Desktop stores on your computer is kept safe.</p>
+<h3 id="what-philter-desktop-stores-and-why-its-protected">What Philter Desktop stores, and why it's protected</h3>
+<p>To do its job, Philter Desktop keeps some information on your computer: your policies, your contexts,
+your settings, the list of documents in your queue, and the <strong>redaction history</strong> (the record of what
+was redacted, which, through the <a href="../redacting-documents/#adjusting-what-was-removed-modify-redaction">Modify Redaction</a>
+feature, can include the actual sensitive text that was found). All of this lives in a small private
+file in your personal Windows profile.</p>
+<p>Because that history can contain personal information, Philter Desktop <strong>encrypts the file at rest</strong> so
+it can't be read by anyone who simply opens it: it's stored in a locked, unreadable form whenever it's
+sitting on your disk. The "key" that unlocks it is created automatically the first time you run the
+program and is locked to <strong>your Windows account on that specific computer</strong>, using a protection feature
+built into Windows itself. By default you don't have to enter any password, but the file can only be
+opened by <strong>you, signed in to your own account, on your own machine</strong>; a copy taken to another computer
+would be useless. If you're upgrading from an older version, your existing data is locked down
+automatically the first time the new version runs.</p>
+<blockquote>
+<p>This protects your data from someone reading it off the disk directly, or from a stolen copy of the
+file. It does <strong>not</strong> protect against other software that's already running under your own Windows
+account; for that, use the passphrase option described next.</p>
+</blockquote>
+<h3 id="adding-a-passphrase-for-stronger-protection">Adding a passphrase for stronger protection</h3>
+<p>By default, your stored information is tied to your Windows account. For an extra layer of protection
+(one that even other software running as <em>you</em> can't get past), the <strong>Security</strong> tab lets you require a
+<strong>passphrase</strong> (a password) before the program will open:</p>
+<ul>
+<li>Check <strong>Require a passphrase to open the database</strong> and choose a passphrase (at least 8 characters,
+  typed twice to confirm). From then on, Philter Desktop will ask you for it every time it starts.</li>
+<li>Use <strong>Change Passphrase…</strong> to change it later (you'll confirm the current one first).</li>
+<li>Uncheck the box to remove passphrase protection and go back to the standard Windows-account
+  protection.</li>
+</ul>
+<p><strong>The passphrase itself is never saved anywhere.</strong> The program only keeps enough scrambled information
+to <em>check</em> that what you type is correct; it never stores the passphrase in a form anyone could read.
+Turning the passphrase on or off, or changing it, takes effect <strong>instantly</strong> and never requires
+re-processing your data.</p>
+<blockquote>
+<p><strong>Please choose your passphrase carefully and store it somewhere safe.</strong> If you forget it, <strong>there
+is no way to recover your stored information.</strong> Also note that, because the program must be unlocked
+before it can do anything, you'll be asked for the passphrase even when Philter Desktop starts
+automatically at sign-in (which keeps your watched folders working).</p>
+</blockquote>
+<h3 id="verifying-redactions-automatically">Verifying redactions automatically</h3>
+<p>The <strong>Verify each redaction by re-scanning the output for PII that may remain</strong> option (on by default)
+makes Philter Desktop double-check its own work: after each document is redacted, it re-opens the
+finished file and runs the detector again, looking for anything the policy might have missed. If
+something is found, you're warned and shown what and where. It runs entirely on your device. This
+applies to <strong>every</strong> way Philter Desktop redacts — the queue, <a href="../watched-folders/">watched folders</a>
+(the warning appears in the folder's activity log and notification), and the command line (it's printed
+as a warning) — so an automated redaction is never silently left unchecked.</p>
+<p>Two scan choices sit underneath it (they apply to the automatic check):</p>
+<ul>
+<li><strong>Scan with a broad policy — every detector on</strong> (default, recommended): looks for kinds of
+  information your policy didn't cover (the missed-PII case that matters most). It catches more, so it
+  may flag things you deliberately left unredacted (review those); the document's own replacement
+  values aren't reported.</li>
+<li><strong>Scan with the same policy used to redact</strong> (limited): only confirms that policy took effect — it
+  can't find a kind of information the policy never looked for.</li>
+</ul>
+<p>Leave verification on, or turn it off if you prefer to verify manually. You can always right-click a
+finished document and choose <strong>Verify Redaction</strong>, which lets you pick <strong>With
+same policy</strong> or <strong>With broad policy</strong> for that one document. See
+<a href="../redacting-documents/#checking-the-result-for-anything-missed-verification">Checking the result for anything missed</a>
+for details.</p>
+<h3 id="clearing-your-saved-redaction-history">Clearing your saved redaction history</h3>
+<p>If you want to wipe the stored history of what's been redacted, use <strong>File → Clear Redaction History…</strong>
+from the main window. This erases the saved versions and redaction lists (including any sensitive text
+they captured) and <strong>removes the completed documents from the queue list</strong>. It does <strong>not</strong>
+delete the cleaned-up files you've already saved to disk; those remain wherever you saved them, and any
+documents still being processed are left in place.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../contexts/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Contexts">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Contexts
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../faq/" class="md-footer__link md-footer__link--next" aria-label="Next: FAQ">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                FAQ
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright 2026 Philterd, LLC
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.linkedin.com/company/philterd/" target="_blank" rel="noopener" title="www.linkedin.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.github.com/philterd/" target="_blank" rel="noopener" title="www.github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.expand", "navigation.footer"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
