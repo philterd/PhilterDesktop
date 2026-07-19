@@ -211,7 +211,8 @@ namespace PhilterDesktop
                 redactOfficeCharts: settings.RedactOfficeCharts,
                 redactCachedFormulaValues: settings.RedactCachedFormulaValues,
                 redactPivotCaches: settings.RedactPivotCaches,
-                removeUninspectableEmbeddedObjects: settings.RemoveUninspectableEmbeddedObjects);
+                removeUninspectableEmbeddedObjects: settings.RemoveUninspectableEmbeddedObjects,
+                redactRecurringImages: settings.RedactRecurringImages);
 
         /// <summary>
         /// Redacts <paramref name="inputPath"/> to <paramref name="outputPath"/> using
@@ -241,7 +242,8 @@ namespace PhilterDesktop
             bool redactOfficeCharts = true,
             bool redactCachedFormulaValues = true,
             bool redactPivotCaches = true,
-            bool removeUninspectableEmbeddedObjects = true)
+            bool removeUninspectableEmbeddedObjects = true,
+            bool redactRecurringImages = false)
         {
             filterService ??= new FilterService();
 
@@ -347,7 +349,8 @@ namespace PhilterDesktop
             {
                 byte[] input = await File.ReadAllBytesAsync(inputPath);
                 (byte[] document, List<RedactionSpanEntity> pdfSpans) = await RedactPdfBytesAsync(
-                    input, policy, context, filterService, ocrScannedPdfs, ocrTextCoverage, ocrImageCoverage, ocrMaxPages);
+                    input, policy, context, filterService, ocrScannedPdfs, ocrTextCoverage, ocrImageCoverage, ocrMaxPages,
+                    redactRecurringImages);
                 await SafeOutput.WriteAsync(outputPath, document);
                 return pdfSpans;
             }
@@ -397,7 +400,8 @@ namespace PhilterDesktop
             bool redactCachedFormulaValues = true,
             bool redactPivotCaches = true,
             bool removeUninspectableEmbeddedObjects = true,
-            string? worksheet = null)
+            string? worksheet = null,
+            bool redactRecurringImages = false)
         {
             filterService ??= new FilterService();
             switch (fileType.ToLowerInvariant())
@@ -413,7 +417,7 @@ namespace PhilterDesktop
                     }
                     break;
                 case ".pdf":
-                    await ApplyPdfSpansAsync(sourcePath, outputPath, spans, policy, filterService);
+                    await ApplyPdfSpansAsync(sourcePath, outputPath, spans, policy, filterService, redactRecurringImages);
                     break;
                 case ".eml":
                 case ".msg":
@@ -521,10 +525,10 @@ namespace PhilterDesktop
 
         private static async Task ApplyPdfSpansAsync(
             string sourcePath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans,
-            PhileasPolicy? policy, FilterService filterService)
+            PhileasPolicy? policy, FilterService filterService, bool redactRecurringImages = false)
         {
             byte[] bytes = await File.ReadAllBytesAsync(sourcePath);
-            byte[] outBytes = await ApplyPdfSpansToBytesAsync(bytes, spans, policy, filterService);
+            byte[] outBytes = await ApplyPdfSpansToBytesAsync(bytes, spans, policy, filterService, redactRecurringImages);
             await SafeOutput.WriteAsync(outputPath, outBytes);
         }
 
@@ -535,11 +539,11 @@ namespace PhilterDesktop
         public static async Task<(byte[] Document, List<RedactionSpanEntity> Spans)> RedactPdfBytesAsync(
             byte[] input, PhileasPolicy policy, string context, FilterService? filterService = null,
             bool ocrScannedPdfs = false, double ocrTextCoverage = 0.01, double ocrImageCoverage = 0.5,
-            int ocrMaxPages = 0)
+            int ocrMaxPages = 0, bool redactRecurringImages = false)
         {
             filterService ??= new FilterService();
             PhEyeModel.Prepare(policy);
-            PreparePdfPolicy(policy, input);
+            PreparePdfPolicy(policy, input, redactRecurringImages);
 
             // When the OCR setting is on, use a hybrid extractor that OCRs scanned (text-layer-less)
             // pages so their PII is detected; otherwise the default text-layer extractor is used.
@@ -575,7 +579,7 @@ namespace PhilterDesktop
         /// </summary>
         public static async Task<byte[]> ApplyPdfSpansToBytesAsync(
             byte[] input, IReadOnlyList<RedactionSpanEntity> spans,
-            PhileasPolicy? policy = null, FilterService? filterService = null)
+            PhileasPolicy? policy = null, FilterService? filterService = null, bool redactRecurringImages = false)
         {
             filterService ??= new FilterService();
 
@@ -598,7 +602,7 @@ namespace PhilterDesktop
             }
 
             PhileasPolicy applyPolicy = policy ?? new PhileasPolicy { Name = "reapply" };
-            PreparePdfPolicy(applyPolicy, input);
+            PreparePdfPolicy(applyPolicy, input, redactRecurringImages);
 
             return await Task.Run(() =>
                 new PdfFilterService(filterService).Apply(applyPolicy, input, spanList, MimeType.ApplicationPdf));
@@ -606,59 +610,19 @@ namespace PhilterDesktop
 
         // The engine renders the output PDF at 25% scale by default (forcing ~400% zoom to read);
         // render at full size and a higher DPI so the result is legible at 100%.
-        private static void PreparePdfPolicy(PhileasPolicy policy, byte[] input)
+        private static void PreparePdfPolicy(PhileasPolicy policy, byte[] input, bool redactRecurringImages = false)
         {
             policy.Config.Pdf.Scale = 1.0f;
             policy.Config.Pdf.Dpi = Math.Max(policy.Config.Pdf.Dpi, 200);
 
-            // A bounding box with page < 1 is a deferred "to the last page" spec (0 = all pages, -N = from
-            // page N on). The engine matches an exact page, so expand it into one box per covered page using
-            // the document's real page count.
-            if (policy.Graphical.BoundingBoxes.Any(b => b.Page < 1))
-            {
-                ExpandAllPagesBoundingBoxes(policy, ReadPageCount(input));
-            }
-        }
+            // Bounding boxes with an open-ended page (0 = all pages, -N = from page N on) are honored by the
+            // engine's PdfRedactor directly, so no expansion is needed here.
 
-        private static int ReadPageCount(byte[] input)
-        {
-            try
+            // Optionally black out logos/watermarks: images that repeat across pages, wherever they sit.
+            if (redactRecurringImages)
             {
-                using UglyToad.PdfPig.PdfDocument doc = UglyToad.PdfPig.PdfDocument.Open(input);
-                return doc.NumberOfPages;
+                policy.Graphical.BoundingBoxes.AddRange(RecurringImageDetector.Detect(input));
             }
-            catch
-            {
-                return 0;
-            }
-        }
-
-        /// <summary>
-        /// Replaces each deferred "to the last page" bounding box (page &lt; 1: <c>0</c> = all pages,
-        /// <c>-N</c> = from page N onward) with one box per covered page of a <paramref name="pageCount"/>-page
-        /// document; boxes pinned to a specific page are kept as-is.
-        /// </summary>
-        internal static void ExpandAllPagesBoundingBoxes(PhileasPolicy policy, int pageCount)
-        {
-            var expanded = new List<Phileas.Policy.BoundingBox>();
-            foreach (Phileas.Policy.BoundingBox b in policy.Graphical.BoundingBoxes)
-            {
-                if (b.Page >= 1)
-                {
-                    expanded.Add(b);
-                    continue;
-                }
-                // 0 -> all pages (from 1); -N -> from page N to the last page ("all but first" is -2).
-                int startPage = b.Page == 0 ? 1 : -b.Page;
-                for (int page = Math.Max(1, startPage); page <= pageCount; page++)
-                {
-                    expanded.Add(new Phileas.Policy.BoundingBox
-                    {
-                        Page = page, X = b.X, Y = b.Y, W = b.W, H = b.H, Color = b.Color, Enabled = b.Enabled
-                    });
-                }
-            }
-            policy.Graphical.BoundingBoxes = expanded;
         }
     }
 }

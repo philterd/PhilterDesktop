@@ -77,6 +77,8 @@ namespace PhilterDesktop
             tabPdf = new TabPage();
             lblOcrInfo = new Label();
             chkOcrScannedPdfs = new CheckBox();
+            chkRedactRecurringImages = new CheckBox();
+            lblRecurringImagesInfo = new Label();
             btnOcrAdvanced = new Button();
             tabEmail = new TabPage();
             lblEmailInfo = new Label();
@@ -470,6 +472,8 @@ namespace PhilterDesktop
             tabPdf.Controls.Add(lblOcrInfo);
             tabPdf.Controls.Add(chkOcrScannedPdfs);
             tabPdf.Controls.Add(btnOcrAdvanced);
+            tabPdf.Controls.Add(chkRedactRecurringImages);
+            tabPdf.Controls.Add(lblRecurringImagesInfo);
             tabPdf.Location = new Point(4, 24);
             tabPdf.Name = "tabPdf";
             tabPdf.Padding = new Padding(3);
@@ -509,7 +513,27 @@ namespace PhilterDesktop
             btnOcrAdvanced.Text = "Ad&vanced…";
             btnOcrAdvanced.UseVisualStyleBackColor = true;
             btnOcrAdvanced.Click += BtnOcrAdvanced_Click;
-            // 
+            //
+            // chkRedactRecurringImages
+            //
+            chkRedactRecurringImages.AutoSize = true;
+            chkRedactRecurringImages.Location = new Point(13, 220);
+            chkRedactRecurringImages.Name = "chkRedactRecurringImages";
+            chkRedactRecurringImages.Size = new Size(190, 19);
+            chkRedactRecurringImages.TabIndex = 3;
+            chkRedactRecurringImages.Text = "Redact recurring images (experimental)";
+            chkRedactRecurringImages.UseVisualStyleBackColor = true;
+            //
+            // lblRecurringImagesInfo
+            //
+            lblRecurringImagesInfo.AutoSize = true;
+            lblRecurringImagesInfo.ForeColor = SystemColors.GrayText;
+            lblRecurringImagesInfo.Location = new Point(30, 243);
+            lblRecurringImagesInfo.MaximumSize = new Size(520, 0);
+            lblRecurringImagesInfo.Name = "lblRecurringImagesInfo";
+            lblRecurringImagesInfo.TabIndex = 4;
+            lblRecurringImagesInfo.Text = "Blacks out images that repeat across a PDF's pages. Useful for logos, watermarks, and similar recurring images that appear at any position. Experimental: it may miss some images or cover more than intended, so review the output.";
+            //
             // tabEmail
             // 
             tabEmail.Controls.Add(lblEmailInfo);
@@ -1095,6 +1119,8 @@ namespace PhilterDesktop
         private TabPage tabPdf;
         private CheckBox chkOcrScannedPdfs;
         private Label lblOcrInfo;
+        private CheckBox chkRedactRecurringImages;
+        private Label lblRecurringImagesInfo;
         private Button btnOcrAdvanced;
         private TabPage tabEmail;
         private CheckBox chkScrubEmailHeaders;

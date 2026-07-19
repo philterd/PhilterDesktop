@@ -213,6 +213,14 @@ namespace PhilterData
         public int OcrMaxPages { get; set; } = 200;
 
         /// <summary>
+        /// When redacting a PDF, also black out raster images that repeat across its pages — logos,
+        /// watermarks, and similar recurring graphics — wherever they appear, without needing a fixed
+        /// region. Off by default. Only catches placed raster images (not vector-drawn logos), and may
+        /// also cover other images that recur across pages.
+        /// </summary>
+        public bool RedactRecurringImages { get; set; }
+
+        /// <summary>
         /// Hard upper bound (in megabytes) on the size of a file the non-interactive paths
         /// (watched folders and the command line) will redact. Larger files are skipped and logged,
         /// since redaction loads a document into memory. 0 means no limit. Default 500 MB.

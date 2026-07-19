@@ -187,6 +187,14 @@ you have a specific problem and understand the trade-off.
 
 To return to normal behavior, set these back to **1%**, **50%**, and **200**.
 
+- **Redact recurring images (experimental)** (off by default). When on, redacting a PDF also blacks out
+  **images that repeat across its pages** — the hallmark of a logo, watermark, or stamp — wherever they
+  appear, without drawing a fixed region. It is **experimental**: it only covers **raster (picture)
+  images** (not logos drawn as vector lines), may **miss** some or **cover more than intended** (any image
+  that legitimately repeats is redacted too), and it leaves full-page backgrounds alone so it doesn't
+  black out whole pages. **Review the redacted PDF** when this is on. See
+  [Redacting PDF documents](redacting-pdf.md#automatically-covering-recurring-images-experimental).
+
 ## Email tab
 
 A redacted email keeps more than the message you can see. Email files carry **technical headers** that

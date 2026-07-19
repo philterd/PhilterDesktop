@@ -10,6 +10,10 @@ All notable changes to Philter Desktop are recorded here, newest first.
 - **New:** in **Modify Redaction**, a **Show low-confidence (not redacted)** option lists entities the
   on-device AI detected but left in because their confidence fell below the threshold, so you can review
   the near-misses.
+- **New (experimental):** a **Redact recurring images** option on the Settings → PDF tab blacks out images
+  that repeat across a PDF's pages — logos, watermarks, and similar recurring graphics — wherever they
+  appear, without a fixed region. Off by default; covers raster images only and may over- or under-cover,
+  so review the output.
 - **New:** PDF fixed regions now accept an **all-but-the-first-page** range — enter `2-` (page 2 to the
   end) to cover a logo or footer that appears on every page except the cover.
 - **Improved:** the **Modify Redaction** list now shows each item's detection **confidence** and lets you

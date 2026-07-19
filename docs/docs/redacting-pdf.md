@@ -32,7 +32,9 @@ does not analyze pictures. **Faces, signatures, ID photos, logos, stamps, and ot
 not detected and will remain in the redacted PDF.** If a document contains visual information that must
 be removed — for example, a photograph or signature on a scanned ID — review the redacted file and cover
 those areas yourself. When the sensitive area is always in the **same place** (as on a form or a
-standard ID), a **PDF region** can black it out automatically; see below.
+standard ID), a **PDF region** can black it out automatically; see below. For a logo or watermark that
+**repeats across pages** — even at different positions — the experimental **Redact recurring images**
+setting can cover it automatically (see [below](#automatically-covering-recurring-images-experimental)).
 
 ## Comments, sticky notes, and form fields
 
@@ -104,6 +106,24 @@ detection can't find them — but both sit at fixed positions, which is exactly 
 Because the regions are stored in the policy, **every** form with the same layout is covered the same
 way — you don't redraw them each time. For a form that spans several pages, enter a page range or list
 (or `0` for all pages) so one region covers each page at once.
+
+## Automatically covering recurring images (experimental)
+
+Fixed regions work when a logo, watermark, or stamp sits in the **same spot** on every page. When it
+appears **in different places** from page to page — or you'd rather not draw regions at all — turn on
+**Redact recurring images** on the **Settings → PDF** tab. When you redact a PDF, Philter Desktop then
+looks for images that **repeat across the pages** — the hallmark of a logo or watermark — and blacks them
+out wherever they appear, with no coordinates to enter.
+
+!!! warning "Experimental"
+    This is an experimental feature. It **only covers raster (picture) images** — a logo drawn as vector
+    lines has no image to find — and because it works by spotting repetition, it may **miss** some images
+    or **cover more than intended** (an image that legitimately repeats across pages is blacked out too).
+    It deliberately leaves very large, full-page background images alone so it doesn't black out whole
+    pages. Always **review the redacted PDF** when this option is on.
+
+It is **off by default**. Because it's a setting rather than part of a policy, it applies to **every** PDF
+you redact while it's turned on.
 
 For adding files to the queue, previewing, adjusting, verifying, and reporting on a redaction, see
 [Redacting Documents](redacting-documents.md).

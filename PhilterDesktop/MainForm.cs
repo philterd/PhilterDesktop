@@ -2064,7 +2064,7 @@ namespace PhilterDesktop
                 modifySettings.RemoveEmailAttachments && modifySettings.RemoveEmailInlineImages,
                 modifySettings.RedactOfficeHeadersFooters, modifySettings.RedactOfficeCharts,
                 modifySettings.RedactCachedFormulaValues, modifySettings.RedactPivotCaches,
-                modifySettings.RemoveUninspectableEmbeddedObjects,
+                modifySettings.RemoveUninspectableEmbeddedObjects, modifySettings.RedactRecurringImages,
                 modifySettings.OutputToOriginalLocation, modifySettings.CustomOutputFolder,
                 modifySettings.GlobalAlwaysRedact, modifySettings.GlobalAlwaysIgnore);
             form.ShowDialog(this);

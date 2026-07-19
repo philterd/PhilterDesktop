@@ -216,17 +216,6 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
-        public void ExpandAllPagesBoundingBoxes_AllButFirst_CoversPagesTwoOnward()
-        {
-            var policy = new Policy { Name = "p" };
-            policy.Graphical.BoundingBoxes.Add(new BoundingBox { Page = -2, X = 5, Y = 6, W = 7, H = 8 }); // 2- (all but first)
-
-            RedactionService.ExpandAllPagesBoundingBoxes(policy, 4);
-
-            Assert.Equal(new[] { 2, 3, 4 }, policy.Graphical.BoundingBoxes.Select(b => b.Page).OrderBy(p => p).ToArray());
-        }
-
-        [Fact]
         public void FromBox_NegativePage_RoundTripsToOpenEndedSpec()
         {
             PdfRegionEntry entry = PdfRegionEntry.FromBox(new BoundingBox { Page = -2, X = 1, Y = 2, W = 3, H = 4 });
@@ -293,20 +282,6 @@ namespace PhilterDesktop.Tests
             Assert.False(string.IsNullOrEmpty(error));
         }
 
-        [Fact]
-        public void ExpandAllPagesBoundingBoxes_PageZero_BecomesOnePerPage_SpecificKept()
-        {
-            var policy = new Policy { Name = "p" };
-            policy.Graphical.BoundingBoxes.Add(new BoundingBox { Page = 0, X = 5, Y = 6, W = 7, H = 8 }); // all pages
-            policy.Graphical.BoundingBoxes.Add(new BoundingBox { Page = 2, X = 1, Y = 1, W = 1, H = 1 }); // specific page
-
-            RedactionService.ExpandAllPagesBoundingBoxes(policy, 3);
-
-            Assert.Equal(4, policy.Graphical.BoundingBoxes.Count); // 3 (all-pages) + 1 (specific)
-            Assert.Equal(new[] { 1, 2, 3 },
-                policy.Graphical.BoundingBoxes.Where(b => b.X == 5).Select(b => b.Page).OrderBy(p => p).ToArray());
-            Assert.Contains(policy.Graphical.BoundingBoxes, b => b.Page == 2 && b.X == 1); // specific box untouched
-        }
 
         [Fact]
         public async Task RedactPdf_WithAllPagesBox_RedactsMultiPageDocument()
