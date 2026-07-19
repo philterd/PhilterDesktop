@@ -74,10 +74,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The Phileas redaction engine, referenced from the sibling source checkout rather than the
-         Philterd.Phileas NuGet package: Desktop consumes the Word/Excel redactors (Services/Office)
-         and PDF services that now live in the library. -->
-    <ProjectReference Include="..\..\phileas-dotnet\src\Phileas\Phileas.csproj" />
+    <!-- The Phileas redaction engine. Desktop consumes the Word/Excel redactors (Services/Office)
+         and PDF services that live in the library. -->
+    <PackageReference Include="Philterd.Phileas" Version="1.6.0" />
   </ItemGroup>
 
   <!-- On-device PhEye name-detection model (GLiNER xsmall, ~90 MB). Kept out of git (see
