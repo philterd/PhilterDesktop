@@ -18,8 +18,9 @@ experience, a real PDF, and a couple of GUI interactions.
   Use the **default self-contained** build — do **not** pass `-FrameworkDependent` for a release, so the
   installer bundles .NET 10 and does not require the user to install the .NET runtime (Windows does not
   ship modern .NET).
-- One real **PDF** with obvious PII in it (an email address and/or an SSN) for the manual PDF check, since
-  the self-test does not cover PDF.
+- One real **PDF** with obvious PII in it (an email address and/or an SSN) for the manual PDF check. The
+  self-test redacts a PDF too, but it flattens the page to an image and can't eyeball the result, so a
+  human still confirms one real PDF looks right.
 
 ---
 
@@ -42,8 +43,12 @@ experience, a real PDF, and a couple of GUI interactions.
       cd "C:\Program Files\Philter Desktop"
       .\PhilterDesktop.exe --selftest
 
-- [ ] It prints a PASS line for each format and ends with **`Result: PASS (6/6)`**, and the process exit
-      code is `0`. (Covers txt, csv, rtf, eml, docx, xlsx end-to-end: redact + verify.)
+- [ ] It prints a PASS line for each format and ends with **`Result: PASS (7/7)`**, and the process exit
+      code is `0`. (Covers txt, csv, rtf, eml, docx, xlsx, pdf end-to-end: redact + verify.)
+- [ ] The header shows **`On-device name detection (ONNX): ENABLED`** and the result line ends with
+      **`incl. name detection`**. This proves the bundled name model and its native ONNX runtime actually
+      load and redact on the clean machine. If it says `UNAVAILABLE` / `name detection NOT tested`, the
+      packaged build is missing the model — fail the release and rebuild.
 - [ ] Confirm the shipped license agreement is current (needs network):
 
       .\PhilterDesktop.exe --smoketest

@@ -30,17 +30,23 @@ namespace PhilterDesktop
 {
     /// <summary>
     /// A self-contained smoke test (<c>PhilterDesktop.exe --selftest</c>): generates small documents that
-    /// carry a known email and SSN in each supported format (including PDF), runs the real redaction pipeline
-    /// over them, and verifies each redacted output is free of residual PII. For every format it first confirms
-    /// the planted PII is detectable in the input, so a clean result is meaningful (a redacted PDF is flattened
-    /// to an image, so its output would otherwise verify clean even with no redaction). Prints PASS/FAIL per
-    /// format and exits 0 (all passed) or 1 (any failed) — a post-install confidence check that needs no user data.
+    /// carry a known email, SSN, and person name in each supported format (including PDF), runs the real
+    /// redaction pipeline over them, and verifies each redacted output is free of residual PII. For every
+    /// format it first confirms the planted PII is detectable in the input, so a clean result is meaningful
+    /// (a redacted PDF is flattened to an image, so its output would otherwise verify clean even with no
+    /// redaction). When the bundled on-device name model is present it also exercises name detection through
+    /// the ONNX runtime, proving a packaged build's model and native runtime actually load and redact; on a
+    /// dev build (no bundled model) that is reported as skipped rather than silently passing. Prints PASS/FAIL
+    /// per format and exits 0 (all passed) or 1 (any failed) — a post-install confidence check that needs no
+    /// user data.
     /// </summary>
     internal static class SelfTest
     {
         private const string Email = "george@fake.com";
         private const string Ssn = "123-45-6789";
-        private const string Body = "Contact " + Email + " about SSN " + Ssn + ".";
+        private const string Name = "George Washington";
+        private const string Surname = "Washington"; // unique to Name; not in the email or SSN
+        private const string Body = "Contact " + Name + " at " + Email + " about SSN " + Ssn + ".";
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool AttachConsole(int processId);
@@ -54,10 +60,29 @@ namespace PhilterDesktop
             Console.WriteLine("Philter Desktop self-test");
             Console.WriteLine();
 
+            // ONNX name detection runs only when the model is bundled (dev builds aren't); report which.
+            bool nameModel = PhEyeModel.IsAvailable;
+            if (nameModel)
+            {
+                Console.WriteLine("On-device name detection (ONNX): ENABLED");
+            }
+            else
+            {
+                Console.WriteLine("On-device name detection (ONNX): UNAVAILABLE");
+                Console.WriteLine("  WARNING: the bundled name model was not found, so person-name redaction is NOT");
+                Console.WriteLine("  exercised. Expected on a dev build; a packaged install must include the model.");
+            }
+            Console.WriteLine();
+
             var policy = new PhileasPolicy
             {
                 Name = "selftest",
-                Identifiers = new Identifiers { EmailAddress = new EmailAddress(), Ssn = new Ssn() }
+                Identifiers = new Identifiers
+                {
+                    EmailAddress = new EmailAddress(),
+                    Ssn = new Ssn(),
+                    PhEyes = nameModel ? new List<PhEye> { PhEyeModel.CreateDefaultFilter() } : null
+                }
             };
             var filterService = new FilterService();
 
@@ -80,7 +105,7 @@ namespace PhilterDesktop
             {
                 foreach ((string label, Func<string, string> generate) in cases)
                 {
-                    if (RunCase(label, generate, dir, policy, filterService))
+                    if (RunCase(label, generate, dir, policy, filterService, nameModel ? Surname : null))
                     {
                         passed++;
                     }
@@ -93,11 +118,12 @@ namespace PhilterDesktop
 
             Console.WriteLine();
             bool ok = passed == cases.Length;
-            Console.WriteLine($"Result: {(ok ? "PASS" : "FAIL")} ({passed}/{cases.Length})");
+            Console.WriteLine($"Result: {(ok ? "PASS" : "FAIL")} ({passed}/{cases.Length})"
+                + (nameModel ? " incl. name detection" : ", name detection NOT tested"));
             return ok ? 0 : 1;
         }
 
-        private static bool RunCase(string label, Func<string, string> generate, string dir, PhileasPolicy policy, FilterService filterService)
+        private static bool RunCase(string label, Func<string, string> generate, string dir, PhileasPolicy policy, FilterService filterService, string? requireInputName)
         {
             string input = string.Empty;
             try
@@ -110,6 +136,14 @@ namespace PhilterDesktop
                 if (before.Status != VerificationStatus.ResidualsFound)
                 {
                     Console.WriteLine($"  FAIL  {label} (planted PII not detected in the input)");
+                    return false;
+                }
+
+                // Confirm the model detected the name: one it silently missed would also verify "clean".
+                if (requireInputName != null
+                    && !before.Residuals.Any(r => r.Text != null && r.Text.Contains(requireInputName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    Console.WriteLine($"  FAIL  {label} (name model did not detect the planted name in the input)");
                     return false;
                 }
 
@@ -145,7 +179,7 @@ namespace PhilterDesktop
 
         private static string WriteCsv(string path)
         {
-            File.WriteAllText(path, "name,email,ssn\r\nBob," + Email + "," + Ssn + "\r\n");
+            File.WriteAllText(path, "name,email,ssn\r\n" + Name + "," + Email + "," + Ssn + "\r\n");
             return path;
         }
 
