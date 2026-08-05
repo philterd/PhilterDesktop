@@ -14,10 +14,13 @@ experience, a real PDF, and a couple of GUI interactions.
 - A **clean** Windows 10 or 11 (x64) environment — a fresh VM snapshot, or a Windows Sandbox — with no
   prior Philter Desktop install and no development tools. (The "clean" part matters: it's what catches a
   missing runtime or bundled dependency.)
-- The release installer: **`PhilterDesktop-Setup-<version>.exe`**, built with `Installer\build-setup.ps1`.
-  Use the **default self-contained** build — do **not** pass `-FrameworkDependent` for a release, so the
-  installer bundles .NET 10 and does not require the user to install the .NET runtime (Windows does not
-  ship modern .NET).
+- The release installer for the architecture under test: **`PhilterDesktop-Setup-<version>-x64.exe`**
+  (Intel/AMD) or **`PhilterDesktop-Setup-<version>-arm64.exe`** (Windows on ARM), built with
+  `Installer\build-setup.ps1` (`-Runtime win-arm64` for the ARM build). Use the **default
+  self-contained** build — do **not** pass `-FrameworkDependent` for a release, so the installer
+  bundles .NET 10 and does not require the user to install the .NET runtime (Windows does not ship
+  modern .NET). Run this whole checklist on the **x64** installer; then run the short **ARM64** section
+  below on a Windows-on-ARM machine.
 - One real **PDF** with obvious PII in it (an email address and/or an SSN) for the manual PDF check. The
   self-test redacts a PDF too, but it flattens the page to an image and can't eyeball the result, so a
   human still confirms one real PDF looks right.
@@ -79,11 +82,35 @@ experience, a real PDF, and a couple of GUI interactions.
 
 ---
 
+## Part 5 — ARM64 smoke test (Windows on ARM)
+
+Run this on a **Windows 11 on ARM** machine (for example a Copilot+ PC, or Windows on ARM in a VM on
+Apple Silicon) using **`PhilterDesktop-Setup-<version>-arm64.exe`**. It confirms the native ARM64 build
+runs without x64 emulation — the reason the ARM build exists is that the emulated x64 build fails to
+initialize the native ONNX Runtime.
+
+- [ ] Install with the **arm64** installer; it installs and launches. (The **x64** installer still
+      installs here too, but runs under emulation where on-device name detection fails — the arm64
+      build is the one to ship for ARM.)
+- [ ] Run the self-test from the install directory and confirm on-device name detection loads
+      **natively** (no `NativeMethods` type-initializer error):
+
+      cd "C:\Program Files\Philter Desktop"
+      .\PhilterDesktop.exe --selftest
+
+      The header shows **`On-device name detection (ONNX): ENABLED`**, it prints **`Result: PASS
+      (7/7)`**, and the result line ends with **`incl. name detection`** (exit code `0`).
+- [ ] Redact a real **PDF** through the UI (exercises PDFium + SkiaSharp on ARM64) and confirm the PII
+      is removed in the output.
+- [ ] Redact a **scanned/image PDF** so OCR runs (`Windows.Media.Ocr`) and confirm text is detected and
+      redacted.
+
 ## Sign-off
 
-| Version | Tester | Date | Installer (Part 1) | Self-test (Part 2) | GUI + PDF (Part 3) | Uninstall (Part 4) | Result |
-|---------|--------|------|:------------------:|:------------------:|:------------------:|:------------------:|:------:|
-|         |        |      |                    |                    |                    |                    |        |
+| Version | Arch | Tester | Date | Installer (Part 1) | Self-test (Part 2) | GUI + PDF (Part 3) | Uninstall (Part 4) | ARM64 (Part 5) | Result |
+|---------|------|--------|------|:------------------:|:------------------:|:------------------:|:------------------:|:--------------:|:------:|
+|         | x64  |        |      |                    |                    |                    |                    | n/a            |        |
+|         | arm64|        |      |                    |                    |                    |                    |                |        |
 
 Record any deviations or failures with the version, the step, and a short note (and file an issue if it's
 a real defect).

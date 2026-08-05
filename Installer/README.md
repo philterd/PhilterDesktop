@@ -1,28 +1,42 @@
 # Installer
 
 Philter Desktop is distributed as a **setup `.exe`** built with [Inno Setup](https://jrsoftware.org/)
-from `PhilterDesktop.iss`. It packages a `dotnet publish` (win-x64) output into a single installer for
-direct download.
+from `PhilterDesktop.iss`. It packages a `dotnet publish` output into a single installer for direct
+download.
+
+**Two architectures.** Philter Desktop ships a **native build per CPU architecture** — `win-x64`
+(Intel/AMD) and `win-arm64` (Windows on ARM). They are **separate installers**:
+`PhilterDesktop-Setup-<version>-x64.exe` and `PhilterDesktop-Setup-<version>-arm64.exe`. A native
+arm64 build matters because on Windows-on-ARM the x64 build runs under emulation, where the native
+ONNX Runtime (used by on-device name detection) fails to initialize; the arm64 build runs natively
+and avoids that. The architecture-specific native libraries (ONNX Runtime, PDFium, SkiaSharp) all
+ship arm64 binaries, so a `win-arm64` self-contained publish cross-compiles fine on an x64 machine.
 
 **Build it:**
 
 ```powershell
-# Runs the tests, publishes the app, then compiles the installer with Inno Setup's ISCC.
-pwsh Installer\build-setup.ps1
+# Runs the tests, publishes the app, then compiles the installers with Inno Setup's ISCC.
+pwsh Installer\build-setup.ps1                     # BOTH arches (x64 + arm64) - the default
+pwsh Installer\build-setup.ps1 -Runtime win-arm64  # only arm64
+pwsh Installer\build-setup.ps1 -Runtime win-x64    # only x64
 # Skip the test run:
 pwsh Installer\build-setup.ps1 -NoTest
 # Smaller build that requires the .NET 10 Desktop Runtime on the target:
 pwsh Installer\build-setup.ps1 -FrameworkDependent
 ```
 
+By default it builds **both** installers in one run (tests and signing setup run once; publish and
+packaging run per arch). Pass `-Runtime` to build a single architecture; the `Output` cleanup is
+per-arch, so a single-arch build does not delete the other's installer.
+
 The build runs the test suite first (a failure aborts before publishing; pass `-NoTest` to skip) and
 publishes the app itself (a fresh `dotnet publish`) — no separate build step is needed.
 
 The installer **version comes from the project** — set `<Version>` in
 [`PhilterDesktop.csproj`](../PhilterDesktop/PhilterDesktop.csproj) and bump it for each release; the
-build reads it back from the published exe and names the output `PhilterDesktop-Setup-<version>.exe`
-(so it always matches what the app's About dialog and update check report). Pass `-Version 1.2.3` only
-to override it for a one-off build.
+build reads it back from the published exe and names the output
+`PhilterDesktop-Setup-<version>-<arch>.exe` (so it always matches what the app's About dialog and
+update check report). Pass `-Version 1.2.3` only to override it for a one-off build.
 
 Requires **Inno Setup 6.3+** (`ISCC.exe` on PATH or in the default install location). The setup
 `.exe` is written to `Installer\Output\`.

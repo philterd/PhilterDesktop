@@ -1,12 +1,16 @@
 ; Inno Setup script for Philter Desktop.
 ;
-; This packages a `dotnet publish` (win-x64) output folder into a single setup .exe for direct
-; download. It installs per-user by default (no admin required), and its optional "start at sign-in"
-; task writes the SAME HKCU\Run entry the app's own Settings toggle uses (StartupManager), so the
-; two stay consistent.
+; This packages a `dotnet publish` output folder into a single setup .exe for direct download. It
+; installs per-user by default (no admin required), and its optional "start at sign-in" task writes
+; the SAME HKCU\Run entry the app's own Settings toggle uses (StartupManager), so the two stay
+; consistent.
+;
+; The target architecture is parameterized: build-setup.ps1 compiles this once per RID, passing
+; /DArch and /DArchLabel, and produces two per-arch installers (x64 and arm64). The arm64 build lets
+; Windows-on-ARM run natively instead of under x64 emulation.
 ;
 ; Build:  see Installer\build-setup.ps1  (publishes, then compiles this script with ISCC).
-; Requires Inno Setup 6.3+ (for the x64compatible architecture identifier).
+; Requires Inno Setup 6.3+ (for the x64compatible / arm64 architecture identifiers).
 
 #define AppName "Philter Desktop"
 #define Publisher "Philterd, LLC"
@@ -17,10 +21,19 @@
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
-; build-setup.ps1 always passes /DPublishDir (derived from the project's TargetFramework); this
-; fallback is only used for a direct ISCC run and must match the current TFM.
+; build-setup.ps1 always passes /DPublishDir (derived from the project's TargetFramework and RID);
+; this fallback is only used for a direct ISCC run and must match the current TFM/RID.
 #ifndef PublishDir
   #define PublishDir "..\PhilterDesktop\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish"
+#endif
+; Target architecture. Arch is the Inno Setup architecture identifier (x64compatible or arm64);
+; ArchLabel is the short tag used in the installer filename. build-setup.ps1 passes both per RID;
+; the defaults keep a direct ISCC run producing the x64 installer.
+#ifndef Arch
+  #define Arch "x64compatible"
+#endif
+#ifndef ArchLabel
+  #define ArchLabel "x64"
 #endif
 
 [Setup]
@@ -37,7 +50,7 @@ DisableProgramGroupPage=yes
 UninstallDisplayIcon={app}\{#AppExe}
 SetupIconFile=..\images\PhilterDesktop.ico
 OutputDir=Output
-OutputBaseFilename=PhilterDesktop-Setup-{#AppVersion}
+OutputBaseFilename=PhilterDesktop-Setup-{#AppVersion}-{#ArchLabel}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -54,8 +67,8 @@ SignedUninstaller=yes
 ; Per-user by default (no elevation); users may choose all-users in the dialog or via /ALLUSERS.
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog commandline
-ArchitecturesAllowed=x64compatible
-ArchitecturesInstallIn64BitMode=x64compatible
+ArchitecturesAllowed={#Arch}
+ArchitecturesInstallIn64BitMode={#Arch}
 ; .NET 10 desktop apps require Windows 10 1809+.
 MinVersion=10.0.17763
 
