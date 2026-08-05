@@ -89,19 +89,36 @@ namespace PhilterDesktop
             // first-run launches (e.g. the GUI, a CLI redaction, and the Explorer right-click flow all
             // starting before data.key exists) can't each generate a different key and clobber the file,
             // which would leave data.db encrypted with one key while data.key holds another (unreadable DB).
-            using (KeyInitLock.Acquire(_keyPath))
-            {
-                // Another process may have created the key while we waited for the lock — re-check.
-                if (TryLoadDpapiOrThrow())
-                {
-                    return;
-                }
+            using KeyInitLock initLock = KeyInitLock.Acquire(_keyPath);
 
-                _key = RandomNumberGenerator.GetBytes(KeySize);
-                CreatedNewKey = true;
-                WriteDpapiModel();
-                IsPassphraseProtected = false;
+            // Another process/thread may have created the key while we waited for the lock — re-check.
+            if (TryLoadDpapiOrThrow())
+            {
+                return;
             }
+
+            // Only the lock holder may create the key. If we could not acquire it (the mutex was
+            // unavailable, or the wait timed out because a slow holder was still creating the key),
+            // barging in would write a second key through the shared temp file and race the holder's
+            // write — the source of torn reads. Instead, wait for the holder's key to appear.
+            if (!initLock.Held)
+            {
+                for (int attempt = 0; attempt < 100; attempt++)
+                {
+                    Thread.Sleep(100);
+                    if (TryLoadDpapiOrThrow())
+                    {
+                        return;
+                    }
+                }
+                // ~10s later and still nothing: the presumed holder never produced a key (e.g. it
+                // crashed before writing without leaving an abandoned mutex). Create one as a last resort.
+            }
+
+            _key = RandomNumberGenerator.GetBytes(KeySize);
+            CreatedNewKey = true;
+            WriteDpapiModel();
+            IsPassphraseProtected = false;
         }
 
         // Loads the existing key via DPAPI — the JSON model, or a legacy raw DPAPI blob. Returns false
@@ -293,15 +310,29 @@ namespace PhilterDesktop
         private void WriteModel(KeyFileModel model)
         {
             string json = JsonSerializer.Serialize(model);
-            string tmp = _keyPath + ".tmp";
-            File.WriteAllText(tmp, json);
-            if (File.Exists(_keyPath))
+            // A per-write temp name (not a shared "data.key.tmp") so two writers can never scribble over
+            // one temp file and publish a torn key. The move/replace onto data.key is atomic, so a
+            // concurrent reader only ever sees the old file or a complete new one.
+            string tmp = _keyPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
             {
-                File.Replace(tmp, _keyPath, null);
+                File.WriteAllText(tmp, json);
+                if (File.Exists(_keyPath))
+                {
+                    File.Replace(tmp, _keyPath, null);
+                }
+                else
+                {
+                    File.Move(tmp, _keyPath);
+                }
             }
-            else
+            finally
             {
-                File.Move(tmp, _keyPath);
+                // File.Move/Replace consumes tmp on success; clean it up if we threw before that.
+                if (File.Exists(tmp))
+                {
+                    try { File.Delete(tmp); } catch { /* best effort */ }
+                }
             }
             RestrictToCurrentUser(_keyPath);
         }
@@ -346,6 +377,9 @@ namespace PhilterDesktop
                 _held = held;
             }
 
+            /// <summary>True when this instance actually owns the mutex (so it may create the key).</summary>
+            public bool Held => _held;
+
             public static KeyInitLock Acquire(string keyPath)
             {
                 string name = NameFor(keyPath);
@@ -358,7 +392,10 @@ namespace PhilterDesktop
                 bool held;
                 try
                 {
-                    held = mutex.WaitOne(TimeSpan.FromSeconds(10));
+                    // Key creation itself is fast, but it can queue behind several other first-run
+                    // processes each doing a DPAPI-protect + file write + ACL tighten. Wait generously so
+                    // a slow, contended runner doesn't give up and let a second creator barge in.
+                    held = mutex.WaitOne(TimeSpan.FromSeconds(60));
                 }
                 catch (AbandonedMutexException)
                 {
