@@ -47,6 +47,7 @@ namespace PhilterDesktop.Tests
             new Case("Currency", i => i.Currency = new Currency(), "Total: $1,200.50 due.", "$1,200.50"),
             new Case("Date", i => i.Date = new Date(), "DOB: 01/15/1990.", "01/15/1990"),
             new Case("DriversLicense", i => i.DriversLicense = new DriversLicense(), "DL: A1234567", "A1234567"),
+            new Case("Ein", i => i.Ein = new Ein(), "EIN 12-3456789 on file.", "12-3456789"),
             new Case("EmailAddress", i => i.EmailAddress = new EmailAddress(), "Email a@b.com here.", "a@b.com"),
             new Case("IbanCode", i => i.IbanCode = new IbanCode(), "IBAN: GB29NWBK60161331926819", "GB29NWBK60161331926819"),
             new Case("IpAddress", i => i.IpAddress = new IpAddress(), "Server at 192.168.1.1 is down.", "192.168.1.1"),

@@ -58,6 +58,9 @@ records.
 Official numbers that single out a specific person or thing.
 
 - **SSN (Social Security Number)**: e.g., *123-45-6789*.
+- **EIN (Employer Identification Number)**: a U.S. federal business tax ID, e.g., *12-3456789*. An
+  option restricts matches to prefixes the IRS actually issues (off by default, so any *NN-NNNNNNN*
+  value matches).
 - **Driver's License**: a driver's license number.
 - **Passport Number**
 - **VIN (Vehicle Identification Number)**: the unique number identifying a specific vehicle.
