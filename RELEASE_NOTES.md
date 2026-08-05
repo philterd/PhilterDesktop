@@ -2,8 +2,14 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
-## Unreleased
+## 1.1.0 — 2026-08-05
 
+- **New:** a **native Windows on ARM (ARM64)** build. Philter Desktop now ships **separate Intel/AMD (x64)
+  and ARM64 installers**; the ARM64 build runs natively on ARM PCs (such as Copilot+ / Snapdragon
+  laptops) instead of under x64 emulation, which is what lets on-device name detection work there.
+- **New:** the **Policy Editor** now offers the **EIN (Employer Identification Number)** identifier, the
+  U.S. federal business tax ID (format *NN-NNNNNNN*). An option restricts matches to prefixes the IRS
+  actually issues (off by default, so any correctly formatted value matches).
 - **New:** a **PhEye** tab in the Policy Editor for on-device AI models. The built-in person-names model
   now lives here, and you can **add your own local (GLiNER) models** — point Philter Desktop at a model
   folder and list the entity types it should detect.
@@ -25,6 +31,8 @@ All notable changes to Philter Desktop are recorded here, newest first.
   (e.g. *First Name*, *Email Address*) instead of a generic "Detected".
 - **Fixed:** the **Save** and **Cancel** buttons on the Settings window no longer overlap the tab
   control — they now sit below it.
+- **Fixed:** a rare error while creating the encrypted local database key if several Philter Desktop
+  processes started for the very first time at exactly the same moment.
 - **Internal:** Word (`.docx`) and Excel (`.xlsx`) redaction now runs from the shared Phileas library
   (`Phileas.Services.Office`) instead of app-local code. No change to redaction behavior or output.
 
