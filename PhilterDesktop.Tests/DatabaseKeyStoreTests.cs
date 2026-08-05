@@ -69,6 +69,29 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void UnlockWithDpapi_ConcurrentFirstRun_IsStableAcrossManyRuns()
+        {
+            // The race is timing-dependent (it only tripped on a slow CI runner where a barging creator
+            // published a torn key). Repeat it over many fresh key files to guard against regressions:
+            // every run must still agree on exactly one key with exactly one creator, and none may throw.
+            for (int run = 0; run < 40; run++)
+            {
+                string dir = Path.Combine(_dir, "run-" + run);
+                Directory.CreateDirectory(dir);
+                string dbPath = Path.Combine(dir, "data.db");
+
+                List<DatabaseKeyStore> stores = Enumerable.Range(0, 8)
+                    .Select(_ => DatabaseKeyStore.ForDatabase(dbPath))
+                    .ToList();
+
+                Parallel.ForEach(stores, s => s.UnlockWithDpapi());
+
+                Assert.Single(stores.Select(s => s.DatabasePassword).Distinct());
+                Assert.Single(stores.Where(s => s.CreatedNewKey));
+            }
+        }
+
+        [Fact]
         public void KeyFile_IsRestrictedToCurrentUserOnly()
         {
             var store = DatabaseKeyStore.ForDatabase(_dbPath);
