@@ -374,6 +374,7 @@ namespace PhilterDesktop.PolicyEditing
         {
             string name = FilterLabel.Humanize(filterProp.Name);
             PropertyInfo? strategiesProp = filterProp.PropertyType.GetProperty("Strategies");
+            IReadOnlyList<FilterOption> options = FilterOptions.For(filterProp.Name);
             (Panel row, CheckBox checkBox, Button configure) = NewRow(name, FilterExamples.For(filterProp.Name));
             inner.Controls.Add(row);
             _rows.Add(new FilterRow { Name = name, Panel = row, CheckBox = checkBox, Group = inner.Parent! });
@@ -421,13 +422,34 @@ namespace PhilterDesktop.PolicyEditing
                 // Ensure the default REDACT strategy is present so the list is never empty.
                 FilterStrategyDefaults.MaterializeMissing(_policy);
 
+                // Seed a toggle for each registered filter option from the filter's current value, so the
+                // Configure dialog can show and edit it (e.g. EIN's OnlyValidPrefixes).
+                var optionBindings = new List<(PropertyInfo Prop, FilterOptionToggle Toggle)>();
+                var toggles = new List<FilterOptionToggle>();
+                foreach (FilterOption option in options)
+                {
+                    PropertyInfo? optionProp = filter.GetType().GetProperty(option.Property);
+                    if (optionProp is null || optionProp.PropertyType != typeof(bool) || !optionProp.CanWrite)
+                    {
+                        continue;
+                    }
+                    bool current = optionProp.GetValue(filter) is bool b ? b : option.Default;
+                    var toggle = new FilterOptionToggle { Label = option.Label, Description = option.Description, Value = current };
+                    toggles.Add(toggle);
+                    optionBindings.Add((optionProp, toggle));
+                }
+
                 Type strategyType = strategiesProp.PropertyType.GetGenericArguments()[0];
                 IEnumerable existing = (IEnumerable?)strategiesProp.GetValue(filter) ?? Array.Empty<object>();
-                using var dlg = new FilterStrategiesForm(name, existing, strategyType);
+                using var dlg = new FilterStrategiesForm(name, existing, strategyType, toggles);
                 if (dlg.ShowDialog(this) == DialogResult.OK)
                 {
                     IList result = dlg.BuildResultList();
                     strategiesProp.SetValue(filter, result.Count > 0 ? result : null);
+                    foreach ((PropertyInfo prop, FilterOptionToggle toggle) in optionBindings)
+                    {
+                        prop.SetValue(filter, toggle.Value);
+                    }
                     _dirty = true;
                 }
             };

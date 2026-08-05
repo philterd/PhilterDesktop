@@ -38,7 +38,7 @@ namespace PhilterDesktop.PolicyEditing
             ("Contact", new[] { "EmailAddress", "PhoneNumber", "PhoneNumberExtension" }),
             ("Location", new[] { "City", "County", "State", "StateAbbreviation", "ZipCode", "StreetAddress" }),
             ("Financial", new[] { "CreditCard", "BankRoutingNumber", "IbanCode", "BitcoinAddress", "Currency" }),
-            ("Identifiers", new[] { "Ssn", "DriversLicense", "PassportNumber", "Vin", "TrackingNumber" }),
+            ("Identifiers", new[] { "Ssn", "Ein", "DriversLicense", "PassportNumber", "Vin", "TrackingNumber" }),
             ("Technical", new[] { "IpAddress", "MacAddress", "Url" }),
             ("Medical", new[] { "Hospital" }),
             ("Other", new[] { "Date" }),
@@ -110,6 +110,7 @@ namespace PhilterDesktop.PolicyEditing
                 ["BitcoinAddress"] = "e.g. 1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf",
                 ["Currency"] = "e.g. $1,250.00",
                 ["Ssn"] = "e.g. 123-45-6789",
+                ["Ein"] = "e.g. 12-3456789",
                 ["DriversLicense"] = "e.g. D1234567",
                 ["PassportNumber"] = "e.g. X12345678",
                 ["Vin"] = "e.g. 1HGCM82633A004352",
@@ -126,13 +127,57 @@ namespace PhilterDesktop.PolicyEditing
             Examples.TryGetValue(propertyName, out string? example) ? example : null;
     }
 
+    /// <summary>
+    /// A boolean option a filter exposes beyond its strategies, shown as a checkbox in the filter's
+    /// Configure dialog. <see cref="Property"/> is the Phileas filter property (read/set by reflection).
+    /// </summary>
+    internal sealed record FilterOption(string Property, string Label, string Description, bool Default);
+
+    /// <summary>
+    /// Filter-level boolean options the editor surfaces in the Configure dialog, keyed by the Phileas
+    /// <c>Identifiers</c> property name. Only filters listed here show an Options section; anything else
+    /// shows just its strategies (unchanged). Kept explicit (rather than reflecting every bool property)
+    /// so no unintended engine field leaks into the UI.
+    /// </summary>
+    internal static class FilterOptions
+    {
+        private static readonly IReadOnlyDictionary<string, FilterOption[]> ByFilter =
+            new Dictionary<string, FilterOption[]>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Ein"] = new[]
+                {
+                    new FilterOption(
+                        "OnlyValidPrefixes",
+                        "Only match valid IRS prefixes",
+                        "When on, only EINs whose two-digit prefix is one the IRS currently issues are redacted. " +
+                        "Off (the default) matches any NN-NNNNNNN value, so a newly issued prefix still matches.",
+                        Default: false),
+                },
+            };
+
+        /// <summary>The registered options for a filter, or an empty list if it has none.</summary>
+        public static IReadOnlyList<FilterOption> For(string filterProperty) =>
+            ByFilter.TryGetValue(filterProperty, out FilterOption[]? options) ? options : Array.Empty<FilterOption>();
+    }
+
+    /// <summary>
+    /// Runtime state for one filter option checkbox: its label/description and current value. The editor
+    /// seeds <see cref="Value"/> from the filter, the dialog updates it on OK, and the editor writes it back.
+    /// </summary>
+    internal sealed class FilterOptionToggle
+    {
+        public required string Label;
+        public required string Description;
+        public bool Value;
+    }
+
     /// <summary>Turns a PascalCase filter/property name into a spaced, acronym-aware label.</summary>
     internal static class FilterLabel
     {
         private static readonly Dictionary<string, string> Acronyms = new(StringComparer.OrdinalIgnoreCase)
         {
             ["Ssn"] = "SSN", ["Vin"] = "VIN", ["Url"] = "URL",
-            ["Ip"] = "IP", ["Iban"] = "IBAN", ["Mac"] = "MAC"
+            ["Ip"] = "IP", ["Iban"] = "IBAN", ["Mac"] = "MAC", ["Ein"] = "EIN"
         };
 
         public static string Humanize(string name)
