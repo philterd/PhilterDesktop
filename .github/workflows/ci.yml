@@ -67,15 +67,17 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
 
-      # Publish the app (win-x64, self-contained) and compile the installer using the same script
-      # used for releases. Signing is disabled here (-NoSign): Azure Trusted Signing needs
-      # credentials that aren't available in CI and would fail. Tests already ran above, so -NoTest
-      # avoids running them a second time.
-      - name: Build installer (unsigned)
+      # Publish the app (self-contained) and compile the installers using the same script used for
+      # releases. It builds BOTH architectures by default; the win-arm64 build cross-compiles on this
+      # x64 runner (only runtime verification needs real ARM hardware). Both land in Installer/Output
+      # with an arch tag in the filename. Signing is disabled here (-NoSign): Azure Trusted Signing
+      # needs credentials that aren't available in CI and would fail. Tests already ran above, so
+      # -NoTest avoids re-running them.
+      - name: Build installers (x64 + arm64, unsigned)
         shell: pwsh
         run: ./Installer/build-setup.ps1 -NoSign -NoTest
 
-      # - name: Upload installer artifact
+      # - name: Upload installer artifacts (x64 + arm64)
       #   uses: actions/upload-artifact@v4
       #   with:
       #     name: PhilterDesktop-Setup

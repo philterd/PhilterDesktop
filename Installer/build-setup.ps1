@@ -2,10 +2,17 @@
 # Licensed under the Apache License, Version 2.0.
 #
 # Builds the setup .exe for Philter Desktop:
-#   1. `dotnet publish` the app (win-x64),
+#   1. `dotnet publish` the app for the target RID (-Runtime win-x64 [default] or win-arm64),
 #   2. (optional) Authenticode-sign PhilterDesktop.exe with Azure Trusted Signing,
 #   3. compile Installer\PhilterDesktop.iss with Inno Setup's ISCC, and
 #   4. (optional) sign the generated setup .exe.
+#
+# By default this builds BOTH architectures - it publishes and packages once per RID and writes two
+# arch-named installers: PhilterDesktop-Setup-<version>-x64.exe and -arm64.exe. Pass -Runtime to build
+# just one (e.g. -Runtime win-arm64). The win-arm64 build lets Windows-on-ARM run natively instead of
+# under x64 emulation (where the native ONNX Runtime fails to initialize); it cross-compiles fine on an
+# x64 build machine. Tests and signing setup run once; the Output cleanup is per-arch, so a single-arch
+# build leaves the other arch's installer in place.
 #
 # The version comes from the project's <Version> (PhilterDesktop.csproj) - bump it there and the
 # installer filename follows automatically. Pass -Version only to override it for a one-off build.
@@ -30,7 +37,9 @@
 # AZURE_CLIENT_SECRET (or use a managed identity on a build agent).
 #
 # Usage:
-#   pwsh Installer\build-setup.ps1                       # version from csproj, SIGNED
+#   pwsh Installer\build-setup.ps1                       # version from csproj, SIGNED, BOTH arches
+#   pwsh Installer\build-setup.ps1 -Runtime win-arm64    # build only the arm64 installer
+#   pwsh Installer\build-setup.ps1 -Runtime win-x64      # build only the x64 installer
 #   pwsh Installer\build-setup.ps1 -Version 1.2.3        # override the version
 #   pwsh Installer\build-setup.ps1 -FrameworkDependent
 #   pwsh Installer\build-setup.ps1 -NoTest               # skip the test run (tests run by default)
@@ -38,6 +47,11 @@
 
 param(
     [string]$Version,
+    # RIDs to build. Defaults to both (x64 + arm64); pass one to build a single architecture. Tests
+    # and signing setup run once; publish + packaging run once per RID, producing an arch-tagged
+    # installer each (PhilterDesktop-Setup-<version>-<x64|arm64>.exe).
+    [ValidateSet('win-x64', 'win-arm64')]
+    [string[]]$Runtime = @('win-x64', 'win-arm64'),
     [switch]$FrameworkDependent,
     [switch]$NoTest,
     [switch]$NoSign,
@@ -64,7 +78,15 @@ $proj = Join-Path $repo "PhilterDesktop\PhilterDesktop.csproj"
 # Windows SDK version bump for WinRT OCR) instead of being hard-coded.
 $tfm = ([xml](Get-Content $proj)).Project.PropertyGroup.TargetFramework | Where-Object { $_ } | Select-Object -First 1
 if (-not $tfm) { throw "Could not read <TargetFramework> from $proj" }
-$publishDir = Join-Path $repo "PhilterDesktop\bin\Release\$tfm\win-x64\publish"
+# Per-RID paths and Inno Setup architecture identifiers are computed inside the build loop below.
+
+# signtool.exe and the Trusted Signing dlib run on the BUILD MACHINE, so they must match the host
+# architecture (independent of the target $Runtime). Cross-compiling win-arm64 on an x64 host still
+# signs with the x64 tools; building on an arm64 host needs the arm64 tools.
+$hostArch = switch ($env:PROCESSOR_ARCHITECTURE) {
+    'ARM64' { 'arm64' }
+    default { 'x64' }  # AMD64 (and x86 WOW64, where the x64 tools still work)
+}
 
 # ----- Code-signing helpers ---------------------------------------------------------------------
 
@@ -72,9 +94,12 @@ function Resolve-Signtool {
     if ($SigntoolPath -and (Test-Path $SigntoolPath)) { return $SigntoolPath }
     $cmd = (Get-Command signtool.exe -ErrorAction SilentlyContinue).Source
     if ($cmd) { return $cmd }
-    $found = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
-        Sort-Object FullName -Descending | Select-Object -First 1
-    if ($found) { return $found.FullName }
+    # Prefer the host-arch signtool; fall back to x64 (the SDK always ships it).
+    foreach ($arch in @($hostArch, 'x64' | Select-Object -Unique)) {
+        $found = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\$arch\signtool.exe" -ErrorAction SilentlyContinue |
+            Sort-Object FullName -Descending | Select-Object -First 1
+        if ($found) { return $found.FullName }
+    }
     throw "signtool.exe not found. Install the Windows SDK, add it to PATH, or pass -SigntoolPath."
 }
 
@@ -84,11 +109,25 @@ function Resolve-SigningDlib {
     $pkg = 'microsoft.trusted.signing.client'
     $toolsRoot = Join-Path $PSScriptRoot 'tools\trusted-signing'
 
+    # The dlib runs in signtool on the build host, so pick the host-arch copy (fall back to x64, which
+    # the package always contains). The package ships both bin\x64 and bin\arm64.
+    function Select-DlibUnder([string]$Root) {
+        foreach ($arch in @($hostArch, 'x64' | Select-Object -Unique)) {
+            $hit = Get-ChildItem (Join-Path $Root "bin\$arch\Azure.CodeSigning.Dlib.dll") -ErrorAction SilentlyContinue |
+                Select-Object -First 1
+            if ($hit) { return $hit.FullName }
+        }
+        return $null
+    }
+
     # Reuse a previously restored copy unless a specific version was requested.
     if (-not $TrustedSigningClientVersion) {
-        $cached = Get-ChildItem (Join-Path $toolsRoot '*\bin\x64\Azure.CodeSigning.Dlib.dll') -ErrorAction SilentlyContinue |
-            Sort-Object FullName -Descending | Select-Object -First 1
-        if ($cached) { return $cached.FullName }
+        $cachedVersionDir = Get-ChildItem $toolsRoot -Directory -ErrorAction SilentlyContinue |
+            Sort-Object Name -Descending | Select-Object -First 1
+        if ($cachedVersionDir) {
+            $cached = Select-DlibUnder $cachedVersionDir.FullName
+            if ($cached) { return $cached }
+        }
     }
 
     $version = $TrustedSigningClientVersion
@@ -99,8 +138,7 @@ function Resolve-SigningDlib {
     }
 
     $dest = Join-Path $toolsRoot $version
-    $dll = Join-Path $dest 'bin\x64\Azure.CodeSigning.Dlib.dll'
-    if (-not (Test-Path $dll)) {
+    if (-not (Select-DlibUnder $dest)) {
         Write-Host "Restoring $pkg $version into $dest ..."
         if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
         New-Item -ItemType Directory -Force -Path $dest | Out-Null
@@ -110,7 +148,8 @@ function Resolve-SigningDlib {
         [System.IO.Compression.ZipFile]::ExtractToDirectory($nupkg, $dest)
         Remove-Item $nupkg -ErrorAction SilentlyContinue
     }
-    if (-not (Test-Path $dll)) { throw "Azure.CodeSigning.Dlib.dll not found after restoring $pkg $version." }
+    $dll = Select-DlibUnder $dest
+    if (-not $dll) { throw "Azure.CodeSigning.Dlib.dll not found after restoring $pkg $version." }
     return $dll
 }
 
@@ -213,60 +252,11 @@ if (-not $NoTest) {
 }
 
 $selfContained = if ($FrameworkDependent) { 'false' } else { 'true' }
-Write-Host "Publishing PhilterDesktop (win-x64, self-contained=$selfContained)..."
-$publishArgs = @('-c', 'Release', '-r', 'win-x64', '--self-contained', $selfContained)
-# Only force a version when overriding; otherwise the project's <Version> is used.
-if ($Version) { $publishArgs += "-p:Version=$Version" }
-dotnet publish $proj @publishArgs
-if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed." }
-
-# Determine the version to stamp on the installer. Read it back from the built exe so it always
-# matches what the app reports (About dialog / update check), unless explicitly overridden.
-$exe = Join-Path $publishDir "PhilterDesktop.exe"
-if (-not (Test-Path $exe)) { throw "Published exe not found at $exe" }
-
-# The bundled on-device model is the ONLY thing that redacts person names, so an installer without it
-# would silently ship names unredacted (only a per-run warning is shown). The Release publish downloads
-# it; verify it actually landed in the publish output before packaging, and fail loudly if not.
-$modelDir = Join-Path $publishDir "Models\ph-eye-pii-en-xsmall"
-foreach ($modelFile in @('model.onnx', 'gliner_config.json', 'spm.model')) {
-    $modelPath = Join-Path $modelDir $modelFile
-    if (-not (Test-Path $modelPath)) {
-        throw "PhEye name-detection model file missing from the publish output: $modelPath. The installer must bundle the model or person names ship unredacted. Re-run the Release publish (network required to download it)."
-    }
-}
-Write-Host "Verified PhEye name-detection model is present in the publish output."
-
-# Refresh the EULA the app shows from the live copy on philterd.ai, overwriting the checked-in snapshot in
-# the publish output. A network failure is non-fatal: the bundled snapshot ships instead (the app reads
-# whichever philterd-eula.txt is next to the exe).
-$eulaUrl = 'https://philterd.ai/philterd-eula.txt'
-$eulaPath = Join-Path $publishDir 'philterd-eula.txt'
-try {
-    Invoke-WebRequest -Uri $eulaUrl -OutFile $eulaPath -UseBasicParsing -TimeoutSec 30
-    Write-Host "Downloaded the current EULA from $eulaUrl."
-}
-catch {
-    Write-Warning "Could not download the EULA from $eulaUrl ($($_.Exception.Message)); shipping the bundled snapshot."
-}
-if (-not (Test-Path $eulaPath)) {
-    throw "No EULA file in the publish output ($eulaPath) - the app would show only a fallback pointer. Ensure Resources\philterd-eula.txt is present, or fix the download."
-}
-
-if (-not $Version) {
-    $fileVersion = [version]((Get-Item $exe).VersionInfo.FileVersion)
-    $Version = "{0}.{1}.{2}" -f $fileVersion.Major, $fileVersion.Minor, $fileVersion.Build
-}
-# Final guard, covering the version read back from the project's <Version>.
-Assert-ComparableVersion $Version
-Write-Host "Installer version: $Version"
-
-# Sign the app exe BEFORE packaging, so the installer ships the signed binary.
-Invoke-Sign -Path $exe
 
 # ----- Compile the installer --------------------------------------------------------------------
 
-# Locate the Inno Setup compiler (ISCC.exe).
+# Locate the Inno Setup compiler (ISCC.exe) once, up front, so a missing compiler fails fast before
+# any (slow) publish work.
 $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue).Source
 if (-not $iscc) {
     foreach ($candidate in @(
@@ -279,33 +269,105 @@ if (-not $iscc) {
     throw "ISCC.exe not found. Install Inno Setup 6.3+ from https://jrsoftware.org/isdl.php (or add ISCC to PATH)."
 }
 
-# Wipe the Output folder so it only ever contains the current build's installer.
 $outputDir = Join-Path $PSScriptRoot 'Output'
-if (Test-Path $outputDir) {
-    Write-Host "Clearing previous installers in $outputDir ..."
-    Remove-Item (Join-Path $outputDir '*') -Force -Recurse -ErrorAction SilentlyContinue
+$builtInstallers = @()
+
+# Build one installer per requested RID (both arches by default). Tests and signing setup already ran
+# once above; each iteration publishes, verifies the model/EULA, signs the app exe, and compiles an
+# arch-tagged installer. Both arches' installers coexist in Output (the cleanup below is per-arch).
+foreach ($rid in $Runtime) {
+    # Map the .NET RID to the short arch tag used in the installer filename and to the Inno Setup
+    # architecture identifier passed to ISCC (/DArch). x64compatible also matches ARM devices (x64
+    # emulation); arm64 is native-only.
+    $archLabel  = if ($rid -eq 'win-arm64') { 'arm64' } else { 'x64' }
+    $innoArch   = if ($rid -eq 'win-arm64') { 'arm64' } else { 'x64compatible' }
+    $publishDir = Join-Path $repo "PhilterDesktop\bin\Release\$tfm\$rid\publish"
+
+    Write-Host "Publishing PhilterDesktop ($rid, self-contained=$selfContained)..."
+    $publishArgs = @('-c', 'Release', '-r', $rid, '--self-contained', $selfContained)
+    # Only force a version when overriding; otherwise the project's <Version> is used.
+    if ($Version) { $publishArgs += "-p:Version=$Version" }
+    dotnet publish $proj @publishArgs
+    if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed for $rid." }
+
+    # Read the version back from the built exe so it always matches what the app reports (About dialog /
+    # update check), unless explicitly overridden. Both arches build from the same <Version>, so once
+    # $Version is set (below) it is reused for the remaining RIDs.
+    $exe = Join-Path $publishDir "PhilterDesktop.exe"
+    if (-not (Test-Path $exe)) { throw "Published exe not found at $exe" }
+
+    # The bundled on-device model is the ONLY thing that redacts person names, so an installer without it
+    # would silently ship names unredacted (only a per-run warning is shown). The Release publish downloads
+    # it; verify it actually landed in the publish output before packaging, and fail loudly if not.
+    $modelDir = Join-Path $publishDir "Models\ph-eye-pii-en-xsmall"
+    foreach ($modelFile in @('model.onnx', 'gliner_config.json', 'spm.model')) {
+        $modelPath = Join-Path $modelDir $modelFile
+        if (-not (Test-Path $modelPath)) {
+            throw "PhEye name-detection model file missing from the publish output: $modelPath. The installer must bundle the model or person names ship unredacted. Re-run the Release publish (network required to download it)."
+        }
+    }
+    Write-Host "Verified PhEye name-detection model is present in the publish output."
+
+    # Refresh the EULA the app shows from the live copy on philterd.ai, overwriting the checked-in snapshot in
+    # the publish output. A network failure is non-fatal: the bundled snapshot ships instead (the app reads
+    # whichever philterd-eula.txt is next to the exe).
+    $eulaUrl = 'https://philterd.ai/philterd-eula.txt'
+    $eulaPath = Join-Path $publishDir 'philterd-eula.txt'
+    try {
+        Invoke-WebRequest -Uri $eulaUrl -OutFile $eulaPath -UseBasicParsing -TimeoutSec 30
+        Write-Host "Downloaded the current EULA from $eulaUrl."
+    }
+    catch {
+        Write-Warning "Could not download the EULA from $eulaUrl ($($_.Exception.Message)); shipping the bundled snapshot."
+    }
+    if (-not (Test-Path $eulaPath)) {
+        throw "No EULA file in the publish output ($eulaPath) - the app would show only a fallback pointer. Ensure Resources\philterd-eula.txt is present, or fix the download."
+    }
+
+    if (-not $Version) {
+        $fileVersion = [version]((Get-Item $exe).VersionInfo.FileVersion)
+        $Version = "{0}.{1}.{2}" -f $fileVersion.Major, $fileVersion.Minor, $fileVersion.Build
+    }
+    # Final guard, covering the version read back from the project's <Version>.
+    Assert-ComparableVersion $Version
+    Write-Host "Installer version: $Version ($archLabel)"
+
+    # Sign the app exe BEFORE packaging, so the installer ships the signed binary.
+    Invoke-Sign -Path $exe
+
+    # Clear only THIS arch's previous installers (any version), so building the two arches in sequence
+    # leaves both in Output. The arch tag in the filename keeps them distinct.
+    if (Test-Path $outputDir) {
+        Write-Host "Clearing previous $archLabel installers in $outputDir ..."
+        Remove-Item (Join-Path $outputDir "PhilterDesktop-Setup-*-$archLabel.exe") -Force -ErrorAction SilentlyContinue
+    }
+
+    # Pass the TFM/RID-derived publish dir so the .iss packages the right folder (its built-in default is
+    # a fixed path that goes stale whenever the target framework changes), plus the target architecture
+    # (/DArch drives ArchitecturesAllowed; /DArchLabel is the filename tag).
+    $isccArgs = @("/DAppVersion=$Version", "/DPublishDir=$publishDir", "/DArch=$innoArch", "/DArchLabel=$archLabel")
+    if ($Sign) {
+        # Register the "philtersign" sign tool with ISCC and enable the SignTool directive in the .iss
+        # (/DSign). Inno then signs the installer AND the embedded uninstaller. $q (a literal quote) and
+        # $f (the file being signed) are Inno tokens - single-quoted here so PowerShell leaves them alone.
+        $signToolCmd = '$q' + $script:Signtool + '$q sign /v /fd SHA256 /tr ' + $TimestampUrl +
+            ' /td SHA256 /dlib $q' + $SigningDlib + '$q /dmdf $q' + $script:SigningMetadata + '$q $f'
+        $isccArgs += "/DSign"
+        $isccArgs += "/Sphiltersign=$signToolCmd"
+    }
+    $isccArgs += (Join-Path $PSScriptRoot "PhilterDesktop.iss")
+
+    Write-Host "Compiling $archLabel installer with $iscc ..."
+    & $iscc @isccArgs
+    if ($LASTEXITCODE -ne 0) { throw "ISCC failed for $rid." }
+
+    # The installer and uninstaller are signed by ISCC (via the SignTool directive) when $Sign is set.
+    $setupExe = Join-Path $outputDir "PhilterDesktop-Setup-$Version-$archLabel.exe"
+    if (-not (Test-Path $setupExe)) { throw "Setup .exe not found at $setupExe" }
+    $builtInstallers += $setupExe
+    Write-Host "Built $archLabel installer: $([System.IO.Path]::GetFileName($setupExe))"
 }
 
-# Pass the TFM-derived publish dir so the .iss packages the right folder (its built-in default is a
-# fixed path that goes stale whenever the target framework changes).
-$isccArgs = @("/DAppVersion=$Version", "/DPublishDir=$publishDir")
-if ($Sign) {
-    # Register the "philtersign" sign tool with ISCC and enable the SignTool directive in the .iss
-    # (/DSign). Inno then signs the installer AND the embedded uninstaller. $q (a literal quote) and
-    # $f (the file being signed) are Inno tokens - single-quoted here so PowerShell leaves them alone.
-    $signToolCmd = '$q' + $script:Signtool + '$q sign /v /fd SHA256 /tr ' + $TimestampUrl +
-        ' /td SHA256 /dlib $q' + $SigningDlib + '$q /dmdf $q' + $script:SigningMetadata + '$q $f'
-    $isccArgs += "/DSign"
-    $isccArgs += "/Sphiltersign=$signToolCmd"
-}
-$isccArgs += (Join-Path $PSScriptRoot "PhilterDesktop.iss")
-
-Write-Host "Compiling installer with $iscc ..."
-& $iscc @isccArgs
-if ($LASTEXITCODE -ne 0) { throw "ISCC failed." }
-
-# The installer and uninstaller are signed by ISCC (via the SignTool directive) when $Sign is set.
-$setupExe = Join-Path $outputDir "PhilterDesktop-Setup-$Version.exe"
-if (-not (Test-Path $setupExe)) { throw "Setup .exe not found at $setupExe" }
-
-Write-Host "Done. Setup .exe is in $outputDir."
+Write-Host ""
+Write-Host "Done. Built $($builtInstallers.Count) installer(s) in $outputDir`:"
+foreach ($installer in $builtInstallers) { Write-Host "  $([System.IO.Path]::GetFileName($installer))" }

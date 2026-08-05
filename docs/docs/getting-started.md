@@ -6,6 +6,12 @@ removing the program again.
 ## What you need
 
 - A computer running **Windows 10 (version 1809 or later) or Windows 11**, 64-bit.
+- Philter Desktop has a **separate installer for each processor type**: one for **Intel/AMD (x64)**
+  PCs and one for **Windows on ARM (ARM64)** PCs (such as Copilot+ PCs and Snapdragon-based laptops).
+  Most PCs are Intel/AMD; pick the **ARM64** installer only if you know your PC is an ARM device.
+  (Not sure? Open **Settings → System → About** and check **System type**: "ARM-based processor"
+  means ARM64, otherwise choose x64.) Using the matching native installer is what lets on-device name
+  detection run correctly on ARM PCs.
 
 Philter Desktop's official, signed installer is **free to download** from
 [philterd.ai](https://www.philterd.ai) and **free for personal use and evaluation**; using it for
@@ -21,9 +27,10 @@ Philter Desktop is delivered as a single **setup program**: one file you downloa
 
 To install:
 
-1. **Download** the [Philter Desktop setup file](https://philterd.ai/philter-desktop). (The source is
-   open on GitHub, so a technical user can also build their own copy; see
-   [Licensing & Support](licensing.md).)
+1. **Download** the [Philter Desktop setup file](https://philterd.ai/philter-desktop) for your
+   processor type (**Intel/AMD x64** or **Windows on ARM / ARM64**; see *What you need* above if
+   you're unsure). (The source is open on GitHub, so a technical user can also build their own copy;
+   see [Licensing & Support](licensing.md).)
 2. **Double-click** the downloaded file to start the setup wizard.
 3. Follow the wizard's prompts (the next section explains the choices it offers). It lets you launch
    Philter Desktop as soon as it finishes.

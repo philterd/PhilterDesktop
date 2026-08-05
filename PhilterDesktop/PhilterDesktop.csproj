@@ -24,9 +24,11 @@
          .NET automatically rescales controls when the DPI changes. Every form sets
          AutoScaleMode = Font, so absolute-coordinate layouts scale proportionally with it. -->
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
-    <!-- Declaring the x64 RID makes the self-contained publish lay out the native PDF
-         dependencies (PDFium, SkiaSharp, ONNX Runtime) deterministically for the installer. -->
-    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <!-- Declaring the RIDs makes the self-contained publish lay out the native dependencies
+         (PDFium, SkiaSharp, ONNX Runtime) deterministically for the installer. win-arm64 lets
+         Windows-on-ARM run natively instead of under x64 emulation, where the native ONNX Runtime
+         fails to initialize; all three native packages ship win-arm64 binaries. -->
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <!-- Run the WinForms designer DPI-unaware (effectively 100%) so it always serializes layouts at
          the 96-DPI baseline, regardless of the developer's monitor scaling. This prevents the
          designer from re-inflating *.Designer.cs on high-DPI machines. Runtime DPI behavior is
