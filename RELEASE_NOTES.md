@@ -2,6 +2,28 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
+## 1.1.1 — 2026-09-08
+
+- **Changed:** there is now **one installer for every PC**. The separate Intel/AMD (x64) and ARM64
+  downloads introduced in 1.1.0 are gone; a single `PhilterDesktop-Setup-<version>.exe` contains both
+  native builds and installs the one that matches your PC, so there is nothing to choose based on your
+  hardware. Installing it over an existing copy switches architecture cleanly if you have moved to an
+  ARM PC.
+- **Changed:** Philter Desktop now appears in **Add/Remove Programs** as just *Philter Desktop* rather
+  than *Philter Desktop version x.y.z*. The version still shows in that list's own Version column.
+- **Fixed:** an **unattended uninstall** (`/VERYSILENT`) no longer stops on the "also remove your saved
+  data?" question and waits for someone to click it. It now skips the question entirely and **always
+  keeps** your policies, contexts, settings, and history. Previously a scripted uninstall could hang,
+  or delete that data if the dialog was answered Yes.
+- **Fixed:** a rare failure reading the encrypted database's key when several Philter Desktop
+  processes touched it at once (for example the app, a command-line redaction, and an Explorer
+  right-click starting together). Changing your passphrase while another process was reading the key
+  could also fail, and in the worst case a process could conclude no key existed and generate a
+  second one, leaving the database unreadable. Key-file reads and writes are now contention-safe.
+- **New:** Philter Desktop can be **installed without the wizard**, for setting up several PCs or
+  installing from a script: `PhilterDesktop-Setup-<version>.exe /VERYSILENT /SUPPRESSMSGBOXES
+  /CURRENTUSER`. See *Getting Started* in the documentation for the full list of options.
+
 ## 1.1.0 — 2026-08-05
 
 - **New:** a **native Windows on ARM (ARM64)** build. Philter Desktop now ships **separate Intel/AMD (x64)

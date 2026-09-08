@@ -483,7 +483,9 @@ touched.
 
 > **This section is optional and aimed at technical users.** Everything Philter Desktop does is
 > available through the normal window; this option exists mainly so an IT department can automate
-> redaction.
+> redaction. Philter Desktop can also be
+> [installed without the wizard](getting-started.md#installing-without-the-wizard), which pairs well
+> with this.
 
 Philter Desktop can redact files without opening its window, which is useful for automation. Run it
 from a command prompt (Command Prompt or PowerShell) and pass one or more files, optionally naming a

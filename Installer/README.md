@@ -4,30 +4,35 @@ Philter Desktop is distributed as a **setup `.exe`** built with [Inno Setup](htt
 from `PhilterDesktop.iss`. It packages a `dotnet publish` output into a single installer for direct
 download.
 
-**Two architectures.** Philter Desktop ships a **native build per CPU architecture** — `win-x64`
-(Intel/AMD) and `win-arm64` (Windows on ARM). They are **separate installers**:
-`PhilterDesktop-Setup-<version>-x64.exe` and `PhilterDesktop-Setup-<version>-arm64.exe`. A native
-arm64 build matters because on Windows-on-ARM the x64 build runs under emulation, where the native
-ONNX Runtime (used by on-device name detection) fails to initialize; the arm64 build runs natively
-and avoids that. The architecture-specific native libraries (ONNX Runtime, PDFium, SkiaSharp) all
-ship arm64 binaries, so a `win-arm64` self-contained publish cross-compiles fine on an x64 machine.
+**One installer, both architectures.** Philter Desktop ships a **native build per CPU
+architecture** — `win-x64` (Intel/AMD) and `win-arm64` (Windows on ARM) — but both travel in a
+**single download**, `PhilterDesktop-Setup-<version>.exe`. The installer detects the machine and
+installs only the matching build, so users never pick based on their hardware. A native arm64 build
+matters because on Windows-on-ARM the x64 build runs under emulation, where the native ONNX Runtime
+(used by on-device name detection) fails to initialize; the arm64 build runs natively and avoids
+that. The architecture-specific native libraries (ONNX Runtime, PDFium, SkiaSharp) all ship arm64
+binaries, so a `win-arm64` self-contained publish cross-compiles fine on an x64 machine.
+
+Carrying both builds costs download size. The arch-neutral payload — most of it the ~89 MB PhEye
+model — is stored **once**, so the combined installer is roughly 190 MB rather than the ~140 MB of a
+single-arch build, not double.
 
 **Build it:**
 
 ```powershell
-# Runs the tests, publishes the app, then compiles the installers with Inno Setup's ISCC.
-pwsh Installer\build-setup.ps1                     # BOTH arches (x64 + arm64) - the default
-pwsh Installer\build-setup.ps1 -Runtime win-arm64  # only arm64
-pwsh Installer\build-setup.ps1 -Runtime win-x64    # only x64
+# Runs the tests, publishes both arches, then compiles the installer with Inno Setup's ISCC.
+pwsh Installer\build-setup.ps1
+# Publish a single arch for a faster dev loop (no installer is produced):
+pwsh Installer\build-setup.ps1 -Runtime win-arm64
 # Skip the test run:
 pwsh Installer\build-setup.ps1 -NoTest
 # Smaller build that requires the .NET 10 Desktop Runtime on the target:
 pwsh Installer\build-setup.ps1 -FrameworkDependent
 ```
 
-By default it builds **both** installers in one run (tests and signing setup run once; publish and
-packaging run per arch). Pass `-Runtime` to build a single architecture; the `Output` cleanup is
-per-arch, so a single-arch build does not delete the other's installer.
+Tests and signing setup run once, the publish runs per arch, and packaging runs once at the end. The
+installer needs **both** publish trees, so `-Runtime` with a single RID stops after publishing and
+says so.
 
 The build runs the test suite first (a failure aborts before publishing; pass `-NoTest` to skip) and
 publishes the app itself (a fresh `dotnet publish`) — no separate build step is needed.
@@ -35,8 +40,8 @@ publishes the app itself (a fresh `dotnet publish`) — no separate build step i
 The installer **version comes from the project** — set `<Version>` in
 [`PhilterDesktop.csproj`](../PhilterDesktop/PhilterDesktop.csproj) and bump it for each release; the
 build reads it back from the published exe and names the output
-`PhilterDesktop-Setup-<version>-<arch>.exe` (so it always matches what the app's About dialog and
-update check report). Pass `-Version 1.2.3` only to override it for a one-off build.
+`PhilterDesktop-Setup-<version>.exe` (so it always matches what the app's About dialog and update
+check report). Pass `-Version 1.2.3` only to override it for a one-off build.
 
 Requires **Inno Setup 6.3+** (`ISCC.exe` on PATH or in the default install location). The setup
 `.exe` is written to `Installer\Output\`.
@@ -50,6 +55,14 @@ Requires **Inno Setup 6.3+** (`ISCC.exe` on PATH or in the default install locat
   `/ALLUSERS`. Default build is **self-contained**, so the target needs no .NET runtime.
 - Bundles everything `publish` produces: the app, native PDF libraries, and the on-device PhEye
   model under `Models\`.
+- Installs the **native build for the machine**: the arm64 files on Windows-on-ARM, the x64 files
+  everywhere else, and records which under `Software\Philterd\Philter Desktop` (`InstalledArch`).
+  Publish flattens the native libraries to the app root, so switching architecture overwrites them by
+  name; the only files that would survive are the ones whose *name* carries the architecture
+  (`Microsoft.DiaSymReader.Native.<arch>.dll`, `mscordaccore_<arch>_<arch>_<ver>.dll`), which an
+  `[InstallDelete]` removes for the opposite architecture on every install.
+- Lists itself in Add/Remove Programs as just **Philter Desktop** (`UninstallDisplayName`); the
+  version shows in that list's own Version column.
 - Optional tasks: a desktop icon, and **start at sign-in** — which writes the *same*
   `HKCU\…\Run` value (with `--minimized`) that the in-app "Start at sign-in" toggle uses, so the two
   stay in sync. The entry is removed on uninstall.
@@ -107,8 +120,18 @@ folder and fill in your values:
 just run `pwsh Installer\build-setup.ps1`.
 
 The dlib comes from the **`Microsoft.Trusted.Signing.Client`** NuGet package. `signtool.exe` is found
-on `PATH`, under the Windows SDK, or via `-SigntoolPath`. Timestamping uses
+under the Windows SDK for the build host's architecture, then on `PATH`, or via `-SigntoolPath`; the
+dlib is then chosen to **match that signtool's architecture**. Timestamping uses
 `http://timestamp.acs.microsoft.com` (override with `-TimestampUrl`).
+
+> **If signing fails with "Multiple certificates were found":** the dlib was never loaded and
+> `signtool` fell back to searching your local certificate store. Check the output for the
+> **`Trusted Signing`** banner. If it is missing, signtool and the dlib are on different
+> architectures (the SDK installs a **32-bit** `signtool.exe` on `PATH`, and it cannot load the
+> 64-bit dlib) - the build script now prefers the SDK copy matching the host and refuses a mismatch
+> up front. If the banner is present but signing still failed, it is an Azure authentication problem:
+> run `az login`. **Do not** follow signtool's suggestion to add `/a` or `/sha1`; that signs the build
+> with an unrelated self-signed certificate from your store instead of your publisher identity.
 
 **Azure authentication** uses `DefaultAzureCredential`: run `az login`, or set `AZURE_TENANT_ID` /
 `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` (or use a managed identity on a build agent) before running

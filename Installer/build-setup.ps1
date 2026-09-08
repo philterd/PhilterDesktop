@@ -2,17 +2,19 @@
 # Licensed under the Apache License, Version 2.0.
 #
 # Builds the setup .exe for Philter Desktop:
-#   1. `dotnet publish` the app for the target RID (-Runtime win-x64 [default] or win-arm64),
+#   1. `dotnet publish` the app for each target RID (win-x64 and win-arm64),
 #   2. (optional) Authenticode-sign PhilterDesktop.exe with Azure Trusted Signing,
 #   3. compile Installer\PhilterDesktop.iss with Inno Setup's ISCC, and
 #   4. (optional) sign the generated setup .exe.
 #
-# By default this builds BOTH architectures - it publishes and packages once per RID and writes two
-# arch-named installers: PhilterDesktop-Setup-<version>-x64.exe and -arm64.exe. Pass -Runtime to build
-# just one (e.g. -Runtime win-arm64). The win-arm64 build lets Windows-on-ARM run natively instead of
-# under x64 emulation (where the native ONNX Runtime fails to initialize); it cross-compiles fine on an
-# x64 build machine. Tests and signing setup run once; the Output cleanup is per-arch, so a single-arch
-# build leaves the other arch's installer in place.
+# The result is ONE installer covering both architectures: PhilterDesktop-Setup-<version>.exe. It
+# carries both publish trees and installs the native build matching the machine, so users never pick
+# based on their hardware. The win-arm64 build lets Windows-on-ARM run natively instead of under x64
+# emulation (where the native ONNX Runtime fails to initialize); it cross-compiles fine on an x64
+# build machine.
+#
+# Pass -Runtime to publish just one RID (e.g. -Runtime win-arm64) for a faster dev iteration. That
+# skips the installer, which needs both trees; the message says so.
 #
 # The version comes from the project's <Version> (PhilterDesktop.csproj) - bump it there and the
 # installer filename follows automatically. Pass -Version only to override it for a one-off build.
@@ -37,9 +39,9 @@
 # AZURE_CLIENT_SECRET (or use a managed identity on a build agent).
 #
 # Usage:
-#   pwsh Installer\build-setup.ps1                       # version from csproj, SIGNED, BOTH arches
-#   pwsh Installer\build-setup.ps1 -Runtime win-arm64    # build only the arm64 installer
-#   pwsh Installer\build-setup.ps1 -Runtime win-x64      # build only the x64 installer
+#   pwsh Installer\build-setup.ps1                       # version from csproj, SIGNED, one installer
+#   pwsh Installer\build-setup.ps1 -Runtime win-arm64    # publish only arm64 (no installer)
+#   pwsh Installer\build-setup.ps1 -Runtime win-x64      # publish only x64 (no installer)
 #   pwsh Installer\build-setup.ps1 -Version 1.2.3        # override the version
 #   pwsh Installer\build-setup.ps1 -FrameworkDependent
 #   pwsh Installer\build-setup.ps1 -NoTest               # skip the test run (tests run by default)
@@ -47,9 +49,8 @@
 
 param(
     [string]$Version,
-    # RIDs to build. Defaults to both (x64 + arm64); pass one to build a single architecture. Tests
-    # and signing setup run once; publish + packaging run once per RID, producing an arch-tagged
-    # installer each (PhilterDesktop-Setup-<version>-<x64|arm64>.exe).
+    # RIDs to publish. Defaults to both, which is what the single multi-arch installer needs. Pass
+    # one RID to publish only that architecture (no installer is produced in that case).
     [ValidateSet('win-x64', 'win-arm64')]
     [string[]]$Runtime = @('win-x64', 'win-arm64'),
     [switch]$FrameworkDependent,
@@ -90,16 +91,42 @@ $hostArch = switch ($env:PROCESSOR_ARCHITECTURE) {
 
 # ----- Code-signing helpers ---------------------------------------------------------------------
 
+# Reads a PE file's machine type ('x86', 'x64', 'arm64'), used to keep signtool and the dlib on the
+# same architecture. Returns 'unknown' rather than throwing, so a surprise never blocks a build.
+function Get-PeMachine {
+    param([Parameter(Mandatory)][string]$Path)
+    try {
+        $stream = [System.IO.File]::OpenRead($Path)
+        try {
+            $reader = New-Object System.IO.BinaryReader($stream)
+            $stream.Position = 0x3C
+            $stream.Position = $reader.ReadInt32() + 4
+            switch ($reader.ReadUInt16()) {
+                0x8664  { 'x64' }
+                0xAA64  { 'arm64' }
+                0x014C  { 'x86' }
+                default { 'unknown' }
+            }
+        }
+        finally { $stream.Dispose() }
+    }
+    catch { 'unknown' }
+}
+
+# signtool must match the Trusted Signing dlib's architecture. A 32-bit signtool cannot load the
+# 64-bit dlib: it ignores /dlib WITHOUT reporting anything, falls back to searching the local
+# certificate store, and dies with "Multiple certificates were found" - which reads like an Azure
+# auth failure but is not one. The Windows SDK puts an x86 signtool on PATH by default, so the SDK
+# copy for the build host is preferred over PATH.
 function Resolve-Signtool {
     if ($SigntoolPath -and (Test-Path $SigntoolPath)) { return $SigntoolPath }
-    $cmd = (Get-Command signtool.exe -ErrorAction SilentlyContinue).Source
-    if ($cmd) { return $cmd }
-    # Prefer the host-arch signtool; fall back to x64 (the SDK always ships it).
-    foreach ($arch in @($hostArch, 'x64' | Select-Object -Unique)) {
+    foreach ($arch in @($hostArch, 'x64') | Select-Object -Unique) {
         $found = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\$arch\signtool.exe" -ErrorAction SilentlyContinue |
             Sort-Object FullName -Descending | Select-Object -First 1
         if ($found) { return $found.FullName }
     }
+    $cmd = (Get-Command signtool.exe -ErrorAction SilentlyContinue).Source
+    if ($cmd) { return $cmd }
     throw "signtool.exe not found. Install the Windows SDK, add it to PATH, or pass -SigntoolPath."
 }
 
@@ -109,10 +136,11 @@ function Resolve-SigningDlib {
     $pkg = 'microsoft.trusted.signing.client'
     $toolsRoot = Join-Path $PSScriptRoot 'tools\trusted-signing'
 
-    # The dlib runs in signtool on the build host, so pick the host-arch copy (fall back to x64, which
-    # the package always contains). The package ships both bin\x64 and bin\arm64.
+    # The dlib is loaded INTO signtool, so it must match the signtool binary's architecture, not just
+    # the host's (an x86 signtool cannot load the x64 dlib). $script:ToolArch is set from the resolved
+    # signtool; fall back to x64, which the package always contains.
     function Select-DlibUnder([string]$Root) {
-        foreach ($arch in @($hostArch, 'x64' | Select-Object -Unique)) {
+        foreach ($arch in @($script:ToolArch, 'x64') | Select-Object -Unique) {
             $hit = Get-ChildItem (Join-Path $Root "bin\$arch\Azure.CodeSigning.Dlib.dll") -ErrorAction SilentlyContinue |
                 Select-Object -First 1
             if ($hit) { return $hit.FullName }
@@ -179,6 +207,7 @@ function Test-AzureCredentialAvailable {
 
 # Set up signing once (validate config, locate signtool, write the Trusted Signing metadata file).
 $script:Signtool = $null
+$script:ToolArch = $null
 $script:SigningMetadata = $null
 if ($Sign) {
     foreach ($pair in @(
@@ -188,9 +217,26 @@ if ($Sign) {
         if (-not $pair.Value) { throw "Signing requested (-Sign) but $($pair.Name) is not set." }
     }
 
+    # Resolve signtool FIRST: its architecture decides which dlib to restore, since the dlib is loaded
+    # into signtool's own process.
+    $script:Signtool = Resolve-Signtool
+    $script:ToolArch = Get-PeMachine $script:Signtool
+    if ($script:ToolArch -eq 'unknown') { $script:ToolArch = $hostArch }
+
     # The dlib is auto-restored from NuGet unless an explicit path was provided.
     if (-not $SigningDlib) { $SigningDlib = Resolve-SigningDlib }
     if (-not (Test-Path $SigningDlib)) { throw "Trusted Signing dlib not found: $SigningDlib" }
+
+    # Last line of defence, and the one that matters when -SigntoolPath / -SigningDlib are passed by
+    # hand. Without it the mismatch surfaces only as signtool's misleading certificate-selection error.
+    $dlibArch = Get-PeMachine $SigningDlib
+    if ($dlibArch -ne 'unknown' -and $dlibArch -ne $script:ToolArch) {
+        throw ("Architecture mismatch: signtool is $($script:ToolArch) ($script:Signtool) but the Trusted " +
+            "Signing dlib is $dlibArch ($SigningDlib). signtool loads the dlib into its own process, so a " +
+            "mismatch makes it silently ignore /dlib, fall back to the local certificate store, and fail " +
+            "with 'Multiple certificates were found'. Use the $dlibArch signtool (or pass a $($script:ToolArch) " +
+            "dlib with -SigningDlib).")
+    }
 
     if (-not (Test-AzureCredentialAvailable)) {
         Write-Warning ("No Azure sign-in detected. Azure Trusted Signing needs a credential: run 'az login', " +
@@ -198,7 +244,6 @@ if ($Sign) {
             "misleading 'Multiple certificates were found' error. (Use -NoSign for an unsigned dev build.)")
     }
 
-    $script:Signtool = Resolve-Signtool
     $script:SigningMetadata = Join-Path ([System.IO.Path]::GetTempPath()) "philter-trusted-signing.json"
     $metadataJson = [ordered]@{
         Endpoint               = $SigningEndpoint
@@ -208,7 +253,7 @@ if ($Sign) {
     # Write UTF-8 WITHOUT a BOM - the Trusted Signing dlib's JSON parser rejects a leading BOM
     # ("'0xEF' is an invalid start of a value"). Set-Content -Encoding utf8 adds a BOM in PS 5.1.
     [System.IO.File]::WriteAllText($script:SigningMetadata, $metadataJson, (New-Object System.Text.UTF8Encoding($false)))
-    Write-Host "Code signing enabled (Azure Trusted Signing) via $script:Signtool"
+    Write-Host "Code signing enabled (Azure Trusted Signing) via $script:Signtool [$script:ToolArch]"
 }
 
 function Invoke-Sign {
@@ -219,10 +264,12 @@ function Invoke-Sign {
     & $script:Signtool sign /v /fd SHA256 /tr $TimestampUrl /td SHA256 `
         /dlib $SigningDlib /dmdf $script:SigningMetadata $Path
     if ($LASTEXITCODE -ne 0) {
-        throw ("signtool failed for $Path. If the output mentions 'Multiple certificates were found' or " +
-            "certificate selection, Azure Trusted Signing probably could not authenticate - run 'az login' " +
-            "(or set AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET) and retry, or use -NoSign for an " +
-            "unsigned build.")
+        throw ("signtool failed for $Path. If the output mentions 'Multiple certificates were found', the dlib " +
+            "was never used and signtool fell back to the local certificate store: do NOT retry with /a or " +
+            "/sha1 (that signs with an unrelated local certificate). Look for the 'Trusted Signing' banner in " +
+            "the output above - if it is missing the dlib did not load, and if it is present but signing " +
+            "failed, Azure could not authenticate, so run 'az login' (or set AZURE_TENANT_ID / AZURE_CLIENT_ID " +
+            "/ AZURE_CLIENT_SECRET) and retry. Use -NoSign for an unsigned build.")
     }
 }
 
@@ -270,17 +317,14 @@ if (-not $iscc) {
 }
 
 $outputDir = Join-Path $PSScriptRoot 'Output'
-$builtInstallers = @()
+$publishDirs = @{}
 
-# Build one installer per requested RID (both arches by default). Tests and signing setup already ran
-# once above; each iteration publishes, verifies the model/EULA, signs the app exe, and compiles an
-# arch-tagged installer. Both arches' installers coexist in Output (the cleanup below is per-arch).
+# Publish once per requested RID (both arches by default). Tests and signing setup already ran once
+# above; each iteration publishes, verifies the model/EULA, and signs the app exe. The installer is
+# compiled once, after the loop, from both publish trees.
 foreach ($rid in $Runtime) {
-    # Map the .NET RID to the short arch tag used in the installer filename and to the Inno Setup
-    # architecture identifier passed to ISCC (/DArch). x64compatible also matches ARM devices (x64
-    # emulation); arm64 is native-only.
+    # Short arch tag, used as the key for the publish dir handed to ISCC.
     $archLabel  = if ($rid -eq 'win-arm64') { 'arm64' } else { 'x64' }
-    $innoArch   = if ($rid -eq 'win-arm64') { 'arm64' } else { 'x64compatible' }
     $publishDir = Join-Path $repo "PhilterDesktop\bin\Release\$tfm\$rid\publish"
 
     Write-Host "Publishing PhilterDesktop ($rid, self-contained=$selfContained)..."
@@ -335,39 +379,49 @@ foreach ($rid in $Runtime) {
     # Sign the app exe BEFORE packaging, so the installer ships the signed binary.
     Invoke-Sign -Path $exe
 
-    # Clear only THIS arch's previous installers (any version), so building the two arches in sequence
-    # leaves both in Output. The arch tag in the filename keeps them distinct.
-    if (Test-Path $outputDir) {
-        Write-Host "Clearing previous $archLabel installers in $outputDir ..."
-        Remove-Item (Join-Path $outputDir "PhilterDesktop-Setup-*-$archLabel.exe") -Force -ErrorAction SilentlyContinue
-    }
-
-    # Pass the TFM/RID-derived publish dir so the .iss packages the right folder (its built-in default is
-    # a fixed path that goes stale whenever the target framework changes), plus the target architecture
-    # (/DArch drives ArchitecturesAllowed; /DArchLabel is the filename tag).
-    $isccArgs = @("/DAppVersion=$Version", "/DPublishDir=$publishDir", "/DArch=$innoArch", "/DArchLabel=$archLabel")
-    if ($Sign) {
-        # Register the "philtersign" sign tool with ISCC and enable the SignTool directive in the .iss
-        # (/DSign). Inno then signs the installer AND the embedded uninstaller. $q (a literal quote) and
-        # $f (the file being signed) are Inno tokens - single-quoted here so PowerShell leaves them alone.
-        $signToolCmd = '$q' + $script:Signtool + '$q sign /v /fd SHA256 /tr ' + $TimestampUrl +
-            ' /td SHA256 /dlib $q' + $SigningDlib + '$q /dmdf $q' + $script:SigningMetadata + '$q $f'
-        $isccArgs += "/DSign"
-        $isccArgs += "/Sphiltersign=$signToolCmd"
-    }
-    $isccArgs += (Join-Path $PSScriptRoot "PhilterDesktop.iss")
-
-    Write-Host "Compiling $archLabel installer with $iscc ..."
-    & $iscc @isccArgs
-    if ($LASTEXITCODE -ne 0) { throw "ISCC failed for $rid." }
-
-    # The installer and uninstaller are signed by ISCC (via the SignTool directive) when $Sign is set.
-    $setupExe = Join-Path $outputDir "PhilterDesktop-Setup-$Version-$archLabel.exe"
-    if (-not (Test-Path $setupExe)) { throw "Setup .exe not found at $setupExe" }
-    $builtInstallers += $setupExe
-    Write-Host "Built $archLabel installer: $([System.IO.Path]::GetFileName($setupExe))"
+    $publishDirs[$archLabel] = $publishDir
+    Write-Host "Published $archLabel to $publishDir"
 }
 
+# The single installer carries both architectures, so it can only be built when both were published.
+# A single-RID run is a dev shortcut; say plainly that it stops after the publish.
+if (-not ($publishDirs.ContainsKey('x64') -and $publishDirs.ContainsKey('arm64'))) {
+    Write-Host ""
+    Write-Warning ("Only $($Runtime -join ', ') was published, so no installer was built: the single " +
+        "installer packages both win-x64 and win-arm64. Re-run without -Runtime to build it.")
+    return
+}
+
+# Clear previous installers (any version) so Output holds only the one just built.
+if (Test-Path $outputDir) {
+    Write-Host "Clearing previous installers in $outputDir ..."
+    Remove-Item (Join-Path $outputDir "PhilterDesktop-Setup-*.exe") -Force -ErrorAction SilentlyContinue
+}
+
+# Pass both TFM/RID-derived publish dirs so the .iss packages the right folders (its built-in defaults
+# are fixed paths that go stale whenever the target framework changes).
+$isccArgs = @(
+    "/DAppVersion=$Version",
+    "/DPublishDirX64=$($publishDirs['x64'])",
+    "/DPublishDirArm64=$($publishDirs['arm64'])")
+if ($Sign) {
+    # Register the "philtersign" sign tool with ISCC and enable the SignTool directive in the .iss
+    # (/DSign). Inno then signs the installer AND the embedded uninstaller. $q (a literal quote) and
+    # $f (the file being signed) are Inno tokens - single-quoted here so PowerShell leaves them alone.
+    $signToolCmd = '$q' + $script:Signtool + '$q sign /v /fd SHA256 /tr ' + $TimestampUrl +
+        ' /td SHA256 /dlib $q' + $SigningDlib + '$q /dmdf $q' + $script:SigningMetadata + '$q $f'
+    $isccArgs += "/DSign"
+    $isccArgs += "/Sphiltersign=$signToolCmd"
+}
+$isccArgs += (Join-Path $PSScriptRoot "PhilterDesktop.iss")
+
+Write-Host "Compiling the multi-arch installer with $iscc ..."
+& $iscc @isccArgs
+if ($LASTEXITCODE -ne 0) { throw "ISCC failed." }
+
+# The installer and uninstaller are signed by ISCC (via the SignTool directive) when $Sign is set.
+$setupExe = Join-Path $outputDir "PhilterDesktop-Setup-$Version.exe"
+if (-not (Test-Path $setupExe)) { throw "Setup .exe not found at $setupExe" }
+
 Write-Host ""
-Write-Host "Done. Built $($builtInstallers.Count) installer(s) in $outputDir`:"
-foreach ($installer in $builtInstallers) { Write-Host "  $([System.IO.Path]::GetFileName($installer))" }
+Write-Host "Done. Built $([System.IO.Path]::GetFileName($setupExe)) ($([math]::Round((Get-Item $setupExe).Length / 1MB)) MB, x64 + arm64) in $outputDir"

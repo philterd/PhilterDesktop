@@ -14,13 +14,13 @@ experience, a real PDF, and a couple of GUI interactions.
 - A **clean** Windows 10 or 11 (x64) environment — a fresh VM snapshot, or a Windows Sandbox — with no
   prior Philter Desktop install and no development tools. (The "clean" part matters: it's what catches a
   missing runtime or bundled dependency.)
-- The release installer for the architecture under test: **`PhilterDesktop-Setup-<version>-x64.exe`**
-  (Intel/AMD) or **`PhilterDesktop-Setup-<version>-arm64.exe`** (Windows on ARM), built with
-  `Installer\build-setup.ps1` (`-Runtime win-arm64` for the ARM build). Use the **default
+- The release installer, **`PhilterDesktop-Setup-<version>.exe`**, built with
+  `Installer\build-setup.ps1`. One installer covers both architectures and installs the native build
+  for the machine, so the same file is used on x64 and on Windows-on-ARM. Use the **default
   self-contained** build — do **not** pass `-FrameworkDependent` for a release, so the installer
   bundles .NET 10 and does not require the user to install the .NET runtime (Windows does not ship
-  modern .NET). Run this whole checklist on the **x64** installer; then run the short **ARM64** section
-  below on a Windows-on-ARM machine.
+  modern .NET). Run this whole checklist on an **x64** machine; then run the short **ARM64** section
+  below on a Windows-on-ARM machine, using the same installer.
 - One real **PDF** with obvious PII in it (an email address and/or an SSN) for the manual PDF check. The
   self-test redacts a PDF too, but it flattens the page to an image and can't eyeball the result, so a
   human still confirms one real PDF looks right.
@@ -35,6 +35,9 @@ experience, a real PDF, and a couple of GUI interactions.
       **Start menu** entry "Philter Desktop".
 - [ ] If offered, tick the **desktop icon** task and confirm the shortcut is created.
 - [ ] Finish the installer with "Launch Philter Desktop" checked — the app starts.
+- [ ] **Silent install works** (on a second clean snapshot, or after uninstalling): running the setup
+      file with `/VERYSILENT /SUPPRESSMSGBOXES /CURRENTUSER` installs with no wizard, no elevation
+      prompt, and no desktop icon, and the app launches from the Start menu afterwards.
 - [ ] On first launch, the **welcome / license (EULA)** screen appears. Decline once → the app exits.
       Launch again, accept → the main window opens and the EULA is not shown again on the next launch.
 - [ ] The main window renders correctly (no missing-font or missing-DLL errors).
@@ -75,6 +78,11 @@ experience, a real PDF, and a couple of GUI interactions.
 
 ## Part 4 — Uninstall
 
+- [ ] In **Settings → Apps**, the entry is named just **Philter Desktop** (no "version x.y.z" in the
+      name), and the **Version** column shows the release version.
+- [ ] **Unattended uninstall keeps saved data.** With `%LocalAppData%\PhilterDesktop\` present, run
+      `unins000.exe /VERYSILENT` from the install folder. It completes **without showing any dialog**
+      (a prompt here means an automated uninstall would hang), and that folder still exists afterwards.
 - [ ] Uninstall via **Settings → Apps** (or the Start menu uninstaller). It removes the program files and
       shortcuts.
 - [ ] Confirm the install directory is gone. (User data — the encrypted database and settings under the
@@ -85,13 +93,15 @@ experience, a real PDF, and a couple of GUI interactions.
 ## Part 5 — ARM64 smoke test (Windows on ARM)
 
 Run this on a **Windows 11 on ARM** machine (for example a Copilot+ PC, or Windows on ARM in a VM on
-Apple Silicon) using **`PhilterDesktop-Setup-<version>-arm64.exe`**. It confirms the native ARM64 build
-runs without x64 emulation — the reason the ARM build exists is that the emulated x64 build fails to
-initialize the native ONNX Runtime.
+Apple Silicon) using the **same `PhilterDesktop-Setup-<version>.exe`** used on x64. It confirms the
+installer picks the native ARM64 build, and that it runs without x64 emulation — the reason the ARM
+build exists is that the emulated x64 build fails to initialize the native ONNX Runtime.
 
-- [ ] Install with the **arm64** installer; it installs and launches. (The **x64** installer still
-      installs here too, but runs under emulation where on-device name detection fails — the arm64
-      build is the one to ship for ARM.)
+- [ ] Install with the standard installer; it installs and launches without asking about architecture.
+- [ ] Confirm it installed the **arm64** build rather than the emulated x64 one: in Task Manager's
+      Details tab, the `PhilterDesktop.exe` **Architecture** column reads **ARM64** (not "x64
+      (emulated)"), and `HKCU\Software\Philterd\Philter Desktop` (`HKLM` for an all-users install) has
+      `InstalledArch` = `arm64`.
 - [ ] Run the self-test from the install directory and confirm on-device name detection loads
       **natively** (no `NativeMethods` type-initializer error):
 

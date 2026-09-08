@@ -1,15 +1,16 @@
 ; Inno Setup script for Philter Desktop.
 ;
-; This packages a `dotnet publish` output folder into a single setup .exe for direct download. It
+; This packages the `dotnet publish` output into a single setup .exe for direct download. It
 ; installs per-user by default (no admin required), and its optional "start at sign-in" task writes
 ; the SAME HKCU\Run entry the app's own Settings toggle uses (StartupManager), so the two stay
 ; consistent.
 ;
-; The target architecture is parameterized: build-setup.ps1 compiles this once per RID, passing
-; /DArch and /DArchLabel, and produces two per-arch installers (x64 and arm64). The arm64 build lets
-; Windows-on-ARM run natively instead of under x64 emulation.
+; ONE installer covers BOTH architectures. build-setup.ps1 publishes win-x64 and win-arm64 and
+; passes both publish dirs; the [Files] entries below pick the matching set at install time, so
+; users never choose based on their hardware. The arch-neutral payload (the PhEye model, ~89 MB) is
+; stored once rather than per arch.
 ;
-; Build:  see Installer\build-setup.ps1  (publishes, then compiles this script with ISCC).
+; Build:  see Installer\build-setup.ps1  (publishes both RIDs, then compiles this script with ISCC).
 ; Requires Inno Setup 6.3+ (for the x64compatible / arm64 architecture identifiers).
 
 #define AppName "Philter Desktop"
@@ -17,24 +18,20 @@
 #define AppExe "PhilterDesktop.exe"
 #define AppUrl "https://www.philterd.ai"
 
-; Overridable on the ISCC command line: /DAppVersion=1.2.3 and /DPublishDir=<path>
+; Overridable on the ISCC command line: /DAppVersion=1.2.3 and /DPublishDirX64 /DPublishDirArm64.
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
-; build-setup.ps1 always passes /DPublishDir (derived from the project's TargetFramework and RID);
-; this fallback is only used for a direct ISCC run and must match the current TFM/RID.
-#ifndef PublishDir
-  #define PublishDir "..\PhilterDesktop\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish"
+; build-setup.ps1 always passes both publish dirs (derived from the project's TargetFramework and
+; RIDs); these fallbacks are only used for a direct ISCC run and must match the current TFM.
+#ifndef PublishDirX64
+  #define PublishDirX64 "..\PhilterDesktop\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish"
 #endif
-; Target architecture. Arch is the Inno Setup architecture identifier (x64compatible or arm64);
-; ArchLabel is the short tag used in the installer filename. build-setup.ps1 passes both per RID;
-; the defaults keep a direct ISCC run producing the x64 installer.
-#ifndef Arch
-  #define Arch "x64compatible"
+#ifndef PublishDirArm64
+  #define PublishDirArm64 "..\PhilterDesktop\bin\Release\net10.0-windows10.0.19041.0\win-arm64\publish"
 #endif
-#ifndef ArchLabel
-  #define ArchLabel "x64"
-#endif
+; The arch-neutral files are byte-identical in both publish dirs; ship a single copy of them.
+#define SharedDir PublishDirX64
 
 [Setup]
 ; Keep AppId stable across releases so upgrades replace the prior install.
@@ -47,17 +44,20 @@ AppSupportURL=https://philterd.github.io/PhilterDesktop/
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
+; Without this, Add/Remove Programs lists "Philter Desktop version 1.1.0" as the name. The version
+; still shows in its own Version column (from AppVersion), so repeating it in the name is noise.
+UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\{#AppExe}
 SetupIconFile=..\images\PhilterDesktop.ico
 OutputDir=Output
-OutputBaseFilename=PhilterDesktop-Setup-{#AppVersion}-{#ArchLabel}
+OutputBaseFilename=PhilterDesktop-Setup-{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 ; Show the Philterd Commercial License Agreement (EULA) and require acceptance before installing. The file
 ; is the one build-setup.ps1 downloads from philterd.ai into the publish dir (a checked-in snapshot is
 ; present as a fallback), so it always exists when ISCC runs.
-LicenseFile={#PublishDir}\philterd-eula.txt
+LicenseFile={#SharedDir}\philterd-eula.txt
 ; When the build passes /DSign, sign the installer AND the generated uninstaller. The "philtersign"
 ; sign tool is registered on the ISCC command line by build-setup.ps1 (/Sphiltersign=...).
 #ifdef Sign
@@ -67,8 +67,9 @@ SignedUninstaller=yes
 ; Per-user by default (no elevation); users may choose all-users in the dialog or via /ALLUSERS.
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog commandline
-ArchitecturesAllowed={#Arch}
-ArchitecturesInstallIn64BitMode={#Arch}
+; Runs on both Intel/AMD (x64) and Windows-on-ARM (arm64), installing the native build for each.
+ArchitecturesAllowed=x64compatible or arm64
+ArchitecturesInstallIn64BitMode=x64compatible or arm64
 ; .NET 10 desktop apps require Windows 10 1809+.
 MinVersion=10.0.17763
 
@@ -80,15 +81,38 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "autostart"; Description: "Start {#AppName} automatically when I sign in (runs minimized to the tray and watches folders)"; GroupDescription: "Startup:"; Flags: unchecked
 
 [Files]
-; The entire publish output (app, dependencies, native PDF libs under runtimes\..\native that
-; publish flattens to the app root, and the bundled Models\ folder).
-Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Arch-neutral payload, stored once: the bundled PhEye name-detection model and the EULA text.
+Source: "{#SharedDir}\Models\*"; DestDir: "{app}\Models"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SharedDir}\philterd-eula.txt"; DestDir: "{app}"; Flags: ignoreversion
+
+; Arch-specific payload: the app, its dependencies, and the native libs (ONNX Runtime, PDFium,
+; SkiaSharp) that publish flattens to the app root. Test IsArm64 FIRST: on Windows-on-ARM
+; IsX64Compatible is also true (x64 emulation), so "not IsArm64" is the correct x64 guard.
+Source: "{#PublishDirArm64}\*"; DestDir: "{app}"; Excludes: "Models\*,philterd-eula.txt"; Check: IsArm64; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#PublishDirX64}\*"; DestDir: "{app}"; Excludes: "Models\*,philterd-eula.txt"; Check: not IsArm64; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[InstallDelete]
+; Publish flattens the native libraries to the app root, so the copy step overwrites them by name and
+; nothing is left stale. The exception is the handful of files whose NAME carries the architecture
+; (Microsoft.DiaSymReader.Native.<arch>.dll, mscordaccore_<arch>_<arch>_<ver>.dll): installing the
+; other architecture over an existing install would leave the previous one's copies behind forever.
+; Remove the opposite architecture's files first. These patterns cannot match the set about to be
+; installed, and this runs on every install, so it also cleans up installs made before this existed.
+Type: files; Name: "{app}\*.arm64.dll"; Check: not IsArm64
+Type: files; Name: "{app}\*_arm64_*.dll"; Check: not IsArm64
+Type: files; Name: "{app}\*.amd64.dll"; Check: IsArm64
+Type: files; Name: "{app}\*_amd64_*.dll"; Check: IsArm64
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
 
 [Registry]
+; Record which architecture was installed so a later run can detect an arch switch and clear the
+; stale binaries first (see PrepareToInstall). HKA follows the install mode: HKLM for all-users,
+; HKCU for per-user.
+Root: HKA; Subkey: "Software\Philterd\Philter Desktop"; ValueType: string; ValueName: "InstalledArch"; ValueData: "{code:GetCurrentArch}"; Flags: uninsdeletevalue uninsdeletekeyifempty
+
 ; Optional auto-start. Same value name + "--minimized" switch as StartupManager, so the in-app
 ; "Start at sign-in" toggle reflects/controls this too. Removal is handled in [Code] on uninstall
 ; (covers the case where the user later enabled it from inside the app).
@@ -98,6 +122,17 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
 
 [Code]
+// The architecture this run installs, recorded in the registry so support can tell which build a
+// machine got. Mirrors the IsArm64-first order used in [Files]: on Windows-on-ARM IsX64Compatible
+// is also true, so IsArm64 must be what decides.
+function GetCurrentArch(Param: string): string;
+begin
+  if IsArm64 then
+    Result := 'arm64'
+  else
+    Result := 'x64';
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   DataDir: string;
@@ -119,20 +154,25 @@ begin
   end;
 
   // After the program files are gone, offer to also delete the saved data for this account
-  // (policies, contexts, settings, and redaction history — including any sensitive text it
-  // captured). Default is No, so an upgrade/reinstall keeps everything; a silent uninstall keeps
-  // it too. The redacted output files the user already saved live elsewhere and are never touched.
+  // (policies, contexts, settings, and redaction history, including any sensitive text it
+  // captured). Default is No, so an upgrade/reinstall keeps everything. The redacted output files
+  // the user already saved live elsewhere and are never touched.
+  //
+  // An unattended uninstall NEVER asks and never deletes. Two guards, because either alone leaves a
+  // hole: plain MsgBox ignores /SUPPRESSMSGBOXES and displays anyway, so a scripted uninstall stalls
+  // on a dialog until someone clicks (and loses the data if they click Yes), while SuppressibleMsgBox
+  // alone would still prompt under a bare /VERYSILENT.
   if CurUninstallStep = usPostUninstall then
   begin
     DataDir := ExpandConstant('{localappdata}\PhilterDesktop');
-    if DirExists(DataDir) then
+    if DirExists(DataDir) and not UninstallSilent then
     begin
-      if MsgBox('Also remove your saved Philter Desktop data for this account?' + #13#10 + #13#10 +
+      if SuppressibleMsgBox('Also remove your saved Philter Desktop data for this account?' + #13#10 + #13#10 +
                 'This permanently deletes your policies, contexts, settings, and redaction history ' +
                 '(including any sensitive text it captured).' + #13#10 + #13#10 +
                 'Choose No to keep it, so reinstalling restores everything. Either way, the redacted ' +
                 'files you already saved are not affected.',
-                mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then
+                mbConfirmation, MB_YESNO or MB_DEFBUTTON2, IDNO) = IDYES then
       begin
         DelTree(DataDir, True, True, True);
       end;

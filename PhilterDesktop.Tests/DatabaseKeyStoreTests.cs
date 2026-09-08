@@ -92,6 +92,95 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public void UnlockWithDpapi_WhileTheKeyFileIsBeingRewritten_NeverMisreadsItAsLegacy()
+        {
+            // The concurrency bug behind the flaky first-run test: loading read the file TWICE, once
+            // for the JSON model and once for a legacy raw blob. A writer's atomic Move/Replace makes
+            // an open fail for an instant, so the model read returned "not JSON", the file still
+            // existed, and the JSON was DPAPI-decrypted as a legacy blob: "The data is invalid".
+            // Rewriting the key file under concurrent readers reproduces that window directly.
+            var owner = DatabaseKeyStore.ForDatabase(_dbPath);
+            owner.UnlockWithDpapi();
+            string expected = owner.DatabasePassword;
+
+            using var stop = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            Exception? failure = null;
+
+            // Republishes data.key over and over (temp file, then Replace) for readers to race.
+            Task writer = Task.Run(() =>
+            {
+                while (!stop.IsCancellationRequested)
+                {
+                    owner.DisablePassphrase(); // re-wraps the same key and rewrites the file
+                }
+            });
+
+            try
+            {
+                for (int i = 0; i < 300 && !stop.IsCancellationRequested; i++)
+                {
+                    Parallel.For(0, 4, _ =>
+                    {
+                        try
+                        {
+                            var reader = DatabaseKeyStore.ForDatabase(_dbPath);
+                            reader.UnlockWithDpapi();
+                            Assert.Equal(expected, reader.DatabasePassword);
+                            Assert.False(reader.CreatedNewKey);
+                        }
+                        catch (Exception e)
+                        {
+                            Interlocked.CompareExchange(ref failure, e, null);
+                            stop.Cancel();
+                        }
+                    });
+                }
+            }
+            finally
+            {
+                stop.Cancel();
+                writer.Wait(TimeSpan.FromSeconds(5));
+            }
+
+            Assert.Null(failure);
+        }
+
+        [Fact]
+        public void UnlockWithDpapi_CorruptJsonKeyFile_SaysItIsCorrupt_NotThatTheDataIsInvalid()
+        {
+            // A file that starts with '{' but will not parse is corrupt, not legacy. Falling through to
+            // the legacy path would DPAPI-decrypt JSON and report the misleading "The data is invalid".
+            File.WriteAllText(Path.Combine(_dir, "data.key"), "{ \"version\": 1, \"mode\": ");
+
+            var store = DatabaseKeyStore.ForDatabase(_dbPath);
+
+            InvalidDataException e = Assert.Throws<InvalidDataException>(() => store.UnlockWithDpapi());
+            Assert.Contains("corrupt", e.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void UnlockWithDpapi_LegacyRawBlobKeyFile_StillLoads()
+        {
+            // The legacy path must keep working: the fix narrows when it is taken, not whether it exists.
+            var original = DatabaseKeyStore.ForDatabase(_dbPath);
+            original.UnlockWithDpapi();
+            string expected = original.DatabasePassword;
+
+            // Rewrite data.key in the pre-JSON format: the whole file is a DPAPI blob of the raw key.
+            byte[] raw = Convert.FromBase64String(expected);
+            File.WriteAllBytes(
+                Path.Combine(_dir, "data.key"),
+                System.Security.Cryptography.ProtectedData.Protect(
+                    raw, null, System.Security.Cryptography.DataProtectionScope.CurrentUser));
+
+            var reloaded = DatabaseKeyStore.ForDatabase(_dbPath);
+            reloaded.UnlockWithDpapi();
+
+            Assert.Equal(expected, reloaded.DatabasePassword);
+            Assert.False(reloaded.CreatedNewKey);
+        }
+
+        [Fact]
         public void KeyFile_IsRestrictedToCurrentUserOnly()
         {
             var store = DatabaseKeyStore.ForDatabase(_dbPath);

@@ -6,12 +6,10 @@ removing the program again.
 ## What you need
 
 - A computer running **Windows 10 (version 1809 or later) or Windows 11**, 64-bit.
-- Philter Desktop has a **separate installer for each processor type**: one for **Intel/AMD (x64)**
-  PCs and one for **Windows on ARM (ARM64)** PCs (such as Copilot+ PCs and Snapdragon-based laptops).
-  Most PCs are Intel/AMD; pick the **ARM64** installer only if you know your PC is an ARM device.
-  (Not sure? Open **Settings → System → About** and check **System type**: "ARM-based processor"
-  means ARM64, otherwise choose x64.) Using the matching native installer is what lets on-device name
-  detection run correctly on ARM PCs.
+- **One installer covers every supported PC.** There is nothing to choose based on your hardware:
+  the setup file contains the version built for **Intel/AMD (x64)** PCs *and* the version built for
+  **Windows on ARM (ARM64)** PCs (such as Copilot+ PCs and Snapdragon-based laptops), and installs
+  whichever one matches your PC. That is what lets on-device name detection run correctly on ARM PCs.
 
 Philter Desktop's official, signed installer is **free to download** from
 [philterd.ai](https://www.philterd.ai) and **free for personal use and evaluation**; using it for
@@ -27,10 +25,9 @@ Philter Desktop is delivered as a single **setup program**: one file you downloa
 
 To install:
 
-1. **Download** the [Philter Desktop setup file](https://philterd.ai/philter-desktop) for your
-   processor type (**Intel/AMD x64** or **Windows on ARM / ARM64**; see *What you need* above if
-   you're unsure). (The source is open on GitHub, so a technical user can also build their own copy;
-   see [Licensing & Support](licensing.md).)
+1. **Download** the [Philter Desktop setup file](https://philterd.ai/philter-desktop). There is only
+   one to choose from; it works on both Intel/AMD and ARM PCs. (The source is open on GitHub, so a
+   technical user can also build their own copy; see [Licensing & Support](licensing.md).)
 2. **Double-click** the downloaded file to start the setup wizard.
 3. Follow the wizard's prompts (the next section explains the choices it offers). It lets you launch
    Philter Desktop as soon as it finishes.
@@ -61,6 +58,56 @@ install for all users, which does require an administrator.)
 > then **Run anyway** to continue. If you have
 > any doubt about where a file came from, stop and
 > check with whoever provided it before going further.
+
+### Installing without the wizard
+
+If you would rather not click through the wizard, the setup file can install on its own. This is
+useful when you are setting up several PCs, or installing from a script. Run the setup file from a
+**Command Prompt** or **PowerShell** window with these options:
+
+```
+PhilterDesktop-Setup-<version>.exe /VERYSILENT /SUPPRESSMSGBOXES /CURRENTUSER
+```
+
+(Replace `<version>` with the version in the name of the file you downloaded, and include the folder
+you saved it in.) The three options do this:
+
+- **`/VERYSILENT`** installs with no wizard and no progress window at all.
+- **`/SUPPRESSMSGBOXES`** answers any message the installer would show with its normal default, so
+  nothing sits waiting for a click.
+- **`/CURRENTUSER`** installs for your account only, which is what avoids the administrator prompt.
+
+The installation itself is exactly the one the wizard performs with its default answers, including
+picking the right version for your PC's processor. A few things follow from that, and are worth
+knowing before you use it:
+
+- **No desktop icon, and no starting at sign-in.** Both are off by default, and there is no wizard to
+  turn them on. To include them anyway, add `/TASKS="desktopicon,autostart"`. You can also turn on
+  start-at-sign-in later from inside the program's Settings.
+- **Philter Desktop does not open when the install finishes.** Start it from the Start menu.
+- **The license agreement is not shown, and this is not a way to accept it in advance.** The first
+  time anyone opens Philter Desktop it still shows the license screen and the redaction notice, and
+  they still have to be accepted before the main window appears. See *Your first time opening the
+  program* below.
+
+A few more options you can add if you need them:
+
+- **`/DIR="C:\Some\Folder"`** installs somewhere other than the default location.
+- **`/ALLUSERS`** installs for everyone who uses the PC instead of just you. Use this *instead of*
+  `/CURRENTUSER`; it needs administrator rights, so run it from an elevated Command Prompt or
+  PowerShell window (otherwise Windows shows a prompt, which defeats the point of installing
+  silently).
+- **`/LOG="C:\Some\Folder\install.log"`** writes a record of what the installer did, which is the
+  first thing to look at if a silent install did not produce what you expected.
+
+Installing a newer version silently works the same way: run the new setup file with the same options
+and it replaces the old copy, keeping policies, contexts, settings, and history.
+
+The uninstaller accepts `/VERYSILENT` too. Uninstalling this way never asks whether to remove your
+saved data and **always keeps** your policies, contexts, settings, and history, so an unattended
+uninstall cannot destroy them. To remove that data as well, uninstall normally and answer **Yes** to
+the question (see
+*[What uninstalling removes, and what it leaves behind](#what-uninstalling-removes-and-what-it-leaves-behind)*).
 
 ## Your first time opening the program
 
@@ -155,8 +202,9 @@ When you uninstall, Philter Desktop automatically removes:
 This is your **policies, contexts, settings, and redaction history** (including any sensitive text the
 history captured), kept in a private folder under your user account.
 
-- **Choose No (the default)** to keep it, so a later reinstall still has everything. This is also what
-  happens during an upgrade or a silent/automated uninstall, so you never lose your setup by accident.
+- **Choose No (the default)** to keep it, so a later reinstall still has everything. An upgrade keeps
+  it too, and a silent or automated uninstall does not ask at all and always keeps it, so you never
+  lose your setup by accident.
 - **Choose Yes** to permanently delete that data for your account in one step. (You can also wipe just
   the history from inside the program with **File → Clear Redaction History…**, or delete the folder at
   `%LocalAppData%\PhilterDesktop\` by hand.)

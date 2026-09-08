@@ -48,6 +48,10 @@ namespace PhilterDesktop
         private const int FormatVersion = 1;
         private const string ModeDpapi = "dpapi";
         private const string ModePassphrase = "passphrase";
+        // Retry budget for contended access to data.key: ~1s, far longer than the moment a concurrent
+        // reader or a publishing rename holds the file.
+        private const int RetryAttempts = 50;
+        private const int RetryDelayMs = 20;
 
         private readonly string _keyPath;
         private byte[]? _key;
@@ -66,7 +70,16 @@ namespace PhilterDesktop
             string dir = Path.GetDirectoryName(dbPath) ?? ".";
             Directory.CreateDirectory(dir);
             var store = new DatabaseKeyStore(Path.Combine(dir, KeyFileName));
-            store.IsPassphraseProtected = store.ReadModel()?.Mode == ModePassphrase;
+            // This only probes the mode, so a corrupt key file must not stop construction: unlocking
+            // is what reports it, with a message that says the file is corrupt.
+            try
+            {
+                store.IsPassphraseProtected = store.ReadModel()?.Mode == ModePassphrase;
+            }
+            catch (InvalidDataException)
+            {
+                store.IsPassphraseProtected = false;
+            }
             return store;
         }
 
@@ -125,7 +138,16 @@ namespace PhilterDesktop
         // when no key file exists yet (first run). Throws when the file is passphrase-protected.
         private bool TryLoadDpapiOrThrow()
         {
-            KeyFileModel? model = ReadModel();
+            // ONE read decides everything. Reading twice (once for the model, once for the legacy
+            // blob) let a concurrent first-run writer slip between them: the model read failed
+            // transiently, the file then existed, and the JSON got DPAPI-decrypted as a legacy blob,
+            // failing with "The data is invalid".
+            if (!TryReadKeyFile(out byte[] bytes))
+            {
+                return false; // no key file yet: first run
+            }
+
+            KeyFileModel? model = ParseModel(bytes);
             if (model is not null)
             {
                 if (model.Mode == ModePassphrase)
@@ -133,21 +155,16 @@ namespace PhilterDesktop
                     throw new PassphraseRequiredException();
                 }
                 _key = ProtectedData.Unprotect(Convert.FromBase64String(model.DpapiKey!), null, DataProtectionScope.CurrentUser);
-                CreatedNewKey = false;
-                IsPassphraseProtected = false;
-                return true;
             }
-
-            if (File.Exists(_keyPath))
+            else
             {
                 // Legacy format: the whole file is a DPAPI blob of the raw key.
-                _key = ProtectedData.Unprotect(File.ReadAllBytes(_keyPath), null, DataProtectionScope.CurrentUser);
-                CreatedNewKey = false;
-                IsPassphraseProtected = false;
-                return true;
+                _key = ProtectedData.Unprotect(bytes, null, DataProtectionScope.CurrentUser);
             }
 
-            return false;
+            CreatedNewKey = false;
+            IsPassphraseProtected = false;
+            return true;
         }
 
         /// <summary>Unlocks with a passphrase. Returns false if it's wrong (or not passphrase-protected).</summary>
@@ -281,29 +298,63 @@ namespace PhilterDesktop
             }
         }
 
-        private KeyFileModel? ReadModel()
+        private KeyFileModel? ReadModel() =>
+            TryReadKeyFile(out byte[] bytes) ? ParseModel(bytes) : null;
+
+        // Reads the key file, retrying briefly on transient I/O. A concurrent writer's Move/Replace
+        // makes an open fail for a moment, and callers distinguish "no key file" (first run) from
+        // "this file is a legacy raw blob" by whether this succeeds - so returning false for a
+        // momentary sharing violation would misclassify a perfectly good JSON key file.
+        // Returns false only when the file genuinely is not there.
+        private bool TryReadKeyFile(out byte[] bytes)
         {
-            if (!File.Exists(_keyPath))
+            for (int attempt = 0; ; attempt++)
             {
-                return null;
+                try
+                {
+                    bytes = File.ReadAllBytes(_keyPath);
+                    return true;
+                }
+                catch (FileNotFoundException)
+                {
+                    bytes = [];
+                    return false;
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    bytes = [];
+                    return false;
+                }
+                catch (Exception e) when ((e is IOException or UnauthorizedAccessException) && attempt < RetryAttempts)
+                {
+                    Thread.Sleep(RetryDelayMs);
+                }
+            }
+        }
+
+        // Parses the key file's bytes. Null means the content is a legacy raw DPAPI blob rather than
+        // JSON. Pure: it never conflates "could not read" with "not JSON".
+        private static KeyFileModel? ParseModel(byte[] bytes)
+        {
+            int i = 0;
+            while (i < bytes.Length && bytes[i] is 0x20 or 0x09 or 0x0A or 0x0D or 0xEF or 0xBB or 0xBF)
+            {
+                i++; // skip whitespace / UTF-8 BOM
+            }
+            if (i >= bytes.Length || bytes[i] != (byte)'{')
+            {
+                return null; // legacy raw DPAPI blob, not JSON
             }
             try
             {
-                byte[] bytes = File.ReadAllBytes(_keyPath);
-                int i = 0;
-                while (i < bytes.Length && bytes[i] is 0x20 or 0x09 or 0x0A or 0x0D or 0xEF or 0xBB or 0xBF)
-                {
-                    i++; // skip whitespace / UTF-8 BOM
-                }
-                if (i >= bytes.Length || bytes[i] != (byte)'{')
-                {
-                    return null; // legacy raw DPAPI blob, not JSON
-                }
                 return JsonSerializer.Deserialize<KeyFileModel>(bytes);
             }
-            catch
+            catch (JsonException)
             {
-                return null;
+                // Starts with '{' but will not parse: the file is corrupt, not legacy. Say so rather
+                // than letting the caller try to DPAPI-decrypt JSON and report "The data is invalid".
+                throw new InvalidDataException(
+                    "The database key file is corrupt: it looks like JSON but could not be parsed.");
             }
         }
 
@@ -317,13 +368,24 @@ namespace PhilterDesktop
             try
             {
                 File.WriteAllText(tmp, json);
-                if (File.Exists(_keyPath))
+                // Publish with an atomic replacing rename. NOT File.Replace: that deletes the target
+                // before renaming, so data.key briefly does not exist, and a reader catching that
+                // window decides it is a first run and generates a SECOND key - leaving the database
+                // encrypted with one key and data.key holding another. File.Move(overwrite: true) is
+                // MoveFileEx(MOVEFILE_REPLACE_EXISTING): readers only ever see the old file or the new
+                // one. It still needs delete access, which a concurrent reader denies for an instant,
+                // so retry rather than failing the caller's passphrase change.
+                for (int attempt = 0; ; attempt++)
                 {
-                    File.Replace(tmp, _keyPath, null);
-                }
-                else
-                {
-                    File.Move(tmp, _keyPath);
+                    try
+                    {
+                        File.Move(tmp, _keyPath, overwrite: true);
+                        break;
+                    }
+                    catch (Exception e) when ((e is IOException or UnauthorizedAccessException) && attempt < RetryAttempts)
+                    {
+                        Thread.Sleep(RetryDelayMs);
+                    }
                 }
             }
             finally
