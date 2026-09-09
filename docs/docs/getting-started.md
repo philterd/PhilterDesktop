@@ -28,17 +28,41 @@ To install:
 1. **Download** the [Philter Desktop setup file](https://philterd.ai/philter-desktop). There is only
    one to choose from; it works on both Intel/AMD and ARM PCs. (The source is open on GitHub, so a
    technical user can also build their own copy; see [Licensing & Support](licensing.md).)
-2. **Double-click** the downloaded file to start the setup wizard.
-3. Follow the wizard's prompts (the next section explains the choices it offers). It lets you launch
-   Philter Desktop as soon as it finishes.
+2. **Double-click** the downloaded file to start the setup wizard. It first asks whether to install
+   **for me only** or **for all users**; choose **Install for me only**, which needs no administrator
+   permission.
+3. Read the **License Agreement**, choose **I accept the agreement**, and click **Next**.
+
+    ![The setup wizard's License Agreement page, showing the Philterd Commercial License Agreement with "I accept the agreement" selected](img/install-license.png)
+
+    *The license agreement, shown before anything is installed. (Philter Desktop shows its licenses again the first time you open the program.)*
+
+4. On the **Select Destination Location** page, click **Next** to accept the suggested folder. (There
+   is no reason to change it unless you keep programs somewhere particular.)
+5. On the **Select Additional Tasks** page, tick any optional extras you want and click **Next**. Both
+   are off by default and both are safe to leave alone; the next section explains what they do.
+
+    ![The setup wizard's Select Additional Tasks page, with unticked checkboxes for a desktop shortcut and for starting automatically at sign-in](img/options.png)
+
+    *The two optional extras: a desktop shortcut, and starting automatically when you sign in.*
+
+6. On the **Ready to Install** page, click **Install**. This is your last chance to go **Back** and
+   change an answer.
+
+    ![The setup wizard's Ready to Install page, with Back, Install, and Cancel buttons](img/install.png)
+
+    *The final confirmation before the files are copied.*
+
+7. When the files have been copied, the last page offers to **launch Philter Desktop** right away.
+   Leave that ticked (or untick it) and click **Finish**.
 
 Once it is done, Philter Desktop appears in your Start menu, and on your desktop if you chose that
 option.
 
 ### The choices the setup wizard offers
 
-The setup wizard offers a couple of optional checkboxes; you can leave them
-at their defaults:
+The **Select Additional Tasks** page shown above offers a couple of optional checkboxes; you can leave
+them at their defaults:
 
 - **Create a desktop icon**: adds a Philter Desktop shortcut to your desktop. (Off by default.)
 - **Start Philter Desktop automatically when I sign in**: has Philter Desktop launch quietly each
