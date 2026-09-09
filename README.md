@@ -12,20 +12,16 @@ no internet connection.
 
 ## Get Philter Desktop
 
-Download the official signed build from
-**[philterd.ai/philter-desktop/download/](https://philterd.ai/philter-desktop/download/)**. One
-installer covers both Intel/AMD (x64) and ARM64 PCs, and it installs cleanly with no Windows
-SmartScreen warning.
+Download Philter Desktop installer at
+**[philterd.ai/philter-desktop/download/](https://philterd.ai/philter-desktop/download/)**.
 
 **Personal and evaluation use is free.** Commercial use is a per-user subscription (currently **$100
 per user, per year**), which also covers direct support and official updates through your
-subscription term. Everyone runs the same signed build. There are no license keys to enter.
+subscription term. There are no license keys to enter.
 
-Its **source code is free and open source** under the Apache License 2.0, so you (or your IT
+The Philter Desktop source code is open source under the Apache License 2.0, so you (or your IT
 department) can inspect exactly what it does, confirm it works entirely on your own machine and never
-sends your documents anywhere, and [build and run your own copy](#building-from-source) under that
-license. **This repository hosts the source code, not ready-made installers**, which come from
-philterd.ai.
+sends your documents anywhere.
 
 > *Philter* is a trademark of Philterd, LLC; Philterd's official builds are distributed under the
 > Philter brand.
