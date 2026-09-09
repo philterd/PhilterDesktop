@@ -23,6 +23,16 @@ The Philter Desktop source code is open source under the Apache License 2.0, so 
 department) can inspect exactly what it does, confirm it works entirely on your own machine and never
 sends your documents anywhere.
 
+## Documentation
+
+The **[Philter Desktop user guide](https://philterd.github.io/PhilterDesktop/)** covers installing,
+redacting each supported document type, policies, contexts, watched folders, and settings.
+
+- **[Getting Started](https://philterd.github.io/PhilterDesktop/getting-started/)** — installing and
+  redacting your first document.
+- **[Building from Source](https://philterd.github.io/PhilterDesktop/building-from-source/)** —
+  building, running, the test suite, and building the setup installer.
+
 ## Building from source
 
 ### Prerequisites
@@ -34,32 +44,14 @@ sends your documents anywhere.
 The redaction engine ([Phileas](https://github.com/philterd/phileas-dotnet)) is consumed as the
 `Philterd.Phileas` NuGet package, so no separate clone or build is required.
 
-### Building
-
 ```bash
 git clone https://github.com/philterd/PhilterDesktop
 cd PhilterDesktop
 dotnet build PhilterDesktop.slnx
 ```
 
-`PhilterDesktop.slnx` contains two projects:
-
-- **PhilterDesktop** — the WinForms application (UI, data access, redaction, and the policy editor)
-- **PhilterDesktop.Tests** — the xUnit test suite
-
-To build the distributable **setup installer**, see [`Installer/README.md`](Installer/README.md).
-
-### Running
-
-- Press F5 in Visual Studio, or
-- Run from the command line:
-  ```bash
-  dotnet run --project PhilterDesktop/PhilterDesktop.csproj
-  ```
-
-Word (`.docx`) redaction uses the open-source [Open XML SDK](https://github.com/dotnet/Open-XML-SDK)
-— no license key or third-party component is required. All supported formats (`.txt`, `.docx`,
-`.pdf`) redact out of the box.
+For running, testing, the on-device model, and building the setup installer, see
+[Building from Source](https://philterd.github.io/PhilterDesktop/building-from-source/).
 
 ## Features
 
@@ -100,37 +92,6 @@ Each filter supports multiple replacement strategies:
 - **Random replacement** — replace with a randomly generated value
 - **Conditional filtering** — apply a strategy only when a condition is met
 - **Scope control** — document-level or context-level replacement
-
-## Testing
-
-```bash
-dotnet test PhilterDesktop.Tests/PhilterDesktop.Tests.csproj
-```
-
-The suite covers the data layer (LiteDB repositories), the redaction service, Word redaction
-(via the Open XML SDK — no license needed, so these always run), the editor↔engine policy
-contract, and form construction smoke tests. On-device name-detection tests are skipped when the
-PhEye model is not bundled.
-The same build-and-test flow runs in CI on every push and pull request
-(`.github/workflows/ci.yml`).
-
-### Testing before release
-
-Before publishing a release, run the manual checklist in [`RELEASE_TESTING.md`](RELEASE_TESTING.md): it
-covers installing on a clean Windows machine and smoke-testing the app. Most of the functional
-verification is automated by the built-in self-test — run it against the installed (or built) binary:
-
-```
-PhilterDesktop.exe --selftest
-```
-
-It redacts a small built-in corpus (generated at runtime — nothing is bundled) across every supported
-text-based format and verifies each output is free of residual PII, printing `Result: PASS (n/n)` and
-exiting `0` on success. PDF is not covered by the self-test and is checked manually per the checklist.
-
-`PhilterDesktop.exe --smoketest` is a separate release check that confirms the bundled license agreement
-(`philterd-eula.txt`, refreshed by the installer build) still matches the live copy at
-`https://philterd.ai/philterd-eula.txt` (requires network); it exits `0` on a match.
 
 ## License
 
