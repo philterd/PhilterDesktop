@@ -1,7 +1,10 @@
 # Philter Desktop
 
-A Windows desktop application for redacting personally identifiable information (PII) from
-plain text (`.txt`), Microsoft Word (`.docx`), and PDF (`.pdf`) documents.
+A Windows desktop application for redacting personally identifiable information (PII) from PDF,
+Microsoft Word (`.docx`), Excel (`.xlsx`), CSV, plain text (`.txt`), rich text (`.rtf`), and email
+(`.eml`, `.msg`) files. Scanned, image-only PDFs are read with on-device OCR, so text baked into a
+scan can be redacted too. Detection and redaction run on your own computer, and the app works with
+no internet connection.
 
 ![build-and-test](https://github.com/philterd/PhilterDesktop/actions/workflows/ci.yml/badge.svg)
 
@@ -9,16 +12,20 @@ plain text (`.txt`), Microsoft Word (`.docx`), and PDF (`.pdf`) documents.
 
 ## Get Philter Desktop
 
-Philter Desktop is a **commercial product** from Philterd. The **official, signed build — with
-support — is a per-user subscription** (currently **$100 per user, per year**), provided to
-subscribers from **[philterd.ai](https://www.philterd.ai)** (it installs cleanly, with no Windows
-SmartScreen warning).
+Download the official signed build from
+**[philterd.ai/philter-desktop/download/](https://philterd.ai/philter-desktop/download/)**. One
+installer covers both Intel/AMD (x64) and ARM64 PCs, and it installs cleanly with no Windows
+SmartScreen warning.
 
-Its **source code is free and open source** under the Apache License 2.0 — you (or your IT
+**Personal and evaluation use is free.** Commercial use is a per-user subscription (currently **$100
+per user, per year**), which also covers direct support and official updates through your
+subscription term. Everyone runs the same signed build. There are no license keys to enter.
+
+Its **source code is free and open source** under the Apache License 2.0, so you (or your IT
 department) can inspect exactly what it does, confirm it works entirely on your own machine and never
 sends your documents anywhere, and [build and run your own copy](#building-from-source) under that
-license. **This repository hosts the source code, not ready-made installers** — the official build is
-provided to subscribers from Philterd.
+license. **This repository hosts the source code, not ready-made installers**, which come from
+philterd.ai.
 
 > *Philter* is a trademark of Philterd, LLC; Philterd's official builds are distributed under the
 > Philter brand.
@@ -31,7 +38,7 @@ provided to subscribers from Philterd.
 - Windows 10/11
 - Visual Studio 2022 (17.12 or later) — optional; the CLI is sufficient
 
-The redaction engine ([Phileas](https://github.com/philterd/phileas-net)) is consumed as the
+The redaction engine ([Phileas](https://github.com/philterd/phileas-dotnet)) is consumed as the
 `Philterd.Phileas` NuGet package, so no separate clone or build is required.
 
 ### Building
