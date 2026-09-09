@@ -13,18 +13,15 @@ no internet connection.
 ## Get Philter Desktop
 
 Download Philter Desktop installer at
-**[philterd.ai/philter-desktop/download/](https://philterd.ai/philter-desktop/download/)**.
+[https://philterd.ai/philter-desktop/download/](https://philterd.ai/philter-desktop/download/).
 
-**Personal and evaluation use is free.** Commercial use is a per-user subscription (currently **$100
-per user, per year**), which also covers direct support and official updates through your
+Personal and evaluation use is free. Commercial use is a per-user subscription (currently $100
+per user, per year), which also covers direct support and official updates through your
 subscription term. There are no license keys to enter.
 
 The Philter Desktop source code is open source under the Apache License 2.0, so you (or your IT
 department) can inspect exactly what it does, confirm it works entirely on your own machine and never
 sends your documents anywhere.
-
-> *Philter* is a trademark of Philterd, LLC; Philterd's official builds are distributed under the
-> Philter brand.
 
 ## Building from source
 
@@ -137,11 +134,10 @@ exiting `0` on success. PDF is not covered by the self-test and is checked manua
 
 ## License
 
-The **source code** is open source under the **Apache License, Version 2.0** — you may inspect,
-modify, and build it under that license. See [`LICENSE`](LICENSE) for the full text.
+The source code is open source under the Apache License, Version 2.0. See [`LICENSE`](LICENSE).
 
-The **official Philter Desktop product** — the signed, maintained build and the support that comes
-with it — is a paid **per-user subscription** from Philterd, provided to subscribers under the
+The official Philter Desktop product - the signed, maintained build and the support that comes
+with it - is a paid **per-user subscription** from Philterd, provided to subscribers under the
 Philterd Commercial License Agreement (see [Get Philter Desktop](#get-philter-desktop) and
 [philterd.ai](https://www.philterd.ai)). That agreement covers the official product and does not limit
 your rights in the open-source code under the Apache license. ***Philter*** is a trademark of
