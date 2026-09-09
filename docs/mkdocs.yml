@@ -1,7 +1,7 @@
 site_name: Philter Desktop
 site_description: User documentation for Philter Desktop, a Windows application for redacting PII from documents
 site_url: https://philterd.github.io/PhilterDesktop/
-repo_url: https://www.github.com/philterd/PhilterDesktop
+repo_url: https://github.com/philterd/PhilterDesktop
 edit_uri: edit/main/docs/docs
 copyright: Copyright 2026 Philterd, LLC
 site_author: philterd
@@ -22,7 +22,7 @@ extra:
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/company/philterd/
     - icon: fontawesome/brands/github
-      link: https://www.github.com/philterd/
+      link: https://github.com/philterd/
 
 markdown_extensions:
   - admonition
