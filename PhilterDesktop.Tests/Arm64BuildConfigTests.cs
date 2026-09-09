@@ -83,10 +83,10 @@ namespace PhilterDesktop.Tests
             Assert.Contains("PhilterDesktop-Setup-$Version.exe", script);
             Assert.DoesNotContain("PhilterDesktop-Setup-$Version-$archLabel.exe", script);
 
-            // The Output cleanup must not be arch-scoped any more, or stale per-arch installers
-            // from an older build would linger next to the combined one.
-            Assert.Contains("PhilterDesktop-Setup-*.exe", script);
-            Assert.DoesNotContain("PhilterDesktop-Setup-*-$archLabel.exe", script);
+            // The Output cleanup must stay scoped to the version being built: a wildcard over every
+            // version would delete previously released installers archived there.
+            Assert.DoesNotContain("PhilterDesktop-Setup-*.exe", script);
+            Assert.Contains("PhilterDesktop-Setup-$Version-arm64.exe", script);
         }
 
         [Fact]

@@ -392,10 +392,14 @@ if (-not ($publishDirs.ContainsKey('x64') -and $publishDirs.ContainsKey('arm64')
     return
 }
 
-# Clear previous installers (any version) so Output holds only the one just built.
+# Clear only THIS version's installer, so previously built releases archived in Output survive a
+# rebuild. (ISCC overwrites it anyway; this also sweeps the per-arch names used before the x64 and
+# arm64 builds were combined into one installer.)
 if (Test-Path $outputDir) {
-    Write-Host "Clearing previous installers in $outputDir ..."
-    Remove-Item (Join-Path $outputDir "PhilterDesktop-Setup-*.exe") -Force -ErrorAction SilentlyContinue
+    Write-Host "Clearing any existing $Version installer in $outputDir ..."
+    foreach ($stale in @("PhilterDesktop-Setup-$Version.exe", "PhilterDesktop-Setup-$Version-x64.exe", "PhilterDesktop-Setup-$Version-arm64.exe")) {
+        Remove-Item (Join-Path $outputDir $stale) -Force -ErrorAction SilentlyContinue
+    }
 }
 
 # Pass both TFM/RID-derived publish dirs so the .iss packages the right folders (its built-in defaults
