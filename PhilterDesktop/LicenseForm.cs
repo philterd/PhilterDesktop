@@ -66,6 +66,13 @@ namespace PhilterDesktop
             }
         }
 
+        /// <summary>Keeps the dialog on screen at high display scaling.</summary>
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            UiState.FitToScreen(this);
+        }
+
         /// <summary>Whether the license dialog should be shown on this launch (i.e. not yet accepted).</summary>
         public static bool ShouldShow() => !Acknowledgements.Store.HasAccepted(Acknowledgements.LicenseKey);
 

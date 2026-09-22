@@ -58,6 +58,13 @@ namespace PhilterDesktop
             }
         }
 
+        /// <summary>Keeps the dialog on screen at high display scaling.</summary>
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            UiState.FitToScreen(this);
+        }
+
         /// <summary>Opens the redaction-accuracy documentation page in the user's browser.</summary>
         private void OnLearnMoreClicked(object? sender, LinkLabelLinkClickedEventArgs e)
         {

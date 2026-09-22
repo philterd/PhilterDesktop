@@ -84,5 +84,37 @@ namespace PhilterDesktop.Tests
         {
             Assert.Null(UiState.ParseWidths(text, 4));
         }
+
+        private static readonly Rectangle WorkingArea = new Rectangle(0, 0, 1366, 728); // 768 minus a 40px taskbar
+
+        [Fact]
+        public void FitToWorkingArea_AlreadyFits_Unchanged()
+        {
+            var bounds = new Rectangle(100, 50, 640, 480);
+            Assert.Equal(bounds, UiState.FitToWorkingArea(bounds, WorkingArea));
+        }
+
+        [Fact]
+        public void FitToWorkingArea_TallerThanScreen_ShrinksAndStaysAboveTaskbar()
+        {
+            var fitted = UiState.FitToWorkingArea(new Rectangle(300, -60, 1100, 1050), WorkingArea);
+            Assert.Equal(new Rectangle(266, 0, 1100, 728), fitted);
+            Assert.True(WorkingArea.Contains(fitted));
+        }
+
+        [Fact]
+        public void FitToWorkingArea_HangingOffBottomRight_MovedInside()
+        {
+            var fitted = UiState.FitToWorkingArea(new Rectangle(1000, 600, 640, 480), WorkingArea);
+            Assert.Equal(new Rectangle(726, 248, 640, 480), fitted);
+        }
+
+        [Fact]
+        public void FitToWorkingArea_SecondMonitor_StaysOnThatMonitor()
+        {
+            var secondary = new Rectangle(1920, 0, 1920, 1040);
+            var fitted = UiState.FitToWorkingArea(new Rectangle(2200, 100, 700, 1300), secondary);
+            Assert.Equal(new Rectangle(2200, 0, 700, 1040), fitted);
+        }
     }
 }
