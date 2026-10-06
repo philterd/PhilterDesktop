@@ -109,6 +109,26 @@ namespace PhilterDesktop
             return false;
         }
 
+        /// <summary>Shrinks and moves <paramref name="bounds"/> to fit inside <paramref name="workingArea"/>.</summary>
+        public static Rectangle FitToWorkingArea(Rectangle bounds, Rectangle workingArea)
+        {
+            int width = Math.Min(bounds.Width, workingArea.Width);
+            int height = Math.Min(bounds.Height, workingArea.Height);
+            int x = Math.Clamp(bounds.X, workingArea.Left, workingArea.Right - width);
+            int y = Math.Clamp(bounds.Y, workingArea.Top, workingArea.Bottom - height);
+            return new Rectangle(x, y, width, height);
+        }
+
+        /// <summary>Fits <paramref name="form"/> onto its monitor's working area. Call from <c>OnLoad</c>.</summary>
+        public static void FitToScreen(Form form)
+        {
+            Rectangle workingArea = Screen.FromControl(form).WorkingArea;
+            form.MinimumSize = new Size(
+                Math.Min(form.MinimumSize.Width, workingArea.Width),
+                Math.Min(form.MinimumSize.Height, workingArea.Height));
+            form.Bounds = FitToWorkingArea(form.Bounds, workingArea);
+        }
+
         /// <summary>Formats column widths as a comma-separated string, e.g. "350,180,120,120".</summary>
         public static string FormatWidths(IEnumerable<int> widths) => string.Join(",", widths);
 

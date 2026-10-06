@@ -368,6 +368,36 @@ namespace PhilterDesktop.Tests
         });
 
         [Fact]
+        public void LicenseForm_IsResizable_WithButtonsPinnedToBottom() => Sta(() =>
+        {
+            using var f = new LicenseForm();
+            _ = f.Handle;
+            const System.Reflection.BindingFlags Flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var agree = (System.Windows.Forms.Button)typeof(LicenseForm).GetField("_agree", Flags)!.GetValue(f)!;
+            Assert.Equal(System.Windows.Forms.FormBorderStyle.Sizable, f.FormBorderStyle);
+
+            f.Size = f.MinimumSize;
+            f.PerformLayout();
+            var buttonBounds = f.RectangleToClient(agree.RectangleToScreen(agree.ClientRectangle));
+            Assert.True(f.ClientRectangle.Contains(buttonBounds));
+        });
+
+        [Fact]
+        public void RedactionNoticeForm_IsResizable_WithButtonPinnedToBottom() => Sta(() =>
+        {
+            using var f = new RedactionNoticeForm();
+            _ = f.Handle;
+            const System.Reflection.BindingFlags Flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var ok = (System.Windows.Forms.Button)typeof(RedactionNoticeForm).GetField("_ok", Flags)!.GetValue(f)!;
+            Assert.Equal(System.Windows.Forms.FormBorderStyle.Sizable, f.FormBorderStyle);
+
+            f.Size = f.MinimumSize;
+            f.PerformLayout();
+            var buttonBounds = f.RectangleToClient(ok.RectangleToScreen(ok.ClientRectangle));
+            Assert.True(f.ClientRectangle.Contains(buttonBounds));
+        });
+
+        [Fact]
         public void PassphraseForm_Constructs() => Sta(() =>
         {
             using var f = new PassphraseForm(PassphraseFormMode.Set);
