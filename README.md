@@ -12,8 +12,9 @@ no internet connection.
 
 ## Get Philter Desktop
 
-Download Philter Desktop installer at
-[https://philterd.ai/philter-desktop/download/](https://philterd.ai/philter-desktop/download/).
+Install Philter Desktop from the
+[Microsoft Store](https://apps.microsoft.com/store/detail/XPFMJ16DZWWFV5), or download the installer
+at [https://philterd.ai/philter-desktop/download/](https://philterd.ai/philter-desktop/download/).
 
 Personal and evaluation use is free. Commercial use is a per-user subscription (currently $100
 per user, per year), which also covers direct support and official updates through your
