@@ -46,7 +46,7 @@ namespace PhilterDesktop.PolicyEditing
         private const int LastStep = 3;
 
         private readonly Panel _content = new() { Dock = DockStyle.Fill, AutoScroll = true, Padding = new Padding(16, 12, 16, 8) };
-        private readonly Label _heading = new() { Dock = DockStyle.Top, AutoSize = false, Height = 36, Padding = new Padding(16, 8, 16, 0), Font = new Font(ModernTheme.UiFont.FontFamily, 11f, FontStyle.Bold) };
+        private readonly Label _heading = new() { Dock = DockStyle.Top, Padding = new Padding(16, 8, 16, 0), Font = new Font(ModernTheme.UiFont.FontFamily, 11f, FontStyle.Bold) };
         private readonly Button _back = new() { Text = "Back", Size = ModernTheme.StandardButtonSize, Enabled = false };
         private readonly Button _next = new() { Text = "Next", Size = ModernTheme.StandardButtonSize };
         private readonly Button _cancel = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, Size = ModernTheme.StandardButtonSize };
@@ -70,7 +70,7 @@ namespace PhilterDesktop.PolicyEditing
             StartPosition = FormStartPosition.CenterParent;
             ClientSize = new Size(640, 600);
 
-            var bar = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = 52, Padding = new Padding(8) };
+            var bar = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, AutoSize = true, Padding = new Padding(8) };
             _cancel.Margin = _next.Margin = _back.Margin = new Padding(6, 3, 0, 3);
             bar.Controls.Add(_cancel);
             bar.Controls.Add(_next);
@@ -83,6 +83,7 @@ namespace PhilterDesktop.PolicyEditing
             _back.Click += (_, _) => { if (_step > 0) { _step--; ShowStep(); } };
             _next.Click += OnNext;
 
+            ModernTheme.FitHeightToText(_heading);
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_next);
 
@@ -265,7 +266,8 @@ namespace PhilterDesktop.PolicyEditing
             var col = Column();
 
             col.Controls.Add(new Label { Text = "Policy name:", AutoSize = true, Margin = new Padding(3, 4, 3, 2) });
-            var nameBox = new TextBox { Text = _policyName, Width = 320, Margin = new Padding(3, 0, 3, 12) };
+            // Steps are built after the form has been DPI-scaled, so fixed sizes are scaled here.
+            var nameBox = new TextBox { Text = _policyName, Width = LogicalToDeviceUnits(320), Margin = new Padding(3, 0, 3, 12) };
             nameBox.TextChanged += (_, _) => _policyName = nameBox.Text;
             col.Controls.Add(nameBox);
 
@@ -277,7 +279,7 @@ namespace PhilterDesktop.PolicyEditing
                 Text = "This is a starting point, not a compliance guarantee. Review the policy and always check " +
                        "redacted documents before relying on them.",
                 AutoSize = true,
-                MaximumSize = new Size(500, 0),
+                MaximumSize = new Size(LogicalToDeviceUnits(500), 0),
                 ForeColor = Color.FromArgb(176, 92, 0),
                 Margin = new Padding(3, 4, 3, 4)
             });

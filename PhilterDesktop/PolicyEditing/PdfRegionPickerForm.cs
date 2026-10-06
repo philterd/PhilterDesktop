@@ -27,7 +27,7 @@ namespace PhilterDesktop.PolicyEditing
     {
         private readonly byte[] _pdf;
         private readonly PdfPageView _view = new() { Dock = DockStyle.Fill };
-        private readonly Label _status = new() { Dock = DockStyle.Bottom, Height = 24, Padding = new Padding(6, 4, 6, 0) };
+        private readonly Label _status = new() { Dock = DockStyle.Bottom, Padding = new Padding(6, 4, 6, 0) };
 
         /// <summary>The regions drawn during this session (valid on <see cref="DialogResult.OK"/>).</summary>
         public List<BoundingBox> Boxes { get; private set; } = new();
@@ -51,7 +51,7 @@ namespace PhilterDesktop.PolicyEditing
             var done = new Button { Text = "&Done", DialogResult = DialogResult.OK, AutoSize = true };
             done.Click += (_, _) => Boxes = _view.OverlayRegions.Select(ToBox).ToList();
             var cancel = new Button { Text = "&Cancel", DialogResult = DialogResult.Cancel, AutoSize = true };
-            var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = 40, Padding = new Padding(6) };
+            var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, AutoSize = true, Padding = new Padding(6) };
             buttons.Controls.Add(cancel);
             buttons.Controls.Add(done);
 
@@ -60,6 +60,8 @@ namespace PhilterDesktop.PolicyEditing
             Controls.Add(buttons);
             AcceptButton = done;
             CancelButton = cancel;
+            ModernTheme.FitHeightToText(_status);
+            ModernTheme.EnableDpiScaling(this);
         }
 
         protected override void OnLoad(EventArgs e)

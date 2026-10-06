@@ -84,7 +84,7 @@ namespace PhilterDesktop
 
         public PdfPageView()
         {
-            var nav = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 40, Padding = new Padding(6, 4, 6, 4) };
+            var nav = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(6, 4, 6, 4) };
             _prev.Click += (_, _) => ShowPage(_page - 1);
             _next.Click += (_, _) => ShowPage(_page + 1);
             _fit.Click += (_, _) => { _fitMode = true; ApplyZoom(); };

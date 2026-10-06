@@ -37,8 +37,32 @@ namespace PhilterDesktop
         public WatchedFolderForm()
         {
             InitializeComponent();
+            ArrangeFileTypes();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_ok);
+        }
+
+        // The designer places the file-type boxes at fixed positions, which overlap once display scaling
+        // grows their text. A 3-column grid sizes each column to its widest box (and lines them up).
+        private void ArrangeFileTypes()
+        {
+            var grid = new TableLayoutPanel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                ColumnCount = 3,
+                RowCount = 2,
+                Location = _typePdf.Location,
+                Margin = Padding.Empty
+            };
+            CheckBox[] boxes = { _typePdf, _typeDocx, _typeTxt, _typeRtf, _typeSpreadsheet, _typeEmail };
+            foreach (CheckBox box in boxes)
+            {
+                Controls.Remove(box);
+                box.Margin = new Padding(0, 0, LogicalToDeviceUnits(10), LogicalToDeviceUnits(2));
+                grid.Controls.Add(box);
+            }
+            Controls.Add(grid);
         }
 
         public WatchedFolderForm(PolicyRepository policyRepository, ContextRepository contextRepository,

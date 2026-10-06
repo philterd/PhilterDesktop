@@ -58,6 +58,8 @@ namespace PhilterDesktop
             DatabaseKeyStore? keyStore = null)
         {
             InitializeComponent();
+            ArrangeLoggingGroup();
+            ArrangeEmailTab();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(btnSave);
             _settingsRepository = settingsRepository;
@@ -79,9 +81,7 @@ namespace PhilterDesktop
                 LinkLabel philterLink = Links.CreateLink(
                     "Automating redaction across systems or at scale? Philter runs it in your data pipeline →",
                     Links.PhilterUrl("watched-folders"));
-                philterLink.Location = new Point(6, 292);
-                tabWatched.Controls.Add(philterLink);
-                philterLink.BringToFront();
+                ArrangeWatchedTab(philterLink);
             }
 
             // The security tab manages the database passphrase; hide it without a key store.
@@ -89,6 +89,76 @@ namespace PhilterDesktop
             {
                 tabControl.TabPages.Remove(tabSecurity);
             }
+        }
+
+        // The designer places these at fixed positions; at higher display scaling their text outgrows the
+        // gaps and they overlap. Stack them in auto-sizing layout panels instead. Runs after the designer
+        // has scaled the controls, so any new spacing is scaled here.
+        private void ArrangeWatchedTab(LinkLabel philterLink)
+        {
+            var buttons = new FlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Margin = Padding.Empty };
+            buttons.Controls.AddRange(new Control[] { btnAddWatched, btnEditWatched, btnRemoveWatched, btnViewLog });
+
+            var concurrency = new FlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Margin = Padding.Empty };
+            lblConcurrency.Anchor = AnchorStyles.Left; // vertically centered on the combo
+            concurrency.Controls.AddRange(new Control[] { lblConcurrency, cmbConcurrency });
+
+            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 5 };
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // the list takes the spare height
+            for (int i = 0; i < 4; i++)
+            {
+                layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            }
+            listWatched.Dock = DockStyle.Fill;
+            lblStartupHint.Margin = new Padding(LogicalToDeviceUnits(14), 0, 0, 0);
+            philterLink.Margin = new Padding(LogicalToDeviceUnits(2), LogicalToDeviceUnits(6), 0, 0);
+            layout.Controls.Add(listWatched, 0, 0);
+            layout.Controls.Add(buttons, 0, 1);
+            layout.Controls.Add(lblStartupHint, 0, 2);
+            layout.Controls.Add(concurrency, 0, 3);
+            layout.Controls.Add(philterLink, 0, 4);
+
+            tabWatched.Controls.Clear();
+            tabWatched.Controls.Add(layout);
+        }
+
+        // Each option is a checkbox with a wrapping hint under it; hints wrap to different heights at
+        // different scaling, so stack them top to bottom (keeping each one's indent) rather than at fixed Ys.
+        private void ArrangeEmailTab()
+        {
+            var stack = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true
+            };
+            Control[] inOrder =
+            {
+                chkScrubEmailHeaders, lblEmailInfo, chkRemoveCommonHeaders, lblCommonHeadersInfo,
+                chkRemoveDateHeader, lblDateHeaderInfo, chkRemoveAttachments, chkRemoveInlineImages, lblAttachmentsInfo
+            };
+            int groupGap = LogicalToDeviceUnits(12);
+            int hintGap = LogicalToDeviceUnits(3);
+            for (int i = 0; i < inOrder.Length; i++)
+            {
+                Control c = inOrder[i];
+                int top = i == 0 ? c.Top : (c is CheckBox && c.Left <= chkScrubEmailHeaders.Left ? groupGap : hintGap);
+                c.Margin = new Padding(c.Left, top, 0, 0);
+                stack.Controls.Add(c);
+            }
+            tabEmail.Controls.Clear();
+            tabEmail.Controls.Add(stack);
+        }
+
+        private void ArrangeLoggingGroup()
+        {
+            var row = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, Padding = new Padding(LogicalToDeviceUnits(12), 0, 0, 0) };
+            chkEnableLogging.Anchor = AnchorStyles.Left; // vertically centered on the buttons
+            chkEnableLogging.Margin = new Padding(0, 0, LogicalToDeviceUnits(12), 0);
+            row.Controls.AddRange(new Control[] { chkEnableLogging, btnOpenLog, btnClearLog });
+            groupBoxLogging.Controls.Clear();
+            groupBoxLogging.Controls.Add(row);
         }
 
         private void SettingsForm_Load(object sender, EventArgs e)

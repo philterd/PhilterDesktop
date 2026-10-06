@@ -18,3 +18,21 @@
 // threads at once; running tests serially avoids intermittent "Member not found on
 // BsonMapper" errors. The suite is small, so this has negligible cost.
 [assembly: Xunit.CollectionBehavior(DisableTestParallelization = true)]
+
+namespace PhilterDesktop.Tests
+{
+    internal static class WinFormsStartup
+    {
+        // Start WinForms exactly as Program.Main does (PerMonitorV2, visual styles, theme font) so forms
+        // measure and scale as they do for users, and so tests can simulate a move to a high-DPI monitor.
+        // Must run before any window is created.
+        [System.Runtime.CompilerServices.ModuleInitializer]
+        internal static void Initialize()
+        {
+            System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.PerMonitorV2);
+            System.Windows.Forms.Application.EnableVisualStyles();
+            System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
+            System.Windows.Forms.Application.SetDefaultFont(ModernTheme.UiFont);
+        }
+    }
+}

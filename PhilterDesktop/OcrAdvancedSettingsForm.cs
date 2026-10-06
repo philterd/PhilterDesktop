@@ -44,122 +44,114 @@ namespace PhilterDesktop
             MaximizeBox = false;
             MinimizeBox = false;
             ShowInTaskbar = false;
-            ClientSize = new Size(440, 320);
+            // The dialog fits its content: a fixed-width table whose rows grow with their (wrapping) text.
+            AutoSize = true;
+            AutoSizeMode = AutoSizeMode.GrowAndShrink;
 
-            var intro = new Label
+            var layout = new TableLayoutPanel
             {
-                Location = new Point(14, 12),
-                Size = new Size(412, 34),
-                Text = "These control when a PDF page is read with OCR. The defaults suit most documents; " +
-                       "lower values mean OCR runs on more pages (slower, but less likely to miss anything)."
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                ColumnCount = 3,
+                MinimumSize = new Size(440, 0),
+                MaximumSize = new Size(440, 0),
+                Padding = new Padding(11, 9, 11, 9)
             };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
-            var textLabel = new Label
+            void AddWide(Control control)
             {
-                Location = new Point(14, 58),
-                Size = new Size(300, 20),
-                Text = "Treat a page as scanned when its text covers under:"
-            };
+                layout.Controls.Add(control);
+                layout.SetColumnSpan(control, 3);
+            }
+
+            void AddSetting(string label, NumericUpDown input, string? unit)
+            {
+                layout.Controls.Add(Wrapping(label));
+                input.Anchor = AnchorStyles.Left;
+                input.Width = 90;
+                layout.Controls.Add(input);
+                layout.Controls.Add(new Label { Text = unit ?? string.Empty, AutoSize = true, Anchor = AnchorStyles.Left });
+            }
+
+            Label Hint(string text)
+            {
+                Label hint = Wrapping(text);
+                hint.ForeColor = SystemColors.GrayText;
+                hint.Margin = new Padding(3, 0, 3, 12);
+                return hint;
+            }
+
+            AddWide(Wrapping("These control when a PDF page is read with OCR. The defaults suit most documents; " +
+                             "lower values mean OCR runs on more pages (slower, but less likely to miss anything)."));
+            layout.GetControlFromPosition(0, 0)!.Margin = new Padding(3, 0, 3, 12);
+
             _textCoverage = new NumericUpDown
             {
-                Location = new Point(330, 56),
-                Size = new Size(90, 23),
                 DecimalPlaces = 1,
                 Minimum = 0.1m,
                 Maximum = 50m,
                 Increment = 0.5m,
                 Value = ClampPercent(textCoverageFraction, 0.1m, 50m)
             };
-            var textPct = new Label { Location = new Point(424, 58), Size = new Size(16, 20), Text = "%" };
-            var textHint = new Label
-            {
-                Location = new Point(14, 84),
-                Size = new Size(412, 18),
-                ForeColor = SystemColors.GrayText,
-                Text = "Higher = more pages count as scanned and get OCR'd. Default 1%."
-            };
+            AddSetting("Treat a page as scanned when its text covers under:", _textCoverage, "%");
+            AddWide(Hint("Higher = more pages count as scanned and get OCR'd. Default 1%."));
 
-            var imageLabel = new Label
-            {
-                Location = new Point(14, 120),
-                Size = new Size(300, 20),
-                Text = "Also OCR a text page when images cover at least:"
-            };
             _imageCoverage = new NumericUpDown
             {
-                Location = new Point(330, 118),
-                Size = new Size(90, 23),
                 DecimalPlaces = 0,
                 Minimum = 5m,
                 Maximum = 100m,
                 Increment = 5m,
                 Value = ClampPercent(imageCoverageFraction, 5m, 100m)
             };
-            var imagePct = new Label { Location = new Point(424, 120), Size = new Size(16, 20), Text = "%" };
-            var imageHint = new Label
-            {
-                Location = new Point(14, 146),
-                Size = new Size(412, 32),
-                ForeColor = SystemColors.GrayText,
-                Text = "Catches a scan that also has some real text (e.g. a digital header over a scanned " +
-                       "body). Lower = OCR more such pages. Default 50%."
-            };
+            AddSetting("Also OCR a text page when images cover at least:", _imageCoverage, "%");
+            AddWide(Hint("Catches a scan that also has some real text (e.g. a digital header over a scanned " +
+                         "body). Lower = OCR more such pages. Default 50%."));
 
-            var maxPagesLabel = new Label
-            {
-                Location = new Point(14, 190),
-                Size = new Size(300, 20),
-                Text = "Maximum pages to OCR in one PDF:"
-            };
             _maxPages = new NumericUpDown
             {
-                Location = new Point(330, 188),
-                Size = new Size(90, 23),
                 DecimalPlaces = 0,
                 Minimum = 0m,
                 Maximum = 100000m,
                 Increment = 50m,
                 Value = Math.Clamp(maxPages, 0, 100000)
             };
-            var maxPagesHint = new Label
-            {
-                Location = new Point(14, 216),
-                Size = new Size(412, 32),
-                ForeColor = SystemColors.GrayText,
-                Text = "If a PDF needs OCR on more pages than this, redaction stops with an error instead " +
-                       "of partly processing it. 0 = no limit. Default 200."
-            };
+            AddSetting("Maximum pages to OCR in one PDF:", _maxPages, null);
+            AddWide(Hint("If a PDF needs OCR on more pages than this, redaction stops with an error instead " +
+                         "of partly processing it. 0 = no limit. Default 200."));
 
-            var ok = new Button
+            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Size = ModernTheme.StandardButtonSize };
+            var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Size = ModernTheme.StandardButtonSize };
+            var buttons = new FlowLayoutPanel
             {
-                Text = "OK",
-                DialogResult = DialogResult.OK,
-                Size = ModernTheme.StandardButtonSize,
-                Location = new Point(206, 274),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+                FlowDirection = FlowDirection.RightToLeft,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Anchor = AnchorStyles.Right,
+                Margin = new Padding(0, 6, 0, 0)
             };
-            var cancel = new Button
-            {
-                Text = "Cancel",
-                DialogResult = DialogResult.Cancel,
-                Size = ModernTheme.StandardButtonSize,
-                Location = new Point(322, 274),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Right
-            };
+            buttons.Controls.Add(cancel);
+            buttons.Controls.Add(ok);
+            AddWide(buttons);
 
-            Controls.AddRange(new Control[]
-            {
-                intro, textLabel, _textCoverage, textPct, textHint,
-                imageLabel, _imageCoverage, imagePct, imageHint,
-                maxPagesLabel, _maxPages, maxPagesHint, ok, cancel
-            });
-
+            Controls.Add(layout);
             AcceptButton = ok;
             CancelButton = cancel;
 
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(ok);
         }
+
+        // An auto-sized label that wraps to its table column's width.
+        private static Label Wrapping(string text) => new()
+        {
+            Text = text,
+            AutoSize = true,
+            Anchor = AnchorStyles.Left | AnchorStyles.Right
+        };
 
         private static decimal ClampPercent(double fraction, decimal min, decimal max)
         {

@@ -130,6 +130,45 @@ namespace PhilterDesktop
             }
 
             ApplyToControls(form.Controls);
+            EnableDpiScaling(form);
+        }
+
+        /// <summary>
+        /// Code-built forms have no designer AutoScale setup, so their pixel sizes wouldn't grow with
+        /// display scaling while their (point-sized) text does. Treat them as authored at 96 DPI and let
+        /// WinForms scale them, now and on later DPI changes. Call once the form's controls exist.
+        /// </summary>
+        internal static void EnableDpiScaling(Form form)
+        {
+            if (form.AutoScaleMode is not (AutoScaleMode.None or AutoScaleMode.Inherit))
+            {
+                return; // designer forms already scale
+            }
+            form.SuspendLayout();
+            form.AutoScaleDimensions = new SizeF(96F, 96F);
+            form.AutoScaleMode = AutoScaleMode.Dpi;
+            form.ResumeLayout(false);
+            form.PerformLayout();
+        }
+
+        /// <summary>
+        /// Keeps a word-wrapping label (typically docked Top) exactly as tall as its text needs at its
+        /// current width, so it never clips or overlaps as the window, font or DPI changes.
+        /// </summary>
+        internal static void FitHeightToText(Label label)
+        {
+            label.AutoSize = false;
+            void Fit()
+            {
+                if (label.Width > 0)
+                {
+                    label.Height = label.GetPreferredSize(new Size(label.Width, 0)).Height;
+                }
+            }
+            label.SizeChanged += (_, _) => Fit();
+            label.TextChanged += (_, _) => Fit();
+            label.FontChanged += (_, _) => Fit();
+            Fit();
         }
 
         // The embedded application icon (PhilterDesktop.ico), loaded once. Loaded from a manifest

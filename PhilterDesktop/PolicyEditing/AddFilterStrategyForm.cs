@@ -64,8 +64,6 @@ namespace PhilterDesktop.PolicyEditing
             MinimizeBox = false;
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode = AutoScaleMode.Font;
 
             BuildLayout();
 

@@ -86,6 +86,7 @@ namespace PhilterDesktop.PolicyEditing
             Controls.Add(buttons);
             AcceptButton = ok;
             CancelButton = cancel;
+            ModernTheme.EnableDpiScaling(this);
         }
 
         private void OnOk(object? sender, EventArgs e)

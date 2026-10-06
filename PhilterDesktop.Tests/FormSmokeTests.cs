@@ -99,10 +99,11 @@ namespace PhilterDesktop.Tests
                 // CenterScreen (not Manual) => the window centers instead of reopening off-screen.
                 Assert.Equal(FormStartPosition.CenterScreen, form.StartPosition);
 
-                // The saved size is still honored (clamped to the primary screen's working area).
+                // The saved size is still honored (clamped to the primary screen's working area, and never
+                // below the minimum size, which grows with display scaling).
                 Rectangle wa = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1024, 768);
-                Assert.Equal(Math.Min(900, wa.Width), form.Width);
-                Assert.Equal(Math.Min(700, wa.Height), form.Height);
+                Assert.Equal(Math.Max(form.MinimumSize.Width, Math.Min(900, wa.Width)), form.Width);
+                Assert.Equal(Math.Max(form.MinimumSize.Height, Math.Min(700, wa.Height)), form.Height);
             }
             finally { try { File.Delete(path); } catch { /* best effort */ } }
         });

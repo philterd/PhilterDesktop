@@ -51,16 +51,15 @@ namespace PhilterDesktop.PolicyEditing
             var info = new Label
             {
                 Dock = DockStyle.Top,
-                AutoSize = false,
-                Height = 40,
                 Padding = new Padding(6),
                 Text = "Rectangles always painted over when redacting a PDF (signatures, photos, logos, form " +
                        "fields). Add a region by entering its coordinates, or draw it on a sample PDF."
             };
+            ModernTheme.FitHeightToText(info);
 
             foreach ((string header, int width) in new[] { ("Page", 60), ("X", 70), ("Y", 70), ("Width", 70), ("Height", 70), ("Color", 100) })
             {
-                _list.Columns.Add(header, width);
+                _list.Columns.Add(header, LogicalToDeviceUnits(width)); // columns don't scale with the form
             }
             foreach (PdfRegionEntry entry in PdfRegionEntry.FromBoxes(existing)) // regroup same-rect boxes into one row
             {
@@ -102,7 +101,7 @@ namespace PhilterDesktop.PolicyEditing
             ok.Click += (_, _) => Boxes = _list.Items.Cast<ListViewItem>()
                 .SelectMany(i => ((PdfRegionEntry)i.Tag!).ToBoundingBoxes()).ToList();
 
-            var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = 40, Padding = new Padding(6) };
+            var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, AutoSize = true, Padding = new Padding(6) };
             buttons.Controls.Add(cancel);
             buttons.Controls.Add(ok);
             buttons.Controls.Add(remove);
@@ -114,6 +113,7 @@ namespace PhilterDesktop.PolicyEditing
             Controls.Add(info);
             AcceptButton = ok;
             CancelButton = cancel;
+            ModernTheme.EnableDpiScaling(this);
         }
 
         private void RemoveSelected()

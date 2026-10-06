@@ -52,8 +52,9 @@ namespace PhilterDesktop.PolicyEditing
             AcceptButton = _ok;
             CancelButton = _cancel;
 
-            _list.Columns.Add("Classification", 200);
-            _list.Columns.Add("Pattern", 300);
+            // Column widths aren't scaled with the form, so scale them here.
+            _list.Columns.Add("Classification", LogicalToDeviceUnits(200));
+            _list.Columns.Add("Pattern", LogicalToDeviceUnits(300));
 
             BuildLayout();
             RefreshList();

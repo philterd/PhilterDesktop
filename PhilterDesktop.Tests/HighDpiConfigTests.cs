@@ -20,8 +20,8 @@ namespace PhilterDesktop.Tests
 {
     /// <summary>
     /// High-DPI configuration. The app opts into Per-Monitor v2 DPI awareness so windows scale
-    /// crisply on high-DPI and mixed-DPI multi-monitor setups; combined with AutoScaleMode.Font on every
-    /// form, absolute-coordinate layouts scale proportionally. This guards against the setting being
+    /// crisply on high-DPI and mixed-DPI multi-monitor setups; combined with AutoScaleMode on every form
+    /// (Font for designer forms, Dpi for code-built ones via ModernTheme.Apply), layouts scale proportionally. This guards against the setting being
     /// dropped (which would silently revert to the blurrier SystemAware default).
     /// </summary>
     public sealed class HighDpiConfigTests

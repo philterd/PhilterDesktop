@@ -66,14 +66,24 @@ namespace PhilterDesktop.PolicyEditing
         };
 
         // Ignore List / Always Redact edit policy-wide term lists. They live as regular buttons in a
-        // panel directly below the tabs, not as toolbar actions.
-        private readonly FlowLayoutPanel _actions = new()
+        // bar directly below the tabs (with the Philter Scope link at its right), not as toolbar actions.
+        private readonly TableLayoutPanel _actionsBar = new()
         {
             Dock = DockStyle.Bottom,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 2,
+            RowCount = 1,
+            Padding = new Padding(10, 8, 10, 8)
+        };
+        private readonly FlowLayoutPanel _actions = new()
+        {
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false, // keep the term/region buttons on a single row
-            Height = 48,
-            Padding = new Padding(10, 8, 10, 8)
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Anchor = AnchorStyles.Left,
+            Margin = Padding.Empty
         };
         private readonly Button _ignoreList = new()
         {
@@ -130,9 +140,17 @@ namespace PhilterDesktop.PolicyEditing
         private const string BundledNameModelLabel = "Person Names (on-device)";
 
         // Free-text, editor-only description (stored on the policy record, not in the engine JSON).
-        private readonly Panel _descPanel = new() { Dock = DockStyle.Top, Height = 30, Padding = new Padding(8, 4, 8, 2) };
-        private readonly Label _descLabel = new() { Text = "Description:", AutoSize = true, Dock = DockStyle.Left, Padding = new Padding(0, 4, 6, 0) };
-        private readonly TextBox _description = new() { Dock = DockStyle.Fill };
+        private readonly TableLayoutPanel _descPanel = new()
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 2,
+            RowCount = 1,
+            Padding = new Padding(8, 4, 8, 2)
+        };
+        private readonly Label _descLabel = new() { Text = "Description:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 0, 6, 0) };
+        private readonly TextBox _description = new() { Anchor = AnchorStyles.Left | AnchorStyles.Right, Margin = Padding.Empty };
 
         private readonly List<Action> _loaders = new();
         private readonly List<FilterRow> _rows = new();
@@ -150,10 +168,6 @@ namespace PhilterDesktop.PolicyEditing
             MinimumSize = new Size(560, 380);
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
-
-            // Don't open larger than the screen on smaller displays (each tab still scrolls).
-            Rectangle workingArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1024, 768);
-            Size = new Size(Math.Min(Width, workingArea.Width), Math.Min(Height, workingArea.Height));
 
             BuildLayout();
             RegisterFilters();
@@ -173,25 +187,32 @@ namespace PhilterDesktop.PolicyEditing
             _alwaysRedact.Click += OnAlwaysRedact;
             _pdfRegions.Click += OnPdfRegions;
 
-            ModernTheme.Apply(this);
+            ModernTheme.Apply(this); // also scales the layout for the display's DPI
+
+            // Don't open larger than the screen on smaller displays (each tab still scrolls).
+            Rectangle workingArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1024, 768);
+            Size = new Size(Math.Min(Width, workingArea.Width), Math.Min(Height, workingArea.Height));
 
             Load += (_, _) => ReloadPolicyList("default");
         }
 
         private void BuildLayout()
         {
-            _toolStrip.ImageScalingSize = new Size(20, 20);
-            _new.Image = ModernTheme.CreateGlyphImage("\uE710", 20, ModernTheme.Text);     // Add
-            _save.Image = ModernTheme.CreateGlyphImage("\uE74E", 20, ModernTheme.Accent);  // Save
-            _saveAs.Image = ModernTheme.CreateGlyphImage("\uE792", 20, ModernTheme.Text);  // SaveAs
-            _delete.Image = ModernTheme.CreateGlyphImage("\uE74D", 20, ModernTheme.Text);  // Delete
-            _import.Image = ModernTheme.CreateGlyphImage("", 20, ModernTheme.Text);  // Download (import from file)
-            _export.Image = ModernTheme.CreateGlyphImage("", 20, ModernTheme.Text);  // Upload (export to file)
+            // Icons are rendered at the display's DPI so they stay crisp and proportionate.
+            int icon = LogicalToDeviceUnits(20);
+            int menuIcon = LogicalToDeviceUnits(16);
+            _toolStrip.ImageScalingSize = new Size(icon, icon);
+            _new.Image = ModernTheme.CreateGlyphImage("\uE710", icon, ModernTheme.Text);     // Add
+            _save.Image = ModernTheme.CreateGlyphImage("\uE74E", icon, ModernTheme.Accent);  // Save
+            _saveAs.Image = ModernTheme.CreateGlyphImage("\uE792", icon, ModernTheme.Text);  // SaveAs
+            _delete.Image = ModernTheme.CreateGlyphImage("\uE74D", icon, ModernTheme.Text);  // Delete
+            _import.Image = ModernTheme.CreateGlyphImage("", icon, ModernTheme.Text);  // Download (import from file)
+            _export.Image = ModernTheme.CreateGlyphImage("", icon, ModernTheme.Text);  // Upload (export to file)
 
             // "New" is a dropdown: Blank Policy, From Template, or From Wizard. Menu items use small icons.
-            _newBlank.Image = ModernTheme.CreateGlyphImage("\uE7C3", 16, ModernTheme.Text);        // Page (blank)
-            _newFromTemplate.Image = ModernTheme.CreateGlyphImage("\uE8A5", 16, ModernTheme.Text); // Document (template)
-            _newWizard.Image = ModernTheme.CreateGlyphImage("\uE945", 16, ModernTheme.Text);       // Lightbulb (wizard)
+            _newBlank.Image = ModernTheme.CreateGlyphImage("\uE7C3", menuIcon, ModernTheme.Text);        // Page (blank)
+            _newFromTemplate.Image = ModernTheme.CreateGlyphImage("\uE8A5", menuIcon, ModernTheme.Text); // Document (template)
+            _newWizard.Image = ModernTheme.CreateGlyphImage("\uE945", menuIcon, ModernTheme.Text);       // Lightbulb (wizard)
             _new.DropDownItems.AddRange(new ToolStripItem[] { _newBlank, _newFromTemplate, _newWizard });
 
             // Toolbar buttons show their icon above the label.
@@ -215,26 +236,27 @@ namespace PhilterDesktop.PolicyEditing
             _actions.Controls.Add(_alwaysRedact);
             _actions.Controls.Add(_pdfRegions);
 
-            // A quiet "score this policy" link pinned to the bottom-right, pointing at Philter Scope.
-            // Sits in the empty right side of the bottom actions bar; anchored bottom-right so it stays
-            // put if the window is clamped to a smaller screen. Tagged utm_medium=policy-editor.
+            // A quiet "score this policy" link at the right of the actions bar, pointing at Philter Scope;
+            // it wraps rather than squeezing the buttons when the window is narrow. Tagged utm_medium=policy-editor.
             LinkLabel scoreLink = Links.CreateLink(
                 "Score this policy with Philter Scope →",
                 Links.ScopeUrl("policy-editor"));
-            scoreLink.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            scoreLink.Location = new Point(
-                ClientSize.Width - scoreLink.PreferredWidth - 14,
-                ClientSize.Height - scoreLink.PreferredHeight - 16);
-            Controls.Add(scoreLink);
-            scoreLink.BringToFront();
+            scoreLink.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+            scoreLink.TextAlign = ContentAlignment.MiddleRight;
+            _actionsBar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            _actionsBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            _actionsBar.Controls.Add(_actions, 0, 0);
+            _actionsBar.Controls.Add(scoreLink, 1, 0);
 
-            _descPanel.Controls.Add(_description); // fill
-            _descPanel.Controls.Add(_descLabel);   // left
+            _descPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            _descPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            _descPanel.Controls.Add(_descLabel, 0, 0);
+            _descPanel.Controls.Add(_description, 1, 0);
 
-            // z-order: tabs fill the middle, the actions panel docks at the bottom, the description bar
+            // z-order: tabs fill the middle, the actions bar docks at the bottom, the description bar
             // sits just under the toolbar, which is on top.
             Controls.Add(_tabs);
-            Controls.Add(_actions);
+            Controls.Add(_actionsBar);
             Controls.Add(_descPanel);
             Controls.Add(_toolStrip);
             SetEditingEnabled(false);
@@ -353,14 +375,15 @@ namespace PhilterDesktop.PolicyEditing
                 Font = new Font(ModernTheme.UiFont.FontFamily, 8.25f)
             };
 
-            // Fixed-size two-column row: label/example fill the left, the button sits at the right edge,
-            // so showing/hiding the button never shifts anything.
+            // Two-column row with a minimum size: label/example fill the left, the button sits at the right
+            // edge, so showing/hiding the button never shifts anything. Grows if its text needs more room.
             var row = new TableLayoutPanel
             {
                 ColumnCount = 2,
                 RowCount = 1,
-                AutoSize = false,
-                Size = new Size(380, 46),
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                MinimumSize = new Size(380, 46),
                 Margin = new Padding(0, 0, 0, 2)
             };
             row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -531,18 +554,18 @@ namespace PhilterDesktop.PolicyEditing
             var intro = new Label
             {
                 Dock = DockStyle.Top,
-                AutoSize = false,
-                Height = 48,
                 Padding = new Padding(2, 2, 2, 6),
                 Text = "PhEye models detect entities on-device (GLiNER), with no network call. Add the built-in " +
                        "person-names model, or your own local models (a model folder on this machine plus the " +
                        "entity types it detects)."
             };
+            ModernTheme.FitHeightToText(intro);
 
+            // Column widths aren't scaled with the form, so scale them here.
             _phEyeModelList.ShowItemToolTips = true;
-            _phEyeModelList.Columns.Add("Model", 200);
-            _phEyeModelList.Columns.Add("Entity Types", 240);
-            _phEyeModelList.Columns.Add("Threshold", 80);
+            _phEyeModelList.Columns.Add("Model", LogicalToDeviceUnits(200));
+            _phEyeModelList.Columns.Add("Entity Types", LogicalToDeviceUnits(240));
+            _phEyeModelList.Columns.Add("Threshold", LogicalToDeviceUnits(80));
             _phEyeModelList.SelectedIndexChanged += (_, _) => UpdatePhEyeModelButtons();
             _phEyeModelList.DoubleClick += OnEditPhEyeModel;
 
@@ -554,7 +577,8 @@ namespace PhilterDesktop.PolicyEditing
             {
                 Dock = DockStyle.Bottom,
                 FlowDirection = FlowDirection.LeftToRight,
-                Height = 44,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Padding = new Padding(0, 6, 0, 0)
             };
             buttons.Controls.AddRange(new Control[] { _addPhEyeModel, _editPhEyeModel, _removePhEyeModel });

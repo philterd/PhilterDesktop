@@ -54,7 +54,7 @@ namespace PhilterDesktop.PolicyEditing
 
             var pathLabel = new Label { Text = "Model folder:", AutoSize = true, Location = new Point(12, 18) };
             _modelPath.SetBounds(110, 15, 300, 23);
-            _browse.SetBounds(416, 14, 92, 26);
+            _browse.SetBounds(416, 12, 92, 29); // centered on the 23px-tall path box
 
             var labelsLabel = new Label { Text = "Entity types:", AutoSize = true, Location = new Point(12, 55) };
             _labels.SetBounds(110, 52, 398, 23);
