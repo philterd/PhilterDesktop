@@ -63,9 +63,7 @@ namespace PhilterDesktop
             policy.Identifiers ??= new Identifiers();
 
             // Always-redact matches each term as a whole word; a '*' opts into inside-word matching
-            // (*acme*, acme*, *acme). One case-insensitive regex identifier, re-applied in place. Also drop
-            // any dictionary from an older build so a reused policy object can't keep stale terms.
-            policy.Identifiers.Dictionaries?.RemoveAll(d => d.Name == AlwaysRedactName);
+            // (*acme*, acme*, *acme). One case-insensitive regex identifier, re-applied in place.
             policy.Identifiers.CustomIdentifiers?.RemoveAll(i => i.Classification == AlwaysRedactName);
             string? pattern = BuildAlwaysRedactPattern(alwaysRedact);
             if (pattern is not null)

@@ -199,6 +199,10 @@ Philter Desktop removes every occurrence of those terms (ignoring capitalization
 copy alongside the original, then offers to open the containing folder. It doesn't touch your policies,
 queue, or history.
 
+Each term is matched as a **whole word**, as with the global [Always Redact](policies.md) list. To match
+inside longer words too, add a `*` wildcard: `bluebird*` also removes `Bluebirds`, and `*bird*` removes
+any word containing "bird".
+
 Use Find & Redact when you know **exactly** what text to remove. To have Philter Desktop *find*
 sensitive information by its kind (every Social Security number, email address, or name), use a
 [policy](policies.md) with the **Redact** or **Redact with Preview** actions above. For terms you want

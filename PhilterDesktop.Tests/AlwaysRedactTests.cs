@@ -16,9 +16,9 @@
 
 using Phileas.Policy;
 using Phileas.Services;
+using PhilterDesktop.PolicyEditing;
 using Xunit;
 using PhileasPolicy = Phileas.Policy.Policy;
-using PhileasDictionary = Phileas.Policy.Filters.Dictionary;
 
 namespace PhilterDesktop.Tests
 {
@@ -28,17 +28,13 @@ namespace PhilterDesktop.Tests
     /// </summary>
     public sealed class AlwaysRedactTests
     {
-        private static PhileasPolicy PolicyWithAlwaysRedact(params string[] terms) => new()
+        // Built the way the Policy Editor stores the list, so the test covers what ships.
+        private static PhileasPolicy PolicyWithAlwaysRedact(params string[] terms)
         {
-            Name = "p",
-            Identifiers = new Identifiers
-            {
-                Dictionaries = new List<PhileasDictionary>
-                {
-                    new() { Name = "always-redact", Terms = terms.ToList(), Enabled = true }
-                }
-            }
-        };
+            var policy = new PhileasPolicy { Name = "p", Identifiers = new Identifiers() };
+            AlwaysRedactPolicy.SetTerms(policy, terms);
+            return policy;
+        }
 
         [Fact]
         public void AlwaysRedactTerm_IsRedacted_EvenWithoutAFilter()

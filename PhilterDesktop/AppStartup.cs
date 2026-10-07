@@ -21,7 +21,7 @@ using Phileas.Policy.Filters;
 using Phileas.Services;
 using PhilterData;
 using PhileasPolicy = Phileas.Policy.Policy;
-using PhileasDictionary = Phileas.Policy.Filters.Dictionary;
+using PhileasIdentifier = Phileas.Policy.Filters.Identifier;
 
 namespace PhilterDesktop
 {
@@ -240,21 +240,23 @@ namespace PhilterDesktop
 
     /// <summary>
     /// Builds a throwaway, terms-only policy for the ad-hoc "Find &amp; Redact" action — redact exactly
-    /// the given terms in one document, without creating or using a saved policy. Terms are matched via
-    /// a dictionary filter (the same mechanism behind the Always Redact lists).
+    /// the given terms in one document, without creating or using a saved policy. Terms are matched by
+    /// the same case-insensitive, word-bounded regex as the global Always Redact list ('*' = wildcard),
+    /// which also finds a term next to a line break or tab.
     /// </summary>
     internal static class FindAndRedact
     {
-        public const string DictionaryName = "find-and-redact";
+        public const string Classification = "find-and-redact";
 
         public static PhileasPolicy BuildPolicy(IReadOnlyList<string> terms)
         {
             var policy = new PhileasPolicy { Name = "Find and Redact", Identifiers = new Identifiers() };
-            if (terms.Count > 0)
+            string? pattern = GlobalLists.BuildAlwaysRedactPattern(terms);
+            if (pattern is not null)
             {
-                policy.Identifiers.Dictionaries = new List<PhileasDictionary>
+                policy.Identifiers.CustomIdentifiers = new List<PhileasIdentifier>
                 {
-                    new() { Name = DictionaryName, Terms = terms.ToList(), Enabled = true }
+                    new() { Pattern = pattern, CaseSensitive = false, Classification = Classification, Enabled = true }
                 };
             }
             return policy;
