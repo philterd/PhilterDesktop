@@ -45,6 +45,7 @@ namespace PhilterDesktop
         private readonly FilterService _filterService = SharedFilterService.Instance;
 
         private string[] _paragraphs = Array.Empty<string>();
+        private TextBoxText _paragraphsDisplay = new(string.Empty); // the joined paragraphs as shown in _originalBox
         private List<RedactionSpanEntity> _spans = new();
         private bool _loading;
         private bool _busy; // guards against overlapping async detections
@@ -81,7 +82,8 @@ namespace PhilterDesktop
             try
             {
                 _paragraphs = WordDocumentRedactor.ReadParagraphs(_sourcePath).ToArray();
-                _originalBox.Text = string.Join(Environment.NewLine, _paragraphs); // selectable copy for manual redaction
+                _paragraphsDisplay = new TextBoxText(string.Join(Environment.NewLine, _paragraphs));
+                _originalBox.Text = _paragraphsDisplay.Display; // selectable copy for manual redaction
                 LoadNames(_policyCombo, _policies.GetAll().Select(p => p.Name), _settings.LastPolicy);
                 LoadNames(_contextCombo, _contexts.GetAll().Select(c => c.Name), _settings.LastContext);
             }
@@ -254,11 +256,14 @@ namespace PhilterDesktop
 
         // Manual redaction: turn the reviewer's selection (in the "Select text to redact" tab) into
         // user-added spans. Word redactions are per-paragraph, so a selection spanning paragraphs
-        // produces one span per paragraph. Environment.NewLine (2 chars) joins paragraphs in the box.
+        // produces one span per paragraph. Environment.NewLine (2 chars) joins paragraphs in the box; any
+        // line break inside a paragraph is shown as CRLF, so the selection is first mapped back.
         private void OnRedactSelection(object? sender, EventArgs e)
         {
+            int start = _paragraphsDisplay.ToOriginal(_originalBox.SelectionStart);
+            int end = _paragraphsDisplay.ToOriginal(_originalBox.SelectionStart + _originalBox.SelectionLength);
             List<RedactionSpanEntity> added = ManualRedaction.FromParagraphSelection(
-                _paragraphs, _originalBox.SelectionStart, _originalBox.SelectionLength, Environment.NewLine.Length);
+                _paragraphs, start, end - start, Environment.NewLine.Length);
             if (added.Count == 0)
             {
                 _leftTabs.SelectedTab = _selectTab;

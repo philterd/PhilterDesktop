@@ -52,9 +52,9 @@ namespace PhilterDesktop
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_agree);
 
-            _licenseBody.Text = ReadResource(ApacheResource);
+            _licenseBody.Text = ForTextBox(ReadResource(ApacheResource));
             _licenseBody.Select(0, 0); // keep the view scrolled to the top
-            _eulaBody.Text = ReadEula();
+            _eulaBody.Text = ForTextBox(ReadEula());
             _eulaBody.Select(0, 0);
 
             if (viewOnly)
@@ -81,6 +81,10 @@ namespace PhilterDesktop
         /// remembered and the dialog is never re-shown after that (no opt-out to leave off).
         /// </summary>
         public static void RememberAccepted() => Acknowledgements.Store.RememberAccepted(Acknowledgements.LicenseKey);
+
+        // A Windows TextBox only breaks lines on CRLF; bare LFs (as in a file checked out with Unix line
+        // endings) are dropped, running the words on either side together.
+        internal static string ForTextBox(string text) => text.ReplaceLineEndings("\r\n");
 
         // Reads an embedded license text (the Apache license). Returns a short fallback rather than throwing
         // if a resource is somehow missing, so the acceptance gate always renders.

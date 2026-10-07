@@ -355,6 +355,48 @@ namespace PhilterDesktop.Tests
             Assert.Contains("Philterd", eula.Text, StringComparison.OrdinalIgnoreCase);
         });
 
+        // Both boxes must show their line breaks: bare LFs render as nothing in a TextBox, joining words.
+        [Fact]
+        public void LicenseForm_LicenseTexts_UseCrLfLineBreaks() => Sta(() =>
+        {
+            using var f = new LicenseForm();
+            _ = f.Handle;
+            const System.Reflection.BindingFlags Flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            foreach (string field in new[] { "_licenseBody", "_eulaBody" })
+            {
+                string text = ((System.Windows.Forms.TextBox)typeof(LicenseForm).GetField(field, Flags)!.GetValue(f)!).Text;
+                Assert.DoesNotMatch(@"(?<!\r)\n|\r(?!\n)", text); // no bare LF or CR
+            }
+        });
+
+        [SkippableFact]
+        public void LicenseForm_EulaFile_KeepsItsLineBreaksOnScreen() => Sta(() =>
+        {
+            string path = Path.Combine(AppContext.BaseDirectory, "philterd-eula.txt");
+            Skip.IfNot(File.Exists(path), "EULA file not copied next to the test binaries");
+            string firstLine = File.ReadLines(path).First(l => l.Length > 0);
+
+            using var f = new LicenseForm();
+            _ = f.Handle;
+            var eula = (System.Windows.Forms.TextBox)typeof(LicenseForm)
+                .GetField("_eulaBody", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(f)!;
+            Assert.StartsWith(firstLine + "\r\n", eula.Text);
+            // The native control (not TextBox.Lines, which splits in managed code) puts line 2 below line 1.
+            int secondLineStart = eula.Text.IndexOf("\r\n", StringComparison.Ordinal) + 2;
+            Assert.True(eula.GetLineFromCharIndex(secondLineStart) > 0, "the EULA's second line is drawn on its first");
+        });
+
+        [Theory]
+        [InlineData("a\nb", "a\r\nb")]
+        [InlineData("a\r\nb", "a\r\nb")]
+        [InlineData("a\rb", "a\r\nb")]
+        [InlineData("a\n\nb\r\nc\rd", "a\r\n\r\nb\r\nc\r\nd")]
+        [InlineData("no breaks", "no breaks")]
+        [InlineData("", "")]
+        [InlineData("trailing\n", "trailing\r\n")]
+        public void LicenseForm_ForTextBox_NormalizesEveryLineEnding(string input, string expected) =>
+            Assert.Equal(expected, LicenseForm.ForTextBox(input));
+
         [Fact]
         public void LicenseForm_ViewOnly_HidesDisagree_AndShowsClose() => Sta(() =>
         {
@@ -376,10 +418,15 @@ namespace PhilterDesktop.Tests
             var agree = (System.Windows.Forms.Button)typeof(LicenseForm).GetField("_agree", Flags)!.GetValue(f)!;
             Assert.Equal(System.Windows.Forms.FormBorderStyle.Sizable, f.FormBorderStyle);
 
+            // Shown, so the nested button row lays itself out (its positions are stale until then).
+            f.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
+            f.ShowInTaskbar = false;
+            f.Show();
             f.Size = f.MinimumSize;
-            f.PerformLayout();
+            System.Windows.Forms.Application.DoEvents();
             var buttonBounds = f.RectangleToClient(agree.RectangleToScreen(agree.ClientRectangle));
-            Assert.True(f.ClientRectangle.Contains(buttonBounds));
+            Assert.True(f.ClientRectangle.Contains(buttonBounds), $"button {buttonBounds} outside client {f.ClientRectangle}");
+            f.Close();
         });
 
         [Fact]
@@ -391,10 +438,15 @@ namespace PhilterDesktop.Tests
             var ok = (System.Windows.Forms.Button)typeof(RedactionNoticeForm).GetField("_ok", Flags)!.GetValue(f)!;
             Assert.Equal(System.Windows.Forms.FormBorderStyle.Sizable, f.FormBorderStyle);
 
+            // Shown, so the nested button row lays itself out (its positions are stale until then).
+            f.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
+            f.ShowInTaskbar = false;
+            f.Show();
             f.Size = f.MinimumSize;
-            f.PerformLayout();
+            System.Windows.Forms.Application.DoEvents();
             var buttonBounds = f.RectangleToClient(ok.RectangleToScreen(ok.ClientRectangle));
-            Assert.True(f.ClientRectangle.Contains(buttonBounds));
+            Assert.True(f.ClientRectangle.Contains(buttonBounds), $"button {buttonBounds} outside client {f.ClientRectangle}");
+            f.Close();
         });
 
         [Fact]

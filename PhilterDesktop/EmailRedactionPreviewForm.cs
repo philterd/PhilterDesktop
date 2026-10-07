@@ -50,6 +50,7 @@ namespace PhilterDesktop
 
         private (string Label, string Text, bool IsBody)[] _fields = Array.Empty<(string, string, bool)>();
         private int[] _bodyFieldIndices = Array.Empty<int>(); // field indices that are message bodies
+        private TextBoxText _bodiesDisplay = new(string.Empty); // the joined bodies as shown in _originalBox
         private List<RedactionSpanEntity> _spans = new();
         private bool _loading;
         private bool _busy; // guards against overlapping async detections
@@ -87,7 +88,8 @@ namespace PhilterDesktop
             {
                 _fields = EmailRedactor.ReadFields(_sourcePath).ToArray();
                 _bodyFieldIndices = _fields.Select((f, i) => (f, i)).Where(x => x.f.IsBody).Select(x => x.i).ToArray();
-                _originalBox.Text = string.Join(BodySeparator, _bodyFieldIndices.Select(i => _fields[i].Text));
+                _bodiesDisplay = new TextBoxText(string.Join(BodySeparator, _bodyFieldIndices.Select(i => _fields[i].Text)));
+                _originalBox.Text = _bodiesDisplay.Display;
                 LoadNames(_policyCombo, _policies.GetAll().Select(p => p.Name), _settings.LastPolicy);
                 LoadNames(_contextCombo, _contexts.GetAll().Select(c => c.Name), _settings.LastContext);
             }
@@ -270,13 +272,16 @@ namespace PhilterDesktop
 
         // Manual redaction: turn the reviewer's selection in the "Select text to redact" tab (which shows
         // only the message body parts) into user-added spans. The select box joins the body parts with
-        // BodySeparator; map the selection per body part, then translate the body-part index back to the
+        // BodySeparator (shown with every line break as CRLF, so the selection is first mapped back to the
+        // joined text); map the selection per body part, then translate the body-part index back to the
         // real field index so the span applies to the right field on save.
         private void OnRedactSelection(object? sender, EventArgs e)
         {
             List<string> bodyTexts = _bodyFieldIndices.Select(i => _fields[i].Text).ToList();
+            int start = _bodiesDisplay.ToOriginal(_originalBox.SelectionStart);
+            int end = _bodiesDisplay.ToOriginal(_originalBox.SelectionStart + _originalBox.SelectionLength);
             List<RedactionSpanEntity> added = ManualRedaction.FromParagraphSelection(
-                bodyTexts, _originalBox.SelectionStart, _originalBox.SelectionLength, BodySeparator.Length);
+                bodyTexts, start, end - start, BodySeparator.Length);
 
             if (added.Count == 0)
             {

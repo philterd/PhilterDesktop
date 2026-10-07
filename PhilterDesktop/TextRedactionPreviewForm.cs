@@ -48,6 +48,7 @@ namespace PhilterDesktop
         private readonly FilterService _filterService = SharedFilterService.Instance;
 
         private string _originalText = string.Empty;
+        private TextBoxText _originalDisplay = new(string.Empty); // _originalText as shown in _originalBox
         private List<RedactionSpanEntity> _spans = new();
         private bool _loading;
         private bool _busy; // guards against overlapping async detections
@@ -85,7 +86,8 @@ namespace PhilterDesktop
             try
             {
                 _originalText = IsRtf ? RtfRedactor.ReadText(_sourcePath) : File.ReadAllText(_sourcePath);
-                _originalBox.Text = _originalText; // selectable copy for manual "redact selection"
+                _originalDisplay = new TextBoxText(_originalText);
+                _originalBox.Text = _originalDisplay.Display; // selectable copy for manual "redact selection"
                 LoadNames(_policyCombo, _policies.GetAll().Select(p => p.Name), _settings.LastPolicy);
                 LoadNames(_contextCombo, _contexts.GetAll().Select(c => c.Name), _settings.LastContext);
             }
@@ -251,11 +253,13 @@ namespace PhilterDesktop
         }
 
         // Manual redaction: turn the reviewer's text selection (in the "Select text to redact" tab) into
-        // a user-added span over that character range. Offsets index directly into the original text.
+        // a user-added span over that character range. The box shows line breaks as CRLF, so the selection
+        // is mapped back to offsets in the original text.
         private void OnRedactSelection(object? sender, EventArgs e)
         {
-            RedactionSpanEntity? span = ManualRedaction.FromSelection(
-                _originalText, _originalBox.SelectionStart, _originalBox.SelectionLength);
+            int start = _originalDisplay.ToOriginal(_originalBox.SelectionStart);
+            int end = _originalDisplay.ToOriginal(_originalBox.SelectionStart + _originalBox.SelectionLength);
+            RedactionSpanEntity? span = ManualRedaction.FromSelection(_originalText, start, end - start);
             if (span is null)
             {
                 _leftTabs.SelectedTab = _selectTab;
