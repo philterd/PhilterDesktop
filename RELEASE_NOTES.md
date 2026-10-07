@@ -14,6 +14,8 @@ All notable changes to Philter Desktop are recorded here, newest first.
 - **Fixed:** Modify Redaction no longer redacts the wrong text when the original document has changed.
 - **New:** the Policy Editor offers more redaction strategies, such as Mask, Keep the last 4 characters,
   hashing, and encryption.
+- **New:** the truncate strategy can keep a chosen number of characters at either end and mask the rest,
+  for example `************1111`.
 
 ## 1.1.1 — 2026-09-08
 

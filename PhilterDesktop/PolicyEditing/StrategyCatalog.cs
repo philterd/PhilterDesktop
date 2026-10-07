@@ -61,7 +61,7 @@ namespace PhilterDesktop.PolicyEditing
             new(RandomReplace, "Replace with a random value", "Replace with a made-up value of the same kind."),
             new(Mask, "Mask", "Replace each character, for example with ****."),
             new(Last4, "Keep the last 4 characters", "For example, 4111-1111-1111-1111 becomes 1111."),
-            new(Truncate, "Keep the first character", "For example, John becomes J."),
+            TruncateInfo(TruncateSettingsSupported),
             new(Abbreviate, "Abbreviate to initials", "For example, John Smith becomes JS."),
             new(HashSha256, "Replace with a SHA-256 hash", "The same value always gets the same hash, unless salted."),
             new(Crypto, "Encrypt", "AES-GCM encryption. The original can be recovered with the key."),
@@ -73,6 +73,20 @@ namespace PhilterDesktop.PolicyEditing
         };
 
         public static Version InstalledPhileas => typeof(PhileasPolicy).Assembly.GetName().Version ?? new Version(0, 0);
+
+        /// <summary>
+        /// True when the installed Phileas honors TRUNCATE's settings (how many characters to keep, at which
+        /// end, and the masking character). Earlier versions ignore them and keep only the first character.
+        /// </summary>
+        // Computed on access, not stored: All is initialized from it, and static fields initialize in textual order.
+        public static bool TruncateSettingsSupported =>
+            typeof(Phileas.Policy.Filters.Strategies.AbstractFilterStrategy).GetProperties()
+                .Any(p => p.GetCustomAttributes(typeof(System.Text.Json.Serialization.JsonPropertyNameAttribute), false)
+                    .Cast<System.Text.Json.Serialization.JsonPropertyNameAttribute>().Any(a => a.Name == "truncateLeaveCharacters"));
+
+        internal static StrategyInfo TruncateInfo(bool settingsSupported) => settingsSupported
+            ? new(Truncate, "Keep some characters, mask the rest", "For example, 4111111111111111 becomes ************1111.")
+            : new(Truncate, "Keep the first character", "For example, John becomes J.");
 
         public static StrategyInfo? Find(string? name) =>
             All.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase));

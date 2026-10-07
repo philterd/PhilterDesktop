@@ -133,7 +133,6 @@ namespace PhilterDesktop.Tests
 
         [Theory]
         [InlineData(StrategyCatalog.Last4, "Card 1111 on file.")]
-        [InlineData(StrategyCatalog.Truncate, "Card 4 on file.")]
         [InlineData(StrategyCatalog.Abbreviate, "Card 4 on file.")]
         public void SettingFreeStrategies_RedactAsDescribed(string strategy, string expected) =>
             Assert.Equal(expected, RedactCard(new StrategySettings { Strategy = strategy }).Output);
@@ -502,7 +501,7 @@ namespace PhilterDesktop.Tests
             { new SsnFilterStrategy { Strategy = StrategyCatalog.HashSha256, Salt = true }, "Replace with a SHA-256 hash, salted" },
             { new SsnFilterStrategy { Strategy = StrategyCatalog.RandomReplace, AnonymizationMethod = "UUID" }, "Replace with a random ID" },
             { new SsnFilterStrategy { Strategy = StrategyCatalog.Crypto }, "Encrypt (no key set)" },
-            { new SsnFilterStrategy { Strategy = StrategyCatalog.Truncate, Condition = "confidence > 0.9" }, "Keep the first character  [when confidence > 0.9]" },
+            { new SsnFilterStrategy { Strategy = StrategyCatalog.Abbreviate, Condition = "confidence > 0.9" }, "Abbreviate to initials  [when confidence > 0.9]" },
             { new SsnFilterStrategy { Strategy = "FUTURE_STRATEGY" }, "FUTURE_STRATEGY" },
             {
                 new SsnFilterStrategy { Strategy = StrategyCatalog.MapReplace, Mappings = new() { ["a"] = "b", ["c"] = "d" }, FallbackStrategy = StrategyCatalog.Mask },
@@ -520,5 +519,111 @@ namespace PhilterDesktop.Tests
             Assert.Equal("Encrypt (key from %CRYPTO_KEY%)",
                 FilterStrategiesForm.Describe(new SsnFilterStrategy { Strategy = StrategyCatalog.Crypto },
                     new PhileasPolicy { Crypto = new Crypto { Key = "env:CRYPTO_KEY" } }));
+
+        // --- TRUNCATE: Phileas 1.6.0 keeps only the first character; later versions honor its settings -----
+
+        private static bool TruncateSettings => StrategyCatalog.TruncateSettingsSupported;
+
+        // A credit-card strategy loaded from JSON, so these tests compile against versions without the properties.
+        private static CreditCardFilterStrategy CardStrategy(string json) =>
+            PolicySerializer.DeserializeFromJson("{\"identifiers\":{\"creditCard\":{\"creditCardFilterStrategies\":[" + json + "]}}}")
+                .Identifiers.CreditCard!.Strategies!.Single();
+
+        [Fact]
+        public void Truncate_LabelMatchesWhatTheInstalledPhileasDoes()
+        {
+            Assert.Equal(StrategyCatalog.TruncateInfo(TruncateSettings), StrategyCatalog.Find(StrategyCatalog.Truncate));
+            Assert.Equal("Keep the first character", StrategyCatalog.TruncateInfo(false).Label);
+            Assert.Equal("Keep some characters, mask the rest", StrategyCatalog.TruncateInfo(true).Label);
+            Assert.DoesNotContain("—", StrategyCatalog.TruncateInfo(true).Description + StrategyCatalog.TruncateInfo(false).Description);
+        }
+
+        [SkippableFact]
+        public void Truncate_WithoutSettingsSupport_KeepsTheFirstCharacter_AndNeedsNoSettings()
+        {
+            Skip.If(TruncateSettings, "this Phileas honors TRUNCATE's settings");
+            var settings = new StrategySettings { Strategy = StrategyCatalog.Truncate, TruncateLeaveCharacters = 0, TruncateCharacter = "" };
+            Assert.Null(settings.Validate()); // the settings don't apply, so they aren't checked
+            Assert.Equal("Card 4 on file.", RedactCard(settings).Output);
+            Assert.Equal("Keep the first character", FilterStrategiesForm.Describe(new SsnFilterStrategy { Strategy = StrategyCatalog.Truncate }));
+        }
+
+        [SkippableTheory]
+        [InlineData(4, false, "*", "Card 4111*************** on file.")]
+        [InlineData(4, true, "*", "Card ***************1111 on file.")]
+        [InlineData(4, true, "#", "Card ###############1111 on file.")]
+        [InlineData(1, false, "X", "Card 4XXXXXXXXXXXXXXXXXX on file.")]
+        public void Truncate_KeepsCharactersAtTheChosenEnd_AndMasksTheRest(int leave, bool trailing, string character, string expected)
+        {
+            Skip.IfNot(TruncateSettings, "this Phileas ignores TRUNCATE's settings");
+            var settings = new StrategySettings
+            {
+                Strategy = StrategyCatalog.Truncate, TruncateLeaveCharacters = leave, TruncateTrailing = trailing, TruncateCharacter = character
+            };
+            Assert.Null(settings.Validate());
+            Assert.Equal(expected, RedactCard(settings).Output);
+        }
+
+        [SkippableFact]
+        public void Truncate_SettingsRoundTripThroughThePolicy()
+        {
+            Skip.IfNot(TruncateSettings, "this Phileas ignores TRUNCATE's settings");
+            (_, PhileasPolicy policy) = RedactCard(new StrategySettings
+            {
+                Strategy = StrategyCatalog.Truncate, TruncateLeaveCharacters = 4, TruncateTrailing = true, TruncateCharacter = "#"
+            });
+            string json = PolicySerializer.SerializeToJson(policy);
+            Assert.Contains("\"truncateLeaveCharacters\":4", json);
+            Assert.Contains("\"truncateDirection\":\"TRAILING\"", json);
+            Assert.Contains("\"truncateCharacter\":\"#\"", json);
+
+            StrategySettings reloaded = StrategySettings.Load(PolicySerializer.DeserializeFromJson(json).Identifiers.CreditCard!.Strategies!.Single(), null);
+            Assert.Equal((4, true, "#"), (reloaded.TruncateLeaveCharacters, reloaded.TruncateTrailing, reloaded.TruncateCharacter));
+        }
+
+        [SkippableFact]
+        public void Truncate_LoadsPhileasDefaults_WhenNothingIsSet()
+        {
+            Skip.IfNot(TruncateSettings, "this Phileas ignores TRUNCATE's settings");
+            StrategySettings s = StrategySettings.Load(CardStrategy("{\"strategy\":\"TRUNCATE\"}"), null);
+            Assert.Equal((StrategySettings.DefaultTruncateLeave, false, "*"), (s.TruncateLeaveCharacters, s.TruncateTrailing, s.TruncateCharacter));
+        }
+
+        [SkippableTheory]
+        [InlineData(0, "*", "how many characters")]
+        [InlineData(1001, "*", "how many characters")]
+        [InlineData(4, "", "single, visible character")]
+        [InlineData(4, " ", "single, visible character")]
+        public void Truncate_RejectsInvalidSettings(int leave, string character, string message)
+        {
+            Skip.IfNot(TruncateSettings, "this Phileas ignores TRUNCATE's settings");
+            var settings = new StrategySettings { Strategy = StrategyCatalog.Truncate, TruncateLeaveCharacters = leave, TruncateCharacter = character };
+            Assert.Contains(message, settings.Validate());
+        }
+
+        [SkippableFact]
+        public void Truncate_DescribesItsSettings()
+        {
+            Skip.IfNot(TruncateSettings, "this Phileas ignores TRUNCATE's settings");
+            Assert.Equal("Keep the last 4 characters, mask with #",
+                FilterStrategiesForm.Describe(CardStrategy("{\"strategy\":\"TRUNCATE\",\"truncateLeaveCharacters\":4,\"truncateDirection\":\"TRAILING\",\"truncateCharacter\":\"#\"}")));
+            Assert.Equal("Keep the first 1 character, mask with *",
+                FilterStrategiesForm.Describe(CardStrategy("{\"strategy\":\"TRUNCATE\",\"truncateLeaveCharacters\":1}")));
+        }
+
+        [SkippableFact]
+        public void Truncate_DialogEditsAndKeepsTheSettings() => Sta(() =>
+        {
+            Skip.IfNot(TruncateSettings, "this Phileas ignores TRUNCATE's settings");
+            CreditCardFilterStrategy strategy = CardStrategy(
+                "{\"strategy\":\"TRUNCATE\",\"truncateLeaveCharacters\":2,\"truncateDirection\":\"TRAILING\",\"truncateCharacter\":\"#\"}");
+            using var form = new AddFilterStrategyForm(strategy, "Credit Card");
+
+            StrategySettings shown = form.ReadSettings();
+            Assert.Equal((StrategyCatalog.Truncate, 2, true, "#"), (shown.Strategy, shown.TruncateLeaveCharacters, shown.TruncateTrailing, shown.TruncateCharacter));
+            Assert.Null(form.Accept());
+            Assert.Equal((2, true, "#"), (StrategySettings.Load(strategy, null).TruncateLeaveCharacters,
+                StrategySettings.Load(strategy, null).TruncateTrailing, StrategySettings.Load(strategy, null).TruncateCharacter));
+        });
     }
 }

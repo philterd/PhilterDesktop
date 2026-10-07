@@ -55,6 +55,12 @@ namespace PhilterDesktop.PolicyEditing
         public int ShiftYears { get; set; }
         public bool ShiftRandom { get; set; }
         public bool FutureDates { get; set; }
+        public int TruncateLeaveCharacters { get; set; } = DefaultTruncateLeave;
+        public bool TruncateTrailing { get; set; }
+        public string TruncateCharacter { get; set; } = "*";
+
+        /// <summary>Characters TRUNCATE keeps when none is set (as in Phileas).</summary>
+        public const int DefaultTruncateLeave = 4;
 
         /// <summary>True when the policy already holds a key itself (not an <c>env:</c> reference), which
         /// is kept unless a variable name is entered.</summary>
@@ -83,6 +89,9 @@ namespace PhilterDesktop.PolicyEditing
                 ShiftYears = GetJson<int>(strategy, "shiftYears"),
                 ShiftRandom = GetJson<bool>(strategy, "shiftRandom"),
                 FutureDates = GetJson<bool>(strategy, "futureDates"),
+                TruncateLeaveCharacters = GetJson<int>(strategy, "truncateLeaveCharacters") is int leave and > 0 ? leave : DefaultTruncateLeave,
+                TruncateTrailing = string.Equals(GetJsonString(strategy, "truncateDirection"), "TRAILING", StringComparison.OrdinalIgnoreCase),
+                TruncateCharacter = GetJsonString(strategy, "truncateCharacter") is { Length: > 0 } character ? character : "*",
             };
 
             (s.CryptoKeyVariable, s.HasStoredCryptoKey) = SplitKey(policy?.Crypto?.Key);
@@ -116,6 +125,11 @@ namespace PhilterDesktop.PolicyEditing
                     return ValidateMappings();
                 case StrategyCatalog.Shift when !ShiftRandom && ShiftDays == 0 && ShiftMonths == 0 && ShiftYears == 0:
                     return "Enter how far to shift dates, or choose a random shift.";
+                case StrategyCatalog.Truncate when StrategyCatalog.TruncateSettingsSupported && TruncateLeaveCharacters is < 1 or > 1000:
+                    return "Enter how many characters to keep, from 1 to 1000.";
+                case StrategyCatalog.Truncate when StrategyCatalog.TruncateSettingsSupported
+                                                   && (TruncateCharacter.Length != 1 || char.IsWhiteSpace(TruncateCharacter[0])):
+                    return "Enter a single, visible character to put in place of the others, such as *.";
                 default:
                     return null;
             }
@@ -166,6 +180,11 @@ namespace PhilterDesktop.PolicyEditing
                     SetJson(strategy, "shiftYears", ShiftYears);
                     SetJson(strategy, "shiftRandom", ShiftRandom);
                     SetJson(strategy, "futureDates", FutureDates);
+                    break;
+                case StrategyCatalog.Truncate when StrategyCatalog.TruncateSettingsSupported:
+                    SetJson<int?>(strategy, "truncateLeaveCharacters", TruncateLeaveCharacters);
+                    SetJson(strategy, "truncateDirection", TruncateTrailing ? "TRAILING" : "LEADING");
+                    SetJson(strategy, "truncateCharacter", TruncateCharacter);
                     break;
             }
         }
@@ -231,6 +250,9 @@ namespace PhilterDesktop.PolicyEditing
 
         private static T GetJson<T>(object target, string jsonName) where T : struct =>
             JsonProperty(target, jsonName)?.GetValue(target) is T value ? value : default;
+
+        private static string? GetJsonString(object target, string jsonName) =>
+            JsonProperty(target, jsonName)?.GetValue(target) as string;
 
         private static void SetJson<T>(object target, string jsonName, T value) =>
             JsonProperty(target, jsonName)?.SetValue(target, value);

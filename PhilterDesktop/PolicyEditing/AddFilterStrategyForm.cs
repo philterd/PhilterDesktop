@@ -86,6 +86,11 @@ namespace PhilterDesktop.PolicyEditing
         private readonly CheckBox _shiftRandom = new() { Text = "Shift by a random amount instead", AutoSize = true };
         private readonly CheckBox _futureDates = new() { Text = "Allow shifted dates in the future", AutoSize = true };
 
+        // TRUNCATE (Phileas versions that honor its settings)
+        private readonly NumericUpDown _truncateLeave = new() { Minimum = 1, Maximum = 1000, Value = StrategySettings.DefaultTruncateLeave, Width = 80 };
+        private readonly ComboBox _truncateEnd = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 160 };
+        private readonly TextBox _truncateCharacter = new() { Width = 40, MaxLength = 1 };
+
         // Condition
         private readonly CheckBox _enableCondition = new() { Text = "Only apply when:", AutoSize = true };
         private readonly ComboBox _conditionField = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220, DisplayMember = "Display" };
@@ -184,6 +189,13 @@ namespace PhilterDesktop.PolicyEditing
                      "restart Philter Desktop. Every filter in this policy that uses this encryption shares them.", wrap: true)));
             AddPanel(StrategyCatalog.MapReplace, Stack(
                 _mappings, Row(SubLabel("For values not in the table:"), _fallback), _caseSensitive, _mapConsistent));
+            if (StrategyCatalog.TruncateSettingsSupported)
+            {
+                AddPanel(StrategyCatalog.Truncate, Stack(
+                    Row(SubLabel("Keep"), _truncateLeave, SubLabel("characters"), _truncateEnd),
+                    Row(SubLabel("Put this in place of the others:"), _truncateCharacter)));
+                _truncateEnd.Items.AddRange(new object[] { "at the start", "at the end" });
+            }
             AddPanel(StrategyCatalog.Shift, Stack(
                 Row(SubLabel("Years:"), _shiftYears, SubLabel("Months:"), _shiftMonths, SubLabel("Days:"), _shiftDays),
                 _shiftRandom, _futureDates));
@@ -440,6 +452,9 @@ namespace PhilterDesktop.PolicyEditing
             _shiftDays.Value = Math.Clamp(s.ShiftDays, (int)_shiftDays.Minimum, (int)_shiftDays.Maximum);
             _shiftRandom.Checked = s.ShiftRandom;
             _futureDates.Checked = s.FutureDates;
+            _truncateLeave.Value = Math.Clamp(s.TruncateLeaveCharacters, (int)_truncateLeave.Minimum, (int)_truncateLeave.Maximum);
+            _truncateEnd.SelectedIndex = _truncateEnd.Items.Count == 0 ? -1 : s.TruncateTrailing ? 1 : 0;
+            _truncateCharacter.Text = s.TruncateCharacter;
             SyncRandom();
             SyncShift();
 
@@ -479,6 +494,9 @@ namespace PhilterDesktop.PolicyEditing
             s.ShiftDays = (int)_shiftDays.Value;
             s.ShiftRandom = _shiftRandom.Checked;
             s.FutureDates = _futureDates.Checked;
+            s.TruncateLeaveCharacters = (int)_truncateLeave.Value;
+            s.TruncateTrailing = _truncateEnd.SelectedIndex == 1;
+            s.TruncateCharacter = _truncateCharacter.Text;
             return s;
         }
 

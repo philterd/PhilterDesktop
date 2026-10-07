@@ -237,6 +237,9 @@ namespace PhilterDesktop.PolicyEditing
                 StrategyCatalog.MapReplace =>
                     $"Replace from a lookup table ({settings.Mappings.Count} {(settings.Mappings.Count == 1 ? "entry" : "entries")}, " +
                     $"otherwise {StrategyCatalog.Find(settings.FallbackStrategy)?.Label.ToLowerInvariant() ?? settings.FallbackStrategy})" + consistent,
+                StrategyCatalog.Truncate when StrategyCatalog.TruncateSettingsSupported =>
+                    $"Keep the {(settings.TruncateTrailing ? "last" : "first")} {settings.TruncateLeaveCharacters} " +
+                    $"character{(settings.TruncateLeaveCharacters == 1 ? string.Empty : "s")}, mask with {settings.TruncateCharacter}",
                 StrategyCatalog.Shift => settings.ShiftRandom
                     ? "Shift the date by a random amount"
                     : $"Shift the date by {Amount(settings.ShiftYears, "year")}{Amount(settings.ShiftMonths, "month")}{Amount(settings.ShiftDays, "day")}".TrimEnd(',', ' '),
