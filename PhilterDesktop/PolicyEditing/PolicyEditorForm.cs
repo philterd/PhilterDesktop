@@ -464,7 +464,7 @@ namespace PhilterDesktop.PolicyEditing
 
                 Type strategyType = strategiesProp.PropertyType.GetGenericArguments()[0];
                 IEnumerable existing = (IEnumerable?)strategiesProp.GetValue(filter) ?? Array.Empty<object>();
-                using var dlg = new FilterStrategiesForm(name, existing, strategyType, toggles);
+                using var dlg = new FilterStrategiesForm(name, existing, strategyType, toggles, _policy);
                 if (dlg.ShowDialog(this) == DialogResult.OK)
                 {
                     IList result = dlg.BuildResultList();
@@ -733,7 +733,7 @@ namespace PhilterDesktop.PolicyEditing
         {
             FilterStrategyDefaults.MaterializeMissing(_policy); // ensure the default REDACT strategy is present
             IEnumerable existing = (IEnumerable?)phEye.Strategies ?? Array.Empty<object>();
-            using var dlg = new FilterStrategiesForm(title, existing, typeof(Phileas.Policy.Filters.Strategies.PhEyeFilterStrategy));
+            using var dlg = new FilterStrategiesForm(title, existing, typeof(Phileas.Policy.Filters.Strategies.PhEyeFilterStrategy), policy: _policy);
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
                 IList result = dlg.BuildResultList();

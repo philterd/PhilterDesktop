@@ -16,6 +16,7 @@
 
 using System.Collections;
 using Phileas.Policy.Filters.Strategies;
+using PhileasPolicy = Phileas.Policy.Policy;
 
 namespace PhilterDesktop.PolicyEditing
 {
@@ -29,6 +30,7 @@ namespace PhilterDesktop.PolicyEditing
         private readonly Type _strategyType;
         private readonly List<AbstractFilterStrategy> _items;
         private readonly IReadOnlyList<FilterOptionToggle> _options;
+        private readonly PhileasPolicy? _policy; // holds the encryption key references
         private readonly List<(CheckBox Box, FilterOptionToggle Toggle)> _optionChecks = new();
         private static readonly Size ButtonSize = new(90, 34);
 
@@ -40,9 +42,10 @@ namespace PhilterDesktop.PolicyEditing
         private readonly Button _cancel = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, Size = ButtonSize };
 
         public FilterStrategiesForm(string filterTypeDisplay, IEnumerable existing, Type strategyType,
-            IReadOnlyList<FilterOptionToggle>? options = null)
+            IReadOnlyList<FilterOptionToggle>? options = null, PhileasPolicy? policy = null)
         {
             _display = filterTypeDisplay;
+            _policy = policy;
             _strategyType = strategyType;
             _items = existing.Cast<AbstractFilterStrategy>().ToList();
             _options = options ?? Array.Empty<FilterOptionToggle>();
@@ -160,7 +163,7 @@ namespace PhilterDesktop.PolicyEditing
             _list.Items.Clear();
             foreach (AbstractFilterStrategy s in _items)
             {
-                _list.Items.Add(Describe(s));
+                _list.Items.Add(Describe(s, _policy));
             }
             _list.EndUpdate();
             if (selected >= 0 && selected < _list.Items.Count)
@@ -179,7 +182,7 @@ namespace PhilterDesktop.PolicyEditing
         private void OnNew(object? sender, EventArgs e)
         {
             var strategy = (AbstractFilterStrategy)Activator.CreateInstance(_strategyType)!;
-            using var dlg = new AddFilterStrategyForm(strategy, _display);
+            using var dlg = new AddFilterStrategyForm(strategy, _display, _policy);
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
                 _items.Add(strategy);
@@ -194,7 +197,7 @@ namespace PhilterDesktop.PolicyEditing
             {
                 return;
             }
-            using var dlg = new AddFilterStrategyForm(_items[i], _display);
+            using var dlg = new AddFilterStrategyForm(_items[i], _display, _policy);
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
                 RefreshList();
@@ -211,13 +214,33 @@ namespace PhilterDesktop.PolicyEditing
             }
         }
 
-        private static string Describe(AbstractFilterStrategy s)
+        /// <summary>One line describing a strategy and its key settings, for the list.</summary>
+        internal static string Describe(AbstractFilterStrategy s, PhileasPolicy? policy = null)
         {
-            string text = s.Strategy switch
+            StrategySettings settings = StrategySettings.Load(s, policy);
+            string consistent = settings.Consistent ? ", consistent across contexts" : string.Empty;
+            string text = settings.Strategy switch
             {
-                AbstractFilterStrategy.StaticReplace => $"Replace with \"{s.StaticReplacement}\"",
-                AbstractFilterStrategy.RandomReplace => $"Random replacement (scope: {s.ReplacementScope})",
-                _ => $"Redact with \"{s.RedactionFormat}\""
+                StrategyCatalog.Redact => $"Redact with \"{settings.RedactionFormat}\"",
+                StrategyCatalog.StaticReplace => $"Replace with \"{settings.StaticReplacement}\"",
+                StrategyCatalog.RandomReplace => settings.RandomMethod switch
+                {
+                    StrategySettings.RandomFromList => $"Replace with a value from a list of {settings.RandomCandidates.Count}",
+                    StrategySettings.RandomUuid => "Replace with a random ID",
+                    _ => "Replace with a realistic random value"
+                } + consistent,
+                StrategyCatalog.Mask => $"Mask with {settings.MaskCharacter}" +
+                    (settings.MaskLength is int length ? $", {length} characters" : string.Empty),
+                StrategyCatalog.HashSha256 => "Replace with a SHA-256 hash" + (settings.Salt ? ", salted" : string.Empty),
+                StrategyCatalog.Crypto => "Encrypt" + KeySource(settings.CryptoKeyVariable, settings.HasStoredCryptoKey),
+                StrategyCatalog.Fpe => "Encrypt, keeping the format" + KeySource(settings.FpeKeyVariable, settings.HasStoredFpeKey),
+                StrategyCatalog.MapReplace =>
+                    $"Replace from a lookup table ({settings.Mappings.Count} {(settings.Mappings.Count == 1 ? "entry" : "entries")}, " +
+                    $"otherwise {StrategyCatalog.Find(settings.FallbackStrategy)?.Label.ToLowerInvariant() ?? settings.FallbackStrategy})" + consistent,
+                StrategyCatalog.Shift => settings.ShiftRandom
+                    ? "Shift the date by a random amount"
+                    : $"Shift the date by {Amount(settings.ShiftYears, "year")}{Amount(settings.ShiftMonths, "month")}{Amount(settings.ShiftDays, "day")}".TrimEnd(',', ' '),
+                _ => StrategyCatalog.Find(settings.Strategy)?.Label ?? settings.Strategy
             };
             if (!string.IsNullOrWhiteSpace(s.Condition))
             {
@@ -225,5 +248,11 @@ namespace PhilterDesktop.PolicyEditing
             }
             return text;
         }
+
+        private static string KeySource(string variable, bool stored) =>
+            variable.Length > 0 ? $" (key from %{variable}%)" : stored ? " (key stored in the policy)" : " (no key set)";
+
+        private static string Amount(int value, string unit) =>
+            value == 0 ? string.Empty : $"{value} {unit}{(Math.Abs(value) == 1 ? string.Empty : "s")}, ";
     }
 }

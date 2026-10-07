@@ -12,6 +12,8 @@ All notable changes to Philter Desktop are recorded here, newest first.
 - **Fixed:** the text, email, and Word redaction previews no longer run some files' lines together.
 - **Improved:** Find & Redact terms accept a `*` wildcard, as in Always Redact.
 - **Fixed:** Modify Redaction no longer redacts the wrong text when the original document has changed.
+- **New:** the Policy Editor offers more redaction strategies, such as Mask, Keep the last 4 characters,
+  hashing, and encryption.
 
 ## 1.1.1 — 2026-09-08
 
