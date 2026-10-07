@@ -38,6 +38,11 @@ namespace PhilterDesktop.Tests
         /// that must be gone after redaction.</summary>
         private sealed record Case(string Property, Action<Identifiers> Enable, string Sample, string Sensitive, bool RequiresModel = false);
 
+        // "Dictionaries" is a public filter in Phileas 1.6.0 and a private, JSON-only alias from 1.7.0, so it
+        // gets a case only where it's public, set by reflection so this file compiles against both.
+        private static readonly PropertyInfo? PublicDictionaries =
+            typeof(Identifiers).GetProperty("Dictionaries", BindingFlags.Public | BindingFlags.Instance);
+
         private static readonly IReadOnlyList<Case> Cases = new[]
         {
             // Pattern / checksum filters.
@@ -77,15 +82,17 @@ namespace PhilterDesktop.Tests
                 "Contact George Washington today.", "George Washington", RequiresModel: true),
 
             // Configuration-driven filters (the user supplies the terms/pattern/markers).
-            new Case("Dictionaries", i => i.Dictionaries = new List<PhDictionary> { new() { Name = "proj", Terms = new List<string> { "Wanderlust" } } },
-                "Project Wanderlust launched.", "Wanderlust"),
             new Case("CustomDictionaries", i => i.CustomDictionaries = new List<CustomDictionary> { new() { Terms = new List<string> { "Zephyrous" } } },
                 "Codename Zephyrous active.", "Zephyrous"),
             new Case("CustomIdentifiers", i => i.CustomIdentifiers = new List<Identifier> { new() { Pattern = @"CASE-\d+" } },
                 "Ref CASE-4821 filed.", "CASE-4821"),
             new Case("Sections", i => i.Sections = new List<Section> { new() { StartPattern = "<secret>", EndPattern = "</secret>" } },
                 "Note: <secret>hidden</secret> end.", "hidden"),
-        };
+        }.Concat(PublicDictionaries is null ? Array.Empty<Case>() : new[]
+        {
+            new Case("Dictionaries", i => PublicDictionaries.SetValue(i, new List<PhDictionary> { new() { Name = "proj", Terms = new List<string> { "Wanderlust" } } }),
+                "Project Wanderlust launched.", "Wanderlust"),
+        }).ToList();
 
         [Fact]
         public void EveryPhileasFilterType_HasAContractCase()
