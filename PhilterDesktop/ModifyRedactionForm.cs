@@ -388,12 +388,13 @@ namespace PhilterDesktop
                 Replacement = RedactionService.DefaultReplacement,
                 ParagraphIndex = kind == SpanPositionKind.Paragraph ? 0 : -1
             };
+            IReadOnlyList<string>? paragraphs = kind == SpanPositionKind.Paragraph ? SourceParagraphs() : null;
             using var dlg = new SpanEditForm("Add Redaction", kind, template, positionEditable: true,
                 maxOffset: kind == SpanPositionKind.TextOffset ? SourceTextLength() : 0,
-                paragraphLengths: kind == SpanPositionKind.Paragraph ? SourceParagraphLengths() : null);
+                paragraphLengths: paragraphs?.Select(p => p.Length).ToList());
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
-                _working.Add(FromDialog(new RedactionSpanEntity { UserAdded = true }, kind, dlg));
+                _working.Add(FromDialog(new RedactionSpanEntity { UserAdded = true }, kind, dlg, paragraphs));
                 SaveWorking();
                 RefreshSpanList();
             }
@@ -414,14 +415,15 @@ namespace PhilterDesktop
             // spans can have their position changed. Cell/field-indexed formats have no positional UI,
             // so there the replacement is the only editable part. The replacement is always editable.
             bool positionEditable = span.UserAdded && !RedactionService.UsesOrdinalSpanAddressing(_selectedVersion!.FileType);
+            IReadOnlyList<string>? paragraphs = kind == SpanPositionKind.Paragraph ? SourceParagraphs() : null;
             using var dlg = new SpanEditForm("Edit Redaction", kind, span, positionEditable,
                 maxOffset: kind == SpanPositionKind.TextOffset ? SourceTextLength() : 0,
-                paragraphLengths: kind == SpanPositionKind.Paragraph ? SourceParagraphLengths() : null);
+                paragraphLengths: paragraphs?.Select(p => p.Length).ToList());
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
                 if (positionEditable)
                 {
-                    FromDialog(span, kind, dlg);
+                    FromDialog(span, kind, dlg, paragraphs);
                 }
                 else
                 {
@@ -456,12 +458,13 @@ namespace PhilterDesktop
             }
         }
 
-        // The length of each Word paragraph's text (by paragraph index), for the same offset bounds.
-        private IReadOnlyList<int>? SourceParagraphLengths()
+        // Each Word paragraph's text (by paragraph index): bounds the dialog's offsets and records the text
+        // a manual span covers.
+        private IReadOnlyList<string>? SourceParagraphs()
         {
             try
             {
-                return WordDocumentRedactor.ReadParagraphs(_selectedVersion!.SourcePath).Select(p => p.Length).ToList();
+                return WordDocumentRedactor.ReadParagraphs(_selectedVersion!.SourcePath);
             }
             catch
             {
@@ -469,8 +472,19 @@ namespace PhilterDesktop
             }
         }
 
+        /// <summary>
+        /// The text a paragraph span covers, so re-applying it can check it still lines up with the source;
+        /// empty when the paragraphs are unavailable or the range is outside them.
+        /// </summary>
+        internal static string ParagraphSlice(IReadOnlyList<string>? paragraphs, int paragraph, int start, int stop) =>
+            paragraphs is not null && paragraph >= 0 && paragraph < paragraphs.Count
+                && start >= 0 && stop > start && stop <= paragraphs[paragraph].Length
+                ? paragraphs[paragraph][start..stop]
+                : string.Empty;
+
         // Copies the dialog's position + replacement onto the span according to the document type.
-        private static RedactionSpanEntity FromDialog(RedactionSpanEntity span, SpanPositionKind kind, SpanEditForm dlg)
+        private static RedactionSpanEntity FromDialog(RedactionSpanEntity span, SpanPositionKind kind, SpanEditForm dlg,
+            IReadOnlyList<string>? paragraphs = null)
         {
             span.Replacement = dlg.Replacement;
             switch (kind)
@@ -479,6 +493,7 @@ namespace PhilterDesktop
                     span.ParagraphIndex = dlg.Paragraph;
                     span.CharacterStart = dlg.Start;
                     span.CharacterEnd = dlg.Stop;
+                    span.Text = ParagraphSlice(paragraphs, dlg.Paragraph, dlg.Start, dlg.Stop);
                     break;
                 case SpanPositionKind.Pdf:
                     span.PageNumber = dlg.Page;
@@ -581,6 +596,11 @@ namespace PhilterDesktop
                     worksheet: version.Worksheet,
                     redactRecurringImages: _redactRecurringImages);
             }
+            catch (StaleRedactionSpansException stale)
+            {
+                MessageBox.Show(StaleSpansMessage(stale), "Modify Redaction", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             catch (Exception ex)
             {
                 MessageBox.Show(UserError.Describe(ex, output, writing: true), "Modify Redaction", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -598,6 +618,22 @@ namespace PhilterDesktop
 
             // Open the freshly redacted document in the system default application.
             OpenInDefaultApp(output);
+        }
+
+        // Explains why nothing was written when saved redactions no longer line up with the source.
+        internal static string StaleSpansMessage(StaleRedactionSpansException stale)
+        {
+            const int Shown = 5;
+            var lines = stale.Unmatched.Take(Shown).Select(s => string.IsNullOrEmpty(s.Text)
+                ? $"  Paragraph {s.ParagraphIndex + 1}, characters {s.CharacterStart}-{s.CharacterEnd}"
+                : $"  Paragraph {s.ParagraphIndex + 1}: \"{s.Text}\"");
+            string more = stale.Unmatched.Count > Shown ? $"{Environment.NewLine}  and {stale.Unmatched.Count - Shown} more" : string.Empty;
+            return stale.Message + " No new redacted copy was written." +
+                   Environment.NewLine + Environment.NewLine +
+                   string.Join(Environment.NewLine, lines) + more +
+                   Environment.NewLine + Environment.NewLine +
+                   "The document may have changed since it was redacted. Redact it again from the main window " +
+                   "to detect its current text, or edit or remove these redactions here.";
         }
 
         private static void OpenInDefaultApp(string path)

@@ -51,10 +51,8 @@ namespace PhilterDesktop.Tests
     /// </summary>
     public sealed class IdentifierReflectionTests
     {
-        private static IEnumerable<PropertyInfo> SingleFilterProperties() =>
-            typeof(Identifiers)
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => typeof(AbstractPolicyFilter).IsAssignableFrom(p.PropertyType));
+        // The filters the Policy Editor offers (deprecated aliases excluded).
+        private static IEnumerable<PropertyInfo> SingleFilterProperties() => FilterCatalog.Discover().Values;
 
         [Fact]
         public void ThereAreManySingleFilters()

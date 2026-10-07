@@ -50,8 +50,31 @@ namespace PhilterDesktop.PolicyEditing
         public static Dictionary<string, PropertyInfo> Discover() =>
             typeof(Identifiers)
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => typeof(AbstractPolicyFilter).IsAssignableFrom(p.PropertyType))
+                .Where(p => typeof(AbstractPolicyFilter).IsAssignableFrom(p.PropertyType) && !IsDeprecatedAlias(p))
                 .ToDictionary(p => p.Name);
+
+        /// <summary>
+        /// True for a deprecated <c>Identifiers</c> alias: a property that accepts a value (folding it into
+        /// another filter, as Phileas does for <c>Person</c>) but never reads it back. It isn't a filter
+        /// of its own, so offering it would show a checkbox that never stays ticked.
+        /// </summary>
+        internal static bool IsDeprecatedAlias(PropertyInfo property)
+        {
+            if (!property.CanRead || !property.CanWrite)
+            {
+                return true;
+            }
+            try
+            {
+                object probe = Activator.CreateInstance(property.ReflectedType!)!; // e.g. a fresh Identifiers
+                property.SetValue(probe, Activator.CreateInstance(property.PropertyType));
+                return property.GetValue(probe) is null;
+            }
+            catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or MemberAccessException)
+            {
+                return true; // can't be created, so the editor couldn't enable it either
+            }
+        }
 
         /// <summary>
         /// The discovered filters grouped by category in display order; identifiers not listed in

@@ -301,10 +301,11 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
-        public void DateTypedCell_IsoValue_NotContentRedacted_ButFullColumnClearsIt()
+        public void DateTypedCell_IsoValue_ContentRedactionKeepsTheFileValid_AndFullColumnClearsIt()
         {
-            // Date-typed cells store an ISO value (e.g. 1972-05-20) that the date detector doesn't match,
-            // so content detection leaves it — whole-column redaction is the dependable tool (documented).
+            // A date-typed cell stores an ISO value (e.g. 1972-05-20). Whether content detection matches it
+            // depends on the Phileas version (newer versions detect ISO dates). Either way the output must
+            // be a valid workbook: a redacted value can't stay in a cell still typed as a date.
             string path = Path.Combine(_dir, "date.xlsx");
             SpreadsheetTestHelper.CreateTyped(path, new SpreadsheetTestHelper.CellSpec?[][]
             {
@@ -314,7 +315,27 @@ namespace PhilterDesktop.Tests
             var policy = new PhileasPolicy { Name = "date", Identifiers = new Identifiers { Date = new Date() } };
 
             string contentOnly = Redact(path, policy);
-            Assert.Contains("1972-05-20", SpreadsheetTestHelper.AllText(contentOnly)); // not caught by content scan
+            // The validator rejects the fixture's bare ISO date itself, so compare against the source:
+            // redaction must not add validation errors.
+            static int ValidationErrors(string file)
+            {
+                using var d = DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Open(file, isEditable: false);
+                return new DocumentFormat.OpenXml.Validation.OpenXmlValidator().Validate(d).Count();
+            }
+            Assert.True(ValidationErrors(contentOnly) <= ValidationErrors(path), "redaction made the workbook less valid");
+            using (var doc = DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Open(contentOnly, isEditable: false))
+            {
+                var cell = doc.WorkbookPart!.WorksheetParts
+                    .SelectMany(w => w.Worksheet!.Descendants<DocumentFormat.OpenXml.Spreadsheet.Cell>())
+                    .Single(c => c.CellReference?.Value == "A2");
+                bool redacted = !SpreadsheetTestHelper.AllText(contentOnly).Contains("1972-05-20");
+                if (redacted)
+                {
+                    Assert.Contains("REDACTED", SpreadsheetTestHelper.AllText(contentOnly));
+                    Assert.False(cell.DataType?.Value == DocumentFormat.OpenXml.Spreadsheet.CellValues.Date,
+                        "a redacted value must not stay in a date-typed cell");
+                }
+            }
 
             // Whole-column removal clears it regardless of detection.
             string fullColumn = Path.Combine(_dir, "date_fc.xlsx");

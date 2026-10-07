@@ -410,7 +410,18 @@ namespace PhilterDesktop
                     Func<string, TextFilterResult>? docxDrawingFilter = policy is null
                         ? null
                         : text => filterService.Filter(policy, string.Empty, 0, text);
-                    await Task.Run(() => WordDocumentRedactor.ApplySpans(sourcePath, outputPath, OfficeSpanMapping.ToOfficeSpans(spans), highlight, docxDrawingFilter, redactOfficeCharts, removeUninspectableEmbeddedObjects));
+                    await Task.Run(() =>
+                    {
+                        // Re-anchor saved spans to the source's current text, and refuse (before writing
+                        // anything) rather than redact the wrong characters when one can't be placed.
+                        List<OfficeRedactionSpan> officeSpans = OfficeSpanMapping.ToOfficeSpans(spans);
+                        WordSpanAnchoring.Result anchored = WordSpanAnchoring.Anchor(WordDocumentRedactor.ReadParagraphs(sourcePath), officeSpans);
+                        if (anchored.Unmatched.Count > 0)
+                        {
+                            throw new StaleRedactionSpansException(anchored.Unmatched);
+                        }
+                        WordDocumentRedactor.ApplySpans(sourcePath, outputPath, officeSpans, highlight, docxDrawingFilter, redactOfficeCharts, removeUninspectableEmbeddedObjects);
+                    });
                     if (wordScrub != WordScrubOptions.None)
                     {
                         await Task.Run(() => DocumentMetadata.ScrubDocx(outputPath, wordScrub));

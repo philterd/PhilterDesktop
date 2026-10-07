@@ -19,6 +19,7 @@ using Phileas.Policy;
 using Phileas.Policy.Filters;
 using Phileas.Services;
 using PhilterDesktop;
+using PhilterDesktop.PolicyEditing;
 using Xunit;
 using PhileasPolicy = Phileas.Policy.Policy;
 using PhDictionary = Phileas.Policy.Filters.Dictionary;
@@ -89,11 +90,14 @@ namespace PhilterDesktop.Tests
         [Fact]
         public void EveryPhileasFilterType_HasAContractCase()
         {
-            var expected = FilterPropertyNames();
+            // Every real filter needs a case; a case may also name a deprecated alias (e.g. "Dictionaries",
+            // a real filter in older Phileas versions), which still has to redact.
+            var expected = FilterPropertyNames(includeAliases: false);
+            var known = FilterPropertyNames(includeAliases: true);
             var covered = Cases.Select(c => c.Property).ToHashSet();
 
             var missing = expected.Except(covered).OrderBy(x => x).ToList();
-            var unknown = covered.Except(expected).OrderBy(x => x).ToList();
+            var unknown = covered.Except(known).OrderBy(x => x).ToList();
 
             Assert.True(missing.Count == 0,
                 "Phileas filter types with no contract case (add a sample so a new filter can't silently no-op): " + string.Join(", ", missing));
@@ -123,9 +127,9 @@ namespace PhilterDesktop.Tests
             Assert.DoesNotContain(c.Sensitive, result.FilteredText);
         }
 
-        private static ISet<string> FilterPropertyNames() =>
+        private static ISet<string> FilterPropertyNames(bool includeAliases) =>
             typeof(Identifiers).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => IsFilter(p.PropertyType))
+                .Where(p => IsFilter(p.PropertyType) && (includeAliases || !FilterCatalog.IsDeprecatedAlias(p)))
                 .Select(p => p.Name)
                 .ToHashSet();
 

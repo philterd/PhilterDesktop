@@ -11,6 +11,7 @@ All notable changes to Philter Desktop are recorded here, newest first.
 - **Fixed:** the license agreement text no longer runs words together where lines break.
 - **Fixed:** the text, email, and Word redaction previews no longer run some files' lines together.
 - **Improved:** Find & Redact terms accept a `*` wildcard, as in Always Redact.
+- **Fixed:** Modify Redaction no longer redacts the wrong text when the original document has changed.
 
 ## 1.1.1 — 2026-09-08
 

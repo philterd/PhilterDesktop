@@ -49,29 +49,14 @@ namespace PhilterDesktop.Tests
             Assert.True(result.IsValid, "policy with always-redact terms failed schema validation: " + string.Join(" | ", result.Errors));
         }
 
-        // Documents the bug: the old storage (Identifiers.Dictionaries -> "dictionary") is schema-invalid,
-        // which is exactly why saving was blocked. Guards against regressing to it.
-        [Fact]
-        public void OldDictionaryStorage_IsSchemaInvalid()
-        {
-            PhileasPolicy policy = NewPolicy();
-            policy.Identifiers.Dictionaries = new List<Dictionary>
-            {
-                new() { Name = "always-redact", Terms = new List<string> { "Voldemort" }, Enabled = true }
-            };
-
-            PolicyValidationResult result = PolicyValidator.Validate(PolicySerializer.SerializeToJson(policy));
-
-            Assert.False(result.IsValid); // the schema has no "dictionary" property (additionalProperties:false)
-        }
-
         [Fact]
         public void SetTerms_StoresUnderCustomDictionaries_NotDictionaries()
         {
             PhileasPolicy policy = NewPolicy();
             AlwaysRedactPolicy.SetTerms(policy, new[] { "Voldemort" });
 
-            Assert.Null(policy.Identifiers.Dictionaries);              // never the schema-invalid list
+            // Never the deprecated "dictionary" key (which older Phileas versions wrote and the schema rejects).
+            Assert.DoesNotContain("\"dictionary\"", PolicySerializer.SerializeToJson(policy));
             Assert.NotNull(policy.Identifiers.CustomDictionaries);
             CustomDictionary dict = Assert.Single(policy.Identifiers.CustomDictionaries!);
             Assert.Equal(AlwaysRedactPolicy.Classification, dict.Classification);
