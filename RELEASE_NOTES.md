@@ -2,6 +2,15 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
+## 1.2.0 — Unreleased
+
+- **Fixed:** at display scaling above 100% (such as 150%), controls no longer overlap or get cut off in
+  the Policy Editor, Settings, and other dialogs.
+- **Fixed:** the license agreement and redaction notice windows can be resized and now fit on screen at
+  high display scaling, so their buttons are always reachable.
+- **Fixed:** the license agreement text no longer runs words together where lines break.
+- **Fixed:** the text, email, and Word redaction previews no longer run some files' lines together.
+
 ## 1.1.1 — 2026-09-08
 
 - **Changed:** there is now **one installer for every PC**. The separate Intel/AMD (x64) and ARM64
