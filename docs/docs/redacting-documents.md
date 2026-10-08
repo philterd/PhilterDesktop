@@ -64,9 +64,8 @@ model isn't installed). Hover the row for a short explanation, and check the **V
 
 If a document shows **Failed**, Philter Desktop records the reason. **Hover over the failed row** to
 see it in a pop-up, or right-click the row and choose **View Details…**, where the reason appears as a
-**"Why it failed"** line. The reasons are in plain language, for example: *"…could not save
-'report.docx' because it is open in another program (such as Microsoft Word or a PDF viewer). Please
-close it and try again."*
+**"Why it failed"** line. The reasons are in plain language, for example: *"'report.docx' is open in
+another program (such as Microsoft Word), so it can't be redacted. Close it and try again."*
 
 Once you've fixed the cause (closed the file, freed up disk space, raised a limit in Settings, and so
 on), **retry** the document rather than adding it again:
@@ -341,6 +340,11 @@ re-applies that version's redactions to your **original document** and writes a 
 produces `report_redacted-draft.docx`, later versions add a number, like
 `report_redacted-draft_2.docx`). Because the file is built from the original, **the original document
 must still be in its original location.** The finished document opens automatically when ready.
+
+For **Word documents**, Philter Desktop first checks that every redaction still lines up with the
+original's text. If the document has changed since it was redacted, it lists the redactions that no
+longer match and writes no new copy. Redact the document again from the main window to detect its
+current text, or edit or remove those redactions.
 
 Re-redacting produces a **new, unverified** output, so the document's earlier verification result is
 cleared (its **Verification** status returns to not-checked). Run **Verify Redaction** again on the new

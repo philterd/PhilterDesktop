@@ -7,7 +7,8 @@ All notable changes to Philter Desktop are recorded here, newest first.
 - **New:** more redaction strategies in the Policy Editor, including Mask, Keep the last 4 characters,
   hashing, encryption, and date shifting. Truncate can now keep characters at either end, for example
   `************1111`.
-- **New:** ITIN and Canadian SIN identifiers.
+- **New:** ITIN and Canadian SIN identifiers, each with an option to match only numbers that are
+  actually issued.
 - **Improved:** Find & Redact terms accept a `*` wildcard, as in Always Redact.
 - **Fixed:** redaction no longer misses values next to line breaks or tabs in Word, PowerPoint, and text
   files. Redact again any such Word documents redacted with an earlier version.

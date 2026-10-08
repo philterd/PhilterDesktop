@@ -62,9 +62,11 @@ Official numbers that single out a specific person or thing.
   option restricts matches to prefixes the IRS actually issues (off by default, so any *NN-NNNNNNN*
   value matches).
 - **ITIN (Individual Taxpayer Identification Number)**: a U.S. tax ID for people who can't get an SSN,
-  e.g., *912-70-1234*.
+  e.g., *912-70-1234*. An option restricts matches to the ranges the IRS issues (off by default, so any
+  *9XX-XX-XXXX* value matches).
 - **Canada SIN (Social Insurance Number)**: e.g., *046 454 286*. Only numbers that pass the SIN
-  checksum match, so a mistyped number isn't caught.
+  checksum match, so a mistyped number isn't caught. An option skips numbers starting with 0 or 8,
+  which aren't issued to people (off by default).
 - **Driver's License**: a driver's license number.
 - **Passport Number**
 - **VIN (Vehicle Identification Number)**: the unique number identifying a specific vehicle.

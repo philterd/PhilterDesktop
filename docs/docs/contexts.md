@@ -68,7 +68,7 @@ rest, so the stored originals and their stand-in values are protected like the r
 - When you add documents using the **Redact** button, you choose which context to use for them.
 - Documents added by **drag-and-drop** use the **default** context.
 - Whether replacements are shared from one document to the next depends on the
-  [filter strategy](filter-strategies.md). Specifically, **random replacement** set to
-  reuse values within a context is what makes the same original turn into the same stand-in
-  everywhere. (When blacking information out, consistency isn't a concern: every
+  [filter strategy](filter-strategies.md). Specifically, **Replace with a random value** (or a lookup
+  table) with **Replace consistently across document contexts** ticked is what makes the same original
+  turn into the same stand-in everywhere. (When blacking information out, consistency isn't a concern: every
   redaction becomes the same placeholder anyway.)

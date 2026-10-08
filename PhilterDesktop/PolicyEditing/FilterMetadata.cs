@@ -178,6 +178,25 @@ namespace PhilterDesktop.PolicyEditing
                         "Off (the default) matches any NN-NNNNNNN value, so a newly issued prefix still matches.",
                         Default: false),
                 },
+                ["Itin"] = new[]
+                {
+                    new FilterOption(
+                        "OnlyValidRanges",
+                        "Only match ranges the IRS issues",
+                        "When on, only ITINs whose fourth and fifth digits are in a range the IRS issues are redacted, " +
+                        "and ATINs (93) are not. Off (the default) matches any 9XX-XX-XXXX value, so a newly issued " +
+                        "range still matches.",
+                        Default: false),
+                },
+                ["CanadaSin"] = new[]
+                {
+                    new FilterOption(
+                        "OnlyValidPrefixes",
+                        "Skip numbers starting with 0 or 8",
+                        "When on, SINs starting with 0 or 8 are not redacted, since neither is issued to a person " +
+                        "(8 is used for business numbers). Off (the default) matches any valid SIN.",
+                        Default: false),
+                },
             };
 
         /// <summary>The registered options for a filter, or an empty list if it has none.</summary>

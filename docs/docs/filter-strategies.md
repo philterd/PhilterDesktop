@@ -86,6 +86,10 @@ As you choose, Philter Desktop shows the exact condition it will use (for exampl
 you pick comparisons and values the redaction engine understands, so a condition can never be silently
 ignored (which would make the strategy apply everywhere instead of only where you intended).
 
+If a policy has a condition the redaction engine can't read (for example, from an older version or an
+imported file), Philter Desktop removes it when you open or import the policy and tells you which ones.
+Those conditions already applied their strategy to every match, so redaction doesn't change.
+
 These examples show the kind of fine-tuning conditions make possible:
 
 | Scenario | Condition |
