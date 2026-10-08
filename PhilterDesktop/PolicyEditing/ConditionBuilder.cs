@@ -21,14 +21,15 @@ namespace PhilterDesktop.PolicyEditing
     /// <summary>
     /// Builds and parses a single filter-strategy condition (e.g. <c>token == "Smith"</c>) for the
     /// guided condition editor. Mirrors the grammar phileas-dotnet's ConditionEvaluator accepts:
-    /// a field (token/context/type/confidence/population), an operator, and a quoted-string or numeric
+    /// a field (token/context/confidence/population), an operator, and a quoted-string or numeric
     /// value. (The engine also allows chaining with "and"; that multi-condition case isn't built here.)
     /// </summary>
     internal static class ConditionBuilder
     {
-        // AllowsPrefix: whether the field supports the "starts with" operator. The engine supports it for
-        // token and context but rejects it for type, so a policy using it wouldn't load. Numeric fields
-        // never use prefix ops.
+        // AllowsPrefix: whether the field supports the "starts with" operator (token and context only).
+        // "type" isn't offered: the engine compares it with the classification, which built-in filters
+        // don't set, so a type condition would leave their values unredacted. Existing type conditions
+        // are kept as advanced conditions.
         internal sealed record ConditionField(string Display, string Keyword, bool Numeric, bool AllowsPrefix);
         internal sealed record ConditionOperator(string Display, string Symbol);
 
@@ -36,7 +37,6 @@ namespace PhilterDesktop.PolicyEditing
         {
             new ConditionField("Matched text", "token", Numeric: false, AllowsPrefix: true),
             new ConditionField("Context", "context", Numeric: false, AllowsPrefix: true),
-            new ConditionField("Detected type", "type", Numeric: false, AllowsPrefix: false),
             new ConditionField("Confidence (0 to 1)", "confidence", Numeric: true, AllowsPrefix: false),
             new ConditionField("Population", "population", Numeric: true, AllowsPrefix: false),
         };
@@ -69,9 +69,9 @@ namespace PhilterDesktop.PolicyEditing
             : field.AllowsPrefix ? TextOperators
             : EqualityOperators;
 
-        // The engine's condition grammar accepts numbers as \d+(?:\.\d+)? — no sign, exponent, or
-        // thousands separator. A value outside this (e.g. "1E3", "1,000") makes the whole condition
-        // unparseable, and an unparseable condition evaluates to true, so the strategy over-applies.
+        // The engine's condition grammar accepts numbers as \d+(?:\.\d+)?, with no sign, exponent, or
+        // thousands separator. A value outside this (e.g. "1E3", "1,000") makes the condition unparseable,
+        // and the engine refuses to load a policy holding one.
         private static readonly Regex NumericValue = new(@"^\d+(?:\.\d+)?$", RegexOptions.Compiled);
 
         /// <summary>Whether <paramref name="value"/> is a number the engine's condition grammar accepts.</summary>

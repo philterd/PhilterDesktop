@@ -408,6 +408,17 @@ namespace PhilterDesktop.Tests
         });
 
         [Fact]
+        public void Dialog_DoesNotOfferDetectedType_ButKeepsAnExistingTypeCondition() => Sta(() =>
+        {
+            var strategy = new IdentifierFilterStrategy { Strategy = StrategyCatalog.Redact, Condition = "type == \"acct\"" };
+            using var form = new AddFilterStrategyForm(strategy, "Custom Identifier");
+
+            Assert.DoesNotContain(form.ConditionFieldChoice.Items.Cast<ConditionBuilder.ConditionField>(), f => f.Keyword == "type");
+            Assert.Null(form.Accept());
+            Assert.Equal("type == \"acct\"", strategy.Condition);
+        });
+
+        [Fact]
         public void Dialog_AStrategyItCantEdit_IsShownAsIs_AndKept() => Sta(() =>
         {
             // A strategy not offered here (from a newer Phileas, or not working in this one) is preserved.

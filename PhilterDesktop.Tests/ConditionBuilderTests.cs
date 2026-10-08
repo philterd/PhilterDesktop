@@ -15,8 +15,13 @@
  */
 
 using Phileas.Filters.Conditions;
+using Phileas.Policy;
+using Phileas.Policy.Filters;
+using Phileas.Policy.Filters.Strategies;
+using Phileas.Services;
 using PhilterDesktop.PolicyEditing;
 using Xunit;
+using PhileasPolicy = Phileas.Policy.Policy;
 
 namespace PhilterDesktop.Tests
 {
@@ -70,10 +75,10 @@ namespace PhilterDesktop.Tests
         // --- the builder must not offer operators/values the engine silently ignores -----------
 
         [Fact]
-        public void TypeField_DoesNotOfferStartsWith()
+        public void DetectedType_IsNotOffered()
         {
-            // EvaluateType only handles ==/!=; startswith would be an always-true (over-applying) condition.
-            Assert.DoesNotContain(ConditionBuilder.OperatorsFor(Field("type")), o => o.Symbol == "startswith");
+            Assert.DoesNotContain(ConditionBuilder.Fields, f => f.Keyword == "type");
+            Assert.Equal(new[] { "token", "context", "confidence", "population" }, ConditionBuilder.Fields.Select(f => f.Keyword));
         }
 
         [Theory]
@@ -94,19 +99,59 @@ namespace PhilterDesktop.Tests
             Assert.NotNull(ConditionParser.GetError("type startswith \"SS\""));
         }
 
-        [Fact]
-        public void TypeEquals_ActuallyNarrowsInEngine()
+        private static string RedactSsn(string condition)
         {
-            string c = ConditionBuilder.Build(Field("type"), Op(Field("type"), "=="), "SSN");
-            Assert.True(ConditionEvaluator.Evaluate(c, "ctx", "x", 0.9, "SSN"));
-            Assert.False(ConditionEvaluator.Evaluate(c, "ctx", "x", 0.9, "EMAIL_ADDRESS"));
+            var policy = new PhileasPolicy
+            {
+                Identifiers = new Identifiers
+                {
+                    Ssn = new Ssn { Strategies = new() { new SsnFilterStrategy { Strategy = "STATIC_REPLACE", StaticReplacement = "X", Condition = condition } } }
+                }
+            };
+            return new FilterService().Filter(policy, "ctx", 0, "SSN 123-45-6789 now.").FilteredText;
+        }
+
+        [Theory]
+        [InlineData("type == \"ssn\"")]
+        [InlineData("type == \"SSN\"")]
+        [InlineData("type is \"ssn\"")]
+        public void TypeEquals_NeverMatchesABuiltInFilter_WhichIsWhyItIsHidden(string condition)
+        {
+            // The engine compares type with the classification, which built-in filters don't set, so the
+            // strategy never applies and the value stays. If this starts failing, the engine is fixed and
+            // "Detected type" can be offered again.
+            Assert.Equal("SSN 123-45-6789 now.", RedactSsn(condition));
+            Assert.Equal("SSN X now.", RedactSsn("token == \"123-45-6789\""));
         }
 
         [Fact]
-        public void TryParse_TypeStartsWith_ReturnsFalse_SoItFallsBackToAdvanced()
+        public void TypeEquals_MatchesACustomIdentifiersClassification()
         {
-            // The guided editor can't show it; LegacyConditions removes it when the policy is opened.
-            Assert.False(ConditionBuilder.TryParse("type startswith \"SSN\"", out _, out _, out _));
+            // Why existing type conditions are kept: they work where a classification is set.
+            var policy = new PhileasPolicy
+            {
+                Identifiers = new Identifiers
+                {
+                    CustomIdentifiers = new()
+                    {
+                        new Identifier
+                        {
+                            Pattern = "ACCT-[0-9]+", Classification = "acct",
+                            Strategies = new() { new IdentifierFilterStrategy { Strategy = "STATIC_REPLACE", StaticReplacement = "X", Condition = "type == \"acct\"" } }
+                        }
+                    }
+                }
+            };
+            Assert.Equal("Account X open.", new FilterService().Filter(policy, "ctx", 0, "Account ACCT-1234 open.").FilteredText);
+        }
+
+        [Theory]
+        [InlineData("type == \"acct\"")]
+        [InlineData("type != \"ssn\"")]
+        [InlineData("type startswith \"SSN\"")]
+        public void TryParse_TypeConditions_ReturnFalse_SoTheyAreKeptAsAdvanced(string condition)
+        {
+            Assert.False(ConditionBuilder.TryParse(condition, out _, out _, out _));
         }
 
         [Theory]

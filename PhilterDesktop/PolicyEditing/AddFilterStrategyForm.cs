@@ -356,6 +356,7 @@ namespace PhilterDesktop.PolicyEditing
         // --- Strategy settings ---------------------------------------------
 
         internal ComboBox StrategyChoice => _strategyChoice;
+        internal ComboBox ConditionFieldChoice => _conditionField;
 
         private StrategyInfo? SelectedStrategy => _strategyChoice.SelectedItem as StrategyInfo;
 

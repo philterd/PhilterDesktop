@@ -2,7 +2,7 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
-## 1.2.0 — Unreleased
+## 1.2.0 — 2026-10-08
 
 - **Fixed:** at display scaling above 100% (such as 150%), controls no longer overlap or get cut off in
   the Policy Editor, Settings, and other dialogs.
@@ -22,6 +22,9 @@ All notable changes to Philter Desktop are recorded here, newest first.
 - **New:** the Policy Editor offers the ITIN and Canadian SIN identifiers.
 - **Changed:** opening a policy removes strategy conditions that can't be read. They applied to every
   match before, and still do.
+- **Changed:** strategy conditions no longer offer "Detected type", which never matched the built-in
+  filters. Existing type conditions are kept.
+- **Internal:** updated to the Phileas 1.7.0 redaction engine.
 
 ## 1.1.1 — 2026-09-08
 

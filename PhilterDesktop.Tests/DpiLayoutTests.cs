@@ -110,7 +110,12 @@ namespace PhilterDesktop.Tests
             ChangeDpi(form, 144);
 
             Assert.Equal(144, form.DeviceDpi);
-            Assert.True(form.ClientSize.Width > before.Width * 1.3, $"form didn't scale: {before} → {form.ClientSize}");
+            // Windows caps a window at the screen size, so on a small screen (such as a 1024x768 CI runner)
+            // reaching the screen's edge counts as scaling.
+            Size screen = Screen.FromControl(form).Bounds.Size;
+            bool cappedByScreen = form.Width >= screen.Width || form.Height >= screen.Height;
+            Assert.True(form.ClientSize.Width > before.Width * 1.3 || cappedByScreen,
+                $"form didn't scale: {before} → {form.ClientSize} (screen {screen})");
             LayoutAudit.AssertClean(AuditAllSteps(form));
         });
 
