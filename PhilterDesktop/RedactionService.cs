@@ -215,6 +215,25 @@ namespace PhilterDesktop
                 redactRecurringImages: settings.RedactRecurringImages);
 
         /// <summary>
+        /// Throws a <see cref="DocumentLoadException"/> naming the file when another program (such as Word)
+        /// has it open in a way that stops the redactors reading it.
+        /// </summary>
+        internal static void EnsureInputNotInUse(string inputPath)
+        {
+            try
+            {
+                // The same access the redactors use (File.ReadAllBytes and similar).
+                using FileStream stream = new(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            }
+            catch (IOException ex) when (UserError.IsFileInUse(ex))
+            {
+                throw new DocumentLoadException(
+                    $"\"{Path.GetFileName(inputPath)}\" is open in another program (such as Microsoft Word), " +
+                    "so it can't be redacted. Close it and try again.");
+            }
+        }
+
+        /// <summary>
         /// Redacts <paramref name="inputPath"/> to <paramref name="outputPath"/> using
         /// <paramref name="policy"/>, dispatching by file type, and returns the spans it applied
         /// (so they can be stored and later edited / re-applied).
@@ -252,6 +271,8 @@ namespace PhilterDesktop
             PhEyeModel.Prepare(policy);
 
             string extension = Path.GetExtension(inputPath).ToLowerInvariant();
+
+            EnsureInputNotInUse(inputPath);
 
             // Word/Excel files that are password-protected or corrupt fail deep inside the Open XML SDK
             // with an opaque "corrupt data" error. Detect those up front and surface a clear message.

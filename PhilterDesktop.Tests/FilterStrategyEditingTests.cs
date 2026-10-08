@@ -35,9 +35,6 @@ namespace PhilterDesktop.Tests
         private static readonly Version Phileas16 = new(1, 6, 0);
         private static readonly Version Phileas17 = new(1, 7, 0);
 
-        private static bool Installed(string strategy) =>
-            StrategyCatalog.Works(StrategyCatalog.Find(strategy)!, StrategyCatalog.InstalledPhileas);
-
         private static IEnumerable<string> Names(IEnumerable<StrategyInfo> strategies) => strategies.Select(s => s.Name);
 
         // --- StrategyCatalog -----------------------------------------------------------------
@@ -224,10 +221,9 @@ namespace PhilterDesktop.Tests
             Assert.NotEqual(Card, output);
         }
 
-        [SkippableFact]
+        [Fact]
         public void LookupTable_ReplacesListedValues_AndFallsBackForOthers()
         {
-            Skip.IfNot(Installed(StrategyCatalog.MapReplace), "MAP_REPLACE needs Phileas 1.7.0");
             var settings = new StrategySettings
             {
                 Strategy = StrategyCatalog.MapReplace,
@@ -243,10 +239,9 @@ namespace PhilterDesktop.Tests
             Assert.Single(strategy.Mappings!); // the blank row isn't saved
         }
 
-        [SkippableFact]
+        [Fact]
         public void Shift_MovesTheDate()
         {
-            Skip.IfNot(Installed(StrategyCatalog.Shift), "SHIFT needs Phileas 1.7.0");
             var policy = new PhileasPolicy { Name = "p", Identifiers = new Identifiers() };
             var strategy = new DateFilterStrategy();
             new StrategySettings { Strategy = StrategyCatalog.Shift, ShiftYears = 1, ShiftDays = 10 }.ApplyTo(strategy, policy);
@@ -257,12 +252,11 @@ namespace PhilterDesktop.Tests
             Assert.Equal((1, 0, 10), (reloaded.ShiftYears, reloaded.ShiftMonths, reloaded.ShiftDays));
         }
 
-        [SkippableTheory]
+        [Theory]
         [InlineData(StrategyCatalog.Relative, "DOB: \\d+ years( \\d+ months?)? ago\\.")]
         [InlineData(StrategyCatalog.TruncateToYear, "DOB: 1990\\.")]
         public void DateStrategies_RedactAsDescribed(string name, string pattern)
         {
-            Skip.IfNot(Installed(name), name + " needs Phileas 1.7.0");
             var policy = new PhileasPolicy { Name = "p", Identifiers = new Identifiers() };
             var strategy = new DateFilterStrategy();
             new StrategySettings { Strategy = name }.ApplyTo(strategy, policy);
@@ -435,20 +429,6 @@ namespace PhilterDesktop.Tests
             Assert.Equal("token startswith \"4\"", strategy.Condition);
         });
 
-        [SkippableFact]
-        public void Dialog_AStrategyThisVersionCantRun_SaysSo_AndKeepsIt() => Sta(() =>
-        {
-            Skip.If(Installed(StrategyCatalog.MapReplace), "every strategy works on this Phileas version");
-            var strategy = new CreditCardFilterStrategy { Strategy = StrategyCatalog.MapReplace };
-            using var form = new AddFilterStrategyForm(strategy, "Credit Card", new PhileasPolicy());
-            var kept = (StrategyInfo)form.StrategyChoice.SelectedItem!;
-
-            Assert.Equal("Replace from a lookup table (kept as is)", kept.Label);
-            Assert.Contains("needs a newer version", kept.Description);
-            Assert.Null(form.Accept());
-            Assert.Equal(StrategyCatalog.MapReplace, strategy.Strategy);
-        });
-
         [Fact]
         public void Dialog_EncryptionWithoutAPolicy_IsKeptAsIs() => Sta(() =>
         {
@@ -520,9 +500,7 @@ namespace PhilterDesktop.Tests
                 FilterStrategiesForm.Describe(new SsnFilterStrategy { Strategy = StrategyCatalog.Crypto },
                     new PhileasPolicy { Crypto = new Crypto { Key = "env:CRYPTO_KEY" } }));
 
-        // --- TRUNCATE: Phileas 1.6.0 keeps only the first character; later versions honor its settings -----
-
-        private static bool TruncateSettings => StrategyCatalog.TruncateSettingsSupported;
+        // --- TRUNCATE: keeps some characters at either end and masks the rest -------------------------------
 
         // A credit-card strategy loaded from JSON, so these tests compile against versions without the properties.
         private static CreditCardFilterStrategy CardStrategy(string json) =>
@@ -532,30 +510,20 @@ namespace PhilterDesktop.Tests
         [Fact]
         public void Truncate_LabelMatchesWhatTheInstalledPhileasDoes()
         {
-            Assert.Equal(StrategyCatalog.TruncateInfo(TruncateSettings), StrategyCatalog.Find(StrategyCatalog.Truncate));
+            Assert.True(StrategyCatalog.TruncateSettingsSupported);
+            Assert.Equal(StrategyCatalog.TruncateInfo(true), StrategyCatalog.Find(StrategyCatalog.Truncate));
             Assert.Equal("Keep the first character", StrategyCatalog.TruncateInfo(false).Label);
             Assert.Equal("Keep some characters, mask the rest", StrategyCatalog.TruncateInfo(true).Label);
             Assert.DoesNotContain("—", StrategyCatalog.TruncateInfo(true).Description + StrategyCatalog.TruncateInfo(false).Description);
         }
 
-        [SkippableFact]
-        public void Truncate_WithoutSettingsSupport_KeepsTheFirstCharacter_AndNeedsNoSettings()
-        {
-            Skip.If(TruncateSettings, "this Phileas honors TRUNCATE's settings");
-            var settings = new StrategySettings { Strategy = StrategyCatalog.Truncate, TruncateLeaveCharacters = 0, TruncateCharacter = "" };
-            Assert.Null(settings.Validate()); // the settings don't apply, so they aren't checked
-            Assert.Equal("Card 4 on file.", RedactCard(settings).Output);
-            Assert.Equal("Keep the first character", FilterStrategiesForm.Describe(new SsnFilterStrategy { Strategy = StrategyCatalog.Truncate }));
-        }
-
-        [SkippableTheory]
+        [Theory]
         [InlineData(4, false, "*", "Card 4111*************** on file.")]
         [InlineData(4, true, "*", "Card ***************1111 on file.")]
         [InlineData(4, true, "#", "Card ###############1111 on file.")]
         [InlineData(1, false, "X", "Card 4XXXXXXXXXXXXXXXXXX on file.")]
         public void Truncate_KeepsCharactersAtTheChosenEnd_AndMasksTheRest(int leave, bool trailing, string character, string expected)
         {
-            Skip.IfNot(TruncateSettings, "this Phileas ignores TRUNCATE's settings");
             var settings = new StrategySettings
             {
                 Strategy = StrategyCatalog.Truncate, TruncateLeaveCharacters = leave, TruncateTrailing = trailing, TruncateCharacter = character
@@ -564,10 +532,9 @@ namespace PhilterDesktop.Tests
             Assert.Equal(expected, RedactCard(settings).Output);
         }
 
-        [SkippableFact]
+        [Fact]
         public void Truncate_SettingsRoundTripThroughThePolicy()
         {
-            Skip.IfNot(TruncateSettings, "this Phileas ignores TRUNCATE's settings");
             (_, PhileasPolicy policy) = RedactCard(new StrategySettings
             {
                 Strategy = StrategyCatalog.Truncate, TruncateLeaveCharacters = 4, TruncateTrailing = true, TruncateCharacter = "#"
@@ -581,40 +548,36 @@ namespace PhilterDesktop.Tests
             Assert.Equal((4, true, "#"), (reloaded.TruncateLeaveCharacters, reloaded.TruncateTrailing, reloaded.TruncateCharacter));
         }
 
-        [SkippableFact]
+        [Fact]
         public void Truncate_LoadsPhileasDefaults_WhenNothingIsSet()
         {
-            Skip.IfNot(TruncateSettings, "this Phileas ignores TRUNCATE's settings");
             StrategySettings s = StrategySettings.Load(CardStrategy("{\"strategy\":\"TRUNCATE\"}"), null);
             Assert.Equal((StrategySettings.DefaultTruncateLeave, false, "*"), (s.TruncateLeaveCharacters, s.TruncateTrailing, s.TruncateCharacter));
         }
 
-        [SkippableTheory]
+        [Theory]
         [InlineData(0, "*", "how many characters")]
         [InlineData(1001, "*", "how many characters")]
         [InlineData(4, "", "single, visible character")]
         [InlineData(4, " ", "single, visible character")]
         public void Truncate_RejectsInvalidSettings(int leave, string character, string message)
         {
-            Skip.IfNot(TruncateSettings, "this Phileas ignores TRUNCATE's settings");
             var settings = new StrategySettings { Strategy = StrategyCatalog.Truncate, TruncateLeaveCharacters = leave, TruncateCharacter = character };
             Assert.Contains(message, settings.Validate());
         }
 
-        [SkippableFact]
+        [Fact]
         public void Truncate_DescribesItsSettings()
         {
-            Skip.IfNot(TruncateSettings, "this Phileas ignores TRUNCATE's settings");
             Assert.Equal("Keep the last 4 characters, mask with #",
                 FilterStrategiesForm.Describe(CardStrategy("{\"strategy\":\"TRUNCATE\",\"truncateLeaveCharacters\":4,\"truncateDirection\":\"TRAILING\",\"truncateCharacter\":\"#\"}")));
             Assert.Equal("Keep the first 1 character, mask with *",
                 FilterStrategiesForm.Describe(CardStrategy("{\"strategy\":\"TRUNCATE\",\"truncateLeaveCharacters\":1}")));
         }
 
-        [SkippableFact]
+        [Fact]
         public void Truncate_DialogEditsAndKeepsTheSettings() => Sta(() =>
         {
-            Skip.IfNot(TruncateSettings, "this Phileas ignores TRUNCATE's settings");
             CreditCardFilterStrategy strategy = CardStrategy(
                 "{\"strategy\":\"TRUNCATE\",\"truncateLeaveCharacters\":2,\"truncateDirection\":\"TRAILING\",\"truncateCharacter\":\"#\"}");
             using var form = new AddFilterStrategyForm(strategy, "Credit Card");

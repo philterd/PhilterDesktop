@@ -18,6 +18,7 @@ All notable changes to Philter Desktop are recorded here, newest first.
   for example `************1111`.
 - **Fixed:** redaction no longer misses values next to line breaks or tabs in Word, PowerPoint, and text
   files. Redact again any such Word documents redacted with an earlier version.
+- **Fixed:** redacting a file that is open in another program, such as Word, now says to close it.
 - **New:** the Policy Editor offers the ITIN and Canadian SIN identifiers.
 - **Changed:** opening a policy removes strategy conditions that can't be read. They applied to every
   match before, and still do.

@@ -203,7 +203,7 @@ namespace PhilterDesktop
                     $"Philter Desktop could not {verb} {name}. You may not have permission to use that " +
                     "location, or the file may be read-only. Try a different folder.",
 
-                IOException io when IsCode(io, ErrorSharingViolation, ErrorLockViolation) =>
+                IOException io when IsFileInUse(io) =>
                     $"Philter Desktop could not {verb} {name} because it is open in another program " +
                     "(such as Microsoft Word or a PDF viewer). Please close it and try again.",
 
@@ -221,6 +221,9 @@ namespace PhilterDesktop
                 _ => $"Philter Desktop could not {verb} {name}." + Environment.NewLine + Environment.NewLine + ex.Message,
             };
         }
+
+        /// <summary>True when another program has the file open in a way that blocks this one.</summary>
+        public static bool IsFileInUse(IOException io) => IsCode(io, ErrorSharingViolation, ErrorLockViolation);
 
         private static bool IsCode(IOException io, params int[] codes)
         {
