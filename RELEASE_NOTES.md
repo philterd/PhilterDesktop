@@ -4,26 +4,21 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 ## 1.2.0 — 2026-10-08
 
-- **Fixed:** at display scaling above 100% (such as 150%), controls no longer overlap or get cut off in
-  the Policy Editor, Settings, and other dialogs.
-- **Fixed:** the license agreement and redaction notice windows can be resized and now fit on screen at
-  high display scaling, so their buttons are always reachable.
-- **Fixed:** the license agreement text no longer runs words together where lines break.
-- **Fixed:** the text, email, and Word redaction previews no longer run some files' lines together.
+- **New:** more redaction strategies in the Policy Editor, including Mask, Keep the last 4 characters,
+  hashing, encryption, and date shifting. Truncate can now keep characters at either end, for example
+  `************1111`.
+- **New:** ITIN and Canadian SIN identifiers.
 - **Improved:** Find & Redact terms accept a `*` wildcard, as in Always Redact.
-- **Fixed:** Modify Redaction no longer redacts the wrong text when the original document has changed.
-- **New:** the Policy Editor offers more redaction strategies, such as Mask, Keep the last 4 characters,
-  hashing, and encryption.
-- **New:** the truncate strategy can keep a chosen number of characters at either end and mask the rest,
-  for example `************1111`.
 - **Fixed:** redaction no longer misses values next to line breaks or tabs in Word, PowerPoint, and text
   files. Redact again any such Word documents redacted with an earlier version.
-- **Fixed:** redacting a file that is open in another program, such as Word, now says to close it.
-- **New:** the Policy Editor offers the ITIN and Canadian SIN identifiers.
-- **Changed:** opening a policy removes strategy conditions that can't be read. They applied to every
-  match before, and still do.
+- **Fixed:** at display scaling above 100%, dialogs no longer have overlapping or cut-off controls, and
+  the license and notice windows can be resized.
+- **Fixed:** the license text and the text, email, and Word previews no longer run lines together.
+- **Fixed:** Modify Redaction no longer redacts the wrong text when the original document has changed.
+- **Fixed:** redacting a file that is open in another program now says to close it.
 - **Changed:** strategy conditions no longer offer "Detected type", which never matched the built-in
-  filters. Existing type conditions are kept.
+  filters, and opening a policy removes conditions that can't be read. Neither changes how existing
+  policies redact.
 - **Internal:** updated to the Phileas 1.7.0 redaction engine.
 
 ## 1.1.1 — 2026-09-08
