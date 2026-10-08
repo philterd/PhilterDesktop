@@ -78,7 +78,7 @@
   <ItemGroup>
     <!-- The Phileas redaction engine. Desktop consumes the Word/Excel redactors (Services/Office)
          and PDF services that live in the library. -->
-    <PackageReference Include="Philterd.Phileas" Version="1.6.0" />
+    <PackageReference Include="Philterd.Phileas" Version="1.7.0" />
   </ItemGroup>
 
   <!-- On-device PhEye name-detection model (GLiNER xsmall, ~90 MB). Kept out of git (see

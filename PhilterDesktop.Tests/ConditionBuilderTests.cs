@@ -86,12 +86,12 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
-        public void TypeStartsWith_IsAlwaysTrueInEngine_WhichIsWhyItIsExcluded()
+        public void TypeStartsWith_IsRejectedByEngine_WhichIsWhyItIsExcluded()
         {
-            // Pin the engine behavior that makes "type startswith" wrong: it passes regardless of the
-            // classification (both a prefix match and a non-match), so it could never narrow anything.
-            Assert.True(ConditionEvaluator.Evaluate("type startswith \"SS\"", "ctx", "x", 0.9, "SSN"));
-            Assert.True(ConditionEvaluator.Evaluate("type startswith \"ZZ\"", "ctx", "x", 0.9, "SSN"));
+            // The engine doesn't support startswith on type, so a policy holding it won't load.
+            Assert.Throws<InvalidConditionException>(() =>
+                ConditionEvaluator.Evaluate("type startswith \"SS\"", "ctx", "x", 0.9, "SSN"));
+            Assert.NotNull(ConditionParser.GetError("type startswith \"SS\""));
         }
 
         [Fact]
@@ -105,8 +105,7 @@ namespace PhilterDesktop.Tests
         [Fact]
         public void TryParse_TypeStartsWith_ReturnsFalse_SoItFallsBackToAdvanced()
         {
-            // An old policy holding this always-true condition can't be shown in the guided editor; it is
-            // preserved verbatim as an "advanced" condition rather than silently rewritten.
+            // The guided editor can't show it; LegacyConditions removes it when the policy is opened.
             Assert.False(ConditionBuilder.TryParse("type startswith \"SSN\"", out _, out _, out _));
         }
 
@@ -132,12 +131,12 @@ namespace PhilterDesktop.Tests
             Assert.False(ConditionBuilder.IsValidNumericValue(value));
 
         [Fact]
-        public void RejectedNumericForm_IsAlwaysTrueInEngine_WhichIsWhyItIsRejected()
+        public void RejectedNumericForm_IsRejectedByEngine_WhichIsWhyItIsRejected()
         {
-            // "1E3" fails the engine's value regex, so the whole condition is unparseable and always true —
-            // it passes even for a confidence that plainly doesn't "equal" it.
-            Assert.True(ConditionEvaluator.Evaluate("confidence == 1E3", "ctx", "x", 0.5, "t"));
-            Assert.True(ConditionEvaluator.Evaluate("confidence == 1E3", "ctx", "x", 1000, "t"));
+            // "1E3" isn't a number the engine reads, so the condition doesn't parse.
+            Assert.Throws<InvalidConditionException>(() =>
+                ConditionEvaluator.Evaluate("confidence == 1E3", "ctx", "x", 0.5, "t"));
+            Assert.NotNull(ConditionParser.GetError("confidence == 1E3"));
         }
 
         [Fact]

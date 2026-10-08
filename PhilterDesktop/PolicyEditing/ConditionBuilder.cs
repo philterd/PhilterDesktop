@@ -26,10 +26,9 @@ namespace PhilterDesktop.PolicyEditing
     /// </summary>
     internal static class ConditionBuilder
     {
-        // AllowsPrefix: whether the field supports the "starts with" operator. The engine's
-        // ConditionEvaluator implements startswith for token and context, but NOT for type (EvaluateType
-        // handles only ==/!= and returns true for anything else) — so offering it there would build an
-        // always-true condition that over-applies the strategy. Numeric fields never use prefix ops.
+        // AllowsPrefix: whether the field supports the "starts with" operator. The engine supports it for
+        // token and context but rejects it for type, so a policy using it wouldn't load. Numeric fields
+        // never use prefix ops.
         internal sealed record ConditionField(string Display, string Keyword, bool Numeric, bool AllowsPrefix);
         internal sealed record ConditionOperator(string Display, string Symbol);
 

@@ -835,7 +835,9 @@ namespace PhilterDesktop.PolicyEditing
                 return;
             }
 
-            _policy = PolicySerializer.DeserializeFromJson(string.IsNullOrWhiteSpace(entity.Json) ? "{}" : entity.Json);
+            string json = LegacyConditions.RemoveUnparseable(
+                string.IsNullOrWhiteSpace(entity.Json) ? "{}" : entity.Json, out IReadOnlyList<string> removed);
+            _policy = PolicySerializer.DeserializeFromJson(json);
 
             // Surface the engine's implicit default: give every enabled filter that has no strategy an
             // explicit REDACT ({{{REDACTED-%t}}}) entry, so it's visible in Configure instead of implied.
@@ -851,7 +853,23 @@ namespace PhilterDesktop.PolicyEditing
 
             SetEditingEnabled(true);
             _currentPolicyName = name;
-            _dirty = false;
+            _dirty = removed.Count > 0;
+            if (removed.Count > 0)
+            {
+                ShowRemovedConditions(removed, "Save the policy to keep this change.");
+            }
+        }
+
+        private void ShowRemovedConditions(IReadOnlyList<string> removed, string action)
+        {
+            MessageBox.Show(
+                this,
+                "These strategy conditions could not be read, so they were removed:" +
+                Environment.NewLine + Environment.NewLine + "  • " +
+                string.Join(Environment.NewLine + "  • ", removed.Take(15)) +
+                Environment.NewLine + Environment.NewLine +
+                "Earlier versions applied these strategies to every match, and they still do. " + action,
+                "Policy Conditions", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void OnSave(object? sender, EventArgs e)
@@ -1054,6 +1072,11 @@ namespace PhilterDesktop.PolicyEditing
                 return;
             }
 
+            text = LegacyConditions.RemoveUnparseable(text, out IReadOnlyList<string> removed);
+            if (removed.Count > 0)
+            {
+                ShowRemovedConditions(removed, "The policy will be imported without them.");
+            }
             PhileasPolicy imported = PolicySerializer.DeserializeFromJson(text);
             string name = string.IsNullOrWhiteSpace(imported.Name)
                 ? Path.GetFileNameWithoutExtension(dlg.FileName)

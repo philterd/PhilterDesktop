@@ -16,6 +16,11 @@ All notable changes to Philter Desktop are recorded here, newest first.
   hashing, and encryption.
 - **New:** the truncate strategy can keep a chosen number of characters at either end and mask the rest,
   for example `************1111`.
+- **Fixed:** redaction no longer misses values next to line breaks or tabs in Word, PowerPoint, and text
+  files. Redact again any such Word documents redacted with an earlier version.
+- **New:** the Policy Editor offers the ITIN and Canadian SIN identifiers.
+- **Changed:** opening a policy removes strategy conditions that can't be read. They applied to every
+  match before, and still do.
 
 ## 1.1.1 — 2026-09-08
 

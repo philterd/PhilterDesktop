@@ -38,7 +38,7 @@ namespace PhilterDesktop.PolicyEditing
             ("Contact", new[] { "EmailAddress", "PhoneNumber", "PhoneNumberExtension" }),
             ("Location", new[] { "City", "County", "State", "StateAbbreviation", "ZipCode", "StreetAddress" }),
             ("Financial", new[] { "CreditCard", "BankRoutingNumber", "IbanCode", "BitcoinAddress", "Currency" }),
-            ("Identifiers", new[] { "Ssn", "Ein", "DriversLicense", "PassportNumber", "Vin", "TrackingNumber" }),
+            ("Identifiers", new[] { "Ssn", "Itin", "Ein", "CanadaSin", "DriversLicense", "PassportNumber", "Vin", "TrackingNumber" }),
             ("Technical", new[] { "IpAddress", "MacAddress", "Url" }),
             ("Medical", new[] { "Hospital" }),
             ("Other", new[] { "Date" }),
@@ -133,7 +133,9 @@ namespace PhilterDesktop.PolicyEditing
                 ["BitcoinAddress"] = "e.g. 1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf",
                 ["Currency"] = "e.g. $1,250.00",
                 ["Ssn"] = "e.g. 123-45-6789",
+                ["Itin"] = "e.g. 912-70-1234",
                 ["Ein"] = "e.g. 12-3456789",
+                ["CanadaSin"] = "e.g. 046 454 286",
                 ["DriversLicense"] = "e.g. D1234567",
                 ["PassportNumber"] = "e.g. X12345678",
                 ["Vin"] = "e.g. 1HGCM82633A004352",
@@ -200,7 +202,8 @@ namespace PhilterDesktop.PolicyEditing
         private static readonly Dictionary<string, string> Acronyms = new(StringComparer.OrdinalIgnoreCase)
         {
             ["Ssn"] = "SSN", ["Vin"] = "VIN", ["Url"] = "URL",
-            ["Ip"] = "IP", ["Iban"] = "IBAN", ["Mac"] = "MAC", ["Ein"] = "EIN"
+            ["Ip"] = "IP", ["Iban"] = "IBAN", ["Mac"] = "MAC", ["Ein"] = "EIN",
+            ["Itin"] = "ITIN", ["Sin"] = "SIN"
         };
 
         public static string Humanize(string name)
