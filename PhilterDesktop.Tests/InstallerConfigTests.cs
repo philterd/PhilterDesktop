@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace PhilterDesktop.Tests
@@ -39,6 +40,21 @@ namespace PhilterDesktop.Tests
             // UninstallDisplayName only renames the entry; AppVersion is what fills the Version
             // column, so dropping it would hide the version rather than tidy the name.
             Assert.Contains("AppVersion={#AppVersion}", InnoScript());
+        }
+
+        [Fact]
+        public void SetupFile_HasTheAppVersionAsItsFileVersion()
+        {
+            // Without it, the setup file's "File version" in Explorer is 0.0.0.0.
+            Assert.Contains("VersionInfoVersion={#AppVersion}", InnoScript());
+        }
+
+        [Fact]
+        public void DefaultAppVersion_IsNumeric_AsVersionInfoVersionRequires()
+        {
+            Match m = Regex.Match(InnoScript(), "#define AppVersion \"([^\"]*)\"");
+            Assert.True(m.Success);
+            Assert.Matches(@"^\d+\.\d+\.\d+(\.\d+)?$", m.Groups[1].Value);
         }
 
         [Fact]

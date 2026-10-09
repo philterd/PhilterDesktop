@@ -38,6 +38,9 @@
 AppId={{B7E5A3D2-9C41-4E8A-A1F6-2D0C7B9E4F31}
 AppName={#AppName}
 AppVersion={#AppVersion}
+; Fills the setup file's "File version" in Explorer, which is otherwise 0.0.0.0. AppVersion is numeric
+; (build-setup.ps1 checks it), as this needs.
+VersionInfoVersion={#AppVersion}
 AppPublisher={#Publisher}
 AppPublisherURL={#AppUrl}
 AppSupportURL=https://philterd.github.io/PhilterDesktop/
