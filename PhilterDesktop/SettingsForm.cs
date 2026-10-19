@@ -60,6 +60,7 @@ namespace PhilterDesktop
             InitializeComponent();
             ArrangeLoggingGroup();
             ArrangeEmailTab();
+            ArrangePdfTab();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(btnSave);
             _settingsRepository = settingsRepository;
@@ -151,6 +152,85 @@ namespace PhilterDesktop
             tabEmail.Controls.Add(stack);
         }
 
+        // Display order matches the PdfOutputQuality enum values.
+        private static readonly string[] PdfQualityChoices =
+        {
+            "Smaller files (150 DPI)", "Balanced (recommended)", "Best quality (largest files)"
+        };
+
+        private readonly ComboBox cmbPdfQuality = new()
+        {
+            Name = "cmbPdfQuality",
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+
+        // Stacks the PDF options top to bottom like the Email tab, and adds the output-quality row.
+        private void ArrangePdfTab()
+        {
+            cmbPdfQuality.Items.AddRange(PdfQualityChoices);
+            var lblPdfQuality = new Label
+            {
+                Name = "lblPdfQuality",
+                Text = "Redacted PDF quality:",
+                AutoSize = true,
+                Anchor = AnchorStyles.Left, // vertically centered on the combo
+                Margin = Padding.Empty
+            };
+            var qualityRow = new FlowLayoutPanel
+            {
+                Name = "pnlPdfQuality",
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                WrapContents = false
+            };
+            qualityRow.Controls.AddRange(new Control[] { lblPdfQuality, cmbPdfQuality });
+            var lblPdfQualityInfo = new Label
+            {
+                Name = "lblPdfQualityInfo",
+                Text = "Redacted PDF pages are saved as images. Smaller files use a lower resolution; Best quality " +
+                       "can be several times larger than Balanced.",
+                AutoSize = true,
+                ForeColor = SystemColors.GrayText,
+                MaximumSize = lblRecurringImagesInfo.MaximumSize
+            };
+
+            var stack = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true
+            };
+            int groupGap = LogicalToDeviceUnits(12);
+            int hintGap = LogicalToDeviceUnits(3);
+            int left = chkOcrScannedPdfs.Left;
+            int indent = lblOcrInfo.Left;
+            (Control Control, int Left, int Top)[] inOrder =
+            {
+                (chkOcrScannedPdfs, left, chkOcrScannedPdfs.Top),
+                (lblOcrInfo, indent, hintGap),
+                (btnOcrAdvanced, indent, groupGap / 2),
+                (chkRedactRecurringImages, left, groupGap),
+                (lblRecurringImagesInfo, indent, hintGap),
+                (qualityRow, left, groupGap),
+                (lblPdfQualityInfo, indent, hintGap)
+            };
+            foreach ((Control c, int l, int t) in inOrder)
+            {
+                c.Margin = new Padding(l, t, 0, 0);
+                stack.Controls.Add(c);
+            }
+            tabPdf.Controls.Clear();
+            tabPdf.Controls.Add(stack);
+        }
+
+        // Widen the combo to its longest choice in the final (themed, scaled) font.
+        private void FitPdfQualityCombo()
+        {
+            int text = PdfQualityChoices.Max(c => TextRenderer.MeasureText(c, cmbPdfQuality.Font).Width);
+            cmbPdfQuality.Width = text + SystemInformation.VerticalScrollBarWidth + LogicalToDeviceUnits(12);
+        }
+
         private void ArrangeLoggingGroup()
         {
             var row = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, Padding = new Padding(LogicalToDeviceUnits(12), 0, 0, 0) };
@@ -164,6 +244,7 @@ namespace PhilterDesktop
         private void SettingsForm_Load(object sender, EventArgs e)
         {
             LoadSettings();
+            FitPdfQualityCombo();
             LoadWatchedFolders();
             ConfigureStartupToggle();
             ConfigureContextMenuToggle();
@@ -553,6 +634,9 @@ namespace PhilterDesktop
             chkOcrScannedPdfs.Checked = _settings.OcrScannedPdfs;
             btnOcrAdvanced.Enabled = _settings.OcrScannedPdfs;
             chkRedactRecurringImages.Checked = _settings.RedactRecurringImages;
+            cmbPdfQuality.SelectedIndex = Enum.IsDefined(_settings.PdfOutputQuality)
+                ? (int)_settings.PdfOutputQuality
+                : (int)PdfOutputQuality.Balanced;
             chkScrubEmailHeaders.Checked = _settings.ScrubEmailHeaders;
             chkRemoveCommonHeaders.Checked = _settings.RemoveCommonEmailHeaders;
             chkRemoveDateHeader.Checked = _settings.RemoveEmailDateHeader;
@@ -753,6 +837,9 @@ namespace PhilterDesktop
             _settings.RemoveUninspectableEmbeddedObjects = chkRemoveEmbeddedObjects.Checked;
             _settings.OcrScannedPdfs = chkOcrScannedPdfs.Checked;
             _settings.RedactRecurringImages = chkRedactRecurringImages.Checked;
+            _settings.PdfOutputQuality = cmbPdfQuality.SelectedIndex >= 0
+                ? (PdfOutputQuality)cmbPdfQuality.SelectedIndex
+                : PdfOutputQuality.Balanced;
             _settings.ScrubEmailHeaders = chkScrubEmailHeaders.Checked;
             _settings.RemoveCommonEmailHeaders = chkRemoveCommonHeaders.Checked;
             _settings.RemoveEmailDateHeader = chkRemoveDateHeader.Checked;

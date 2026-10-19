@@ -221,6 +221,12 @@ namespace PhilterData
         public bool RedactRecurringImages { get; set; }
 
         /// <summary>
+        /// Resolution and JPEG quality of redacted PDF pages, which are rebuilt as images. Balanced by
+        /// default; Best keeps the old full-quality output, which is several times larger.
+        /// </summary>
+        public PdfOutputQuality PdfOutputQuality { get; set; } = PdfOutputQuality.Balanced;
+
+        /// <summary>
         /// Hard upper bound (in megabytes) on the size of a file the non-interactive paths
         /// (watched folders and the command line) will redact. Larger files are skipped and logged,
         /// since redaction loads a document into memory. 0 means no limit. Default 500 MB.
@@ -298,5 +304,18 @@ namespace PhilterData
             SortAscending = source.SortAscending;
             ColumnWidths = source.ColumnWidths;
         }
+    }
+
+    /// <summary>Resolution/compression preset for redacted PDF output. See <see cref="SettingsEntity.PdfOutputQuality"/>.</summary>
+    public enum PdfOutputQuality
+    {
+        /// <summary>150 DPI, JPEG quality 75: smallest files.</summary>
+        Smaller,
+
+        /// <summary>200 DPI, JPEG quality 85: about half the size of Best, with no visible difference for text.</summary>
+        Balanced,
+
+        /// <summary>200 DPI, JPEG quality 100: largest files.</summary>
+        Best
     }
 }

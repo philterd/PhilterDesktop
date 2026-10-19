@@ -25,6 +25,12 @@ and does not read handwriting, so reviewing the result matters even more here, a
 cover anything it missed. You can turn this off or fine-tune it on the
 [Settings → PDF](settings.md#pdf-tab) tab.
 
+Some PDFs look like normal text but have text that **can't be read**, because their fonts carry no
+character mapping (common in files printed to PDF through the Windows XPS driver). Copying text from such a
+page gives gibberish, and Philter Desktop sees the same gibberish, so it would find nothing to redact.
+Philter Desktop detects these pages and reads them with OCR, the same way it reads scanned pages. If OCR is
+off, the redaction is flagged for review and names the pages that weren't checked.
+
 ## Text only — images are not detected
 
 Philter Desktop finds and removes **text** — including the text OCR recognizes on scanned pages — but it

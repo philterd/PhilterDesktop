@@ -126,7 +126,7 @@ namespace PhilterDesktop
                                 highlight: options.Highlight)
                             .GetAwaiter().GetResult();
                         Console.WriteLine($"Redacted: {path} -> {outputPath}");
-                        string? droppedWarning = DroppedContentWarning.For(path);
+                        string? droppedWarning = DroppedContentWarning.For(path, settings.OcrScannedPdfs);
                         if (droppedWarning is not null)
                         {
                             Console.Error.WriteLine("Warning: " + droppedWarning);

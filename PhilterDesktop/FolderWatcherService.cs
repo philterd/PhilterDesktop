@@ -400,7 +400,7 @@ namespace PhilterDesktop
 
                 // Content the redaction path doesn't carry into the output (RTF non-body parts; PDF
                 // annotations/form fields).
-                string? rtfWarning = DroppedContentWarning.For(fullPath);
+                string? rtfWarning = DroppedContentWarning.For(fullPath, watcherSettings.OcrScannedPdfs);
 
                 // Post-redaction self-check (on by default) — the same residual-PII scan the GUI queue runs,
                 // so a watched-folder redaction isn't silently unverified.

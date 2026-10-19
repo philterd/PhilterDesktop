@@ -53,6 +53,42 @@ namespace PhilterDesktop.Tests
             Helvetica
         }, root: 1);
 
+        /// <summary>
+        /// A PDF with one page per entry. A page whose <c>Unmapped</c> flag is set draws its text with an
+        /// Identity-H font that has no <c>/ToUnicode</c>, as glyph IDs offset by 29 (a standard TrueType
+        /// glyph order), so it extracts as gibberish like "3DWLHQW" just as print-driver output does.
+        /// </summary>
+        public static byte[] Pages(params (string Text, bool Unmapped)[] pages)
+        {
+            // Objects: 1 catalog, 2 pages, 3 Helvetica, 4 Type0, 5 CIDFont, 6 descriptor, then page + content pairs.
+            const int firstPage = 7;
+            var objects = new List<string>
+            {
+                "<< /Type /Catalog /Pages 2 0 R >>",
+                $"<< /Type /Pages /Kids [{string.Join(" ", pages.Select((_, i) => $"{firstPage + 2 * i} 0 R"))}] /Count {pages.Length} >>",
+                Helvetica,
+                "<< /Type /Font /Subtype /Type0 /BaseFont /ABCDEF+Arial /Encoding /Identity-H /DescendantFonts [5 0 R] >>",
+                "<< /Type /Font /Subtype /CIDFontType2 /BaseFont /ABCDEF+Arial /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor 6 0 R /DW 500 /CIDToGIDMap /Identity >>",
+                "<< /Type /FontDescriptor /FontName /ABCDEF+Arial /Flags 32 /FontBBox [0 -200 1000 900] /ItalicAngle 0 /Ascent 900 /Descent -200 /CapHeight 700 /StemV 80 >>"
+            };
+            for (int i = 0; i < pages.Length; i++)
+            {
+                objects.Add($"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents {firstPage + 2 * i + 1} 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> >>");
+                objects.Add(ContentStream(pages[i].Unmapped ? GlyphIdLines(pages[i].Text) : TextLines("/F1", pages[i].Text)));
+            }
+            return Build(objects.ToArray(), root: 1);
+        }
+
+        // One Tj per line, 14pt apart, in a simple font.
+        private static string TextLines(string font, string text) =>
+            $"BT {font} 12 Tf 14 TL 72 740 Td " +
+            string.Join(" T* ", text.Split('\n').Select(l => $"({EscapeString(l)}) Tj")) + " ET";
+
+        // As TextLines, but each character written as a 2-byte glyph ID (code point - 29) in the unmapped font.
+        private static string GlyphIdLines(string text) =>
+            "BT /F2 12 Tf 14 TL 72 740 Td " +
+            string.Join(" T* ", text.Split('\n').Select(l => $"<{string.Concat(l.Select(c => (c - 29).ToString("X4")))}> Tj")) + " ET";
+
         private static string ContentStream(string content) =>
             $"<< /Length {Encoding.Latin1.GetByteCount(content)} >>\nstream\n{content}\nendstream";
 

@@ -43,6 +43,7 @@ namespace PhilterDesktop
         private List<RedactionSpanEntity> _spans = new();
         private bool _loading;
         private bool _busy;
+        private bool _unreadableChecked; // the unreadable-text banner is decided once per document
 
         // Side panel for reviewer-added redactions (built in code; see BuildRedactionPanel).
         private Panel _sidePanel = null!;
@@ -207,18 +208,14 @@ namespace PhilterDesktop
 
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 (byte[] redacted, List<RedactionSpanEntity> spans) = await RedactionService.RedactPdfBytesAsync(
-                    _originalBytes, policy, _contextCombo.Text, _filterService,
-                    ocrScannedPdfs: _settings.OcrScannedPdfs,
-                    ocrTextCoverage: _settings.OcrTextCoverageThreshold,
-                    ocrImageCoverage: _settings.OcrImageCoverageThreshold,
-                    ocrMaxPages: _settings.OcrMaxPages);
+                    _originalBytes, policy, _contextCombo.Text, _settings, _filterService);
                 _spans = spans;
                 _spans.AddRange(userAdded);
 
                 // RedactPdfBytesAsync produced the detected spans only; re-burn if there are added ones.
                 if (userAdded.Count > 0)
                 {
-                    redacted = await RedactionService.ApplyPdfSpansToBytesAsync(_originalBytes, _spans, policy, _filterService);
+                    redacted = await RedactionService.ApplyPdfSpansToBytesAsync(_originalBytes, _spans, policy, _settings, _filterService);
                 }
                 stopwatch.Stop();
                 RedactionDurationMs = stopwatch.ElapsedMilliseconds;
@@ -227,6 +224,14 @@ namespace PhilterDesktop
                 _view.SetDocuments(_originalBytes, _redactedBytes, "Original", "Redacted (preview)");
                 RefreshRedactionList();
                 _save.Enabled = true;
+
+                if (!_unreadableChecked)
+                {
+                    _unreadableChecked = true;
+                    string? unreadable = await Task.Run(() =>
+                        PdfTextLayerQuality.WarningFor(_originalBytes, _settings.OcrScannedPdfs));
+                    if (unreadable is not null) WarningBanner.AddTo(this, unreadable);
+                }
             }
             catch (OcrPageLimitExceededException ex)
             {
@@ -322,7 +327,7 @@ namespace PhilterDesktop
             {
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 _redactedBytes = await RedactionService.ApplyPdfSpansToBytesAsync(
-                    _originalBytes, _spans, CurrentPolicy(), _filterService);
+                    _originalBytes, _spans, CurrentPolicy(), _settings, _filterService);
                 stopwatch.Stop();
                 RedactionDurationMs = stopwatch.ElapsedMilliseconds;
 

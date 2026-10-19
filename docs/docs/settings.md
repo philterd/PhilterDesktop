@@ -194,6 +194,16 @@ To return to normal behavior, set these back to **1%**, **50%**, and **200**.
   that legitimately repeats is redacted too), and it leaves full-page backgrounds alone so it doesn't
   black out whole pages. **Review the redacted PDF** when this is on. See
   [Redacting PDF documents](redacting-pdf.md#automatically-covering-recurring-images-experimental).
+- **Redacted PDF quality** (default **Balanced**). Redacted PDF pages are saved as images, and this
+  sets their resolution and compression, which decide the file size:
+    - **Smaller files (150 DPI)**: about a third of the size of Best quality. Text stays sharp at
+      100% zoom, but the file is less suited to OCR or heavy zooming later.
+    - **Balanced (recommended)**: 200 DPI, about half the size of Best quality with no visible
+      difference for text.
+    - **Best quality (largest files)**: 200 DPI at full image quality. Several times larger than
+      the original PDF.
+
+    This changes only how the output looks, never what is redacted.
 
 ## Email tab
 

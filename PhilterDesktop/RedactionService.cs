@@ -212,7 +212,8 @@ namespace PhilterDesktop
                 redactCachedFormulaValues: settings.RedactCachedFormulaValues,
                 redactPivotCaches: settings.RedactPivotCaches,
                 removeUninspectableEmbeddedObjects: settings.RemoveUninspectableEmbeddedObjects,
-                redactRecurringImages: settings.RedactRecurringImages);
+                redactRecurringImages: settings.RedactRecurringImages,
+                pdfOutputQuality: settings.PdfOutputQuality);
 
         /// <summary>
         /// Throws a <see cref="DocumentLoadException"/> naming the file when another program (such as Word)
@@ -262,7 +263,8 @@ namespace PhilterDesktop
             bool redactCachedFormulaValues = true,
             bool redactPivotCaches = true,
             bool removeUninspectableEmbeddedObjects = true,
-            bool redactRecurringImages = false)
+            bool redactRecurringImages = false,
+            PdfOutputQuality pdfOutputQuality = PdfOutputQuality.Balanced)
         {
             filterService ??= new FilterService();
 
@@ -371,7 +373,7 @@ namespace PhilterDesktop
                 byte[] input = await File.ReadAllBytesAsync(inputPath);
                 (byte[] document, List<RedactionSpanEntity> pdfSpans) = await RedactPdfBytesAsync(
                     input, policy, context, filterService, ocrScannedPdfs, ocrTextCoverage, ocrImageCoverage, ocrMaxPages,
-                    redactRecurringImages);
+                    redactRecurringImages, pdfOutputQuality);
                 await SafeOutput.WriteAsync(outputPath, document);
                 return pdfSpans;
             }
@@ -422,7 +424,8 @@ namespace PhilterDesktop
             bool redactPivotCaches = true,
             bool removeUninspectableEmbeddedObjects = true,
             string? worksheet = null,
-            bool redactRecurringImages = false)
+            bool redactRecurringImages = false,
+            PdfOutputQuality pdfOutputQuality = PdfOutputQuality.Balanced)
         {
             filterService ??= new FilterService();
             switch (fileType.ToLowerInvariant())
@@ -449,7 +452,7 @@ namespace PhilterDesktop
                     }
                     break;
                 case ".pdf":
-                    await ApplyPdfSpansAsync(sourcePath, outputPath, spans, policy, filterService, redactRecurringImages);
+                    await ApplyPdfSpansAsync(sourcePath, outputPath, spans, policy, filterService, redactRecurringImages, pdfOutputQuality);
                     break;
                 case ".eml":
                 case ".msg":
@@ -557,12 +560,38 @@ namespace PhilterDesktop
 
         private static async Task ApplyPdfSpansAsync(
             string sourcePath, string outputPath, IReadOnlyList<RedactionSpanEntity> spans,
-            PhileasPolicy? policy, FilterService filterService, bool redactRecurringImages = false)
+            PhileasPolicy? policy, FilterService filterService, bool redactRecurringImages = false,
+            PdfOutputQuality pdfOutputQuality = PdfOutputQuality.Balanced)
         {
             byte[] bytes = await File.ReadAllBytesAsync(sourcePath);
-            byte[] outBytes = await ApplyPdfSpansToBytesAsync(bytes, spans, policy, filterService, redactRecurringImages);
+            byte[] outBytes = await ApplyPdfSpansToBytesAsync(bytes, spans, policy, filterService, redactRecurringImages, pdfOutputQuality);
             await SafeOutput.WriteAsync(outputPath, outBytes);
         }
+
+        /// <summary>
+        /// Redacts a PDF in memory using every PDF option in <paramref name="settings"/> (OCR, recurring
+        /// images, output quality), so the preview redacts exactly as the queue does.
+        /// </summary>
+        public static Task<(byte[] Document, List<RedactionSpanEntity> Spans)> RedactPdfBytesAsync(
+            byte[] input, PhileasPolicy policy, string context, SettingsEntity settings, FilterService? filterService = null) =>
+            RedactPdfBytesAsync(input, policy, context, filterService,
+                ocrScannedPdfs: settings.OcrScannedPdfs,
+                ocrTextCoverage: settings.OcrTextCoverageThreshold,
+                ocrImageCoverage: settings.OcrImageCoverageThreshold,
+                ocrMaxPages: settings.OcrMaxPages,
+                redactRecurringImages: settings.RedactRecurringImages,
+                pdfOutputQuality: settings.PdfOutputQuality);
+
+        /// <summary>
+        /// Re-applies PDF spans in memory using the PDF output options in <paramref name="settings"/>
+        /// (recurring images, output quality).
+        /// </summary>
+        public static Task<byte[]> ApplyPdfSpansToBytesAsync(
+            byte[] input, IReadOnlyList<RedactionSpanEntity> spans, PhileasPolicy? policy, SettingsEntity settings,
+            FilterService? filterService = null) =>
+            ApplyPdfSpansToBytesAsync(input, spans, policy, filterService,
+                redactRecurringImages: settings.RedactRecurringImages,
+                pdfOutputQuality: settings.PdfOutputQuality);
 
         /// <summary>
         /// Redacts a PDF entirely in memory (bytes in, bytes out) and returns the detected spans.
@@ -571,11 +600,12 @@ namespace PhilterDesktop
         public static async Task<(byte[] Document, List<RedactionSpanEntity> Spans)> RedactPdfBytesAsync(
             byte[] input, PhileasPolicy policy, string context, FilterService? filterService = null,
             bool ocrScannedPdfs = false, double ocrTextCoverage = 0.01, double ocrImageCoverage = 0.5,
-            int ocrMaxPages = 0, bool redactRecurringImages = false)
+            int ocrMaxPages = 0, bool redactRecurringImages = false,
+            PdfOutputQuality pdfOutputQuality = PdfOutputQuality.Balanced)
         {
             filterService ??= new FilterService();
             PhEyeModel.Prepare(policy);
-            PreparePdfPolicy(policy, input, redactRecurringImages);
+            PreparePdfPolicy(policy, input, redactRecurringImages, pdfOutputQuality);
 
             // When the OCR setting is on, use a hybrid extractor that OCRs scanned (text-layer-less)
             // pages so their PII is detected; otherwise the default text-layer extractor is used.
@@ -611,7 +641,8 @@ namespace PhilterDesktop
         /// </summary>
         public static async Task<byte[]> ApplyPdfSpansToBytesAsync(
             byte[] input, IReadOnlyList<RedactionSpanEntity> spans,
-            PhileasPolicy? policy = null, FilterService? filterService = null, bool redactRecurringImages = false)
+            PhileasPolicy? policy = null, FilterService? filterService = null, bool redactRecurringImages = false,
+            PdfOutputQuality pdfOutputQuality = PdfOutputQuality.Balanced)
         {
             filterService ??= new FilterService();
 
@@ -634,18 +665,29 @@ namespace PhilterDesktop
             }
 
             PhileasPolicy applyPolicy = policy ?? new PhileasPolicy { Name = "reapply" };
-            PreparePdfPolicy(applyPolicy, input, redactRecurringImages);
+            PreparePdfPolicy(applyPolicy, input, redactRecurringImages, pdfOutputQuality);
 
             return await Task.Run(() =>
                 new PdfFilterService(filterService).Apply(applyPolicy, input, spanList, MimeType.ApplicationPdf));
         }
 
-        // The engine renders the output PDF at 25% scale by default (forcing ~400% zoom to read);
-        // render at full size and a higher DPI so the result is legible at 100%.
-        private static void PreparePdfPolicy(PhileasPolicy policy, byte[] input, bool redactRecurringImages = false)
+        /// <summary>The render DPI and JPEG quality (0-1) for a <see cref="PdfOutputQuality"/> preset.</summary>
+        internal static (int Dpi, float JpegQuality) PdfOutputProfile(PdfOutputQuality quality) => quality switch
         {
+            PdfOutputQuality.Smaller => (150, 0.75f),
+            PdfOutputQuality.Best => (200, 1.0f),
+            _ => (200, 0.85f)
+        };
+
+        // The engine renders the output PDF at 25% scale by default (forcing ~400% zoom to read);
+        // render at full size, at the preset's DPI (or the policy's, if higher) and JPEG quality.
+        internal static void PreparePdfPolicy(PhileasPolicy policy, byte[] input, bool redactRecurringImages = false,
+            PdfOutputQuality pdfOutputQuality = PdfOutputQuality.Balanced)
+        {
+            (int dpi, float jpegQuality) = PdfOutputProfile(pdfOutputQuality);
             policy.Config.Pdf.Scale = 1.0f;
-            policy.Config.Pdf.Dpi = Math.Max(policy.Config.Pdf.Dpi, 200);
+            policy.Config.Pdf.Dpi = Math.Max(policy.Config.Pdf.Dpi, dpi);
+            policy.Config.Pdf.CompressionQuality = jpegQuality;
 
             // Bounding boxes with an open-ended page (0 = all pages, -N = from page N on) are honored by the
             // engine's PdfRedactor directly, so no expansion is needed here.

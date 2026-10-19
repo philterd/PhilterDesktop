@@ -119,7 +119,7 @@ namespace PhilterDesktop
 
                 stopwatch.Stop();
                 // Content the redaction path doesn't carry over (RTF non-body parts, or PDF annotations/form fields).
-                string? contentDroppedWarning = DroppedContentWarning.For(entity.Name);
+                string? contentDroppedWarning = DroppedContentWarning.For(entity.Name, settings.OcrScannedPdfs);
                 return QueueRedactionResult.Succeeded(outputPath, spans, verification, stopwatch.ElapsedMilliseconds, nameDetectionUnavailable, contentDroppedWarning);
             }
             catch (Exception ex)

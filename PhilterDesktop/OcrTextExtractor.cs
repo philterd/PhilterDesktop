@@ -69,6 +69,8 @@ namespace PhilterDesktop
     ///   <item>a page that has real text <b>and</b> a large embedded image (a scan with a digital
     ///   header/letterhead) is OCR'd <b>in addition to</b> its text layer, so PII baked into the image is
     ///   still found while the accurate digital text is kept.</item>
+    ///   <item>a page whose text layer can't be read (fonts with no Unicode mapping) is OCR'd instead of
+    ///   using its text layer.</item>
     /// </list>
     /// OCR-recognized words are mapped to per-character bounding boxes in PDF user-space points so the
     /// rest of the redaction pipeline (detect, locate, draw) is unchanged. OCR is best-effort: it can
@@ -119,7 +121,8 @@ namespace PhilterDesktop
             {
                 List<PdfLine> pageLines = byPage.TryGetValue(page, out List<PdfLine>? l) ? l : new List<PdfLine>();
                 (double area, double imageCoverage) = geometry[page - 1];
-                OcrPageMode mode = DecideMode(SumCharArea(pageLines), area, imageCoverage, _minTextCoverage, _minImageCoverage);
+                OcrPageMode mode = DecideMode(SumCharArea(pageLines), area, imageCoverage, _minTextCoverage, _minImageCoverage,
+                    IsUnreadable(pageLines));
                 if (mode is OcrPageMode.Replace or OcrPageMode.Merge)
                 {
                     count++;
@@ -145,7 +148,8 @@ namespace PhilterDesktop
 
                 OcrPageMode mode = engine is null
                     ? OcrPageMode.TextOnly
-                    : DecideMode(SumCharArea(pageLines), area, imageCoverage, _minTextCoverage, _minImageCoverage);
+                    : DecideMode(SumCharArea(pageLines), area, imageCoverage, _minTextCoverage, _minImageCoverage,
+                        IsUnreadable(pageLines));
 
                 switch (mode)
                 {
@@ -167,11 +171,17 @@ namespace PhilterDesktop
 
         /// <summary>
         /// Decides how a page's text should be sourced, given its text-layer glyph area, page area, and
-        /// the fraction of the page covered by embedded images. Pure (no UI/IO) so it can be unit-tested.
+        /// the fraction of the page covered by embedded images. A text layer that can't be read (see
+        /// <see cref="PdfTextLayerQuality"/>) is replaced by OCR whatever its size. Pure (no UI/IO) so it
+        /// can be unit-tested.
         /// </summary>
         internal static OcrPageMode DecideMode(double textArea, double pageAreaPts, double imageCoverage,
-            double minTextCoverage, double minImageCoverage)
+            double minTextCoverage, double minImageCoverage, bool textUnreadable = false)
         {
+            if (textUnreadable)
+            {
+                return OcrPageMode.Replace; // glyph-ID gibberish: detection would find nothing in it
+            }
             if (pageAreaPts <= 0)
             {
                 // Unknown geometry: only OCR when there is no text at all (can't measure coverage).
@@ -189,6 +199,9 @@ namespace PhilterDesktop
             }
             return OcrPageMode.TextOnly;
         }
+
+        private static bool IsUnreadable(IReadOnlyList<PdfLine> pageLines) =>
+            PdfTextLayerQuality.LooksUnreadable(string.Join("\n", pageLines.Select(l => l.Text)));
 
         private static double SumCharArea(IReadOnlyList<PdfLine> pageLines)
         {

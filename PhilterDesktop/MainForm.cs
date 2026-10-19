@@ -2066,7 +2066,8 @@ namespace PhilterDesktop
                 modifySettings.RedactCachedFormulaValues, modifySettings.RedactPivotCaches,
                 modifySettings.RemoveUninspectableEmbeddedObjects, modifySettings.RedactRecurringImages,
                 modifySettings.OutputToOriginalLocation, modifySettings.CustomOutputFolder,
-                modifySettings.GlobalAlwaysRedact, modifySettings.GlobalAlwaysIgnore);
+                modifySettings.GlobalAlwaysRedact, modifySettings.GlobalAlwaysIgnore,
+                pdfOutputQuality: modifySettings.PdfOutputQuality);
             form.ShowDialog(this);
 
             // A modify re-redaction produces a new, unverified output. Clear the document's stored
@@ -2654,7 +2655,7 @@ namespace PhilterDesktop
             "ResidualsFound" => $"{e.VerificationFindingCount} may remain",
             "Error" => "Check failed",
             NamesNotCheckedStatus => "Names not checked",
-            ContentDroppedStatus => "Some parts not carried over",
+            ContentDroppedStatus => "Some parts need review",
             _ => "Not checked"
         };
 
@@ -2758,7 +2759,7 @@ namespace PhilterDesktop
             // A clean re-scan of an RTF that dropped non-body content must not read as fully "Clean" — keep
             // the review cue, so the report and queue row stay honest after a re-verify.
             entity.VerificationStatus = EffectiveVerificationStatus(
-                entity.VerificationStatus, nameDetectionUnavailable: false, contentDropped: DroppedContentWarning.For(entity.Name) is not null);
+                entity.VerificationStatus, nameDetectionUnavailable: false, contentDropped: DroppedContentWarning.For(entity.Name, _settingsRepository.GetSettings().OcrScannedPdfs) is not null);
             _redactionQueueRepository.Update(entity);
             LoadRedactionQueue();
 

@@ -70,6 +70,7 @@ namespace PhilterDesktop
         private readonly bool _redactPivotCaches = true;
         private readonly bool _removeUninspectableEmbeddedObjects = true;
         private readonly bool _redactRecurringImages;
+        private readonly PdfOutputQuality _pdfOutputQuality;
         private readonly bool _outputToOriginalLocation = true;
         private readonly string _customOutputFolder = string.Empty;
         private readonly string _globalAlwaysRedact = string.Empty;
@@ -113,7 +114,8 @@ namespace PhilterDesktop
             bool outputToOriginalLocation = true,
             string? customOutputFolder = null,
             string? globalAlwaysRedact = null,
-            string? globalAlwaysIgnore = null)
+            string? globalAlwaysIgnore = null,
+            PdfOutputQuality pdfOutputQuality = PdfOutputQuality.Balanced)
             : this()
         {
             _documentId = documentId;
@@ -133,6 +135,7 @@ namespace PhilterDesktop
             _redactPivotCaches = redactPivotCaches;
             _removeUninspectableEmbeddedObjects = removeUninspectableEmbeddedObjects;
             _redactRecurringImages = redactRecurringImages;
+            _pdfOutputQuality = pdfOutputQuality;
             _outputToOriginalLocation = outputToOriginalLocation;
             _customOutputFolder = customOutputFolder ?? string.Empty;
             _globalAlwaysRedact = globalAlwaysRedact ?? string.Empty;
@@ -594,7 +597,8 @@ namespace PhilterDesktop
                     redactPivotCaches: _redactPivotCaches,
                     removeUninspectableEmbeddedObjects: _removeUninspectableEmbeddedObjects,
                     worksheet: version.Worksheet,
-                    redactRecurringImages: _redactRecurringImages);
+                    redactRecurringImages: _redactRecurringImages,
+                    pdfOutputQuality: _pdfOutputQuality);
             }
             catch (StaleRedactionSpansException stale)
             {

@@ -2,6 +2,18 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
+## 1.3.0 (unreleased)
+
+- **Improved:** redacted PDFs are about half the size by default, with no visible change to text. A new
+  **Redacted PDF quality** setting on the PDF tab offers smaller files (150 DPI) or the previous full
+  quality.
+
+- **Fixed:** PDF pages whose text can't be read (fonts with no character mapping, common in files printed
+  through the Windows XPS driver) are no longer passed through unredacted. They are read with OCR, or,
+  when OCR is off, the redaction is flagged for review with the pages that weren't checked.
+- **Fixed:** the PDF preview now applies the **Redact recurring images** setting, so saving from the
+  preview gives the same result as redacting from the queue.
+
 ## 1.2.0 — 2026-10-08
 
 - **New:** more redaction strategies in the Policy Editor, including Mask, Keep the last 4 characters,

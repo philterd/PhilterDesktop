@@ -77,15 +77,23 @@ namespace PhilterDesktop
     /// <summary>
     /// The fidelity warning for a source whose content may not carry into the redacted output — an RTF's
     /// non-body parts (<see cref="RtfFidelity"/>) or a PDF's annotations/form fields
-    /// (<see cref="PdfFidelity"/>) — or null when there is none. One place so every redaction path (queue,
-    /// watched folders, CLI) reports the drop consistently.
+    /// (<see cref="PdfFidelity"/>) — plus any PDF pages whose text couldn't be read and so weren't checked
+    /// (<see cref="PdfTextLayerQuality"/>), or null when there is none. One place so every redaction path
+    /// (queue, watched folders, CLI) reports these consistently.
     /// </summary>
     internal static class DroppedContentWarning
     {
-        public static string? For(string inputPath) =>
-            RtfFidelity.HasDroppedContent(inputPath) ? RtfFidelity.Warning
-            : PdfFidelity.HasDroppedContent(inputPath) ? PdfFidelity.Warning
-            : null;
+        public static string? For(string inputPath, bool ocrScannedPdfs = false)
+        {
+            string? dropped =
+                RtfFidelity.HasDroppedContent(inputPath) ? RtfFidelity.Warning
+                : PdfFidelity.HasDroppedContent(inputPath) ? PdfFidelity.Warning
+                : null;
+            string? unreadable = PdfTextLayerQuality.WarningFor(inputPath, ocrScannedPdfs);
+            return dropped is null ? unreadable
+                : unreadable is null ? dropped
+                : dropped + "\n" + unreadable;
+        }
     }
 }
 

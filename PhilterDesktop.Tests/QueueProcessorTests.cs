@@ -170,6 +170,43 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public async Task ProcessAsync_PdfWithUnreadableText_OcrOff_FlagsPagesNotChecked()
+        {
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{\"identifiers\":{\"ssn\":{}}}" });
+
+            string input = Path.Combine(_tempDir, "unmapped.pdf");
+            File.WriteAllBytes(input, MinimalPdf.Pages(
+                (PdfTextLayerQualityTests.Prose, false),
+                (PdfTextLayerQualityTests.Prose, true)));
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = true, OcrScannedPdfs = false };
+            var entity = new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.ContentDroppedWarning);
+            Assert.Contains("Page 2 ", result.ContentDroppedWarning);
+        }
+
+        [Fact]
+        public async Task ProcessAsync_PdfWithReadableText_DoesNotFlag()
+        {
+            _policies.Insert(new PolicyEntity { Name = "p", Json = "{\"identifiers\":{\"ssn\":{}}}" });
+
+            string input = Path.Combine(_tempDir, "readable.pdf");
+            File.WriteAllBytes(input, MinimalPdf.Pages((PdfTextLayerQualityTests.Prose, false)));
+
+            var settings = new SettingsEntity { OutputToOriginalLocation = true, OcrScannedPdfs = false };
+            var entity = new RedactionQueueEntity { Name = input, Policy = "p", Context = "ctx" };
+
+            QueueRedactionResult result = await QueueProcessor.ProcessAsync(entity, _policies, settings, _filterService);
+
+            Assert.True(result.Success);
+            Assert.Null(result.ContentDroppedWarning);
+        }
+
+        [Fact]
         public async Task ProcessAsync_ValidTextFile_SucceedsAndWritesRedactedOutput()
         {
             // Policy enabling SSN/email/phone (the JSON the editor would produce).
