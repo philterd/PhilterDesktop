@@ -13,6 +13,9 @@ All notable changes to Philter Desktop are recorded here, newest first.
   when OCR is off, the redaction is flagged for review with the pages that weren't checked.
 - **Fixed:** the PDF preview now applies the **Redact recurring images** setting, so saving from the
   preview gives the same result as redacting from the queue.
+- **Fixed:** detection now finds SSNs written with no separators, phone numbers like `1-123-555-0100`
+  whose area code begins with 1, and dates written day-first with a comma or ordinal, such as
+  `21st October, 2026`. ZIP+4 codes are no longer mistaken for SSNs.
 
 ## 1.2.0 — 2026-10-08
 
