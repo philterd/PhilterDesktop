@@ -34,6 +34,11 @@ redacting each supported document type, policies, contexts, watched folders, and
 - **[Building from Source](https://philterd.github.io/PhilterDesktop/building-from-source/)** —
   building, running, the test suite, and building the setup installer.
 
+## Community
+
+Have a question, an idea, or want to contribute? Users and developers are welcome to
+[join the Philterd Slack workspace](https://philterd.ai/slack/).
+
 ## Building from source
 
 ### Prerequisites
