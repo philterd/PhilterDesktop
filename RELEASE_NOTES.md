@@ -7,7 +7,6 @@ All notable changes to Philter Desktop are recorded here, newest first.
 - **Improved:** redacted PDFs are about half the size by default, with no visible change to text. A new
   **Redacted PDF quality** setting on the PDF tab offers smaller files (150 DPI) or the previous full
   quality.
-
 - **Fixed:** PDF pages whose text can't be read (fonts with no character mapping, common in files printed
   through the Windows XPS driver) are no longer passed through unredacted. They are read with OCR, or,
   when OCR is off, the redaction is flagged for review with the pages that weren't checked.
@@ -16,6 +15,7 @@ All notable changes to Philter Desktop are recorded here, newest first.
 - **Fixed:** detection now finds SSNs written with no separators, phone numbers like `1-123-555-0100`
   whose area code begins with 1, and dates written day-first with a comma or ordinal, such as
   `21st October, 2026`. ZIP+4 codes are no longer mistaken for SSNs.
+- **Internal:** updated to the Phileas 1.8.0 redaction engine.
 
 ## 1.2.0 — 2026-10-08
 
