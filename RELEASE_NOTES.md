@@ -2,7 +2,7 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
-## 1.3.0 — 2026-10-23
+## 1.3.0
 
 - **Improved:** redacted PDFs are about half the size by default, with no visible change to text. A new
   **Redacted PDF quality** setting on the PDF tab offers smaller files (150 DPI) or the previous full
@@ -15,6 +15,8 @@ All notable changes to Philter Desktop are recorded here, newest first.
 - **Fixed:** detection now finds SSNs written with no separators, phone numbers like `1-123-555-0100`
   whose area code begins with 1, and dates written day-first with a comma or ordinal, such as
   `21st October, 2026`. ZIP+4 codes are no longer mistaken for SSNs.
+- **Fixed:** Outlook `.msg` files with RTF bodies no longer fail to redact with "The type initializer for
+  'MsgReader.Rtf.Font' threw an exception".
 - **Internal:** updated to the Phileas 1.8.0 redaction engine.
 
 ## 1.2.0 — 2026-10-08

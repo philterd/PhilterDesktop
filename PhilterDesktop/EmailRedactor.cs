@@ -44,6 +44,14 @@ namespace PhilterDesktop
     {
         private const string DefaultReplacement = "{{{REDACTED-custom}}}";
 
+        // .NET ships only the Unicode/ASCII/Latin-1 encodings. MsgReader's RTF parser needs Windows code
+        // pages (its Font type initializer resolves Windows-1252), so without this any .msg whose RTF body
+        // has a font table, which is nearly every Outlook message, fails with a TypeInitializationException.
+        static EmailRedactor()
+        {
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        }
+
         /// <summary>
         /// The caveat added to a <em>verification</em> result when the redacted email still carries
         /// attachments: their content is never inspected or redacted, so a clean body result doesn't cover

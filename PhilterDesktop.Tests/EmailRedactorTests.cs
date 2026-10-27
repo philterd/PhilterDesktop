@@ -256,6 +256,50 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
+        public async Task RedactFileAsync_Msg_OutlookRtfWithFontTable_IsRecoveredAndRedacted()
+        {
+            // Outlook's RTF always carries a font table, which makes MsgReader resolve Windows-1252. That
+            // failed with "The type initializer for 'MsgReader.Rtf.Font' threw an exception" when the
+            // code-pages encoding provider wasn't registered.
+            string input = WriteRtfOnlyMsg("outlook-rtf.msg",
+                @"{\rtf1\ansi\ansicpg1252\deff0{\fonttbl{\f0\fswiss\fcharset0 Calibri;}}\f0\fs22 " +
+                @"Quarterly figures. Please email secret@example.com or call 555-123-4567.\par}");
+            string output = Path.Combine(_tempDir, "outlook-rtf.eml");
+
+            await RedactionService.RedactFileAsync(input, output, EmailPolicy(), "ctx");
+
+            using var stream = File.OpenRead(output);
+            MimeKit.MimeMessage message = MimeKit.MimeMessage.Load(stream);
+            string body = message.TextBody ?? string.Empty;
+
+            Assert.Contains("Quarterly figures", body);
+            Assert.DoesNotContain("secret@example.com", body);
+            Assert.DoesNotContain("555-123-4567", body);
+        }
+
+        [Fact]
+        public async Task RedactFileAsync_Msg_OutlookHtmlEncapsulatedInRtf_IsRecoveredAndRedacted()
+        {
+            // An HTML message as Outlook stores it: HTML wrapped in RTF (\fromhtml1) with no separate HTML
+            // property. MsgReader de-encapsulates it, which also goes through its font table.
+            string input = WriteRtfOnlyMsg("outlook-html.msg",
+                @"{\rtf1\ansi\ansicpg1252\fromhtml1 \deff0{\fonttbl{\f0\fswiss\fcharset0 Arial;}}" +
+                @"{\*\htmltag19 <html>}{\*\htmltag50 <body>}Quarterly figures. Please email secret@example.com " +
+                @"or call 555-123-4567.{\*\htmltag58 </body>}{\*\htmltag27 </html>}}");
+            string output = Path.Combine(_tempDir, "outlook-html.eml");
+
+            await RedactionService.RedactFileAsync(input, output, EmailPolicy(), "ctx");
+
+            using var stream = File.OpenRead(output);
+            MimeKit.MimeMessage message = MimeKit.MimeMessage.Load(stream);
+            string body = message.HtmlBody ?? string.Empty;
+
+            Assert.Contains("Quarterly figures", body);
+            Assert.DoesNotContain("secret@example.com", body);
+            Assert.DoesNotContain("555-123-4567", body);
+        }
+
+        [Fact]
         public void ExtractText_ReturnsPlainTextOfRtf()
         {
             string text = RtfRedactor.ExtractText(@"{\rtf1\ansi\deff0 Hello \b world\b0 .\par}");
@@ -275,14 +319,15 @@ namespace PhilterDesktop.Tests
         }
 
         // A .msg whose only body is RTF (no BodyText/BodyHtml).
-        private string WriteRtfOnlyMsg(string name)
+        private string WriteRtfOnlyMsg(string name,
+            string rtf = @"{\rtf1\ansi\deff0 Quarterly figures. Please email secret@example.com or call 555-123-4567.\par}")
         {
             string path = Path.Combine(_tempDir, name);
             using var email = new MsgKit.Email(
                 new MsgKit.Sender("john@example.com", "John Doe"),
                 "RTF only")
             {
-                BodyRtf = @"{\rtf1\ansi\deff0 Quarterly figures. Please email secret@example.com or call 555-123-4567.\par}"
+                BodyRtf = rtf
             };
             email.Recipients.AddTo("jane@example.com", "Jane Roe");
             email.Save(path);
