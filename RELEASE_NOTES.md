@@ -2,6 +2,8 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
+## 1.4.0 (unreleased)
+
 ## 1.3.0 — 2026-10-30
 
 - **Improved:** redacted PDFs are about half the size by default, with no visible change to text. A new
