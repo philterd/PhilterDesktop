@@ -2,7 +2,7 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
-## 1.3.0
+## 1.3.0 — 2026-10-30
 
 - **Improved:** redacted PDFs are about half the size by default, with no visible change to text. A new
   **Redacted PDF quality** setting on the PDF tab offers smaller files (150 DPI) or the previous full
