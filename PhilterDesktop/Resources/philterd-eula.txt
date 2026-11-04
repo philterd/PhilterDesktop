@@ -2,8 +2,8 @@ PHILTERD COMMERCIAL LICENSE AGREEMENT
 
 Copyright (c) 2023-2026 Philterd, LLC. All rights reserved.
 
-"Philter," "Phileas," "PhiSQL," and "Phirestream" are trademarks of Philterd,
-LLC.
+"Philter," "Phileas," "PhiSQL," and "Phirestream" are registered trademarks of
+Philterd, LLC.
 
 This License Agreement ("Agreement") is entered into between Philterd, LLC
 ("Philterd") and you, the user of Philterd's paid Philter(TM) and Philter
@@ -105,7 +105,7 @@ by the applicable order or marketplace terms.
 
 4.1 Pricing. Fees are as stated on the applicable marketplace listing or order.
 For Philter Desktop, commercial use of the official build is priced per user,
-per year (currently USD $100 per user per year), and the Customer must maintain
+per year (currently USD $199 per user per year), and the Customer must maintain
 an active subscription for each individual who uses Philter Desktop for
 commercial purposes. Personal use by an individual, and bona fide evaluation
 use, of the official Philter Desktop build are permitted free of charge and do
@@ -117,14 +117,17 @@ term shown on the order or marketplace listing, renewing as described there
 until cancelled.
 
 4.3 Marketplace billing and precedence. Where you obtain the Commercial Offering
-through AWS Marketplace or another marketplace, ordering, metering, billing,
+through AWS Marketplace, Microsoft Marketplace (including Azure Marketplace),
+Google Cloud Marketplace, or another marketplace, ordering, metering, billing,
 taxes, and refunds are handled by that marketplace under its own terms, which
-apply to those transactions. If you obtain the Commercial Offering through AWS
-Marketplace, the following order of precedence applies to the extent terms
-conflict: (1) the AWS Marketplace terms and the agreement governing your use of
-AWS (including, where applicable, the Standard Contract for AWS Marketplace),
-then (2) this Agreement, then (3) any documentation. This Agreement supplements,
-but does not replace, your agreement with the marketplace.
+apply to those transactions. If you obtain the Commercial Offering through a
+marketplace, the following order of precedence applies to the extent terms
+conflict: (1) the terms of that marketplace and the agreement governing your use
+of the underlying cloud platform, including, where applicable, the Standard
+Contract for AWS Marketplace, the Standard Contract for Microsoft Marketplace,
+or the Google Cloud Marketplace Standard EULA, then (2) this Agreement, then (3)
+any documentation. This Agreement supplements, but does not replace, your
+agreement with the marketplace.
 
 4.4 Refunds and cancellations. Refunds and cancellations are handled as
 described in the Refund and Cancellation Policy

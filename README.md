@@ -16,7 +16,7 @@ Install Philter Desktop from the
 [Microsoft Store](https://apps.microsoft.com/store/detail/XPFMJ16DZWWFV5), or download the installer
 at [https://philterd.ai/philter-desktop/download/](https://philterd.ai/philter-desktop/download/).
 
-Personal and evaluation use is free. Commercial use is a per-user subscription (currently $100
+Personal and evaluation use is free. Commercial use is a per-user subscription (currently $199
 per user, per year), which also covers direct support and official updates through your
 subscription term. There are no license keys to enter.
 

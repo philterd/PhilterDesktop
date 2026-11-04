@@ -14,7 +14,7 @@ explains how the **free and open-source software** and the **paid official produ
   signed build from [philterd.ai](https://www.philterd.ai) and use it at no charge for personal use or
   to try it out.
 - **Commercial use requires a subscription.** Using the official build for commercial purposes needs a
-  **per-user subscription** (**$100 per user, per year**), with an active subscription for each person
+  **per-user subscription** (**$199 per user, per year**), with an active subscription for each person
   who uses it that way. The subscription also includes **support** and **maintained updates**.
 - **"Philter" is a trademark of Philterd.** Anyone may build the open-source code, but the official
   builds are distributed under the Philter brand by Philterd.
@@ -29,7 +29,7 @@ explains how the **free and open-source software** and the **paid official produ
 ## When you need a subscription
 
 The official, signed build is **free to download, and free for personal use and evaluation.** You need
-a **per-user subscription** ($100 per user, per year, from [philterd.ai](https://www.philterd.ai)) to
+a **per-user subscription** ($199 per user, per year, from [philterd.ai](https://www.philterd.ai)) to
 use the **official build for commercial purposes** (your work for an employer, a client, or a
 business), with an active subscription for each person who does so. The subscription permits that
 commercial use and includes:
