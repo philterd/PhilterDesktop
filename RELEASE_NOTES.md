@@ -2,7 +2,11 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
-## 1.4.0 (unreleased)
+## 1.3.1 (unreleased)
+
+- **Fixed:** Philter Desktop no longer fails to start with "An application control policy has blocked
+  this file" on PCs with Smart App Control or App Control for Business. All of the app's files are now
+  digitally signed, not just the main program.
 
 ## 1.3.0 — 2026-10-30
 

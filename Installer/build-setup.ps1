@@ -3,7 +3,7 @@
 #
 # Builds the setup .exe for Philter Desktop:
 #   1. `dotnet publish` the app for each target RID (win-x64 and win-arm64),
-#   2. (optional) Authenticode-sign PhilterDesktop.exe with Azure Trusted Signing,
+#   2. (optional) Authenticode-sign PhilterDesktop.exe and every unsigned DLL with Azure Trusted Signing,
 #   3. compile Installer\PhilterDesktop.iss with Inno Setup's ISCC, and
 #   4. (optional) sign the generated setup .exe.
 #
@@ -257,9 +257,9 @@ if ($Sign) {
 }
 
 function Invoke-Sign {
-    param([Parameter(Mandatory)][string]$Path)
+    param([Parameter(Mandatory)][string[]]$Path)
     if (-not $Sign) { return }
-    Write-Host "Signing $Path ..."
+    Write-Host "Signing $($Path.Count) file(s): $($Path -join ', ') ..."
     # Add /debug here for detailed Trusted Signing diagnostics (auth, role, endpoint) when troubleshooting.
     & $script:Signtool sign /v /fd SHA256 /tr $TimestampUrl /td SHA256 `
         /dlib $SigningDlib /dmdf $script:SigningMetadata $Path
@@ -376,8 +376,27 @@ foreach ($rid in $Runtime) {
     Assert-ComparableVersion $Version
     Write-Host "Installer version: $Version ($archLabel)"
 
-    # Sign the app exe BEFORE packaging, so the installer ships the signed binary.
-    Invoke-Sign -Path $exe
+    # Sign the exe and every unsigned .dll/.exe BEFORE packaging. Smart App Control and App Control
+    # (WDAC) policies check each loaded DLL, so an unsigned dependency (e.g. Phileas.dll) gets blocked
+    # even when the exe is signed. Already-signed binaries (Microsoft runtime, etc.) are left as-is.
+    # Any other status (HashMismatch = tampered/corrupt, NotTrusted, ...) would be blocked at load, so fail.
+    $binaries = @(Get-ChildItem $publishDir -Recurse -File -Include *.dll, *.exe |
+        ForEach-Object { [pscustomobject]@{ Path = $_.FullName; Status = (Get-AuthenticodeSignature $_.FullName).Status } })
+    $bad = @($binaries | Where-Object { $_.Status -ne 'Valid' -and $_.Status -ne 'NotSigned' })
+    if ($bad) {
+        throw ("Binaries with an invalid signature in the publish output (corrupt, tampered, or untrusted):`n" +
+            (($bad | ForEach-Object { "  $($_.Status): $($_.Path)" }) -join "`n"))
+    }
+    $unsigned = @($binaries | Where-Object { $_.Status -eq 'NotSigned' } | ForEach-Object { $_.Path })
+    if ($unsigned) { Invoke-Sign -Path $unsigned }
+
+    # Confirm signing took: nothing unsigned may ship in a signed build.
+    if ($Sign) {
+        $stillUnsigned = @($unsigned | Where-Object { (Get-AuthenticodeSignature $_).Status -ne 'Valid' })
+        if ($stillUnsigned) {
+            throw ("Binaries still not validly signed after signing:`n  " + ($stillUnsigned -join "`n  "))
+        }
+    }
 
     $publishDirs[$archLabel] = $publishDir
     Write-Host "Published $archLabel to $publishDir"
