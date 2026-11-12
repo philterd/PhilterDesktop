@@ -2,6 +2,8 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
+## 1.4.0 (unreleased)
+
 ## 1.3.1 — 2026-11-12
 
 - **Fixed:** Philter Desktop no longer fails to start with "An application control policy has blocked
