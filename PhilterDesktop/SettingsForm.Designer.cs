@@ -971,7 +971,7 @@ namespace PhilterDesktop
             chkVerifyAfterRedaction.Name = "chkVerifyAfterRedaction";
             chkVerifyAfterRedaction.Size = new Size(401, 19);
             chkVerifyAfterRedaction.TabIndex = 4;
-            chkVerifyAfterRedaction.Text = "Verify each redaction by re-scanning the output for PII that may remain";
+            chkVerifyAfterRedaction.Text = "After each redaction, re-scan the output for leftover PII";
             chkVerifyAfterRedaction.UseVisualStyleBackColor = true;
             chkVerifyAfterRedaction.CheckedChanged += ChkVerifyAfterRedaction_CheckedChanged;
             // 
@@ -983,7 +983,7 @@ namespace PhilterDesktop
             rdoVerifySamePolicy.Size = new Size(240, 19);
             rdoVerifySamePolicy.TabIndex = 5;
             rdoVerifySamePolicy.TabStop = true;
-            rdoVerifySamePolicy.Text = "Scan with the same policy used to redact (limited — can't catch missed PII types)";
+            rdoVerifySamePolicy.Text = "Use the same policy that redacted it (limited: can't catch PII types the policy skips)";
             rdoVerifySamePolicy.UseVisualStyleBackColor = true;
             // 
             // rdoVerifyBroadPolicy
@@ -993,7 +993,7 @@ namespace PhilterDesktop
             rdoVerifyBroadPolicy.Name = "rdoVerifyBroadPolicy";
             rdoVerifyBroadPolicy.Size = new Size(257, 19);
             rdoVerifyBroadPolicy.TabIndex = 6;
-            rdoVerifyBroadPolicy.Text = "Scan with a broad policy — every detector on (recommended)";
+            rdoVerifyBroadPolicy.Text = "Use a broad policy with every detector on (recommended)";
             rdoVerifyBroadPolicy.UseVisualStyleBackColor = true;
             // 
             // lblVerifyHint

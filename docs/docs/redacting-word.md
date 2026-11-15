@@ -22,7 +22,7 @@ More generally, a document can **embed another file** (Insert → Object). An em
 document is redacted in place. An embedded object Philter Desktop **can't read** — a legacy OLE object or
 another program's file — can't be inspected; by default it is **removed** so its original content can't
 ship. You can turn that off in [Settings → Microsoft Office](settings.md#microsoft-office-tab), in which
-case such objects are kept and verification warns you to review them.
+case such objects are kept and the leftover check warns you to review them.
 
 Header and footer scanning covers the **text** that repeats at the top and bottom of each page (for
 example "Confidential — John Doe"); it does not remove images or logos placed in a header/footer. It is

@@ -175,9 +175,9 @@ namespace PhilterDesktop
                 case VerificationStatus.ResidualsFound:
                     string plural = outcome.Count == 1 ? "" : "s";
                     string note = outcome.FidelityNote is null ? "" : " " + outcome.FidelityNote;
-                    return $"Verification found {outcome.Count} possible item{plural} that may still be present in the output — review before sharing.{note}";
+                    return $"The leftover check found {outcome.Count} possible item{plural} that may still be in the output. Review before sharing.{note}";
                 case VerificationStatus.Error:
-                    return "Verification could not be completed on the redacted output — review it before sharing.";
+                    return "The leftover check could not be completed on the redacted output. Review it before sharing.";
                 case VerificationStatus.Clean when outcome.FidelityNote is not null:
                     return outcome.FidelityNote;
                 default:

@@ -424,8 +424,8 @@ namespace PhilterDesktop
                 }
                 if (verifyWarning is not null)
                 {
-                    Log($"Verification of redacted watched file '{fullPath}' -> '{outputPath}': {verifyWarning}", warning: true);
-                    Activity(folder, "Warning", $"Verification: {verifyWarning} ({fullPath})");
+                    Log($"Leftover check of redacted watched file '{fullPath}' -> '{outputPath}': {verifyWarning}", warning: true);
+                    Activity(folder, "Warning", $"Leftover check: {verifyWarning} ({fullPath})");
                 }
 
                 string? combinedWarning = string.Join("\n",

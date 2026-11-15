@@ -4,6 +4,12 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 ## 1.4.0 (unreleased)
 
+- **Changed:** the check that re-scans redacted output for anything still detectable is now called the
+  **leftover check**, so it no longer sounds like a guarantee. Right-click a document and choose
+  **Check for Leftover PII** (formerly **Verify Redaction**); results appear in the **Leftovers** column
+  (formerly **Verification**) as **None found** (formerly **Clean**) or **N found**. It works exactly as
+  before, and earlier results are kept.
+
 - **New:** custom PhEye models can use any redaction strategy, such as abbreviating names to initials.
   Select the model on the Policy Editor's **PhEye** tab and click **Strategies…**; a new **Strategy**
   column shows what each model uses.

@@ -79,7 +79,7 @@ namespace PhilterDesktop.Tests
                 Version(), Spans(), "1.0.0", Generated, "src", "out", options,
                 entity.VerificationStatus, entity.VerificationFindingCount, entity.VerificationCheckedAt);
             Assert.NotNull(stale.VerificationSummary);
-            Assert.Contains("no detectable PII", stale.VerificationSummary!);
+            Assert.Contains("No leftover PII was detected", stale.VerificationSummary!);
 
             // After a modify re-redact, the verdict is reset, so the report for the new (unverified)
             // output makes no verification claim.

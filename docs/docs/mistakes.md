@@ -61,7 +61,7 @@ Automated redaction should be viewed as a powerful tool to accelerate the protec
 2.  **The document remains readable and useful** (ensuring non-sensitive information was not over-redacted).
 3.  **Contextual nuances are correctly handled** that an algorithm might misunderstand.
 
-Philter Desktop provides tools to assist in this review process, allowing you to quickly see what was changed and verify the results: automatic [verification](settings.md#verifying-redactions-automatically) re-scans the redacted output for anything the redaction may have left behind, the **redaction report** records what was removed by type and count, and **View Diff…** shows the source and redacted document side by side so you can see exactly what changed.
+Philter Desktop provides tools to assist in this review process, allowing you to quickly see what was changed and verify the results: the automatic [leftover check](settings.md#checking-for-leftover-pii-automatically) re-scans the redacted output for anything the redaction may have left behind, the **redaction report** records what was removed by type and count, and **View Diff…** shows the source and redacted document side by side so you can see exactly what changed.
 
 ### Best Practices for Review
 

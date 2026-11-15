@@ -581,8 +581,8 @@ namespace PhilterDesktop.Tests
 
             // The email is redacted; the residual SSN is flagged by verification and logged as a warning.
             var entries = await WaitForLogAsync(folder,
-                log => log.Any(e => e.Level == "Warning" && e.Message.Contains("Verification")));
-            Assert.Contains(entries, e => e.Message.Contains("Verification"));
+                log => log.Any(e => e.Level == "Warning" && e.Message.Contains("Leftover check")));
+            Assert.Contains(entries, e => e.Message.Contains("Leftover check"));
             Assert.DoesNotContain("a@example.com", await File.ReadAllTextAsync(Path.Combine(output, "doc_redacted-draft.txt")));
         }
 

@@ -16,9 +16,9 @@ Redacted files are saved with a **`_redacted-draft`** suffix on purpose: the res
 check**, not a finished product. Open it, read it, and confirm the sensitive information is gone and that
 nothing you needed was over-removed. Treat the draft as a starting point for your own review.
 
-## Let verification and the report help you check
+## Let the leftover check and the report help you check
 
-- Keep **[verification](settings.md#verifying-redactions-automatically)** on. After each redaction Philter Desktop re-scans the
+- Keep the **[leftover check](settings.md#checking-for-leftover-pii-automatically)** on. After each redaction Philter Desktop re-scans the
   finished file and warns you if it still detects something that looks sensitive. A clean result is
   reassuring but is **not** a guarantee — it only means the detector found nothing on the second pass.
 - Generate the **redaction report** for a record of what was removed (by type and count) and the file
@@ -78,7 +78,7 @@ on **one worksheet at a time**, and values stored as numbers are only removed wh
 ## Make sure name detection is available
 
 Person-name detection runs on an **on-device model**. If it isn't installed, names may remain in the
-output — verification will tell you when a redaction ran without it. Confirm name detection is available
+output, and the leftover check will tell you when a redaction ran without it. Confirm name detection is available
 before relying on it for documents whose main risk is people's names.
 
 ## Keep originals and drafts separate

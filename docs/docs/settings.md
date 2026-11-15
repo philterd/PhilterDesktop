@@ -129,19 +129,19 @@ channels and control header/footer redaction. All options below are **on by defa
   the workbook set to recalculate when it's next opened in Excel. One side effect: a program that reads
   the file **without recalculating** (i.e. not Excel) sees empty formula results until it recalculates —
   turn this off if that matters for how the file is consumed, and be aware a formula's cached copy of a
-  redacted value may then remain. Verification checks formula caches either way.
+  redacted value may then remain. The leftover check checks formula caches either way.
 - **Redact pivot table cache** *(Excel only)*. A pivot table keeps a **denormalized copy of its source
   data** inside the file — the pivot cache — so redacting the sheet cells alone leaves an intact copy of
   the sensitive values. When on, the cached values in the pivot cache (its definition and records) and in
   the pivot table are scanned and redacted, and the cache is set to **refresh from the (redacted) source
   when the file is opened** in Excel. On by default. Redacting the cache changes what the pivot shows
-  until Excel refreshes it. Verification checks the pivot cache either way.
+  until Excel refreshes it. The leftover check checks the pivot cache either way.
 - **Remove embedded objects Philter Desktop can't inspect** *(Word and Excel)*. A document can **embed
   another file** (Insert → Object) — an Excel workbook, a Word document, or a legacy/other-program object.
   An embedded **Word or Excel** document is **redacted in place** (its own content is scanned like any
   other document); but an object Philter Desktop **can't read** — a legacy OLE object or another
   program's file — can't be inspected, and would otherwise ship with its original content. When on, those
-  un-inspectable objects are **removed**. On by default. When off, they are kept and **verification warns**
+  un-inspectable objects are **removed**. On by default. When off, they are kept and **the leftover check warns**
   that their content wasn't inspected — so you can review them yourself.
 
 Leave these on unless you have a specific reason to keep that information. They affect only what's
@@ -244,7 +244,7 @@ and from where.
       content**, so sensitive information shown only inside an image would otherwise pass through. When on,
       inline images are **deleted** and their references in the body are neutralized. Leave it off if you
       want to keep images such as a corporate logo — but note the caveat below. **Whenever a redacted
-      email still contains attachments or inline images, verification adds a warning** that their content
+      email still contains attachments or inline images, the leftover check adds a warning** that their content
       wasn't inspected, so an un-inspected image is never left silently.
 
 Leave the first two on unless you specifically need to preserve the original headers (for example, for
@@ -377,29 +377,29 @@ re-processing your data.
 > before it can do anything, you'll be asked for the passphrase even when Philter Desktop starts
 > automatically at sign-in (which keeps your watched folders working).
 
-### Verifying redactions automatically
+### Checking for leftover PII automatically
 
-The **Verify each redaction by re-scanning the output for PII that may remain** option (on by default)
-makes Philter Desktop double-check its own work: after each document is redacted, it re-opens the
-finished file and runs the detector again, looking for anything the policy might have missed. If
-something is found, you're warned and shown what and where. It runs entirely on your device. This
-applies to **every** way Philter Desktop redacts — the queue, [watched folders](watched-folders.md)
-(the warning appears in the folder's activity log and notification), and the command line (it's printed
-as a warning) — so an automated redaction is never silently left unchecked.
+The **After each redaction, re-scan the output for leftover PII** option (on by default) makes Philter
+Desktop double-check its own work: after each document is redacted, it re-opens the finished file and
+runs the detectors again, looking for anything the policy might have missed. If something is found,
+you're warned and shown what and where. It runs entirely on your device. This applies to **every** way
+Philter Desktop redacts: the queue, [watched folders](watched-folders.md) (the warning appears in the
+folder's activity log and notification), and the command line (it's printed as a warning), so an
+automated redaction is never silently left unchecked.
 
-Two scan choices sit underneath it (they apply to the automatic check):
+Two choices sit underneath it (they apply to the automatic check):
 
-- **Scan with a broad policy — every detector on** (default, recommended): looks for kinds of
-  information your policy didn't cover (the missed-PII case that matters most). It catches more, so it
-  may flag things you deliberately left unredacted (review those); the document's own replacement
-  values aren't reported.
-- **Scan with the same policy used to redact** (limited): only confirms that policy took effect — it
-  can't find a kind of information the policy never looked for.
+- **Use a broad policy with every detector on** (default, recommended): looks for kinds of information
+  your policy didn't cover (the missed-PII case that matters most). It catches more, so it may flag
+  things you deliberately left unredacted (review those); the document's own replacement values aren't
+  reported.
+- **Use the same policy that redacted it** (limited): only confirms that policy took effect. It can't
+  find a kind of information the policy never looked for.
 
-Leave verification on, or turn it off if you prefer to verify manually. You can always right-click a
-finished document and choose **Verify Redaction**, which lets you pick **With
-same policy** or **With broad policy** for that one document. See
-[Checking the result for anything missed](redacting-documents.md#checking-the-result-for-anything-missed-verification)
+Leave the leftover check on, or turn it off if you prefer to check manually. You can always right-click
+a finished document and choose **Check for Leftover PII**, which lets you pick **Using the same policy**
+or **Using a broad policy** for that one document. See
+[Checking the result for anything missed](redacting-documents.md#checking-the-result-for-anything-missed-leftover-check)
 for details.
 
 ### Clearing your saved redaction history

@@ -282,5 +282,5 @@ Some example identifiers and the regular expressions that match them:
 | Claim number (`CLM0123456789`) | `\bCLM\d{10}\b` |
 
 Adjust these to match your organization's exact format. After redacting, use
-[Verification](redacting-documents.md#checking-the-result-for-anything-missed-verification) to confirm
+[the leftover check](redacting-documents.md#checking-the-result-for-anything-missed-leftover-check) to confirm
 the pattern caught what you expected.

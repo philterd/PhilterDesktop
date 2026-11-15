@@ -106,9 +106,9 @@ namespace PhilterDesktop
             string when = checkedAt is { } c ? $" ({FormatUtc(DateTime.SpecifyKind(c, DateTimeKind.Utc))})" : string.Empty;
             return status switch
             {
-                "Clean" => $"Verified: no detectable PII remained in the output{when}.",
-                "ResidualsFound" => $"Verification warning: {count} possible item{(count == 1 ? "" : "s")} may remain in the output{when}. Review before sharing.",
-                "Error" => $"Verification could not be completed{when}.",
+                "Clean" => $"No leftover PII was detected in the output{when}.",
+                "ResidualsFound" => $"{count} possible item{(count == 1 ? "" : "s")} of leftover PII may remain in the output{when}. Review before sharing.",
+                "Error" => $"The leftover check could not be completed{when}.",
                 "NamesNotChecked" => $"On-device name detection was unavailable when this was redacted{when}, so person names may remain. Review before sharing.",
                 "ContentDropped" => $"Some source content may not have been carried into the output or checked: an RTF's headers/footers/footnotes, a PDF's annotations/form fields, or PDF pages whose text couldn't be read{when}. Review before sharing.",
                 _ => null
@@ -151,7 +151,7 @@ namespace PhilterDesktop
 
             if (m.VerificationSummary is not null)
             {
-                sb.Append("<h2>Verification</h2>");
+                sb.Append("<h2>Leftover Check</h2>");
                 sb.Append($"<p>{E(m.VerificationSummary)}</p>");
             }
 

@@ -46,7 +46,7 @@ option on to strip that too.
     they are deleted and their `cid:` references are neutralized. Leave it off to keep images such as a
     corporate logo.
 
-    Whenever a redacted email still carries **attachments or inline images**, **verification adds a
+    Whenever a redacted email still carries **attachments or inline images**, **the leftover check adds a
     warning** reminding you that their content wasn't inspected — so review the original before sharing.
 
 ## Outlook `.msg` files become `.eml`

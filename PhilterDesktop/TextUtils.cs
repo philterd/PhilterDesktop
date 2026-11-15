@@ -119,7 +119,7 @@ namespace PhilterDesktop
         /// body text only, so a clean result must not be read as confirming the non-body parts came through.
         /// </summary>
         public const string VerificationCaveat =
-            "This RTF had headers, footers, or footnotes. Verification re-scans the body text only, so a " +
+            "This RTF had headers, footers, or footnotes. The leftover check re-scans the body text only, so a " +
             "clean result does not confirm those parts were preserved — RTF redaction may not have carried " +
             "them into the output. To keep them, use .docx.";
 

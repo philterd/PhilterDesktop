@@ -596,18 +596,18 @@ namespace PhilterDesktop
             verifyRedactionToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { verifyWithSamePolicyToolStripMenuItem, verifyWithBroadPolicyToolStripMenuItem });
             verifyRedactionToolStripMenuItem.Name = "verifyRedactionToolStripMenuItem";
             verifyRedactionToolStripMenuItem.Size = new Size(277, 22);
-            verifyRedactionToolStripMenuItem.Text = "&Verify Redaction";
-            verifyRedactionToolStripMenuItem.ToolTipText = "Re-scan the redacted output for any PII that may remain";
+            verifyRedactionToolStripMenuItem.Text = "Check for Lefto&ver PII";
+            verifyRedactionToolStripMenuItem.ToolTipText = "Re-scan the redacted output for leftover PII";
 
             verifyWithSamePolicyToolStripMenuItem.Name = "verifyWithSamePolicyToolStripMenuItem";
             verifyWithSamePolicyToolStripMenuItem.Size = new Size(220, 22);
-            verifyWithSamePolicyToolStripMenuItem.Text = "With &same policy";
+            verifyWithSamePolicyToolStripMenuItem.Text = "Using the &same policy";
             verifyWithSamePolicyToolStripMenuItem.ToolTipText = "Re-scan using the same policy that redacted this document";
             verifyWithSamePolicyToolStripMenuItem.Click += verifyWithSamePolicyToolStripMenuItem_Click;
 
             verifyWithBroadPolicyToolStripMenuItem.Name = "verifyWithBroadPolicyToolStripMenuItem";
             verifyWithBroadPolicyToolStripMenuItem.Size = new Size(220, 22);
-            verifyWithBroadPolicyToolStripMenuItem.Text = "With &broad policy";
+            verifyWithBroadPolicyToolStripMenuItem.Text = "Using a &broad policy";
             verifyWithBroadPolicyToolStripMenuItem.ToolTipText = "Re-scan with every detector on (may flag items you chose not to redact)";
             verifyWithBroadPolicyToolStripMenuItem.Click += verifyWithBroadPolicyToolStripMenuItem_Click;
 
@@ -665,7 +665,7 @@ namespace PhilterDesktop
             columnHeader4.Width = 120;
             columnHeader3.Text = "Context";
             columnHeader3.Width = 120;
-            columnHeader5.Text = "Verification";
+            columnHeader5.Text = "Leftovers";
             columnHeader5.Width = 130;
         }
 
@@ -2769,7 +2769,7 @@ namespace PhilterDesktop
                 ("Redactions", redactionCount),
                 ("Redacted", timestamp),
                 ("Time to redact", duration),
-                ("Verification", entity.VerificationCheckedAt is { } vc
+                ("Leftover check", entity.VerificationCheckedAt is { } vc
                     ? $"{VerificationDisplay(entity)} ({vc.ToLocalTime():f})"
                     : VerificationDisplay(entity))
             };
@@ -2925,8 +2925,8 @@ namespace PhilterDesktop
         // A short, human display of an item's stored verification status (queue column + View Details).
         private static string VerificationDisplay(RedactionQueueEntity e) => e.VerificationStatus switch
         {
-            "Clean" => "Clean",
-            "ResidualsFound" => $"{e.VerificationFindingCount} may remain",
+            "Clean" => "None found",
+            "ResidualsFound" => $"{e.VerificationFindingCount} found",
             "Error" => "Check failed",
             NamesNotCheckedStatus => "Names not checked",
             ContentDroppedStatus => "Some parts need review",
@@ -2961,7 +2961,7 @@ namespace PhilterDesktop
 
         private static string? ResidualWarning(VerificationOutcome? outcome) =>
             outcome is { Status: VerificationStatus.ResidualsFound }
-                ? $"Verification: {outcome.Count} possible item{(outcome.Count == 1 ? "" : "s")} may remain"
+                ? $"Leftover check: {outcome.Count} possible item{(outcome.Count == 1 ? "" : "s")} may remain"
                 : null;
 
         // The combined "check needed" notification text: the residual-PII warning, the name-model warning,
@@ -3444,7 +3444,7 @@ namespace PhilterDesktop
                 else if (IsVerificationWarning(entity.VerificationStatus))
                 {
                     // Non-colour cue (hover) so the warning isn't missed, e.g. by color-blind users.
-                    item.ToolTipText = $"Completed with a warning — {VerificationDisplay(entity)}. See the Verification column.";
+                    item.ToolTipText = $"Completed with a warning: {VerificationDisplay(entity)}. See the Leftovers column.";
                 }
                 listView1.Items.Add(item);
                 shown++;

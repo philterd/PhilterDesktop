@@ -119,7 +119,7 @@ namespace PhilterDesktop
             // On-device name detection (skipped gracefully if no model is bundled).
             identifiers.PhEyes = new List<PhEye> { PhEyeModel.CreateDefaultFilter() };
 
-            return new PhileasPolicy { Name = "Broad verification", Identifiers = identifiers };
+            return new PhileasPolicy { Name = "Broad leftover check", Identifiers = identifiers };
         }
     }
 

@@ -170,13 +170,29 @@ namespace PhilterDesktop.Tests
                 Version(), Spans(), "1.0.0", Generated, "h1", "h2", new RedactionReportOptions(),
                 verificationStatus: "Clean", verificationCount: 0, verificationCheckedAt: new DateTime(2026, 6, 27, 0, 0, 0, DateTimeKind.Utc));
             Assert.NotNull(clean.VerificationSummary);
-            Assert.Contains("no detectable PII", clean.VerificationSummary!);
+            Assert.Contains("No leftover PII was detected", clean.VerificationSummary!);
             Assert.Contains(clean.VerificationSummary!, RedactionReport.ToHtml(clean));
 
             RedactionReportModel residual = RedactionReport.Build(
                 Version(), Spans(), "1.0.0", Generated, "h1", "h2", new RedactionReportOptions(),
                 verificationStatus: "ResidualsFound", verificationCount: 2);
-            Assert.Contains("2 possible items may remain", residual.VerificationSummary!);
+            Assert.Contains("2 possible items of leftover PII may remain", residual.VerificationSummary!);
+        }
+
+        [Theory]
+        [InlineData("Clean", 0, "No leftover PII was detected in the output")]
+        [InlineData("ResidualsFound", 1, "1 possible item of leftover PII may remain in the output")]
+        [InlineData("Error", 0, "The leftover check could not be completed")]
+        public void LeftoverCheck_IsNamedThatInTheReport(string status, int count, string summary)
+        {
+            RedactionReportModel model = RedactionReport.Build(
+                Version(), Spans(), "1.0.0", Generated, "h1", "h2", new RedactionReportOptions(),
+                verificationStatus: status, verificationCount: count);
+            string html = RedactionReport.ToHtml(model);
+
+            Assert.StartsWith(summary, model.VerificationSummary);
+            Assert.Contains("<h2>Leftover Check</h2>", html);
+            Assert.DoesNotContain("Verif", html);
         }
 
         [Fact]

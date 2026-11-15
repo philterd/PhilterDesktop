@@ -92,7 +92,7 @@ You can **preview** the result before saving, have Philter Desktop **re-scan** t
 check for anything still detectable, generate a **redaction report**, and view a **before-and-after**
 comparison. These tools reduce the chance of something slipping through, but automated detection is
 probabilistic, so always give an important document a **human review** as well. See
-[Checking the result for anything missed](redacting-documents.md#checking-the-result-for-anything-missed-verification).
+[Checking the result for anything missed](redacting-documents.md#checking-the-result-for-anything-missed-leftover-check).
 
 ## Is the redaction permanent?
 

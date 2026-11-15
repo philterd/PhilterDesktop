@@ -25,7 +25,7 @@ are removed so they cannot carry unredacted content into the output, and any **r
     assuming those parts came through. If a document keeps important information in headers, footers, or
     footnotes, save it as a **`.docx`** and redact that instead, which covers those parts. When Philter
     Desktop notices an `.rtf` with these parts, it flags the redaction for review (in the queue's
-    Verification column, the watched-folder log, and on the command line).
+    Leftovers column, the watched-folder log, and on the command line).
 
 For adding files to the queue, previewing, adjusting, verifying, and reporting on a redaction, see
 [Redacting Documents](redacting-documents.md).

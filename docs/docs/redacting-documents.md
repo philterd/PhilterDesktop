@@ -58,9 +58,9 @@ where that document is in the process:
 | **Completed** | The document was redacted successfully and the copy is ready. |
 | **Failed** | Something prevented redaction: for example, the original file was moved or deleted, the file was open in another program, or the chosen policy no longer exists. |
 
-A **Completed** status shown in **amber or red** means the document finished but its **Verification**
+A **Completed** status shown in **amber or red** means the document finished but its **leftover check**
 result needs review (for example, residual PII may remain, or names weren't checked because the name
-model isn't installed). Hover the row for a short explanation, and check the **Verification** column.
+model isn't installed). Hover the row for a short explanation, and check the **Leftovers** column.
 
 If a document shows **Failed**, Philter Desktop records the reason. **Hover over the failed row** to
 see it in a pop-up, or right-click the row and choose **View Details…**, where the reason appears as a
@@ -251,7 +251,7 @@ When you have many documents in the queue, two tools help you find the one you w
   are shown (for example, *Showing 3 of 40 documents*). Clear the box (or press **Esc** while typing
   in it) to see the whole queue again.
 - **Sorting.** Click any column heading (**File Name**, **Status**, **Policy**, **Context**, or
-  **Verification**) to sort by that column. Click the same heading again to reverse the order. A small
+  **Leftovers**) to sort by that column. Click the same heading again to reverse the order. A small
   arrow shows which column is sorted and in which direction. (Sorting by **Status** groups the
   documents in order of work: pending, then processing, then completed, then failed.)
 
@@ -346,9 +346,9 @@ original's text. If the document has changed since it was redacted, it lists the
 longer match and writes no new copy. Redact the document again from the main window to detect its
 current text, or edit or remove those redactions.
 
-Re-redacting produces a **new, unverified** output, so the document's earlier verification result is
-cleared (its **Verification** status returns to not-checked). Run **Verify Redaction** again on the new
-copy if you want it re-checked before sharing.
+Re-redacting produces a **new** output that hasn't been checked yet, so the document's earlier
+leftover check result is cleared (its **Leftovers** status returns to **Not checked**). Run **Check for
+Leftover PII** again on the new copy if you want it re-checked before sharing.
 
 ## Comparing the original and the cleaned-up copy (View Diff)
 
@@ -406,59 +406,61 @@ Redaction** are included too, marked as user-added.)
     document**. Philter Desktop reminds you of this before it saves. Store it somewhere secure, treat
     it with the same care as the original, and **never** hand it out in place of the redacted copy.
 
-## Checking the result for anything missed (Verification)
+## Checking the result for anything missed (leftover check)
 
 A **false negative** is sensitive text the policy missed that ends up in the redacted copy. To guard
-against that, Philter Desktop can **verify its own work**: after redacting, it re-opens the
-**finished output file** and runs the detector over it again, looking for anything that still matches.
+against that, Philter Desktop runs a **leftover check**: after redacting, it re-opens the **finished
+output file** and runs the detectors over it again, looking for any PII left over.
 
 This runs **automatically** after each redaction (you can turn it off in
-[Settings → Security](settings.md)), and you can run it any time by right-clicking a **Completed**
-document and choosing **Verify Redaction**.
+[Settings → Security](settings.md#checking-for-leftover-pii-automatically)), and you can run it any time
+by right-clicking a **Completed** document and choosing **Check for Leftover PII**.
 
-- If nothing is found, the output **passed verification**.
+- If nothing is found, you're told no leftover PII was detected, and the document's **Leftovers**
+  column shows **None found**.
 - If something is found, it's surfaced **loudly**: a count of how many items may remain, plus a list
   showing each item's **type, the text still present, and where it is**. Fix it by adjusting the
   policy and redacting again, or by using **Modify Redaction**, before you share the file.
 
-Verification looks for residual **detectable PII** in the text it can read back from the output; it is
-not a check that every part of the document was preserved. For **rich text (`.rtf`)** in particular it
+The leftover check looks for **detectable PII** in the text it can read back from the output; it is not a
+check that every part of the document was preserved. For **rich text (`.rtf`)** in particular it
 re-scans the **body** only, so a clean result does not by itself confirm that headers, footers, or
-footnotes came through — when that applies, the result is flagged for review (see
+footnotes came through. When that applies, the result is flagged for review (see
 [Rich Text](redacting-text.md#rich-text-rtf)).
 
-### Two ways to scan: broad policy (default) vs. same policy
+### Two ways to check: broad policy (default) vs. same policy
 
-When you right-click a finished document, **Verify Redaction** offers two choices:
+When you right-click a finished document, **Check for Leftover PII** offers two choices:
 
-- **With broad policy** (recommended, and the default): re-scans with **every built-in detector turned
-  on**. This is the check that matters most: it can surface kinds of information your policy never
-  looked for (for example, a phone number when your policy only removed email addresses). Because it
-  looks for everything, it may also flag things you **chose not to redact**, so treat its findings as
+- **Using a broad policy** (recommended, and the default): re-scans with **every built-in detector
+  turned on**. This is the check that matters most: it can surface kinds of information your policy
+  never looked for (for example, a phone number when your policy only removed email addresses). Because
+  it looks for everything, it may also flag things you **chose not to redact**, so treat its findings as
   prompts to review, not as mistakes. The document's own replacement values (such as realistic stand-in
   names) are **not** reported.
-- **With same policy**: re-scans using only the **same policy that redacted the document**. This merely
-  confirms that policy *took effect*; it **cannot** find a kind of information the policy never looked
-  for, so it is a limited check.
+- **Using the same policy**: re-scans using only the **same policy that redacted the document**. This
+  merely confirms that policy *took effect*; it **cannot** find a kind of information the policy never
+  looked for, so it is a limited check.
 
 The automatic check after each redaction uses whichever of these you select in
-[Settings → Security](settings.md). It uses the **broad policy by default**.
+[Settings → Security](settings.md#checking-for-leftover-pii-automatically). It uses the **broad policy
+by default**.
 
-### Seeing a document's verification result later
+### Seeing a document's leftover check result later
 
-Each document's most recent result is shown in the **Verification** column of the queue (**Clean**,
-**N may remain** in red, **Names not checked** in amber, **Check failed**, or **Not checked**), so you
-can see at a glance which finished documents need attention. **Names not checked** means the document
-was redacted but on-device name detection wasn't available (the model isn't installed), so person names
-may remain — review it. The same result, with the time it was checked, also appears in **View Details**
-(right-click a document). Running **Verify Redaction** again refreshes it.
+Each document's most recent result is shown in the **Leftovers** column of the queue (**None found**,
+**N found** in red, **Names not checked** in amber, **Check failed**, or **Not checked**), so you can
+see at a glance which finished documents need attention. **Names not checked** means the document was
+redacted but on-device name detection wasn't available (the model isn't installed), so person names may
+remain; review it. The same result, with the time it was checked, also appears in **View Details**
+(right-click a document). Running **Check for Leftover PII** again refreshes it.
 
-Verification reads the **written output**, not an in-memory copy, so it also catches any problem in how
-a particular format was saved. Like everything else in Philter Desktop, it runs **entirely on your
-device**: nothing is sent anywhere. The result is included in the redaction report below.
+The leftover check reads the **written output**, not an in-memory copy, so it also catches any problem
+in how a particular format was saved. Like everything else in Philter Desktop, it runs **entirely on
+your device**: nothing is sent anywhere. The result is included in the redaction report below.
 
-!!! note "Verification is a safety net, not a guarantee"
-    A "passed" result means no built-in detector found anything remaining (aside from the document's own
+!!! note "The leftover check is a safety net, not a guarantee"
+    **None found** means no built-in detector found anything left over (aside from the document's own
     replacements). It can't prove a document is free of every possible identifier. Always give an
     important document a human review as well.
 
@@ -474,8 +476,8 @@ report as a **PDF** and opens it. The report summarizes the redaction:
   tied to exactly those documents and any later change is detectable).
 - The **policy** and **context** used, the **Philter Desktop version**, and the **date and time**.
 - A **count of what was removed, by type** (for example, *7 Email Address, 3 Ssn*) and the total.
-- The **verification result** (when verification has run): whether the output passed, or how many items
-  may remain.
+- The **leftover check result** (when the check has run): whether any leftover PII was found, or how
+  many items may remain.
 - If you chose the detailed table: a row per redaction with its **type, location, and replacement**.
 
 The report is saved as a new file next to your other output; your original and redacted files are not

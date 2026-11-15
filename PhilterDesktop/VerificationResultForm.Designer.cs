@@ -50,7 +50,7 @@ namespace PhilterDesktop
             _summary.Height = 56;
             _summary.Name = "_summary";
             _summary.TabIndex = 0;
-            _summary.Text = "Verification result";
+            _summary.Text = "Leftover check result";
             //
             // _list
             //
@@ -116,7 +116,7 @@ namespace PhilterDesktop
             Name = "VerificationResultForm";
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
-            Text = "Verification";
+            Text = "Leftover Check";
             ResumeLayout(false);
         }
 

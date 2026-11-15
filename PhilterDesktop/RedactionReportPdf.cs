@@ -58,7 +58,7 @@ namespace PhilterDesktop
 
                 if (m.VerificationSummary is not null)
                 {
-                    w.Section("Verification");
+                    w.Section("Leftover Check");
                     w.Muted(m.VerificationSummary);
                 }
 

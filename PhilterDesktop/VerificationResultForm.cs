@@ -62,8 +62,8 @@ namespace PhilterDesktop
                     // "all clear": show it in amber with the note so "clean" doesn't overstate integrity.
                     _summary.ForeColor = outcome.FidelityNote is null ? OkColor : CaveatColor;
                     _summary.Text = outcome.FidelityNote is null
-                        ? $"No detectable PII remains in {fileName}.\nThe redacted output passed verification."
-                        : $"No detectable PII remains in the body text of {fileName}.\n\n{outcome.FidelityNote}";
+                        ? $"No leftover PII was detected in {fileName}."
+                        : $"No leftover PII was detected in the body text of {fileName}.\n\n{outcome.FidelityNote}";
                     _list.Visible = false;
                     break;
 
@@ -79,7 +79,7 @@ namespace PhilterDesktop
                 case VerificationStatus.Error:
                 default:
                     _summary.ForeColor = WarnColor;
-                    _summary.Text = $"Verification could not be completed for {fileName}.\n{outcome.Error}";
+                    _summary.Text = $"The leftover check could not be completed for {fileName}.\n{outcome.Error}";
                     _list.Visible = false;
                     break;
             }
