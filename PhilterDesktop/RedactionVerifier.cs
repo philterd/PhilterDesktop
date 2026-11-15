@@ -64,6 +64,16 @@ namespace PhilterDesktop
     internal static class RedactionVerifier
     {
         /// <summary>
+        /// Whether the check can read <paramref name="path"/>'s redacted output. A redacted PDF's pages are
+        /// flattened images with no text, so a re-scan would find nothing and wrongly report it clean.
+        /// </summary>
+        public static bool CanCheck(string? path) =>
+            !string.Equals(Path.GetExtension(path), ".pdf", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>What the queue and View Details show for an output the check can't read.</summary>
+        public const string CannotCheckDisplay = "Not checked (PDF)";
+
+        /// <summary>
         /// Scans <paramref name="outputPath"/> (the redacted file) with <paramref name="policy"/> and
         /// reports residual detections. The format is taken from the output extension, so an Outlook
         /// <c>.msg</c> redacted to <c>.eml</c> verifies as email.
@@ -145,7 +155,7 @@ namespace PhilterDesktop
             FilterService filterService, IReadOnlyList<RedactionSpanEntity> spans,
             string? sourcePath = null, string? worksheet = null)
         {
-            if (!settings.VerifyAfterRedaction)
+            if (!settings.VerifyAfterRedaction || !CanCheck(outputPath))
             {
                 return null;
             }

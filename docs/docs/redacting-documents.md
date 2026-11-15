@@ -428,6 +428,13 @@ re-scans the **body** only, so a clean result does not by itself confirm that he
 footnotes came through. When that applies, the result is flagged for review (see
 [Rich Text](redacting-text.md#rich-text-rtf)).
 
+!!! warning "PDFs are not checked"
+    A redacted PDF's pages are flattened pictures with no text left to read (see
+    [Redacting PDF Documents](redacting-pdf.md)), so the leftover check has nothing to scan. Philter
+    Desktop doesn't run it on PDFs: their **Leftovers** column shows **Not checked (PDF)**, **Check for
+    Leftover PII** is unavailable for them, and their report says they weren't checked. Review a redacted
+    PDF by eye before sharing it.
+
 ### Two ways to check: broad policy (default) vs. same policy
 
 When you right-click a finished document, **Check for Leftover PII** offers two choices:

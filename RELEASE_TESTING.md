@@ -80,6 +80,8 @@ experience, a real PDF, and a couple of GUI interactions.
 - [ ] Drag the real **PDF** onto the main window (or use *Redact Files…*), pick the default policy, and run
       it. A redacted copy (e.g. `<name>_redacted-draft.pdf`) is produced; open it and confirm the PII is
       blacked out / removed.
+      In the queue, its **Leftovers** column reads **Not checked (PDF)**, and right-clicking it shows
+      **Check for Leftover PII** greyed out.
 - [ ] Redact one more document through the UI (a `.docx` or `.xlsx`) and confirm the redacted output has
       the sensitive values removed.
 - [ ] Open the redaction history / **Modify** view for a redacted item and confirm it loads (spans list

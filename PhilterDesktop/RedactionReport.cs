@@ -96,9 +96,16 @@ namespace PhilterDesktop
                 Details = details,
                 MachineName = options.IncludeMachineInfo ? SafeEnv(() => Environment.MachineName) : null,
                 UserName = options.IncludeMachineInfo ? SafeEnv(() => Environment.UserName) : null,
-                VerificationSummary = VerificationSummaryLine(verificationStatus, verificationCount, verificationCheckedAt)
+                // The source too: a Modify Redaction version has no output path until it's redacted.
+                VerificationSummary = (RedactionVerifier.CanCheck(version.SourcePath) && RedactionVerifier.CanCheck(version.OutputPath))
+                                      || verificationStatus is not (null or "Clean" or "NotRun" or "")
+                    ? VerificationSummaryLine(verificationStatus, verificationCount, verificationCheckedAt)
+                    : CannotCheckPdfLine
             };
         }
+
+        internal const string CannotCheckPdfLine =
+            "Not checked: the leftover check can't read a redacted PDF, whose pages are flattened images. Review the output by eye before sharing.";
 
         // A one-line verification summary for the report, or null when verification hasn't run.
         private static string? VerificationSummaryLine(string status, int count, DateTime? checkedAt)

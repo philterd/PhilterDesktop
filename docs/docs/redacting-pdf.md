@@ -14,6 +14,11 @@ Because each item is simply painted over with a solid box, your
 [filter strategy](filter-strategies.md) choice (the replacement text) does **not** change how a
 redacted PDF looks: PDFs always get solid boxes.
 
+Because the redacted pages are pictures, Philter Desktop's
+[leftover check](redacting-documents.md#checking-the-result-for-anything-missed-leftover-check) can't
+read them, so it doesn't run on PDFs; they show **Not checked (PDF)**. Open the redacted PDF and review
+it by eye before sharing it.
+
 ## Scanned PDFs
 
 Some PDFs are just *pictures* of pages (for example, a document that was scanned), with no real text

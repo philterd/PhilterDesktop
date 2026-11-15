@@ -2598,7 +2598,8 @@ namespace PhilterDesktop
 
             viewDetailsToolStripMenuItem.Enabled = single;
             exportExplanationToolStripMenuItem.Enabled = singleCompleted; // needs captured spans
-            verifyRedactionToolStripMenuItem.Enabled = singleCompleted;   // re-scans a finished output
+            // Re-scans a finished output; a redacted PDF has no text to re-scan.
+            verifyRedactionToolStripMenuItem.Enabled = singleCompleted && RedactionVerifier.CanCheck(SelectedSourcePath());
             generateReportToolStripMenuItem.Enabled = singleCompleted;    // summarizes a finished redaction
         }
 
@@ -2769,7 +2770,7 @@ namespace PhilterDesktop
                 ("Redactions", redactionCount),
                 ("Redacted", timestamp),
                 ("Time to redact", duration),
-                ("Leftover check", entity.VerificationCheckedAt is { } vc
+                ("Leftover check", entity.VerificationCheckedAt is { } vc && !LeftoverCheckSkipped(entity)
                     ? $"{VerificationDisplay(entity)} ({vc.ToLocalTime():f})"
                     : VerificationDisplay(entity))
             };
@@ -2923,7 +2924,9 @@ namespace PhilterDesktop
         internal const string ContentDroppedStatus = "ContentDropped";
 
         // A short, human display of an item's stored verification status (queue column + View Details).
-        private static string VerificationDisplay(RedactionQueueEntity e) => e.VerificationStatus switch
+        private static string VerificationDisplay(RedactionQueueEntity e) => LeftoverCheckSkipped(e)
+            ? RedactionVerifier.CannotCheckDisplay
+            : e.VerificationStatus switch
         {
             "Clean" => "None found",
             "ResidualsFound" => $"{e.VerificationFindingCount} found",
@@ -2932,6 +2935,11 @@ namespace PhilterDesktop
             ContentDroppedStatus => "Some parts need review",
             _ => "Not checked"
         };
+
+        // A PDF can't be checked. Its review statuses still show, but a stored "Clean" (from before PDFs were
+        // skipped) must not read as checked.
+        private static bool LeftoverCheckSkipped(RedactionQueueEntity e) =>
+            !RedactionVerifier.CanCheck(e.Name) && e.VerificationStatus is null or "Clean" or "NotRun" or "";
 
         // The verification status to store/show, accounting for name detection having been silently skipped
         // and for RTF non-body content that wasn't carried over. "Clean"/"NotRun" downgrade to a review

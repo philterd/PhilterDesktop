@@ -9,6 +9,10 @@ All notable changes to Philter Desktop are recorded here, newest first.
   **Check for Leftover PII** (formerly **Verify Redaction**); results appear in the **Leftovers** column
   (formerly **Verification**) as **None found** (formerly **Clean**) or **N found**. It works exactly as
   before, and earlier results are kept.
+- **Fixed:** redacted PDFs are no longer reported as having no leftover PII. Their pages are flattened
+  images with no text, so the check couldn't read them and always found nothing. PDFs now show **Not
+  checked (PDF)**, the check is unavailable for them, and their reports say they weren't checked. Review
+  redacted PDFs by eye.
 
 - **New:** custom PhEye models can use any redaction strategy, such as abbreviating names to initials.
   Select the model on the Policy Editor's **PhEye** tab and click **Strategies…**; a new **Strategy**
