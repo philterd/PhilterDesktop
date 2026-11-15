@@ -211,9 +211,9 @@ Social Security number is always nine digits in a familiar pattern, an email add
 or ordinary words; whether something is a name depends on the surrounding sentence. The model reads the
 context and decides what is a name, more reliably than a fixed rule could.
 
-There's little to configure: add it and save the policy. Select it and click **Edit…** if you want to
-change how detected names are replaced. The first document you redact after turning it on takes a
-moment longer while the model loads; after that it's quick.
+There's little to configure: add it and save the policy. Select it and click **Strategies…** (or
+**Edit…**) if you want to change how detected names are replaced. The first document you redact after
+turning it on takes a moment longer while the model loads; after that it's quick.
 
 ### Adding your own local models
 
@@ -230,6 +230,18 @@ You can also point Philter Desktop at **your own on-device models**. On the **Ph
 Each model you add runs on-device alongside the built-in detectors. Use **Edit…** to change a model's
 folder, entity types, or threshold, and **Remove** to delete it. Custom models run locally, so they
 work even if the built-in names model isn't installed.
+
+#### Choosing how a model's detections are replaced
+
+By default, whatever a model finds is replaced with the marker `{{{REDACTED-ph-eye}}}`, whichever
+entity type it found. To change that, select the model and click **Strategies…**. This opens the same
+strategy dialog as the other detectors, so you can choose any [filter strategy](filter-strategies.md):
+for example **Abbreviate to initials**, which turns *John Smith called* into *JS called*, a mask, a
+fixed or random value, or a hash. The list's **Strategy** column shows what each model uses.
+
+A model's strategies are its own: changing its folder, entity types, or threshold with **Edit…** leaves
+them as they are, and so does saving a policy whose strategies were written into the policy file by
+hand.
 
 !!! warning "If the built-in name detection is unavailable"
     If the names model is missing for any reason (an unusual or damaged installation, or antivirus

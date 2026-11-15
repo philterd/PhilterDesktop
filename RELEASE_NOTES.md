@@ -4,6 +4,10 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 ## 1.4.0 (unreleased)
 
+- **New:** custom PhEye models can use any redaction strategy, such as abbreviating names to initials.
+  Select the model on the Policy Editor's **PhEye** tab and click **Strategies…**; a new **Strategy**
+  column shows what each model uses.
+
 - **New:** a **Leniency** option for the Phone Number filter, in its **Configure…** dialog in the Policy
   Editor. A stricter level avoids false matches, such as years in policies that check several regions,
   but skips local numbers with no area code, such as *555-1234*. The default is unchanged.

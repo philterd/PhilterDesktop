@@ -132,12 +132,16 @@ namespace PhilterDesktop.PolicyEditing
         };
         private readonly Button _addPhEyeModel = new() { Text = "Add…", AutoSize = true, Margin = new Padding(0, 0, 8, 0), Padding = new Padding(10, 4, 10, 4) };
         private readonly Button _editPhEyeModel = new() { Text = "Edit…", AutoSize = true, Enabled = false, Margin = new Padding(0, 0, 8, 0), Padding = new Padding(10, 4, 10, 4) };
+        private readonly Button _phEyeStrategies = new() { Text = "Strategies…", AutoSize = true, Enabled = false, Margin = new Padding(0, 0, 8, 0), Padding = new Padding(10, 4, 10, 4) };
         private readonly Button _removePhEyeModel = new() { Text = "Remove", AutoSize = true, Enabled = false, Margin = new Padding(0, 0, 8, 0), Padding = new Padding(10, 4, 10, 4) };
         // "Add" offers either the built-in person-names model or a user-provided local model.
         private readonly ContextMenuStrip _addPhEyeMenu = new();
         private readonly ToolStripMenuItem _addBundledName = new() { Text = "Person Names (on-device)" };
         private readonly ToolStripMenuItem _addLocalModel = new() { Text = "Custom Local Model…" };
         private const string BundledNameModelLabel = "Person Names (on-device)";
+
+        /// <summary>Shows the PhEye tab's dialogs; tests replace it to drive them without a modal loop.</summary>
+        internal Func<Form, DialogResult> ShowPhEyeDialog;
 
         // Free-text, editor-only description (stored on the policy record, not in the engine JSON).
         private readonly TableLayoutPanel _descPanel = new()
@@ -157,6 +161,7 @@ namespace PhilterDesktop.PolicyEditing
 
         public PolicyEditorForm(PolicyRepository repo, WatchedFolderRepository? watchedFolders = null)
         {
+            ShowPhEyeDialog = dlg => dlg.ShowDialog(this);
             _repo = repo;
             _watchedFolders = watchedFolders;
 
@@ -561,6 +566,7 @@ namespace PhilterDesktop.PolicyEditing
             _phEyeModelList.Columns.Add("Model", LogicalToDeviceUnits(200));
             _phEyeModelList.Columns.Add("Entity Types", LogicalToDeviceUnits(240));
             _phEyeModelList.Columns.Add("Threshold", LogicalToDeviceUnits(80));
+            _phEyeModelList.Columns.Add("Strategy", LogicalToDeviceUnits(220));
             _phEyeModelList.SelectedIndexChanged += (_, _) => UpdatePhEyeModelButtons();
             _phEyeModelList.DoubleClick += OnEditPhEyeModel;
 
@@ -576,7 +582,7 @@ namespace PhilterDesktop.PolicyEditing
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Padding = new Padding(0, 6, 0, 0)
             };
-            buttons.Controls.AddRange(new Control[] { _addPhEyeModel, _editPhEyeModel, _removePhEyeModel });
+            buttons.Controls.AddRange(new Control[] { _addPhEyeModel, _editPhEyeModel, _phEyeStrategies, _removePhEyeModel });
 
             var listHost = new Panel { Dock = DockStyle.Fill };
             listHost.Controls.Add(_phEyeModelList);
@@ -595,6 +601,7 @@ namespace PhilterDesktop.PolicyEditing
                 _addPhEyeMenu.Show(_addPhEyeModel, new Point(0, _addPhEyeModel.Height));
             };
             _editPhEyeModel.Click += OnEditPhEyeModel;
+            _phEyeStrategies.Click += OnPhEyeStrategies;
             _removePhEyeModel.Click += OnRemovePhEyeModel;
 
             _loaders.Add(RefreshPhEyeModelList);
@@ -620,6 +627,11 @@ namespace PhilterDesktop.PolicyEditing
                     };
                     item.SubItems.Add(string.Join(", ", config?.Labels ?? new List<string>()));
                     item.SubItems.Add((config?.Threshold ?? PhEyeModel.DefaultThreshold).ToString("0.00"));
+                    // No strategies means the engine's default redaction, so show that rather than nothing.
+                    var strategies = phEye.Strategies is { Count: > 0 } set
+                        ? set
+                        : new List<Phileas.Policy.Filters.Strategies.PhEyeFilterStrategy> { new() };
+                    item.SubItems.Add(string.Join("; ", strategies.Select(st => FilterStrategiesForm.Describe(st, _policy))));
                     _phEyeModelList.Items.Add(item);
                 }
             }
@@ -631,6 +643,7 @@ namespace PhilterDesktop.PolicyEditing
         {
             bool hasSelection = _phEyeModelList.SelectedItems.Count > 0;
             _editPhEyeModel.Enabled = hasSelection;
+            _phEyeStrategies.Enabled = hasSelection;
             _removePhEyeModel.Enabled = hasSelection;
         }
 
@@ -662,7 +675,7 @@ namespace PhilterDesktop.PolicyEditing
                 }
             };
             using var dlg = new PhEyeModelForm(phEye);
-            if (dlg.ShowDialog(this) != DialogResult.OK)
+            if (ShowPhEyeDialog(dlg) != DialogResult.OK)
             {
                 return;
             }
@@ -682,7 +695,8 @@ namespace PhilterDesktop.PolicyEditing
             }
 
             // The bundled names model has a fixed model and label ("name"); editing it configures how the
-            // detected names are redacted. A user model edits its folder, entity types, and threshold.
+            // detected names are redacted. A user model edits its folder, entity types, and threshold,
+            // leaving its strategies (Strategies…) as they are.
             if (PhEyeModel.IsBundledNameEntry(phEye))
             {
                 EditPhEyeStrategies(phEye, BundledNameModelLabel);
@@ -690,12 +704,24 @@ namespace PhilterDesktop.PolicyEditing
             else
             {
                 using var dlg = new PhEyeModelForm(phEye);
-                if (dlg.ShowDialog(this) != DialogResult.OK)
+                if (ShowPhEyeDialog(dlg) != DialogResult.OK)
                 {
                     return;
                 }
                 _dirty = true;
             }
+            RefreshPhEyeModelList();
+        }
+
+        // How the selected model's detections are replaced, for the built-in model and custom ones alike.
+        private void OnPhEyeStrategies(object? sender, EventArgs e)
+        {
+            if (_policy is null || _phEyeModelList.SelectedItems.Count == 0
+                || _phEyeModelList.SelectedItems[0].Tag is not PhEye phEye)
+            {
+                return;
+            }
+            EditPhEyeStrategies(phEye, _phEyeModelList.SelectedItems[0].Text);
             RefreshPhEyeModelList();
         }
 
@@ -729,7 +755,7 @@ namespace PhilterDesktop.PolicyEditing
             FilterStrategyDefaults.MaterializeMissing(_policy); // ensure the default REDACT strategy is present
             IEnumerable existing = (IEnumerable?)phEye.Strategies ?? Array.Empty<object>();
             using var dlg = new FilterStrategiesForm(title, existing, typeof(Phileas.Policy.Filters.Strategies.PhEyeFilterStrategy), policy: _policy);
-            if (dlg.ShowDialog(this) == DialogResult.OK)
+            if (ShowPhEyeDialog(dlg) == DialogResult.OK)
             {
                 IList result = dlg.BuildResultList();
                 phEye.Strategies = result.Count > 0
