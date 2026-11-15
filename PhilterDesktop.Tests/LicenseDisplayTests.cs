@@ -461,7 +461,8 @@ namespace PhilterDesktop.Tests
             for (DirectoryInfo? dir = new(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
             {
                 string candidate = Path.Combine(new[] { dir.FullName }.Concat(parts).ToArray());
-                if (File.Exists(candidate) && File.Exists(Path.Combine(dir.FullName, "PhilterDesktop.sln")))
+                // The .slnx marks the repo root; the .sln is gitignored, so CI checkouts don't have it.
+                if (File.Exists(candidate) && File.Exists(Path.Combine(dir.FullName, "PhilterDesktop.slnx")))
                 {
                     return candidate;
                 }
