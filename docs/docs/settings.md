@@ -386,7 +386,8 @@ you're warned and shown what and where. It runs entirely on your device. This ap
 Philter Desktop redacts: the queue, [watched folders](watched-folders.md) (the warning appears in the
 folder's activity log and notification), and the command line (it's printed as a warning), so an
 automated redaction is never silently left unchecked. The one exception is PDFs: a redacted PDF has no
-text left to read, so it isn't checked and shows **Not checked (PDF)**.
+text left to read, so finding nothing in it proves nothing, and it shows **Not checked (PDF)** unless the
+check does find something.
 
 Two choices sit underneath it (they apply to the automatic check):
 

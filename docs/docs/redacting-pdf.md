@@ -16,8 +16,8 @@ redacted PDF looks: PDFs always get solid boxes.
 
 Because the redacted pages are pictures, Philter Desktop's
 [leftover check](redacting-documents.md#checking-the-result-for-anything-missed-leftover-check) can't
-read them, so it doesn't run on PDFs; they show **Not checked (PDF)**. Open the redacted PDF and review
-it by eye before sharing it.
+read them: a PDF shows **Not checked (PDF)** (unless the check finds text that leaked into the output,
+which it reports like any other finding). Open the redacted PDF and review it by eye before sharing it.
 
 ## Scanned PDFs
 

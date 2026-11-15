@@ -27,9 +27,9 @@ using PhileasPolicy = Phileas.Policy.Policy;
 namespace PhilterDesktop.Tests
 {
     /// <summary>
-    /// A redacted PDF's pages are flattened images with no text, so the leftover check can't read it and
-    /// would always report it clean. PDFs are therefore never checked, shown as "Not checked (PDF)", and
-    /// the menu item to check one is disabled.
+    /// A redacted PDF's pages are flattened images with no text, so a clean leftover check proves nothing:
+    /// it's shown as "Not checked (PDF)", and the menu item to check one is disabled. The automatic check
+    /// still runs, because finding PII in a redacted PDF means text leaked into it.
     /// </summary>
     public sealed class PdfLeftoverCheckTests : IDisposable
     {
@@ -71,11 +71,38 @@ namespace PhilterDesktop.Tests
         // ---- The automatic check ----
 
         [Fact]
-        public async Task AutomaticCheck_SkipsAPdf_InsteadOfReportingItClean()
+        public async Task AutomaticCheck_OnACleanPdf_IsShownAsNotChecked_NotNoneFound()
         {
             (_, string output) = await RedactPdfLeavingAnSsn();
 
-            Assert.Null(RedactionVerifier.VerifyIfEnabled(Settings(), output, EmailOnly(), "c", new FilterService(), Array.Empty<RedactionSpanEntity>()));
+            VerificationOutcome? outcome = RedactionVerifier.VerifyIfEnabled(Settings(), output, EmailOnly(), "c", new FilterService(), Array.Empty<RedactionSpanEntity>());
+
+            Assert.Equal(VerificationStatus.Clean, outcome?.Status);
+            Assert.Null(RedactionVerifier.WarningFor(outcome)); // nothing to warn about in notifications or logs
+            Assert.Equal(RedactionVerifier.CannotCheckDisplay, Display(new RedactionQueueEntity { Name = output, VerificationStatus = "Clean" }));
+        }
+
+        [Fact]
+        public void AutomaticCheck_CatchesTextLeakedIntoAPdf()
+        {
+            // A PDF output that still has a text layer carrying an SSN, as a broken redaction would leave.
+            string output = Path.Combine(_dir, "leaked.pdf");
+            File.WriteAllBytes(output, MinimalPdf.PlainText("SSN 123-45-6789 leaked into the output."));
+
+            VerificationOutcome? outcome = RedactionVerifier.VerifyIfEnabled(Settings(), output, EmailOnly(), "c", new FilterService(), Array.Empty<RedactionSpanEntity>());
+
+            Assert.Equal(VerificationStatus.ResidualsFound, outcome?.Status);
+            Assert.Contains(outcome!.Residuals, r => r.Text == "123-45-6789");
+            Assert.StartsWith("The leftover check found 1 possible item", RedactionVerifier.WarningFor(outcome));
+        }
+
+        [Fact]
+        public void LeakedPdf_ShowsItsFindings_NotNotChecked()
+        {
+            var entity = new RedactionQueueEntity { Name = @"C:.pdf", VerificationStatus = "ResidualsFound", VerificationFindingCount = 1 };
+
+            Assert.Equal("1 found", Display(entity));
+            Assert.Contains("1 possible item of leftover PII may remain", Report(@"C:\out.pdf", "ResidualsFound", count: 1).VerificationSummary);
         }
 
         [Fact]
@@ -92,7 +119,7 @@ namespace PhilterDesktop.Tests
         // ---- The queue column ----
 
         [Theory]
-        [InlineData("Clean", RedactionVerifier.CannotCheckDisplay)]      // stored before PDFs were skipped
+        [InlineData("Clean", RedactionVerifier.CannotCheckDisplay)]      // a clean PDF proves nothing
         [InlineData("NotRun", RedactionVerifier.CannotCheckDisplay)]
         [InlineData(null, RedactionVerifier.CannotCheckDisplay)]
         [InlineData("NamesNotChecked", "Names not checked")]            // still worth reviewing
@@ -185,10 +212,10 @@ namespace PhilterDesktop.Tests
             (string)typeof(MainForm).GetMethod("VerificationDisplay", BindingFlags.Static | BindingFlags.NonPublic)!
                 .Invoke(null, new object[] { entity })!;
 
-        private static RedactionReportModel Report(string outputPath, string status) => RedactionReport.Build(
+        private static RedactionReportModel Report(string outputPath, string status, int count = 0) => RedactionReport.Build(
             new RedactionVersionEntity { SourcePath = Path.ChangeExtension(outputPath, ".src"), OutputPath = outputPath, FileType = Path.GetExtension(outputPath) },
             Array.Empty<RedactionSpanEntity>(), "1.0.0", DateTimeOffset.UtcNow, "h1", "h2", new RedactionReportOptions(),
-            verificationStatus: status);
+            verificationStatus: status, verificationCount: count);
 
         private static ToolStripMenuItem OpenMenu(MainForm form)
         {

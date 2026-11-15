@@ -64,8 +64,9 @@ namespace PhilterDesktop
     internal static class RedactionVerifier
     {
         /// <summary>
-        /// Whether the check can read <paramref name="path"/>'s redacted output. A redacted PDF's pages are
-        /// flattened images with no text, so a re-scan would find nothing and wrongly report it clean.
+        /// Whether a clean result for <paramref name="path"/>'s redacted output means anything. A redacted PDF's
+        /// pages are flattened images with no text, so a re-scan finds nothing whatever is on the page. (Finding
+        /// something in one still matters: it means text leaked into the output.)
         /// </summary>
         public static bool CanCheck(string? path) =>
             !string.Equals(Path.GetExtension(path), ".pdf", StringComparison.OrdinalIgnoreCase);
@@ -148,14 +149,15 @@ namespace PhilterDesktop
         /// Runs the post-redaction self-check when <see cref="SettingsEntity.VerifyAfterRedaction"/> is on
         /// (returns null when off), choosing the broad "all detectors" policy or the redaction policy per
         /// settings and excluding this redaction's own replacements. Centralizes the check so <b>every</b>
-        /// redaction path — queue, CLI, and watched folders — verifies identically.
+        /// redaction path — queue, CLI, and watched folders — verifies identically. PDFs are checked too: a
+        /// clean result proves nothing for them (it's shown as not checked), but a finding means text leaked.
         /// </summary>
         public static VerificationOutcome? VerifyIfEnabled(
             SettingsEntity settings, string outputPath, PhileasPolicy policy, string context,
             FilterService filterService, IReadOnlyList<RedactionSpanEntity> spans,
             string? sourcePath = null, string? worksheet = null)
         {
-            if (!settings.VerifyAfterRedaction || !CanCheck(outputPath))
+            if (!settings.VerifyAfterRedaction)
             {
                 return null;
             }

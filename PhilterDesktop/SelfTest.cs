@@ -31,14 +31,14 @@ namespace PhilterDesktop
     /// <summary>
     /// A self-contained smoke test (<c>PhilterDesktop.exe --selftest</c>): generates small documents that
     /// carry a known email, SSN, and person name in each supported format (including PDF), runs the real
-    /// redaction pipeline over them, and verifies each redacted output is free of residual PII. For every
-    /// format it first confirms the planted PII is detectable in the input, so a clean result is meaningful
-    /// (a redacted PDF is flattened to an image, so its output would otherwise verify clean even with no
-    /// redaction). When the bundled on-device name model is present it also exercises name detection through
-    /// the ONNX runtime, proving a packaged build's model and native runtime actually load and redact; on a
-    /// dev build (no bundled model) that is reported as skipped rather than silently passing. Prints PASS/FAIL
-    /// per format and exits 0 (all passed) or 1 (any failed) — a post-install confidence check that needs no
-    /// user data.
+    /// redaction pipeline over them, and checks each redacted output for leftover PII. For every format it
+    /// first confirms the planted PII is detectable in the input, so a clean result is meaningful. A redacted
+    /// PDF is flattened to images with no text, so finding nothing in it proves nothing: PDF is reported NOT
+    /// CHECKED rather than passed, but still fails if PII is found (a leaked text layer). When the bundled
+    /// on-device name model is present it also exercises name
+    /// detection through the ONNX runtime, proving a packaged build's model and native runtime actually load
+    /// and redact; on a dev build (no bundled model) that is reported as skipped rather than silently passing.
+    /// Exits 0 when nothing failed and 1 otherwise: a post-install confidence check that needs no user data.
     /// </summary>
     internal static class SelfTest
     {
@@ -100,15 +100,12 @@ namespace PhilterDesktop
                 ("pdf", WritePdf),
             };
 
-            int passed = 0;
+            var results = new List<(string Label, CaseResult Result)>();
             try
             {
                 foreach ((string label, Func<string, string> generate) in cases)
                 {
-                    if (RunCase(label, generate, dir, policy, filterService, nameModel ? Surname : null))
-                    {
-                        passed++;
-                    }
+                    results.Add((label, RunCase(label, generate, dir, policy, filterService, nameModel ? Surname : null)));
                 }
             }
             finally
@@ -117,13 +114,28 @@ namespace PhilterDesktop
             }
 
             Console.WriteLine();
-            bool ok = passed == cases.Length;
-            Console.WriteLine($"Result: {(ok ? "PASS" : "FAIL")} ({passed}/{cases.Length})"
-                + (nameModel ? " incl. name detection" : ", name detection NOT tested"));
-            return ok ? 0 : 1;
+            Console.WriteLine(ResultLine(results, nameModel));
+            return results.Any(r => r.Result == CaseResult.Failed) ? 1 : 0;
         }
 
-        private static bool RunCase(string label, Func<string, string> generate, string dir, PhileasPolicy policy, FilterService filterService, string? requireInputName)
+        internal enum CaseResult { Passed, Failed, NotChecked }
+
+        /// <summary>
+        /// The summary line, e.g. "Result: PASS (6/6, pdf not checked) incl. name detection". Not-checked
+        /// formats don't count toward the total, and don't fail the run.
+        /// </summary>
+        internal static string ResultLine(IReadOnlyList<(string Label, CaseResult Result)> results, bool nameModel)
+        {
+            int checkedCount = results.Count(r => r.Result != CaseResult.NotChecked);
+            int passed = results.Count(r => r.Result == CaseResult.Passed);
+            bool ok = results.All(r => r.Result != CaseResult.Failed);
+            string notChecked = string.Join(", ", results.Where(r => r.Result == CaseResult.NotChecked).Select(r => r.Label));
+            return $"Result: {(ok ? "PASS" : "FAIL")} ({passed}/{checkedCount}"
+                + (notChecked.Length > 0 ? $", {notChecked} not checked)" : ")")
+                + (nameModel ? " incl. name detection" : ", name detection NOT tested");
+        }
+
+        internal static CaseResult RunCase(string label, Func<string, string> generate, string dir, PhileasPolicy policy, FilterService filterService, string? requireInputName)
         {
             string input = string.Empty;
             try
@@ -136,7 +148,7 @@ namespace PhilterDesktop
                 if (before.Status != VerificationStatus.ResidualsFound)
                 {
                     Console.WriteLine($"  FAIL  {label} (planted PII not detected in the input)");
-                    return false;
+                    return CaseResult.Failed;
                 }
 
                 // Confirm the model detected the name: one it silently missed would also verify "clean".
@@ -144,29 +156,65 @@ namespace PhilterDesktop
                     && !before.Residuals.Any(r => r.Text != null && r.Text.Contains(requireInputName, StringComparison.OrdinalIgnoreCase)))
                 {
                     Console.WriteLine($"  FAIL  {label} (name model did not detect the planted name in the input)");
-                    return false;
+                    return CaseResult.Failed;
                 }
 
                 RedactionService.RedactFileAsync(input, output, policy, "selftest", filterService).GetAwaiter().GetResult();
 
-                VerificationOutcome outcome = RedactionVerifier.Verify(output, policy, "selftest", filterService, sourcePath: input);
-                if (outcome.Status == VerificationStatus.Clean)
+                bool canCheck = RedactionVerifier.CanCheck(output);
+                if (!canCheck && !IsPdf(output))
                 {
-                    Console.WriteLine($"  PASS  {label}");
-                    return true;
+                    Console.WriteLine($"  FAIL  {label} (no PDF was written)");
+                    return CaseResult.Failed;
                 }
 
-                string detail = outcome.Status == VerificationStatus.Error
-                    ? outcome.Error ?? "error"
-                    : "residual: " + string.Join(", ", outcome.Residuals.Select(r => r.Text).Distinct().Take(3));
-                Console.WriteLine($"  FAIL  {label} ({detail})");
-                return false;
+                VerificationOutcome outcome = RedactionVerifier.Verify(output, policy, "selftest", filterService, sourcePath: input);
+                CaseResult result = Classify(outcome, canCheck);
+                switch (result)
+                {
+                    case CaseResult.Passed:
+                        Console.WriteLine($"  PASS  {label}");
+                        break;
+                    case CaseResult.NotChecked:
+                        Console.WriteLine($"  NOT CHECKED  {label} (redacted; a redacted PDF has no text to re-scan, so review one by eye)");
+                        break;
+                    default:
+                        string detail = outcome.Status == VerificationStatus.Error
+                            ? outcome.Error ?? "error"
+                            : "residual: " + string.Join(", ", outcome.Residuals.Select(r => r.Text).Distinct().Take(3));
+                        Console.WriteLine($"  FAIL  {label} ({detail})");
+                        break;
+                }
+                return result;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"  FAIL  {label} ({ex.Message})");
+                return CaseResult.Failed;
+            }
+        }
+
+        /// <summary>
+        /// How a re-scan of the output counts. Anything found, or an error, fails. Finding nothing passes only
+        /// if the output has text to scan: a redacted PDF has none, so a clean re-scan proves nothing. A PDF is
+        /// still re-scanned, though, because finding PII there means a text layer leaked into the output.
+        /// </summary>
+        internal static CaseResult Classify(VerificationOutcome outcome, bool canCheck) => outcome.Status switch
+        {
+            VerificationStatus.Clean => canCheck ? CaseResult.Passed : CaseResult.NotChecked,
+            _ => CaseResult.Failed
+        };
+
+        // A file that starts with the PDF header.
+        private static bool IsPdf(string path)
+        {
+            if (!File.Exists(path))
+            {
                 return false;
             }
+            byte[] head = new byte[5];
+            using FileStream stream = File.OpenRead(path);
+            return stream.Read(head, 0, head.Length) == head.Length && Encoding.ASCII.GetString(head) == "%PDF-";
         }
 
         // --- input generators (each carries the email + SSN markers) ------------------

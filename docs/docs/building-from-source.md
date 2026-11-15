@@ -94,16 +94,17 @@ build-and-test flow runs in continuous integration on every push and pull reques
 ### The built-in self-test
 
 The application can check itself against a small corpus it generates at runtime (nothing is
-bundled), covering every supported text-based format and verifying that each output is free of
-residual PII:
+bundled), covering every supported format and checking each redacted output for leftover PII:
 
 ```
 PhilterDesktop.exe --selftest
 ```
 
-It prints `Result: PASS (n/n)` and exits with code `0` on success, so it can be used as a release
-gate against either a build or an installed copy. PDF is not covered by the self-test and is
-verified by hand.
+It prints `Result: PASS (6/6, pdf not checked)` and exits with code `0` on success, so it can be used
+as a release gate against either a build or an installed copy. It redacts a PDF too, but a redacted
+PDF's pages are images with no text to re-scan, so PDF is reported as `NOT CHECKED` rather than passed.
+(It still fails if the redacted PDF does contain readable PII, which would mean text leaked into the
+output.) Check a redacted PDF by hand.
 
 A separate check confirms that the license agreement bundled with the installer still matches the
 live copy published at `https://philterd.ai/philterd-eula.txt` (this one needs a network

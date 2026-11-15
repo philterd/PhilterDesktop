@@ -2936,8 +2936,8 @@ namespace PhilterDesktop
             _ => "Not checked"
         };
 
-        // A PDF can't be checked. Its review statuses still show, but a stored "Clean" (from before PDFs were
-        // skipped) must not read as checked.
+        // A clean re-scan of a PDF proves nothing, so it doesn't read as checked. Findings, failures and
+        // review statuses still show.
         private static bool LeftoverCheckSkipped(RedactionQueueEntity e) =>
             !RedactionVerifier.CanCheck(e.Name) && e.VerificationStatus is null or "Clean" or "NotRun" or "";
 

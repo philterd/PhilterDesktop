@@ -59,8 +59,10 @@ experience, a real PDF, and a couple of GUI interactions.
       cd "C:\Program Files\Philter Desktop"
       .\PhilterDesktop.exe --selftest
 
-- [ ] It prints a PASS line for each format and ends with **`Result: PASS (7/7)`**, and the process exit
-      code is `0`. (Covers txt, csv, rtf, eml, docx, xlsx, pdf end-to-end: redact + verify.)
+- [ ] It prints a PASS line for each format, a **`NOT CHECKED  pdf`** line, and ends with
+      **`Result: PASS (6/6, pdf not checked)`**, and the process exit code is `0`. (Covers txt, csv, rtf,
+      eml, docx, xlsx end-to-end: redact + check for leftover PII. PDF is redacted but can't be
+      re-scanned; Part 3 checks a real PDF by eye.)
 - [ ] The header shows **`On-device name detection (ONNX): ENABLED`** and the result line ends with
       **`incl. name detection`**. This proves the bundled name model and its native ONNX runtime actually
       load and redact on the clean machine. If it says `UNAVAILABLE` / `name detection NOT tested`, the
@@ -126,7 +128,7 @@ build exists is that the emulated x64 build fails to initialize the native ONNX 
       .\PhilterDesktop.exe --selftest
 
       The header shows **`On-device name detection (ONNX): ENABLED`**, it prints **`Result: PASS
-      (7/7)`**, and the result line ends with **`incl. name detection`** (exit code `0`).
+      (6/6, pdf not checked)`**, and the result line ends with **`incl. name detection`** (exit code `0`).
 - [ ] Redact a real **PDF** through the UI (exercises PDFium + SkiaSharp on ARM64) and confirm the PII
       is removed in the output.
 - [ ] Redact a **scanned/image PDF** so OCR runs (`Windows.Media.Ocr`) and confirm text is detected and

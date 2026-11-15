@@ -11,8 +11,10 @@ All notable changes to Philter Desktop are recorded here, newest first.
   before, and earlier results are kept.
 - **Fixed:** redacted PDFs are no longer reported as having no leftover PII. Their pages are flattened
   images with no text, so the check couldn't read them and always found nothing. PDFs now show **Not
-  checked (PDF)**, the check is unavailable for them, and their reports say they weren't checked. Review
-  redacted PDFs by eye.
+  checked (PDF)**, **Check for Leftover PII** is unavailable for them, and their reports say they weren't
+  checked. Review redacted PDFs by eye. The automatic check still runs on PDFs, so text that leaked into
+  one would still be reported. The built-in self-test (`--selftest`) likewise reports PDF as **NOT
+  CHECKED** instead of passed, and still fails if a redacted PDF contains readable PII.
 
 - **New:** custom PhEye models can use any redaction strategy, such as abbreviating names to initials.
   Select the model on the Policy Editor's **PhEye** tab and click **Strategies…**; a new **Strategy**

@@ -430,10 +430,13 @@ footnotes came through. When that applies, the result is flagged for review (see
 
 !!! warning "PDFs are not checked"
     A redacted PDF's pages are flattened pictures with no text left to read (see
-    [Redacting PDF Documents](redacting-pdf.md)), so the leftover check has nothing to scan. Philter
-    Desktop doesn't run it on PDFs: their **Leftovers** column shows **Not checked (PDF)**, **Check for
-    Leftover PII** is unavailable for them, and their report says they weren't checked. Review a redacted
-    PDF by eye before sharing it.
+    [Redacting PDF Documents](redacting-pdf.md)), so the leftover check has nothing to scan and finding
+    nothing proves nothing. A PDF's **Leftovers** column shows **Not checked (PDF)**, **Check for Leftover
+    PII** is unavailable for it, and its report says it wasn't checked. Review a redacted PDF by eye before
+    sharing it.
+
+    The automatic check does still run on PDFs, because finding PII in one would mean text leaked into
+    the output. If that ever happens, the column shows what was found, as for any other document.
 
 ### Two ways to check: broad policy (default) vs. same policy
 
