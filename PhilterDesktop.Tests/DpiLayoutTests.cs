@@ -48,7 +48,8 @@ namespace PhilterDesktop.Tests
 
         private static readonly string[] CodeBuilt =
         {
-            "policy-editor", "policy-wizard", "filter-strategies", "filter-strategies-options", "add-filter-strategy",
+            "policy-editor", "policy-wizard", "filter-strategies", "filter-strategies-options", "filter-strategies-choice",
+            "add-filter-strategy",
             "custom-identifiers", "custom-identifier", "pdf-regions", "add-region", "pdf-region-picker",
             "pheye-model", "ocr-advanced", "work-license", "usage-choice", "usage-choice-work"
         };
@@ -68,6 +69,8 @@ namespace PhilterDesktop.Tests
             "add-filter-strategy" => new AddFilterStrategyForm(new SsnFilterStrategy(), "SSN"),
             "filter-strategies-options" => new FilterStrategiesForm("EIN", Array.Empty<object>(), typeof(SsnFilterStrategy),
                 new[] { new FilterOptionToggle { Label = "Only valid prefixes", Description = "Skip numbers whose prefix the IRS never issued.", Value = true } }),
+            "filter-strategies-choice" => new FilterStrategiesForm("Phone Number", Array.Empty<object>(), typeof(PhoneNumberFilterStrategy),
+                new[] { FilterOptions.Read(FilterOptions.For("PhoneNumber")[0], new PhoneNumber { Leniency = "STRICT_GROUPING" })! }),
             "custom-identifiers" => new CustomIdentifiersForm(new[] { new Identifier { Classification = "case", Pattern = "CASE-\\d+" } }),
             "custom-identifier" => new CustomIdentifierForm(new Identifier()),
             "pdf-regions" => new PdfRegionsForm(new[] { new BoundingBox { Page = 1, X = 1, Y = 2, W = 3, H = 4 } }),

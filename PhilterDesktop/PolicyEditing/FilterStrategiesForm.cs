@@ -32,6 +32,11 @@ namespace PhilterDesktop.PolicyEditing
         private readonly IReadOnlyList<FilterOptionToggle> _options;
         private readonly PhileasPolicy? _policy; // holds the encryption key references
         private readonly List<(CheckBox Box, FilterOptionToggle Toggle)> _optionChecks = new();
+        private readonly List<(ComboBox Combo, FilterOptionToggle Toggle)> _optionCombos = new();
+        private readonly List<(Label Label, IReadOnlyList<FilterOptionChoice> Choices)> _choiceDescriptions = new();
+        private FlowLayoutPanel? _optionsPanel;
+        private const int CheckOptionHeight = 46;
+        private const int ChoiceOptionHeight = 150;
         private static readonly Size ButtonSize = new(90, 34);
 
         private readonly ListBox _list = new() { Dock = DockStyle.Fill, IntegralHeight = false };
@@ -54,7 +59,7 @@ namespace PhilterDesktop.PolicyEditing
             StartPosition = FormStartPosition.CenterParent;
             // Grow the dialog so the Options section (if any) sits above the strategies list without
             // squeezing it.
-            int optionsHeight = _options.Count == 0 ? 0 : 12 + _options.Count * 46;
+            int optionsHeight = OptionsHeight();
             ClientSize = new Size(460, 340 + optionsHeight);
             MinimumSize = new Size(380, 300 + optionsHeight);
             AcceptButton = _ok;
@@ -73,6 +78,38 @@ namespace PhilterDesktop.PolicyEditing
 
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_ok);
+            FitChoiceOptions();
+        }
+
+        // Drop-down descriptions wrap to however many lines the font and DPI need, so size them once
+        // themed: each selected-value line fits its longest description (no jump when the selection
+        // changes), and the dialog grows by whatever the options need beyond the estimate.
+        private void FitChoiceOptions()
+        {
+            if (_optionsPanel is null || _choiceDescriptions.Count == 0)
+            {
+                return;
+            }
+            foreach ((Label label, IReadOnlyList<FilterOptionChoice> choices) in _choiceDescriptions)
+            {
+                string shown = label.Text;
+                int tallest = 0;
+                foreach (FilterOptionChoice choice in choices)
+                {
+                    label.Text = choice.Description;
+                    tallest = Math.Max(tallest, label.GetPreferredSize(new Size(label.MaximumSize.Width, 0)).Height);
+                }
+                label.Text = shown;
+                label.MinimumSize = new Size(0, tallest);
+            }
+            int needed = _optionsPanel.GetPreferredSize(new Size(_optionsPanel.ClientSize.Width, 0)).Height;
+            int grow = needed - _optionsPanel.Height;
+            if (grow > 0)
+            {
+                _optionsPanel.Height += grow;
+                MinimumSize = new Size(MinimumSize.Width, MinimumSize.Height + grow);
+                ClientSize = new Size(ClientSize.Width, ClientSize.Height + grow);
+            }
         }
 
         /// <summary>Copies the current option checkbox states into their toggles. Invoked when the user
@@ -83,7 +120,17 @@ namespace PhilterDesktop.PolicyEditing
             {
                 toggle.Value = box.Checked;
             }
+            foreach ((ComboBox combo, FilterOptionToggle toggle) in _optionCombos)
+            {
+                if (combo.SelectedIndex >= 0)
+                {
+                    toggle.Choice = toggle.Choices![combo.SelectedIndex].Value;
+                }
+            }
         }
+
+        private int OptionsHeight() =>
+            _options.Count == 0 ? 0 : 12 + _options.Sum(o => o.Choices is null ? CheckOptionHeight : ChoiceOptionHeight);
 
         /// <summary>Builds a strongly-typed <c>List&lt;TStrategy&gt;</c> of the edited items.</summary>
         public IList BuildResultList()
@@ -115,11 +162,12 @@ namespace PhilterDesktop.PolicyEditing
             // filters that registered options (e.g. EIN's "only valid IRS prefixes").
             if (_options.Count > 0)
             {
-                Controls.Add(BuildOptionsPanel());
+                _optionsPanel = BuildOptionsPanel();
+                Controls.Add(_optionsPanel);
             }
         }
 
-        private Control BuildOptionsPanel()
+        private FlowLayoutPanel BuildOptionsPanel()
         {
             var panel = new FlowLayoutPanel
             {
@@ -127,7 +175,7 @@ namespace PhilterDesktop.PolicyEditing
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
                 AutoScroll = true,
-                Height = 12 + _options.Count * 46,
+                Height = OptionsHeight(),
                 Padding = new Padding(10, 8, 10, 4)
             };
             panel.Controls.Add(new Label
@@ -139,6 +187,11 @@ namespace PhilterDesktop.PolicyEditing
             });
             foreach (FilterOptionToggle toggle in _options)
             {
+                if (toggle.Choices is { } choices)
+                {
+                    AddChoiceOption(panel, toggle, choices);
+                    continue;
+                }
                 var box = new CheckBox { Text = toggle.Label, Checked = toggle.Value, AutoSize = true, Margin = new Padding(0, 0, 0, 0) };
                 panel.Controls.Add(box);
                 panel.Controls.Add(new Label
@@ -154,6 +207,42 @@ namespace PhilterDesktop.PolicyEditing
                 _optionChecks.Add((box, toggle));
             }
             return panel;
+        }
+
+        // A drop-down option: its label, the list, the selected value's description, then the option's own.
+        private void AddChoiceOption(FlowLayoutPanel panel, FilterOptionToggle toggle, IReadOnlyList<FilterOptionChoice> choices)
+        {
+            var subtle = new Font(ModernTheme.UiFont.FontFamily, 8f);
+            panel.Controls.Add(new Label { Text = toggle.Label, AutoSize = true, Margin = new Padding(0, 0, 0, 2) });
+
+            var combo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220, Margin = new Padding(0, 0, 0, 2) };
+            combo.Items.AddRange(choices.Select(c => (object)c.Label).ToArray());
+            panel.Controls.Add(combo);
+
+            var choiceDescription = new Label
+            {
+                AutoSize = true,
+                MaximumSize = new Size(400, 0),
+                ForeColor = ModernTheme.SubtleText,
+                Font = subtle,
+                Margin = new Padding(0, 0, 0, 4)
+            };
+            panel.Controls.Add(choiceDescription);
+            _choiceDescriptions.Add((choiceDescription, choices));
+            combo.SelectedIndexChanged += (_, _) =>
+                choiceDescription.Text = combo.SelectedIndex >= 0 ? choices[combo.SelectedIndex].Description : string.Empty;
+            combo.SelectedIndex = Math.Max(0, choices.ToList().FindIndex(c => c.Value == toggle.Choice));
+
+            panel.Controls.Add(new Label
+            {
+                Text = toggle.Description,
+                AutoSize = true,
+                MaximumSize = new Size(400, 0),
+                ForeColor = ModernTheme.SubtleText,
+                Font = subtle,
+                Margin = new Padding(0, 0, 0, 6)
+            });
+            _optionCombos.Add((combo, toggle));
         }
 
         private void RefreshList()

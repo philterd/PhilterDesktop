@@ -45,6 +45,10 @@ Desktop can detect, organized into **tabs** (one category per tab):
 2. When you check a box, a **Configure…** button appears beside it. Clicking it lets you choose
    *how* that information is replaced (for example, blacked out entirely, or swapped for a stand-in
    label). Those choices are explained on the [Filter Strategies](filter-strategies.md) page.
+   A few detectors also show **Options** at the top of that dialog that change what they match: for
+   example, **EIN** can skip prefixes the IRS never issued, and **Phone Number** has a **Leniency**
+   setting that controls how strictly a number must look like a real one. Each is described on
+   [Supported Filters](supported-filters.md).
 
 You do **not** have to configure every detector. A detector that's turned on but not configured uses a
 default: the detected text is replaced with a **marker that names what was removed**, like

@@ -25,7 +25,28 @@ Information about who a person is.
 Ways of reaching a person.
 
 - **Email Address**: e.g., *jane.doe@example.com*.
-- **Phone Number**: e.g., *(555) 123-4567*.
+- **Phone Number**: e.g., *(555) 123-4567*. Its **Configure…** dialog has a **Leniency** option that
+  sets how closely a number must match the numbering plan of the policy's regions:
+    - **Possible** (the default): any number whose length is possible for the region, including a
+      local number with no area code, such as *555-1234*. It catches the most.
+    - **Valid**: only numbers that are valid for the region, such as a US number whose area code
+      exists. Local numbers with no area code are **not** matched.
+    - **Strict grouping**: valid numbers grouped the way the region groups them, or not grouped at all.
+      *202 55 50182* is not matched.
+    - **Exact grouping**: valid numbers grouped exactly as the region formats them, or not grouped at
+      all. *202-5550182* is not matched.
+
+    Leave it at **Possible** unless it is matching things that aren't phone numbers. A stricter level
+    avoids false matches, but it misses local numbers like *555-1234*, numbers written in an unusual
+    way, and numbers from a newly issued range, so try it on a few of your own documents first.
+
+    The false matches mostly come from checking several regions at once. The built-in policies check
+    United States numbers only, where a date like *Oct 9, 2026* isn't matched. A policy imported
+    with several regions (for example `"region": ["US", "GB", "DE"]`) can match years and other short
+    numbers under **Possible**, such as the *2026* in *Oct 9, 2026*; **Valid** stops that. The Policy
+    Editor doesn't change a policy's regions.
+
+    Policies that keep the default don't store the option, so existing policies are unchanged.
 - **Phone Number Extension**: an extension that follows a phone number (e.g., *ext. 204*).
 
 ## Location

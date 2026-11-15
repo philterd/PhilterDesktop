@@ -153,10 +153,23 @@ namespace PhilterDesktop.PolicyEditing
     }
 
     /// <summary>
-    /// A boolean option a filter exposes beyond its strategies, shown as a checkbox in the filter's
-    /// Configure dialog. <see cref="Property"/> is the Phileas filter property (read/set by reflection).
+    /// An option a filter exposes beyond its strategies, shown in the filter's Configure dialog.
+    /// <see cref="Property"/> is the Phileas filter property (read/set by reflection). Without
+    /// <see cref="Choices"/> it is a boolean checkbox; with them, a string drop-down.
     /// </summary>
-    internal sealed record FilterOption(string Property, string Label, string Description, bool Default);
+    internal sealed record FilterOption(string Property, string Label, string Description, bool Default)
+    {
+        /// <summary>
+        /// The values of a string option, shown as a drop-down. The first is the engine's default and is
+        /// saved by leaving the property out, so policies that never set it don't change.
+        /// </summary>
+        public IReadOnlyList<FilterOptionChoice>? Choices { get; init; }
+
+        public bool IsChoice => Choices is { Count: > 0 };
+    }
+
+    /// <summary>One value of a drop-down option: the string saved in the policy, and how it's shown.</summary>
+    internal sealed record FilterOptionChoice(string Value, string Label, string Description);
 
     /// <summary>
     /// Filter-level boolean options the editor surfaces in the Configure dialog, keyed by the Phileas
@@ -197,22 +210,107 @@ namespace PhilterDesktop.PolicyEditing
                         "(8 is used for business numbers). Off (the default) matches any valid SIN.",
                         Default: false),
                 },
+                ["PhoneNumber"] = new[]
+                {
+                    new FilterOption(
+                        "Leniency",
+                        "Leniency",
+                        "How closely a number must match the numbering plan of the policy's regions. Stricter " +
+                        "levels avoid false matches, such as years when a policy checks several regions, but they " +
+                        "skip local numbers with no area code, like 555-1234. Check a stricter level against your " +
+                        "own documents before relying on it.",
+                        Default: false)
+                    {
+                        Choices = new[]
+                        {
+                            new FilterOptionChoice("POSSIBLE", "Possible (default)",
+                                "Numbers whose length is possible for the region, including local numbers with no " +
+                                "area code. Catches the most; with several regions it can also flag years."),
+                            new FilterOptionChoice("VALID", "Valid",
+                                "Numbers that are valid for the region, such as a US number whose area code exists. " +
+                                "Local numbers like 555-1234 are not matched."),
+                            new FilterOptionChoice("STRICT_GROUPING", "Strict grouping",
+                                "Valid numbers grouped as the region groups them, or not grouped. " +
+                                "\"202 55 50182\" is not matched."),
+                            new FilterOptionChoice("EXACT_GROUPING", "Exact grouping",
+                                "Valid numbers grouped exactly as the region formats them, or not grouped. " +
+                                "\"202-5550182\" is not matched."),
+                        }
+                    },
+                },
             };
 
         /// <summary>The registered options for a filter, or an empty list if it has none.</summary>
         public static IReadOnlyList<FilterOption> For(string filterProperty) =>
             ByFilter.TryGetValue(filterProperty, out FilterOption[]? options) ? options : Array.Empty<FilterOption>();
+
+        /// <summary>
+        /// The dialog state for <paramref name="option"/>, seeded from <paramref name="filter"/>; null if the
+        /// filter has no writable property of the right type (bool, or string for a drop-down).
+        /// </summary>
+        public static FilterOptionToggle? Read(FilterOption option, object filter)
+        {
+            PropertyInfo? prop = filter.GetType().GetProperty(option.Property);
+            Type expected = option.IsChoice ? typeof(string) : typeof(bool);
+            if (prop is null || prop.PropertyType != expected || !prop.CanWrite)
+            {
+                return null;
+            }
+
+            var toggle = new FilterOptionToggle { Label = option.Label, Description = option.Description };
+            if (!option.IsChoice)
+            {
+                toggle.Value = prop.GetValue(filter) is bool b ? b : option.Default;
+                return toggle;
+            }
+
+            // A value the list doesn't know (a hand-edited policy) is shown as-is so saving keeps it.
+            string? current = prop.GetValue(filter) as string;
+            List<FilterOptionChoice> choices = option.Choices!.ToList();
+            if (current is not null && !choices.Any(c => c.Value == current))
+            {
+                choices.Add(new FilterOptionChoice(current, current, "Not a value Philter Desktop recognizes."));
+            }
+            toggle.Choices = choices;
+            toggle.Choice = current ?? choices[0].Value;
+            toggle.Original = current;
+            return toggle;
+        }
+
+        /// <summary>
+        /// Writes the dialog state back to <paramref name="filter"/>. An unchanged choice keeps exactly what the
+        /// policy had (even an explicit default); picking the default saves it as null.
+        /// </summary>
+        public static void Write(FilterOption option, object filter, FilterOptionToggle toggle)
+        {
+            PropertyInfo prop = filter.GetType().GetProperty(option.Property)!;
+            if (option.IsChoice)
+            {
+                string defaultValue = option.Choices![0].Value;
+                bool unchanged = toggle.Choice == (toggle.Original ?? defaultValue);
+                prop.SetValue(filter, unchanged ? toggle.Original : toggle.Choice == defaultValue ? null : toggle.Choice);
+            }
+            else
+            {
+                prop.SetValue(filter, toggle.Value);
+            }
+        }
     }
 
     /// <summary>
-    /// Runtime state for one filter option checkbox: its label/description and current value. The editor
-    /// seeds <see cref="Value"/> from the filter, the dialog updates it on OK, and the editor writes it back.
+    /// Runtime state for one filter option: a checkbox (<see cref="Value"/>) or, when <see cref="Choices"/>
+    /// is set, a drop-down (<see cref="Choice"/>). The editor seeds it from the filter, the dialog updates it
+    /// on OK, and the editor writes it back.
     /// </summary>
     internal sealed class FilterOptionToggle
     {
         public required string Label;
         public required string Description;
         public bool Value;
+        public IReadOnlyList<FilterOptionChoice>? Choices;
+        public string? Choice;
+        /// <summary>The drop-down option's value as read from the policy (null when unset).</summary>
+        public string? Original;
     }
 
     /// <summary>Turns a PascalCase filter/property name into a spaced, acronym-aware label.</summary>

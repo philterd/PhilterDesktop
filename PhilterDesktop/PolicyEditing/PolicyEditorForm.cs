@@ -445,22 +445,17 @@ namespace PhilterDesktop.PolicyEditing
                 // Ensure the default REDACT strategy is present so the list is never empty.
                 FilterStrategyDefaults.MaterializeMissing(_policy);
 
-                // Seed a toggle for each registered filter option from the filter's current value, so the
-                // Configure dialog can show and edit it (e.g. EIN's OnlyValidPrefixes).
-                var optionBindings = new List<(PropertyInfo Prop, FilterOptionToggle Toggle)>();
-                var toggles = new List<FilterOptionToggle>();
+                // Seed each registered filter option from the filter's current value, so the Configure
+                // dialog can show and edit it (e.g. EIN's OnlyValidPrefixes, phone number leniency).
+                var optionBindings = new List<(FilterOption Option, FilterOptionToggle Toggle)>();
                 foreach (FilterOption option in options)
                 {
-                    PropertyInfo? optionProp = filter.GetType().GetProperty(option.Property);
-                    if (optionProp is null || optionProp.PropertyType != typeof(bool) || !optionProp.CanWrite)
+                    if (FilterOptions.Read(option, filter) is { } toggle)
                     {
-                        continue;
+                        optionBindings.Add((option, toggle));
                     }
-                    bool current = optionProp.GetValue(filter) is bool b ? b : option.Default;
-                    var toggle = new FilterOptionToggle { Label = option.Label, Description = option.Description, Value = current };
-                    toggles.Add(toggle);
-                    optionBindings.Add((optionProp, toggle));
                 }
+                var toggles = optionBindings.Select(b => b.Toggle).ToList();
 
                 Type strategyType = strategiesProp.PropertyType.GetGenericArguments()[0];
                 IEnumerable existing = (IEnumerable?)strategiesProp.GetValue(filter) ?? Array.Empty<object>();
@@ -469,9 +464,9 @@ namespace PhilterDesktop.PolicyEditing
                 {
                     IList result = dlg.BuildResultList();
                     strategiesProp.SetValue(filter, result.Count > 0 ? result : null);
-                    foreach ((PropertyInfo prop, FilterOptionToggle toggle) in optionBindings)
+                    foreach ((FilterOption option, FilterOptionToggle toggle) in optionBindings)
                     {
-                        prop.SetValue(filter, toggle.Value);
+                        FilterOptions.Write(option, filter, toggle);
                     }
                     _dirty = true;
                 }

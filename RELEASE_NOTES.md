@@ -4,6 +4,10 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 ## 1.4.0 (unreleased)
 
+- **New:** a **Leniency** option for the Phone Number filter, in its **Configure…** dialog in the Policy
+  Editor. A stricter level avoids false matches, such as years in policies that check several regions,
+  but skips local numbers with no area code, such as *555-1234*. The default is unchanged.
+
 - **Fixed:** on-device name detection now works on PCs that lack the Microsoft Visual C++ Runtime,
   such as a fresh Windows install or Windows on ARM in Parallels. The installer adds the runtime when
   it is missing or too old, asking for administrator approval only then.

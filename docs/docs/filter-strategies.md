@@ -7,7 +7,9 @@ detector replaces what it finds.)
 
 You set a strategy by clicking the **Configure…** button next to a detector in the
 [Policy Editor](policies.md). Each detector can have one strategy, or several for different
-situations.
+situations. Some detectors also show **Options** above the strategy list, such as the Phone Number
+detector's **Leniency**; those change what the detector matches rather than how it's replaced, and are
+described on [Supported Filters](supported-filters.md).
 
 ## Choosing a strategy
 
