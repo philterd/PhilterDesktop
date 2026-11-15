@@ -750,20 +750,17 @@ namespace PhilterDesktop
             }
         }
 
-        private string GetLogFilePath()
-        {
-            string root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            string folder = Path.Combine(root, "PhilterDesktop");
-            return Path.Combine(folder, "application.log");
-        }
+        /// <summary>Shows the log buttons' messages; tests replace it to check them without a dialog.</summary>
+        internal Func<string, string, MessageBoxButtons, MessageBoxIcon, DialogResult> ShowLogMessage =
+            (text, caption, buttons, icon) => MessageBox.Show(text, caption, buttons, icon);
 
         private void BtnOpenLog_Click(object sender, EventArgs e)
         {
-            string logFilePath = GetLogFilePath();
+            string logFilePath = Logger.LogFilePath;
 
             if (!File.Exists(logFilePath))
             {
-                MessageBox.Show(
+                ShowLogMessage(
                     "Log file does not exist yet. The log file will be created when logging is enabled and events are logged.",
                     "Log File Not Found",
                     MessageBoxButtons.OK,
@@ -781,7 +778,7 @@ namespace PhilterDesktop
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                ShowLogMessage(
                     $"Failed to open log file: {ex.Message}",
                     "Error",
                     MessageBoxButtons.OK,
@@ -791,11 +788,11 @@ namespace PhilterDesktop
 
         private void BtnClearLog_Click(object sender, EventArgs e)
         {
-            string logFilePath = GetLogFilePath();
+            string logFilePath = Logger.LogFilePath;
 
             if (!File.Exists(logFilePath))
             {
-                MessageBox.Show(
+                ShowLogMessage(
                     "There is no log file to clear.",
                     "Clear Log File",
                     MessageBoxButtons.OK,
@@ -803,7 +800,7 @@ namespace PhilterDesktop
                 return;
             }
 
-            DialogResult result = MessageBox.Show(
+            DialogResult result = ShowLogMessage(
                 "Permanently delete the application log file?\n\n" +
                 "The log records application activity for troubleshooting (such as errors and the " +
                 "names of files that were processed). It does not contain the detected/redacted text " +
@@ -821,7 +818,7 @@ namespace PhilterDesktop
             try
             {
                 Logger.ClearLog();
-                MessageBox.Show(
+                ShowLogMessage(
                     "The application log file has been cleared.",
                     "Clear Log File",
                     MessageBoxButtons.OK,
@@ -829,7 +826,7 @@ namespace PhilterDesktop
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                ShowLogMessage(
                     $"Failed to clear the log file: {ex.Message}",
                     "Error",
                     MessageBoxButtons.OK,
