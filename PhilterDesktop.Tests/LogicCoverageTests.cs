@@ -55,7 +55,7 @@ namespace PhilterDesktop.Tests
         public void EachOffering_HasItsOwnTaggedUrl()
         {
             Assert.Equal("https://philterd.ai/philter/?utm_source=desktop&utm_medium=about", Links.PhilterUrl("about"));
-            Assert.Equal("https://philterd.ai/philter-scope/?utm_source=desktop&utm_medium=verification", Links.ScopeUrl("verification"));
+            Assert.Equal("https://philterd.ai/philter-scope/?utm_source=desktop&utm_medium=policy-editor", Links.ScopeUrl("policy-editor"));
             Assert.Equal("https://philterd.ai/philter-diffuse/?utm_source=desktop&utm_medium=details", Links.DiffuseUrl("details"));
             Assert.Equal("https://philterd.ai/consulting/?utm_source=desktop&utm_medium=policy-editor", Links.ConsultingUrl("policy-editor"));
             Assert.Equal("https://philterd.ai/open-source-software/?utm_source=desktop&utm_medium=help-menu", Links.AllProductsUrl("help-menu"));

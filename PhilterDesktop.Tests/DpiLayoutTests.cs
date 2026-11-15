@@ -51,7 +51,8 @@ namespace PhilterDesktop.Tests
             "policy-editor", "policy-wizard", "filter-strategies", "filter-strategies-options", "filter-strategies-choice",
             "add-filter-strategy",
             "custom-identifiers", "custom-identifier", "pdf-regions", "add-region", "pdf-region-picker",
-            "pheye-model", "ocr-advanced", "work-license", "usage-choice", "usage-choice-work"
+            "pheye-model", "ocr-advanced", "work-license", "usage-choice", "usage-choice-work",
+            "leftover-clean", "leftover-caveat", "leftover-found", "leftover-error"
         };
 
         public static TheoryData<string> CodeBuiltForms => new(CodeBuilt);
@@ -81,6 +82,23 @@ namespace PhilterDesktop.Tests
             "work-license" => new WorkLicenseForm(new WorkLicense(new LicenseRepository(db)), new LicenseClient()),
             "usage-choice" => new UsageChoiceForm(_ => { }),
             "usage-choice-work" => WorkChoices(new UsageChoiceForm(_ => { })),
+            "leftover-clean" => Leftover(new VerificationOutcome { Status = VerificationStatus.Clean }),
+            "leftover-caveat" => Leftover(new VerificationOutcome
+            {
+                Status = VerificationStatus.Clean,
+                FidelityNote = "This RTF had headers, footers, or footnotes. The leftover check re-scans the body text only, " +
+                               "so a clean result does not confirm those parts came through. Open the output and check them."
+            }),
+            "leftover-found" => Leftover(new VerificationOutcome
+            {
+                Status = VerificationStatus.ResidualsFound,
+                Residuals = new[]
+                {
+                    new RedactionSpanEntity { FilterType = "ssn", Text = "123-45-6789", CharacterStart = 1, CharacterEnd = 12 },
+                    new RedactionSpanEntity { FilterType = "email-address", Text = "jane.doe@example.com", CharacterStart = 20, CharacterEnd = 40 }
+                }
+            }),
+            "leftover-error" => Leftover(new VerificationOutcome { Status = VerificationStatus.Error, Error = "The redacted output file was not found." }),
             "settings" => new SettingsForm(new SettingsRepository(db), Seeded(db), SeededContexts(db), new WatchedFolderRepository(db)),
             "watched-folder" => new WatchedFolderForm(Seeded(db), SeededContexts(db),
                 new WatchedFolderEntity { FileTypes = new List<string> { ".rtf", ".eml", ".msg" } }),
@@ -90,6 +108,9 @@ namespace PhilterDesktop.Tests
             "update-available" => new UpdateAvailableForm("1.4.0", "1.5.0", "2026-12-01"),
             _ => throw new ArgumentOutOfRangeException(nameof(name))
         };
+
+        private static Form Leftover(VerificationOutcome outcome) =>
+            new VerificationResultForm("quarterly-report_redacted-draft.docx", outcome);
 
         private static ContextRepository SeededContexts(LiteDatabase db)
         {

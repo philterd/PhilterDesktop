@@ -113,7 +113,8 @@ namespace PhilterDesktop.Tests
         {
             using var form = new VerificationResultForm("a.txt", new VerificationOutcome { Status = VerificationStatus.Error, Error = "boom" });
 
-            Assert.StartsWith("The leftover check could not be completed for a.txt.", Field<Label>(form, "_summary").Text);
+            Assert.Equal("The check could not be completed", Field<Label>(form, "_headline").Text);
+            Assert.Equal("a.txt wasn't checked. boom", Field<Label>(form, "_summary").Text);
         });
 
         // ---- Warnings in notifications, the CLI and watched folders ----

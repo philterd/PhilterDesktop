@@ -17,6 +17,7 @@
 using System.Globalization;
 using System.Net;
 using System.Text;
+using Phileas.Model;
 using PhilterData;
 
 namespace PhilterDesktop
@@ -201,30 +202,49 @@ namespace PhilterDesktop
         internal static string FormatUtc(DateTime utc) =>
             utc.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", CultureInfo.InvariantCulture);
 
-        // A readable type name: "EMAIL_ADDRESS" -> "Email Address". Falls back to the classification
-        // label, then a generic bucket. User-added redactions are grouped on their own.
+        // Types that say which detector matched rather than what it found; their classification says what
+        // (e.g. a name from on-device detection, or a custom identifier's own label).
+        private static readonly HashSet<FilterType> GenericTypes =
+        [
+            FilterType.Other, FilterType.Identifier, FilterType.PhEye, FilterType.Person, FilterType.CustomDictionary
+        ];
+
+        // A readable type name. Spans store the engine's enum name ("LocationCity"), which is shown by the
+        // engine's own name for it ("City"); a generic type shows its classification instead. User-added
+        // redactions are grouped on their own.
         internal static string FriendlyType(RedactionSpanEntity s)
         {
             if (s.UserAdded)
             {
                 return "User-added";
             }
-            string raw = !string.IsNullOrWhiteSpace(s.FilterType) ? s.FilterType
-                       : !string.IsNullOrWhiteSpace(s.Classification) ? s.Classification
-                       : "Other";
-            return Humanize(raw);
+            string raw = s.FilterType ?? string.Empty;
+            // Letters only, so a number isn't read as an enum value.
+            FilterType type = default;
+            bool known = raw.All(char.IsAsciiLetter) && Enum.TryParse(raw, ignoreCase: true, out type);
+            if (string.IsNullOrWhiteSpace(raw) || (known && GenericTypes.Contains(type)))
+            {
+                if (!string.IsNullOrWhiteSpace(s.Classification))
+                {
+                    return Humanize(s.Classification);
+                }
+                return known ? Humanize(type.GetFilterTypeName()) : "Other";
+            }
+            return Humanize(known ? type.GetFilterTypeName() : raw);
         }
 
         private static string Humanize(string raw)
         {
+            // Split any PascalCase run ("LocationCity") as well as - and _ separated words.
+            raw = System.Text.RegularExpressions.Regex.Replace(raw, "(?<=[a-z])(?=[A-Z])", " ");
             string[] words = raw.Replace('_', ' ').Replace('-', ' ')
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (words.Length == 0)
             {
                 return raw;
             }
-            return string.Join(' ', words.Select(w =>
-                char.ToUpperInvariant(w[0]) + (w.Length > 1 ? w.Substring(1).ToLowerInvariant() : string.Empty)));
+            return string.Join(' ', words.Select(w => PolicyEditing.FilterLabel.Acronym(
+                char.ToUpperInvariant(w[0]) + (w.Length > 1 ? w.Substring(1).ToLowerInvariant() : string.Empty))));
         }
 
         // A short location string per file type: PDF -> page; the ParagraphIndex doubles as a spreadsheet

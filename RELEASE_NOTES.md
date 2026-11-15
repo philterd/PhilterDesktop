@@ -15,6 +15,12 @@ All notable changes to Philter Desktop are recorded here, newest first.
   checked. Review redacted PDFs by eye. The automatic check still runs on PDFs, so text that leaked into
   one would still be reported. The built-in self-test (`--selftest`) likewise reports PDF as **NOT
   CHECKED** instead of passed, and still fails if a redacted PDF contains readable PII.
+- **Improved:** the leftover check's result window is clearer and fits its content. A caveat about parts
+  that weren't checked is no longer cut off.
+- **Fixed:** findings are named properly in the leftover check, the PDF preview, and reports: for
+  example **City**, **State Abbreviation**, and **SSN** instead of *Locationcity*, *Stateabbreviation*, and
+  *Ssn*. A name found by on-device detection shows as **Name** rather than *Other*, and a custom
+  identifier shows its own label.
 
 - **New:** custom PhEye models can use any redaction strategy, such as abbreviating names to initials.
   Select the model on the Policy Editor's **PhEye** tab and click **Strategies…**; a new **Strategy**

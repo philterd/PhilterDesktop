@@ -56,10 +56,10 @@ namespace PhilterDesktop.Tests
             RedactionReportModel m = Build(new RedactionReportOptions());
 
             Assert.Equal(4, m.TotalRedactions);
-            // Email (2) first, then Ssn (1) and User-added (1) alphabetically.
+            // Email (2) first, then SSN (1) and User-added (1) alphabetically.
             Assert.Equal("Email Address", m.CountsByType[0].Type);
             Assert.Equal(2, m.CountsByType[0].Count);
-            Assert.Contains(("Ssn", 1), m.CountsByType);
+            Assert.Contains(("SSN", 1), m.CountsByType);
             Assert.Contains(("User-added", 1), m.CountsByType);
         }
 

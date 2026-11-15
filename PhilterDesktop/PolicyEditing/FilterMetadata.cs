@@ -341,15 +341,11 @@ namespace PhilterDesktop.PolicyEditing
                 }
             }
 
-            for (int i = 0; i < words.Count; i++)
-            {
-                if (Acronyms.TryGetValue(words[i], out string? upper))
-                {
-                    words[i] = upper;
-                }
-            }
-            return string.Join(" ", words);
+            return string.Join(" ", words.Select(Acronym));
         }
+
+        /// <summary>The word in its acronym form (e.g. "ssn" becomes "SSN"), or unchanged if it isn't one.</summary>
+        public static string Acronym(string word) => Acronyms.TryGetValue(word, out string? upper) ? upper : word;
     }
 
     /// <summary>
