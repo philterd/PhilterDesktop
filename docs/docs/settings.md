@@ -253,7 +253,8 @@ an e-discovery chain-of-custody requirement).
 ## Notifications tab
 
 The **Notifications** tab controls the small pop-up messages (sometimes called "balloon" or "toast"
-notifications) that appear near the Windows clock when a document finishes redacting.
+notifications) that appear near the Windows clock when a document finishes redacting, and whether
+Philter Desktop tells you about new versions.
 
 - **Show a tray notification when a document finishes redacting**: turn this on or off. It is **on by
   default**. Click **Save** to apply your choice.
@@ -275,6 +276,22 @@ This setting is the **master switch** for all completion notifications. [Watched
 folders](watched-folders.md) have their *own* per-folder notification checkbox, but that only has an
 effect while this master switch is on: if you turn notifications off here, no pop-ups appear for
 watched folders either, regardless of each folder's setting.
+
+### Checking for new versions
+
+- **Check for new versions automatically**: **on by default**. Philter Desktop downloads a small version
+  file from philterd.ai when you first open its window, and about once a day while it keeps running in
+  the background, for example watching folders from the system tray. If a newer version is out and the
+  window is open, a message tells you and points you to the download page. If the window isn't open, a
+  notification appears near the clock instead (once each time Philter Desktop starts, until you've seen
+  the message); click it to open the message. Each new version's message appears once. The request includes your Philter Desktop version number and nothing
+  else; no documents are sent, and nothing is downloaded or installed automatically. If the check
+  can't reach philterd.ai (for example, you're offline, behind a firewall, or on a Wi-Fi network with a
+  sign-in page), nothing happens: no message appears and Philter Desktop works as usual. If logging is
+  turned on, the log notes that the check was skipped.
+
+Whatever you choose here, **Help → Check for Updates…** checks right away. If your administrator has
+turned automatic checks off, the box is greyed out and says so.
 
 ## Watched Folder tab
 

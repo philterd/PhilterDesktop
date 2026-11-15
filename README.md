@@ -16,9 +16,11 @@ Install Philter Desktop from the
 [Microsoft Store](https://apps.microsoft.com/store/detail/XPFMJ16DZWWFV5), or download the installer
 at [https://philterd.ai/philter-desktop/download/](https://philterd.ai/philter-desktop/download/).
 
-Personal and evaluation use is free. Commercial use is a per-user subscription (currently $199
-per user, per year), which also covers direct support and official updates through your
-subscription term. There are no license keys to enter.
+Personal and evaluation use is free. Work use (your job, your clients, or an organization, even if
+you work alone) is a per-user subscription (currently $199 per user, per year), which also covers
+direct support and official updates through your subscription term. There are no license keys to
+type: to record a license, choose **Help → Manage License** and enter the email you bought it with. See
+[Licensing & Support](docs/docs/licensing.md) for details.
 
 The Philter Desktop source code is open source under the Apache License 2.0, so you (or your IT
 department) can inspect exactly what it does, confirm it works entirely on your own machine and never
@@ -104,9 +106,9 @@ Each filter supports multiple replacement strategies:
 The source code is open source under the Apache License, Version 2.0. See [`LICENSE`](LICENSE).
 
 The official Philter Desktop product - the signed, maintained build and the support that comes
-with it - is a paid **per-user subscription** from Philterd, provided to subscribers under the
-Philterd Commercial License Agreement (see [Get Philter Desktop](#get-philter-desktop) and
-[philterd.ai](https://www.philterd.ai)). That agreement covers the official product and does not limit
+with it - is free for personal use and evaluation, with a paid **per-user subscription** for work
+use, under the Philterd Commercial License Agreement (see [Get Philter Desktop](#get-philter-desktop)
+and [philterd.ai](https://philterd.ai)). That agreement covers the official product and does not limit
 your rights in the open-source code under the Apache license. ***Philter*** is a trademark of
 Philterd, LLC; the Apache license does not grant permission to use that mark for redistributed builds.
 

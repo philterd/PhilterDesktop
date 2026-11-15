@@ -1,5 +1,7 @@
 PHILTERD COMMERCIAL LICENSE AGREEMENT
 
+Version 2.0
+
 Copyright (c) 2023-2026 Philterd, LLC. All rights reserved.
 
 "Philter," "Phileas," "PhiSQL," and "Phirestream" are registered trademarks of
@@ -107,8 +109,8 @@ by the applicable order or marketplace terms.
 For Philter Desktop, commercial use of the official build is priced per user,
 per year (currently USD $199 per user per year), and the Customer must maintain
 an active subscription for each individual who uses Philter Desktop for
-commercial purposes. Personal use by an individual, and bona fide evaluation
-use, of the official Philter Desktop build are permitted free of charge and do
+commercial purposes. Personal Use and Evaluation of the official Philter
+Desktop build, as defined in Section 4.6, are permitted free of charge and do
 not require a paid subscription. For Philter, pricing and units (for example,
 per instance-hour or annual) are as stated on the applicable listing or order.
 
@@ -133,6 +135,35 @@ agreement with the marketplace.
 described in the Refund and Cancellation Policy
 (https://philterd.ai/refund-policy/) and, where you purchased through a
 marketplace or payment processor, by that party under its own terms.
+
+4.5 Free trials and evaluation. Any free trial or evaluation period for the
+Commercial Offering, including its length and any conditions, is as stated on
+the applicable marketplace listing, order, or product page. Where a free trial
+or evaluation period ends, continued use requires a paid subscription.
+
+4.6 Philter Desktop: personal use, evaluation, and commercial use. For Philter
+Desktop:
+
+(a) "Personal Use" means use by an individual, on their own behalf, to process
+their own documents or those of their household, and not in connection with
+any work.
+
+(b) "Evaluation" means use to assess whether Philter Desktop meets your needs
+before you purchase a subscription. Evaluation is not limited to a fixed
+period, but it ends when you begin using Philter Desktop, or any output it
+produces, in connection with your work, for example by delivering, filing,
+sharing, or relying on redacted documents in the course of your work.
+
+(c) "Commercial Use" means any use other than Personal Use or Evaluation,
+including any use in connection with employment, self-employment, or a trade,
+business, or profession, or on behalf of clients, patients, customers, or any
+organization, including nonprofit, educational, and governmental
+organizations. Use is Commercial Use whether or not you work alone, whether or
+not you profit from it, and regardless of who owns the computer on which
+Philter Desktop is installed.
+
+(d) Each individual who makes Commercial Use of Philter Desktop requires an
+active subscription, as described in Section 4.1.
 
 
 5. OPEN SOURCE COMPONENTS

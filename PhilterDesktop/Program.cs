@@ -90,30 +90,15 @@ namespace PhilterDesktop
                 a.Equals(StartupManager.MinimizedSwitch, StringComparison.OrdinalIgnoreCase) ||
                 a.Equals("-m", StringComparison.OrdinalIgnoreCase));
 
-            // First-run acknowledgements, gated in two independent steps: the license/EULA, then the
-            // redaction-review notice. Each is tracked by its own persisted flag and shown only if not yet
-            // accepted, so declining one doesn't re-prompt the other. Skipped during a silent tray auto-start;
-            // disagreeing at either step exits without starting (and without persisting that step).
+            // The license agreement, shown until accepted (and again when a release ships a newer EULA
+            // version). Skipped during a silent tray auto-start; disagreeing exits without starting.
             if (!startMinimized)
             {
-                if (LicenseForm.ShouldShow())
+                if (!LicenseForm.RunGateIfNeeded())
                 {
-                    using var licenseForm = new LicenseForm();
-                    if (licenseForm.ShowDialog() != DialogResult.OK)
-                    {
-                        return 0;
-                    }
-                    LicenseForm.RememberAccepted();
+                    return 0;
                 }
-                if (RedactionNoticeForm.ShouldShow())
-                {
-                    using var noticeForm = new RedactionNoticeForm();
-                    if (noticeForm.ShowDialog() != DialogResult.OK)
-                    {
-                        return 0;
-                    }
-                    RedactionNoticeForm.RememberAccepted();
-                }
+                // The redaction notice is part of the usage screen, shown whenever the main window opens.
             }
 
             // Unlock the database key. If it's passphrase-protected, prompt now (cancel = exit);
@@ -133,6 +118,8 @@ namespace PhilterDesktop
             }
             EncryptedDatabase.Prepare(keyStore);
 
+            // Enables the automatic update check and the tray-restore license screen (tests construct MainForm directly).
+            MainForm.IsInteractiveGui = true;
             Application.Run(new MainForm(startMinimized));
             return 0;
         }

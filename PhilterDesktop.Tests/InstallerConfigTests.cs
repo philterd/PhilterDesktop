@@ -133,6 +133,17 @@ namespace PhilterDesktop.Tests
             Assert.Contains("= IDYES then", guard);
         }
 
+        // The app's first-run screen is the one place users accept the EULA (per Windows user, per EULA
+        // version); a setup-wizard license page would be a second, unrecorded acceptance.
+        [Fact]
+        public void Installer_HasNoLicensePage() =>
+            Assert.DoesNotMatch(@"(?m)^\s*LicenseFile\s*=", InnoScript());
+
+        // The app still reads the EULA from the file next to the exe, so the installer must ship it.
+        [Fact]
+        public void Installer_StillShipsTheEulaFile() =>
+            Assert.Contains(@"Source: ""{#SharedDir}\philterd-eula.txt""; DestDir: ""{app}""", InnoScript());
+
         private static string InnoScript()
         {
             for (DirectoryInfo? dir = new(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)

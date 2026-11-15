@@ -61,6 +61,7 @@ namespace PhilterDesktop
             ArrangeLoggingGroup();
             ArrangeEmailTab();
             ArrangePdfTab();
+            ArrangeNotificationsTab();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(btnSave);
             _settingsRepository = settingsRepository;
@@ -150,6 +151,81 @@ namespace PhilterDesktop
             }
             tabEmail.Controls.Clear();
             tabEmail.Controls.Add(stack);
+        }
+
+        private readonly CheckBox chkAutoUpdateCheck = new()
+        {
+            Name = "chkAutoUpdateCheck",
+            Text = "Check for new versions automatically",
+            AutoSize = true,
+            UseVisualStyleBackColor = true
+        };
+
+        private readonly Label lblAutoUpdateHint = new()
+        {
+            Name = "lblAutoUpdateHint",
+            AutoSize = true,
+            ForeColor = SystemColors.GrayText
+        };
+
+        // The loaded value, so Save writes the preference only when the user changed it.
+        private bool _autoUpdateCheckLoaded;
+
+        internal const string AutoUpdateHintText =
+            "Checks philterd.ai for new versions when you open Philter Desktop and about once a day, sending only " +
+            "the version number. You can also check anytime with Help, then Check for Updates.";
+
+        internal const string AutoUpdatePolicyHintText =
+            "Automatic update checks are turned off by your administrator. You can still use Help, then Check for Updates.";
+
+        // Stacks the tray-notification option and the automatic update check top to bottom.
+        private void ArrangeNotificationsTab()
+        {
+            lblAutoUpdateHint.MaximumSize = lblNotificationsHint.MaximumSize;
+            var stack = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true
+            };
+            int groupGap = LogicalToDeviceUnits(16);
+            int hintGap = LogicalToDeviceUnits(3);
+            int left = chkShowNotifications.Left;
+            int indent = lblNotificationsHint.Left;
+            (Control Control, int Left, int Top)[] inOrder =
+            {
+                (chkShowNotifications, left, chkShowNotifications.Top),
+                (lblNotificationsHint, indent, hintGap),
+                (chkAutoUpdateCheck, left, groupGap),
+                (lblAutoUpdateHint, indent, hintGap)
+            };
+            foreach ((Control c, int l, int t) in inOrder)
+            {
+                c.Margin = new Padding(l, t, 0, 0);
+                stack.Controls.Add(c);
+            }
+            tabNotifications.Controls.Clear();
+            tabNotifications.Controls.Add(stack);
+        }
+
+        private void LoadUpdateCheckSetting()
+        {
+            IUpdatePreferences prefs = UpdatePreferences.Current;
+            _autoUpdateCheckLoaded = UpdatePreferences.IsAutoCheckOn(prefs);
+            chkAutoUpdateCheck.Checked = _autoUpdateCheckLoaded;
+            chkAutoUpdateCheck.Enabled = !prefs.DisabledByPolicy;
+            lblAutoUpdateHint.Text = prefs.DisabledByPolicy ? AutoUpdatePolicyHintText : AutoUpdateHintText;
+        }
+
+        private void SaveUpdateCheckSetting()
+        {
+            IUpdatePreferences prefs = UpdatePreferences.Current;
+            if (!prefs.DisabledByPolicy && chkAutoUpdateCheck.Checked != _autoUpdateCheckLoaded)
+            {
+                prefs.AutoCheckEnabled = chkAutoUpdateCheck.Checked;
+                _autoUpdateCheckLoaded = chkAutoUpdateCheck.Checked;
+            }
         }
 
         // Display order matches the PdfOutputQuality enum values.
@@ -622,6 +698,7 @@ namespace PhilterDesktop
             txtSuffix.Text = RedactionService.NormalizeSuffix(_settings.RedactedSuffix);
             chkEnableLogging.Checked = _settings.LoggingEnabled;
             chkShowNotifications.Checked = _settings.NotificationsEnabled;
+            LoadUpdateCheckSetting();
             chkScrubMetadata.Checked = _settings.ScrubDocumentMetadata;
             chkScrubComments.Checked = _settings.ScrubWordComments;
             chkScrubTrackedChanges.Checked = _settings.ScrubWordTrackedChanges;
@@ -826,6 +903,7 @@ namespace PhilterDesktop
             _settings.RedactedSuffix = RedactionService.NormalizeSuffix(txtSuffix.Text);
             _settings.LoggingEnabled = chkEnableLogging.Checked;
             _settings.NotificationsEnabled = chkShowNotifications.Checked;
+            SaveUpdateCheckSetting();
             _settings.ScrubDocumentMetadata = chkScrubMetadata.Checked;
             _settings.ScrubWordComments = chkScrubComments.Checked;
             _settings.ScrubWordTrackedChanges = chkScrubTrackedChanges.Checked;

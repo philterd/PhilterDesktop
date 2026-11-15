@@ -38,6 +38,8 @@ namespace PhilterDesktop
         private readonly RedactionSpanRepository _redactionSpanRepository;
         private readonly WatchedFolderRepository _watchedFolderRepository;
         private readonly WatchedFolderLogRepository _watchedFolderLogRepository;
+        private readonly WorkLicense _workLicense;
+        private readonly ToolStripMenuItem _workLicenseMenuItem = new() { Name = "workLicenseToolStripMenuItem", Text = "Manage License..." };
         private readonly FolderWatcherService _folderWatcher;
         private bool _loggingEnabled;
         private bool _queueBusy; // guards the async Verify / View Diff background operations
@@ -45,10 +47,21 @@ namespace PhilterDesktop
         private NotifyIcon _trayIcon = null!;
         private ToolStripMenuItem _pauseResumeItem = null!;
         private System.Windows.Forms.Timer? _logPruneTimer;
+        private UpdateChecker.UpdateManifest? _pendingUpdate;
+        private System.Windows.Forms.Timer? _updateCheckTimer;
+        private DateTime? _lastUpdateCheckUtc; // last successful check this run
+        private bool _updateCheckRunning;
+        private bool _licenseRefreshRunning;
+        private bool _windowShownOnce;
+        private bool _usageScreenOpen;
+        private DateTime? _usageChosenUtc; // when a choice was last made on the usage screen in this run
+        private bool _updateBalloonShowing; // the tray balloon is an update notice, not a redaction notice
+        private string? _balloonedUpdateVersion; // announced in the tray this run
         private bool _exiting;
         private bool _watchingPaused;
         private bool _started;
         private bool _startMinimized;
+        private readonly bool _launchedToTray; // started at sign-in into the tray (watching folders)
 
         private readonly List<WatchedFileProcessedEventArgs> _pendingNotifications = new();
         private System.Windows.Forms.Timer? _notifyCoalesceTimer;
@@ -103,6 +116,7 @@ namespace PhilterDesktop
             InitializeQueueUi();
             InitializeTray();
             _startMinimized = startMinimized;
+            _launchedToTray = startMinimized;
 
             // Single shared database instance (the default path is encrypted at rest — it stores PII).
             _database = database;
@@ -117,6 +131,7 @@ namespace PhilterDesktop
             _redactionSpanRepository = new RedactionSpanRepository(_database);
             _watchedFolderRepository = new WatchedFolderRepository(_database);
             _watchedFolderLogRepository = new WatchedFolderLogRepository(_database);
+            _workLicense = new WorkLicense(new LicenseRepository(_database));
 
             // Back the shared redaction engine with a durable, database-backed context service so
             // consistent (RANDOM_REPLACE) replacements persist across documents/restarts and don't
@@ -230,7 +245,6 @@ namespace PhilterDesktop
             helpToolStripMenuItem1 = new ToolStripMenuItem();
             toolStripSeparator1 = new ToolStripSeparator();
             checkForUpdatesToolStripMenuItem = new ToolStripMenuItem();
-            viewLicenseToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
 
             menuStrip1.SuspendLayout();
@@ -262,7 +276,7 @@ namespace PhilterDesktop
             exitToolStripMenuItem.Text = "Exit";
             exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
 
-            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { helpToolStripMenuItem1, toolStripSeparator1, checkForUpdatesToolStripMenuItem, viewLicenseToolStripMenuItem, aboutToolStripMenuItem });
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { helpToolStripMenuItem1, toolStripSeparator1, checkForUpdatesToolStripMenuItem, _workLicenseMenuItem, aboutToolStripMenuItem });
             helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             helpToolStripMenuItem.Size = new Size(44, 22);
             helpToolStripMenuItem.Text = "Help";
@@ -279,10 +293,8 @@ namespace PhilterDesktop
             checkForUpdatesToolStripMenuItem.Text = "Check for Updates...";
             checkForUpdatesToolStripMenuItem.Click += checkForUpdatesToolStripMenuItem_Click;
 
-            viewLicenseToolStripMenuItem.Name = "viewLicenseToolStripMenuItem";
-            viewLicenseToolStripMenuItem.Size = new Size(180, 22);
-            viewLicenseToolStripMenuItem.Text = "View License...";
-            viewLicenseToolStripMenuItem.Click += viewLicenseToolStripMenuItem_Click;
+            _workLicenseMenuItem.Size = new Size(180, 22);
+            _workLicenseMenuItem.Click += (_, _) => ShowWorkLicense();
 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
             aboutToolStripMenuItem.Size = new Size(180, 22);
@@ -438,7 +450,7 @@ namespace PhilterDesktop
                 Alignment = ToolStripItemAlignment.Right,
                 LinkColor = ModernTheme.Accent,
                 ActiveLinkColor = ModernTheme.Accent,
-                ToolTipText = "The official, signed build comes with support — a per-user subscription from Philterd"
+                ToolTipText = "Using Philter Desktop for work? A per-user subscription includes support from Philterd"
             };
             support.Click += (_, _) => Links.Open(Links.SupportUrl("toolbar"));
             toolStrip1.Items.Add(support);
@@ -872,9 +884,6 @@ namespace PhilterDesktop
             HelpToolStripButton.Click += OpenHelp;
             helpToolStripMenuItem1.Click += OpenHelp;
 
-            // --- "More from Philterd" submenu under Help (other Philterd offerings) ---
-            BuildMoreFromPhilterdMenu();
-
             // --- Modern monochrome toolbar icons + animated processing badges ---
             ApplyToolbarIcons();
 
@@ -1093,7 +1102,20 @@ namespace PhilterDesktop
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
+            _windowShownOnce = true;
             UpdateEmptyState(listView1.Items.Count);
+            if (IsInteractiveGui)
+            {
+                // Once the window has painted, so the screen opens over it.
+                BeginInvoke(() => OfferUsageScreen(openedFromTray: _launchedToTray));
+            }
+            ShowPendingUpdate();
+            // Fires the first time the window appears, whether at launch or when first opened from the tray.
+            if (IsInteractiveGui)
+            {
+                _ = RunAutoUpdateCheckAsync(UpdateChecker.Trigger.WindowOpened);
+                _ = RefreshWorkLicenseAsync();
+            }
         }
 
         private void EnsureStarted()
@@ -1114,6 +1136,142 @@ namespace PhilterDesktop
             LoadRedactionQueue();
             StartFolderWatcher();
             StartLogPruning();
+            StartAutoUpdateCheck();
+        }
+
+        /// <summary>
+        /// Set by Program for the real GUI. Off by default, so tests that construct MainForm never touch the
+        /// network or show the license screen.
+        /// </summary>
+        internal static bool IsInteractiveGui { get; set; }
+
+        // Background checks keep a tray-resident app (e.g. one watching folders) up to date: the first a few
+        // minutes after start, then hourly ticks that contact philterd.ai once a day after a success.
+        private void StartAutoUpdateCheck()
+        {
+            if (!IsInteractiveGui)
+            {
+                return;
+            }
+            _updateCheckTimer = new System.Windows.Forms.Timer { Interval = (int)UpdateChecker.BackgroundFirstDelay.TotalMilliseconds };
+            _updateCheckTimer.Tick += async (_, _) =>
+            {
+                _updateCheckTimer.Interval = (int)UpdateChecker.BackgroundRetryInterval.TotalMilliseconds;
+                await RunAutoUpdateCheckAsync(UpdateChecker.Trigger.Background);
+                await RefreshWorkLicenseAsync();
+            };
+            _updateCheckTimer.Start();
+        }
+
+        private async Task RunAutoUpdateCheckAsync(UpdateChecker.Trigger trigger)
+        {
+            if (_updateCheckRunning || !UpdateChecker.ShouldCheck(trigger, _lastUpdateCheckUtc, DateTime.UtcNow))
+            {
+                return;
+            }
+            _updateCheckRunning = true;
+            try
+            {
+                UpdateChecker.UpdateManifest? manifest = await UpdateChecker.RunAutoCheckAsync(
+                    UpdatePreferences.Current,
+                    // Off the UI thread: proxy discovery on first use can block before the request starts.
+                    ct => Task.Run(() => UpdateChecker.FetchAsync(cancellationToken: ct), ct),
+                    UpdateChecker.CurrentVersion(),
+                    onFailure: ex =>
+                    {
+                        if (_loggingEnabled)
+                        {
+                            Logger.LogInfo($"Update check skipped: couldn't reach philterd.ai ({ex.GetType().Name}: {ex.Message})");
+                        }
+                    },
+                    onReached: () => _lastUpdateCheckUtc = DateTime.UtcNow);
+                if (manifest is not null && !IsDisposed)
+                {
+                    _pendingUpdate = manifest;
+                    AnnounceUpdate(manifest);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (_loggingEnabled)
+                {
+                    Logger.LogError("Automatic update check failed", ex);
+                }
+            }
+            finally
+            {
+                _updateCheckRunning = false;
+            }
+        }
+
+        // With the window showing, the dialog appears. Otherwise (in the tray or minimized) a tray
+        // notification does, at most once per run, and the dialog waits for the window to open. Only the
+        // dialog marks the version as seen, so a missed notification is repeated on the next start.
+        private void AnnounceUpdate(UpdateChecker.UpdateManifest manifest)
+        {
+            if (Visible && WindowState != FormWindowState.Minimized)
+            {
+                ShowPendingUpdate();
+                return;
+            }
+            if (!UpdateChecker.ShouldShowTrayNotification(manifest.Version, _balloonedUpdateVersion))
+            {
+                return;
+            }
+            _balloonedUpdateVersion = manifest.Version;
+            (string title, string text) = UpdateChecker.TrayNotification(manifest.Version!);
+            _trayIcon.BalloonTipIcon = ToolTipIcon.Info;
+            _trayIcon.BalloonTipTitle = title;
+            _trayIcon.BalloonTipText = text;
+            _updateBalloonShowing = true;
+            _trayIcon.ShowBalloonTip(10000);
+        }
+
+        private void OnTrayBalloonClicked()
+        {
+            if (_updateBalloonShowing)
+            {
+                _updateBalloonShowing = false;
+                ShowFromTray(); // the pending update's dialog appears once the window is active
+                return;
+            }
+            OpenLastNotifyDirectory();
+        }
+
+        // Announces a found update once the window is on screen and no other dialog is in front, so a
+        // check from the tray waits until the user opens the window.
+        private void ShowPendingUpdate()
+        {
+            if (_pendingUpdate is null || IsDisposed || !Visible || WindowState == FormWindowState.Minimized)
+            {
+                return;
+            }
+            Form? active = ActiveForm;
+            if (active is not null && active != this)
+            {
+                return;
+            }
+            UpdateChecker.UpdateManifest manifest = _pendingUpdate;
+            _pendingUpdate = null;
+            ShowUpdateAvailable(manifest);
+        }
+
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            if (_pendingUpdate is not null)
+            {
+                BeginInvoke(ShowPendingUpdate);
+            }
+        }
+
+        // Shows the "update available" dialog and records the version so it isn't announced again.
+        private void ShowUpdateAvailable(UpdateChecker.UpdateManifest manifest)
+        {
+            UpdatePreferences.Current.LastNotifiedVersion = manifest.Version;
+            using var dialog = new UpdateAvailableForm(
+                UpdateChecker.CurrentVersion().ToString(3), manifest.Version!, manifest.ReleaseDate);
+            dialog.ShowDialog(this);
         }
 
         // Watched-folder activity logs are pruned by age (30 days). Prune at startup and once a day
@@ -1173,7 +1331,8 @@ namespace PhilterDesktop
                 ContextMenuStrip = menu
             };
             _trayIcon.DoubleClick += (_, _) => ShowFromTray();
-            _trayIcon.BalloonTipClicked += (_, _) => OpenLastNotifyDirectory();
+            _trayIcon.BalloonTipClicked += (_, _) => OnTrayBalloonClicked();
+            _trayIcon.BalloonTipClosed += (_, _) => _updateBalloonShowing = false;
 
             // Coalesce a burst of redactions into a single notification.
             _notifyCoalesceTimer = new System.Windows.Forms.Timer { Interval = 1500 };
@@ -1275,6 +1434,7 @@ namespace PhilterDesktop
                 text = string.Join(", ", parts) + ".";
             }
 
+            _updateBalloonShowing = false;
             _trayIcon.BalloonTipIcon = (failed > 0 && succeeded == 0) || needCheck > 0 ? ToolTipIcon.Warning : ToolTipIcon.Info;
             _trayIcon.BalloonTipTitle = title;
             _trayIcon.BalloonTipText = text;
@@ -1299,6 +1459,12 @@ namespace PhilterDesktop
 
         private void ShowFromTray()
         {
+            if (!EnsureLicenseAccepted())
+            {
+                return;
+            }
+            // The first Show() raises OnShown, which offers the usage screen; later opens offer it here.
+            bool reopening = _windowShownOnce && !Visible;
             Show();
             ShowInTaskbar = true;
             if (WindowState == FormWindowState.Minimized)
@@ -1307,6 +1473,97 @@ namespace PhilterDesktop
             }
             Activate();
             BringToFront();
+            if (reopening && IsInteractiveGui)
+            {
+                BeginInvoke(() => OfferUsageScreen(openedFromTray: true));
+            }
+        }
+
+        /// <summary>
+        /// The personal-or-work screen (with the redaction notice), offered as the window opens to anyone
+        /// without a verified work license: once per run, and again after a day for a run that stays open
+        /// (see <see cref="UsageChoice.ShouldOfferOnOpen"/>). Closing it without choosing exits when the app was opened
+        /// directly, or sends the window back to the tray when it was opened from there.
+        /// </summary>
+        private void OfferUsageScreen(bool openedFromTray)
+        {
+            if (_usageScreenOpen || IsDisposed || !Visible)
+            {
+                return;
+            }
+            bool licensed = CurrentWorkLicense() is not null;
+            if (!UsageChoice.ShouldOfferOnOpen(licensed, _usageChosenUtc, DateTime.UtcNow))
+            {
+                ShowPendingUpdate();
+                return;
+            }
+            _usageScreenOpen = true;
+            bool chose;
+            UsageKind? choice = null;
+            try
+            {
+                (chose, choice) = UsageChoice.ShowIfNeeded(this, licensed);
+                if (chose)
+                {
+                    _usageChosenUtc = DateTime.UtcNow;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Can't record the choice (e.g. the registry is unavailable): don't lock the person out.
+                if (_loggingEnabled)
+                {
+                    Logger.LogError("Usage screen", ex);
+                }
+                chose = true;
+            }
+            finally
+            {
+                _usageScreenOpen = false;
+            }
+            switch (UsageChoice.AfterScreen(chose, choice, openedFromTray))
+            {
+                case UsageChoice.Next.ContinueToManageLicense:
+                    ShowWorkLicense(); // they've just gone to buy one: ready to enter it
+                    ShowPendingUpdate();
+                    break;
+                case UsageChoice.Next.Continue:
+                    ShowPendingUpdate();
+                    break;
+                case UsageChoice.Next.Exit:
+                    ExitApplication();
+                    break;
+                default:
+                    HideToTray();
+                    break;
+            }
+        }
+
+        // A start at sign-in skips the license screen, and a second launch only brings this instance forward,
+        // so owed acceptance (e.g. an upgrade shipped newer terms) is asked for when the window first opens.
+        // Disagreeing exits.
+        private bool _licenseGateOpen;
+
+        private bool EnsureLicenseAccepted()
+        {
+            if (!IsInteractiveGui || _licenseGateOpen)
+            {
+                return !_licenseGateOpen;
+            }
+            _licenseGateOpen = true;
+            try
+            {
+                if (LicenseForm.RunGateIfNeeded())
+                {
+                    return true;
+                }
+            }
+            finally
+            {
+                _licenseGateOpen = false;
+            }
+            ExitApplication();
+            return false;
         }
 
         private void HideToTray()
@@ -1324,6 +1581,7 @@ namespace PhilterDesktop
             {
                 return;
             }
+            _updateBalloonShowing = false;
             _trayIcon.BalloonTipTitle = "Philter Desktop is still running";
             _trayIcon.BalloonTipText =
                 "It keeps watching your folders in the background. Right-click the tray icon to open it again or exit.";
@@ -1436,6 +1694,7 @@ namespace PhilterDesktop
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             _logPruneTimer?.Dispose();
+            _updateCheckTimer?.Dispose();
             _notifyCoalesceTimer?.Dispose();
             _folderWatcher.Dispose();
             _trayIcon.Visible = false;
@@ -1828,7 +2087,7 @@ namespace PhilterDesktop
 
             const string checkFailedMessage =
                 "Philter Desktop was unable to check for updates.\n\n" +
-                "Please visit https://www.philterd.ai/philter-desktop/ to check for updates.";
+                "Please visit https://philterd.ai/philter-desktop/ to check for updates.";
 
             UpdateChecker.UpdateManifest? manifest;
             try
@@ -1859,9 +2118,8 @@ namespace PhilterDesktop
 
             if (newer == true)
             {
-                using var dialog = new UpdateAvailableForm(
-                    current.ToString(3), manifest.Version!, manifest.ReleaseDate);
-                dialog.ShowDialog(this);
+                _pendingUpdate = null;
+                ShowUpdateAvailable(manifest);
             }
             else if (newer == false)
             {
@@ -1885,14 +2143,58 @@ namespace PhilterDesktop
                 Logger.LogInfo("Opening About dialog");
             }
 
-            var aboutForm = new AboutForm();
-            aboutForm.ShowDialog();
+            using var aboutForm = new AboutForm(CurrentWorkLicense());
+            aboutForm.ShowDialog(this);
         }
 
-        private void viewLicenseToolStripMenuItem_Click(object? sender, EventArgs e)
+        // Help, then Manage License.
+        private void ShowWorkLicense()
         {
-            using var licenseForm = new LicenseForm(viewOnly: true);
-            licenseForm.ShowDialog(this);
+            using var form = new WorkLicenseForm(_workLicense, new LicenseClient());
+            form.ShowDialog(this);
+        }
+
+        /// <summary>The current work-use license, or null (also if the database can't be read).</summary>
+        internal LicenseInfo? CurrentWorkLicense()
+        {
+            try
+            {
+                return _workLicense.Current(DateTime.UtcNow);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        // Refreshes a stored license about monthly (WorkLicense decides when). Only a computer with a
+        // license entered ever calls; failures are silent and retried on a later tick.
+        private async Task RefreshWorkLicenseAsync()
+        {
+            if (!IsInteractiveGui || _licenseRefreshRunning)
+            {
+                return;
+            }
+            _licenseRefreshRunning = true;
+            try
+            {
+                LicenseOutcome? outcome = await Task.Run(() => _workLicense.RefreshIfDueAsync(new LicenseClient(), DateTime.UtcNow));
+                if (outcome is not null && _loggingEnabled)
+                {
+                    Logger.LogInfo($"Work license refresh: {outcome}");
+                }
+            }
+            catch (Exception ex)
+            {
+                if (_loggingEnabled)
+                {
+                    Logger.LogError("Work license refresh failed", ex);
+                }
+            }
+            finally
+            {
+                _licenseRefreshRunning = false;
+            }
         }
 
         // Opens the redaction-review notice for reference (from the status-bar reminder link).
@@ -1901,34 +2203,6 @@ namespace PhilterDesktop
             using var noticeForm = new RedactionNoticeForm(viewOnly: true);
             noticeForm.ShowDialog(this);
         }
-
-        // Adds a "More from Philterd" submenu to the Help menu, linking to the other Philterd offerings.
-        // Built in code (rather than the VS-regenerated designer) so the link set is easy to maintain.
-        // Each item opens a UTM-tagged URL (utm_medium=help-menu) so touchpoint use can be measured.
-        private void BuildMoreFromPhilterdMenu()
-        {
-            var more = new ToolStripMenuItem("More from Philterd");
-            more.DropDownItems.Add("Philter — redaction for servers, APIs & data pipelines",
-                null, (_, _) => Links.Open(Links.PhilterUrl("help-menu")));
-            more.DropDownItems.Add("Philter Scope — measure how well a policy performs",
-                null, (_, _) => Links.Open(Links.ScopeUrl("help-menu")));
-            more.DropDownItems.Add("Philter Diffuse — add differential privacy to data and statistics",
-                null, (_, _) => Links.Open(Links.DiffuseUrl("help-menu")));
-            more.DropDownItems.Add("Policy consulting — help building & validating policies",
-                null, (_, _) => Links.Open(Links.ConsultingUrl("help-menu")));
-            more.DropDownItems.Add(new ToolStripSeparator());
-            more.DropDownItems.Add("See all products",
-                null, (_, _) => Links.Open(Links.AllProductsUrl("help-menu")));
-
-            // Insert just before the separator that precedes "Check for Updates..." / "About...".
-            int index = helpToolStripMenuItem.DropDownItems.IndexOf(toolStripSeparator1);
-            if (index < 0)
-            {
-                index = helpToolStripMenuItem.DropDownItems.Count;
-            }
-            helpToolStripMenuItem.DropDownItems.Insert(index, more);
-        }
-
 
         private void policiesToolStripMenuItem_Click(object? sender, EventArgs e)
         {

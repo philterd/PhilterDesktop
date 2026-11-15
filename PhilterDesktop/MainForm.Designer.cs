@@ -43,7 +43,6 @@ namespace PhilterDesktop
         private ToolStripMenuItem helpToolStripMenuItem1;
         private ToolStripMenuItem checkForUpdatesToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator1;
-        private ToolStripMenuItem viewLicenseToolStripMenuItem;
         private ToolStripMenuItem aboutToolStripMenuItem;
         private StatusStrip statusStrip1;
         private ToolStrip toolStrip1;

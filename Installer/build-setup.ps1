@@ -287,6 +287,18 @@ function Assert-ComparableVersion {
     }
 }
 
+# The version declared by a "Version X.Y" line in the EULA's header (first 20 lines), normalized to four
+# parts so 2.0 and 2.0.0 compare equal; $null if there is none. Mirrors EulaVersion.Parse in the app.
+function Get-EulaVersion {
+    param([string]$Text)
+    if (-not $Text) { return $null }
+    $header = ($Text -split "`r?`n" | Select-Object -First 20) -join "`n"
+    $m = [regex]::Match($header, '(?im)^\s*Version\s+(\d+(?:\.\d+){1,3})\s*$')
+    if (-not $m.Success) { return $null }
+    $v = [version]$m.Groups[1].Value
+    return [version]::new([Math]::Max($v.Major, 0), [Math]::Max($v.Minor, 0), [Math]::Max($v.Build, 0), [Math]::Max($v.Revision, 0))
+}
+
 # Validate an explicit -Version override up front, before any (slow) work happens.
 if ($Version) { Assert-ComparableVersion $Version }
 
@@ -353,19 +365,48 @@ foreach ($rid in $Runtime) {
     Write-Host "Verified PhEye name-detection model is present in the publish output."
 
     # Refresh the EULA the app shows from the live copy on philterd.ai, overwriting the checked-in snapshot in
-    # the publish output. A network failure is non-fatal: the bundled snapshot ships instead (the app reads
-    # whichever philterd-eula.txt is next to the exe).
+    # the publish output. The app re-prompts users when the EULA's "Version X.Y" header line is newer than the
+    # version they accepted, so the live copy is used only if it declares a version at least as new as the
+    # snapshot's. A network failure is non-fatal: the bundled snapshot ships instead.
+    # The license, notices, and full third-party license texts must ship: bundled components' licenses
+    # require them. The license texts must also match the dependencies being shipped.
+    foreach ($required in 'LICENSE.txt', 'NOTICE.txt', 'THIRD-PARTY-LICENSES.txt') {
+        if (-not (Test-Path (Join-Path $publishDir $required))) {
+            throw "$required is missing from the publish output ($publishDir). It is copied from the repo root by PhilterDesktop.csproj."
+        }
+    }
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repo 'scripts\generate-third-party-licenses.ps1') -Check
+    if ($LASTEXITCODE -ne 0) { throw "THIRD-PARTY-LICENSES.txt doesn't match the dependencies. Regenerate it and rebuild." }
+
     $eulaUrl = 'https://philterd.ai/philterd-eula.txt'
     $eulaPath = Join-Path $publishDir 'philterd-eula.txt'
+    if (-not (Test-Path $eulaPath)) {
+        throw "No EULA file in the publish output ($eulaPath) - the app would show only a fallback pointer. Ensure Resources\philterd-eula.txt is present."
+    }
+    $snapshotVersion = Get-EulaVersion (Get-Content -Raw $eulaPath)
+    if (-not $snapshotVersion) {
+        throw "The bundled EULA ($eulaPath) has no 'Version X.Y' line in its header. Add one so the app can tell when the terms change."
+    }
+    $downloadPath = Join-Path ([System.IO.Path]::GetTempPath()) ("philterd-eula-" + [guid]::NewGuid().ToString('N') + '.txt')
     try {
-        Invoke-WebRequest -Uri $eulaUrl -OutFile $eulaPath -UseBasicParsing -TimeoutSec 30
-        Write-Host "Downloaded the current EULA from $eulaUrl."
+        Invoke-WebRequest -Uri $eulaUrl -OutFile $downloadPath -UseBasicParsing -TimeoutSec 30
+        $liveVersion = Get-EulaVersion (Get-Content -Raw $downloadPath)
+        if (-not $liveVersion) {
+            Write-Warning "The EULA at $eulaUrl declares no version; shipping the bundled snapshot (version $snapshotVersion)."
+        }
+        elseif ($liveVersion -lt $snapshotVersion) {
+            Write-Warning "The EULA at $eulaUrl (version $liveVersion) is older than the bundled snapshot (version $snapshotVersion); shipping the snapshot."
+        }
+        else {
+            Copy-Item -LiteralPath $downloadPath -Destination $eulaPath -Force
+            Write-Host "Downloaded the current EULA (version $liveVersion) from $eulaUrl."
+        }
     }
     catch {
-        Write-Warning "Could not download the EULA from $eulaUrl ($($_.Exception.Message)); shipping the bundled snapshot."
+        Write-Warning "Could not download the EULA from $eulaUrl ($($_.Exception.Message)); shipping the bundled snapshot (version $snapshotVersion)."
     }
-    if (-not (Test-Path $eulaPath)) {
-        throw "No EULA file in the publish output ($eulaPath) - the app would show only a fallback pointer. Ensure Resources\philterd-eula.txt is present, or fix the download."
+    finally {
+        Remove-Item -LiteralPath $downloadPath -Force -ErrorAction SilentlyContinue
     }
 
     if (-not $Version) {

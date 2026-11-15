@@ -23,9 +23,13 @@ namespace PhilterDesktop
     {
         bool HasAccepted(string key);
         void RememberAccepted(string key);
+
+        /// <summary>A stored string value (e.g. the accepted EULA version), or null if absent.</summary>
+        string? GetValue(string key);
+        void SetValue(string key, string value);
     }
 
-    /// <summary>Registry-backed store: one per-user DWORD value per acknowledgement under HKCU\Software\PhilterDesktop.</summary>
+    /// <summary>Registry-backed store: one per-user value per acknowledgement under HKCU\Software\PhilterDesktop.</summary>
     internal sealed class RegistryAcceptanceStore : IAcceptanceStore
     {
         private const string PrefsKeyPath = @"Software\PhilterDesktop";
@@ -48,6 +52,25 @@ namespace PhilterDesktop
             using RegistryKey regKey = Registry.CurrentUser.CreateSubKey(PrefsKeyPath, writable: true);
             regKey.SetValue(key, 1, RegistryValueKind.DWord);
         }
+
+        public string? GetValue(string key)
+        {
+            try
+            {
+                using RegistryKey? regKey = Registry.CurrentUser.OpenSubKey(PrefsKeyPath, writable: false);
+                return regKey?.GetValue(key) as string;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public void SetValue(string key, string value)
+        {
+            using RegistryKey regKey = Registry.CurrentUser.CreateSubKey(PrefsKeyPath, writable: true);
+            regKey.SetValue(key, value, RegistryValueKind.String);
+        }
     }
 
     /// <summary>
@@ -61,6 +84,9 @@ namespace PhilterDesktop
 
         /// <summary>License / EULA acceptance flag (kept as "EulaAccepted" for continuity).</summary>
         internal const string LicenseKey = "EulaAccepted";
+
+        /// <summary>The EULA version the user last agreed to (absent for pre-versioning acceptances).</summary>
+        internal const string LicenseVersionKey = "EulaAcceptedVersion";
 
         /// <summary>Redaction-review notice acceptance flag.</summary>
         internal const string RedactionNoticeKey = "RedactionNoticeAccepted";

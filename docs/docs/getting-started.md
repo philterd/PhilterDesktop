@@ -12,7 +12,7 @@ removing the program again.
   whichever one matches your PC. That is what lets on-device name detection run correctly on ARM PCs.
 
 Philter Desktop's official, signed installer is **free to download** from
-[philterd.ai](https://www.philterd.ai) and **free for personal use and evaluation**; using it for
+[philterd.ai](https://philterd.ai) and **free for personal use and evaluation**; using it for
 commercial purposes requires a **per-user subscription that includes support** (see
 [Licensing & Support](licensing.md)). There is no product key to type in, and every supported document
 type (plain text, Microsoft Word, PDF, Rich Text, spreadsheets, and email) redacts out of the box. You
@@ -31,29 +31,23 @@ To install:
 2. **Double-click** the downloaded file to start the setup wizard. It first asks whether to install
    **for me only** or **for all users**; choose **Install for me only**, which needs no administrator
    permission.
-3. Read the **License Agreement**, choose **I accept the agreement**, and click **Next**.
-
-    ![The setup wizard's License Agreement page, showing the Philterd Commercial License Agreement with "I accept the agreement" selected](img/install-license.png)
-
-    *The license agreement, shown before anything is installed. (Philter Desktop shows its licenses again the first time you open the program.)*
-
-4. On the **Select Destination Location** page, click **Next** to accept the suggested folder. (There
+3. On the **Select Destination Location** page, click **Next** to accept the suggested folder. (There
    is no reason to change it unless you keep programs somewhere particular.)
-5. On the **Select Additional Tasks** page, tick any optional extras you want and click **Next**. Both
+4. On the **Select Additional Tasks** page, tick any optional extras you want and click **Next**. Both
    are off by default and both are safe to leave alone; the next section explains what they do.
 
     ![The setup wizard's Select Additional Tasks page, with unticked checkboxes for a desktop shortcut and for starting automatically at sign-in](img/options.png)
 
     *The two optional extras: a desktop shortcut, and starting automatically when you sign in.*
 
-6. On the **Ready to Install** page, click **Install**. This is your last chance to go **Back** and
+5. On the **Ready to Install** page, click **Install**. This is your last chance to go **Back** and
    change an answer.
 
     ![The setup wizard's Ready to Install page, with Back, Install, and Cancel buttons](img/install.png)
 
     *The final confirmation before the files are copied.*
 
-7. When the files have been copied, the last page offers to **launch Philter Desktop** right away.
+6. When the files have been copied, the last page offers to **launch Philter Desktop** right away.
    Leave that ticked (or untick it) and click **Finish**.
 
 Once it is done, Philter Desktop appears in your Start menu, and on your desktop if you chose that
@@ -75,7 +69,7 @@ you are setting up a shared computer and want it available to everyone, the wiza
 install for all users, which does require an administrator.)
 
 > **A note on Windows security warnings.** The **official signed installer** from
-> [philterd.ai](https://www.philterd.ai) installs cleanly, with no warning. If you instead build
+> [philterd.ai](https://philterd.ai) installs cleanly, with no warning. If you instead build
 > Philter Desktop yourself from source, the resulting installer is unsigned, so Windows may show a
 > blue **"Windows protected your PC"** message. This is a normal safety feature called SmartScreen
 > that appears for software Windows hasn't seen signed by a known publisher. Click **More info** and
@@ -110,9 +104,8 @@ knowing before you use it:
   start-at-sign-in later from inside the program's Settings.
 - **Philter Desktop does not open when the install finishes.** Start it from the Start menu.
 - **The license agreement is not shown, and this is not a way to accept it in advance.** The first
-  time anyone opens Philter Desktop it still shows the license screen and the redaction notice, and
-  they still have to be accepted before the main window appears. See *Your first time opening the
-  program* below.
+  time anyone opens Philter Desktop it still shows the license screen, which has to be accepted before
+  the main window appears. See *Your first time opening the program* below.
 
 A few more options you can add if you need them:
 
@@ -135,17 +128,29 @@ the question (see
 
 ## Your first time opening the program
 
-The very first time you run Philter Desktop, it shows two short screens you need to accept before the
-main window opens:
+The very first time you run Philter Desktop, it shows a **license** screen with the **Philterd
+Commercial License Agreement** (the license for the official build), and a link to the **Apache License
+2.0** that covers the open-source code. Read it and click **I Agree** to continue (or **I Disagree** to
+close the program). You accept it once; if a later version of Philter Desktop comes with an updated
+license agreement, this screen appears once more so you can review and accept the new terms.
 
-1. A **license** screen showing the **Apache License 2.0** (the open-source code license) and the
-   **Philterd Commercial License Agreement** (the license for the official build), each in its own
-   panel. Read it and click **I Agree** to continue (or **I Disagree** to close the program).
-2. A short **redaction notice** reminding you that automated redaction is not perfect and can miss
-   things, so you should always review each cleaned-up document before sharing it. Click **OK** to
-   acknowledge it.
+Then, when you start Philter Desktop and its window opens, a short screen covers two things. If
+Philter Desktop keeps running in the system tray (for example, watching folders), it appears the first
+time you open the window and then at most once a day, including when you start Philter Desktop again
+while it's already running.
 
-Once you've accepted both, they won't appear again on future launches.
+- **Personal or work use.** Philter Desktop is free for personal use and for trying it out; using it
+  for work needs a license (see [Licensing & Support](licensing.md)). Click **Personal Use** or **Work
+  Use**. If you choose Work Use, click **I'm Trying It Out** to continue, or **Buy a License** to open the
+  purchase page in your browser; Philter Desktop then opens **Manage License**, where you enter the email
+  you bought it with once your purchase is done.
+- **Reviewing redactions.** A reminder that automated redaction isn't perfect and can miss things, so
+  always review each redacted document before sharing it. Choosing Personal Use or Work Use confirms
+  you've read it.
+
+Once you've entered a work license (**Help → Manage License…**), this screen no longer appears. If you
+close it without choosing, Philter Desktop closes (or, if you opened it from the system tray, goes back
+to the tray).
 
 After that, you see the main window. The top of the window has a row of buttons
 (a **toolbar**), and most of the window is taken up by the **redaction queue**, the list of
@@ -198,9 +203,13 @@ When a newer version of Philter Desktop comes out, you do not need to uninstall 
 Download the new Philter Desktop setup file and run it the same way; it installs **over** your
 existing copy, keeping all of your policies, contexts, settings, and history intact.
 
-Philter Desktop can also tell you when an update is available: choose **Help → Check for Updates…**. If
-a newer version exists, it lets you know and points you to your account page to download it. It never
-downloads or installs anything on its own.
+Philter Desktop tells you when an update is available. It checks philterd.ai for a new version when you
+first open its window, and about once a day while it keeps running in the background (you can turn this
+off on the [Notifications tab](settings.md#notifications-tab) in Settings). You can also check at any
+time with **Help → Check for Updates…**. If a newer version exists, it lets you know (with a notification
+near the clock if its window isn't open) and points you to the download page. It never downloads or
+installs anything on its own. If the new version comes with an updated license agreement, you're asked
+to review and accept it the first time you open the new version.
 
 ## Uninstalling Philter Desktop
 

@@ -5,24 +5,47 @@ documentation.
 
 ## How do I get Philter Desktop?
 
-The **official, signed build** is **free to download** from [philterd.ai](https://www.philterd.ai),
+The **official, signed build** is **free to download** from [philterd.ai](https://philterd.ai),
 and free for personal use and evaluation; using it for commercial purposes requires a subscription.
 Because the software is open source under the Apache License 2.0, you can also read the
 [source code](https://github.com/philterd/PhilterDesktop) and build it yourself. See
 [Licensing & Support](licensing.md) for how the free open-source software and the paid official product
 fit together.
 
+## Do I need a license?
+
+You need a license if you use Philter Desktop **for work**: anything connected to your job, your
+business, or your clients, patients, or customers, or done for an organization, including nonprofits
+and government, even if you work alone and on your own computer. **Personal use** (your own or your
+household's documents, outside of work) is free, and so is **evaluation**, for as long as you need,
+until you start using Philter Desktop or its redacted files in your work. See
+[When you need a subscription](licensing.md#when-you-need-a-subscription) for examples.
+
 ## What do I get, and what happens after I purchase?
 
-Subscribers receive the **same official signed build** as everyone else; there are no separate
-downloads or license keys. The subscription permits **commercial use** of the official build and
-covers **support** from the team that makes it and **maintained releases**. Keep your receipt as proof
-of purchase. See [Licensing & Support](licensing.md).
+Subscribers receive the **same official signed build** as everyone else; there are no separate downloads
+or license keys. To record your license in Philter Desktop, choose **Help → Manage License…** and enter
+the email address you bought it with (see [Entering your work
+license](licensing.md#entering-your-work-license)). The subscription permits **commercial use** of the
+official build and covers **support** from the team that makes it and **maintained releases**. Keep your
+receipt as proof of purchase. See [Licensing & Support](licensing.md).
 
 ## Do my documents leave my computer?
 
 No. All detection and redaction happen **locally on your Windows machine**, and Philter Desktop works
 fully offline. Nothing about your documents is uploaded or sent over the internet.
+
+Philter Desktop's network use is an **update check**, plus a monthly **license check** on computers
+where someone has entered a work license (see [Licensing &
+Support](licensing.md#a-note-for-it-departments)). The update check downloads a small version file from
+philterd.ai to see whether a new version is available. It checks when you first open its window, about
+once a day while it keeps running in the background (for example, watching folders from the system
+tray), and when you choose **Help → Check for Updates…**. The request tells philterd.ai which version of
+Philter Desktop you have, which helps Philterd see which versions are in use. It sends nothing else: no
+documents, no identifiers, and no information about what you redact. Like any web request, philterd.ai
+also sees your computer's IP address. You can turn the automatic checks off on the [Notifications
+tab](settings.md#notifications-tab) in Settings, and IT departments can turn them off for everyone (see
+[Licensing & Support](licensing.md#a-note-for-it-departments)).
 
 ## Can you see my documents?
 

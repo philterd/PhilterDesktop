@@ -136,6 +136,19 @@ For the full set of options, including single-architecture developer builds, ski
 framework-dependent builds, and code signing, see
 [`Installer/README.md`](https://github.com/philterd/PhilterDesktop/blob/main/Installer/README.md).
 
+### After changing dependencies
+
+Philter Desktop ships `NOTICE` (a list of its third-party components) and `THIRD-PARTY-LICENSES.txt`
+(the full text of each component's license). When you add, remove, or upgrade a NuGet package, update
+the package's entry in `NOTICE`, then regenerate the license texts:
+
+```powershell
+powershell -File scripts\generate-third-party-licenses.ps1
+```
+
+The script reads the restored packages, so build or restore first. The test suite and the installer
+build both fail if either file no longer matches the dependencies.
+
 ## Where to go from here
 
 - **[Getting Started](getting-started.md)**: installing and using the application.

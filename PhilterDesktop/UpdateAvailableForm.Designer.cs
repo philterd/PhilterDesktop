@@ -56,7 +56,7 @@ namespace PhilterDesktop
             _linkCaption.Name = "_linkCaption";
             _linkCaption.Size = new Size(0, 15);
             _linkCaption.TabIndex = 1;
-            _linkCaption.Text = "Subscribers can download the new version at:";
+            _linkCaption.Text = "Download the new version at:";
             //
             // _link
             //
@@ -67,7 +67,7 @@ namespace PhilterDesktop
             _link.Size = new Size(436, 20);
             _link.TabIndex = 2;
             _link.TabStop = true;
-            _link.Text = "https://account.philterd.ai";
+            _link.Text = "https://philterd.ai/philter-desktop/download/";
             _link.LinkClicked += Link_LinkClicked;
             //
             // _close

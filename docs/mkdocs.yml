@@ -17,7 +17,7 @@ theme:
     - navigation.footer
 
 extra:
-  homepage: https://www.philterd.ai
+  homepage: https://philterd.ai
   social:
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/company/philterd/

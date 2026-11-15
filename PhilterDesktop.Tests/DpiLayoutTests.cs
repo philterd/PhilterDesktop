@@ -50,14 +50,15 @@ namespace PhilterDesktop.Tests
         {
             "policy-editor", "policy-wizard", "filter-strategies", "filter-strategies-options", "add-filter-strategy",
             "custom-identifiers", "custom-identifier", "pdf-regions", "add-region", "pdf-region-picker",
-            "pheye-model", "ocr-advanced"
+            "pheye-model", "ocr-advanced", "work-license", "usage-choice", "usage-choice-work"
         };
 
         public static TheoryData<string> CodeBuiltForms => new(CodeBuilt);
 
         // Designer forms are checked at their real startup DPI only: the simulated DPI change rescales them
         // differently from a real high-DPI start, so it reports problems a real 150% display doesn't have.
-        public static TheoryData<string> AllForms => new(CodeBuilt.Append("settings").Append("watched-folder"));
+        public static TheoryData<string> AllForms => new(CodeBuilt.Append("settings").Append("watched-folder")
+            .Append("license").Append("license-view").Append("update-available").Append("about"));
 
         private static Form Create(string name, LiteDatabase db) => name switch
         {
@@ -74,9 +75,16 @@ namespace PhilterDesktop.Tests
             "pdf-region-picker" => new PdfRegionPickerForm(MinimalPdf.PlainText("Hello")),
             "pheye-model" => new PhEyeModelForm(PhEyeModel.CreateDefaultFilter()),
             "ocr-advanced" => new OcrAdvancedSettingsForm(0.01, 0.5, 200),
+            "work-license" => new WorkLicenseForm(new WorkLicense(new LicenseRepository(db)), new LicenseClient()),
+            "usage-choice" => new UsageChoiceForm(_ => { }),
+            "usage-choice-work" => WorkChoices(new UsageChoiceForm(_ => { })),
             "settings" => new SettingsForm(new SettingsRepository(db), Seeded(db), SeededContexts(db), new WatchedFolderRepository(db)),
             "watched-folder" => new WatchedFolderForm(Seeded(db), SeededContexts(db),
                 new WatchedFolderEntity { FileTypes = new List<string> { ".rtf", ".eml", ".msg" } }),
+            "license" => new LicenseForm(),
+            "license-view" => new LicenseForm(viewOnly: true),
+            "about" => new AboutForm(),
+            "update-available" => new UpdateAvailableForm("1.4.0", "1.5.0", "2026-12-01"),
             _ => throw new ArgumentOutOfRangeException(nameof(name))
         };
 
@@ -85,6 +93,13 @@ namespace PhilterDesktop.Tests
             var contexts = new ContextRepository(db);
             contexts.Insert(new ContextEntity { Name = "default" });
             return contexts;
+        }
+
+        // The usage screen after Work use is clicked (I'm Trying It Out and Buy a License, with longer text).
+        private static Form WorkChoices(UsageChoiceForm form)
+        {
+            form.ShowWorkChoices();
+            return form;
         }
 
         private static PolicyRepository Seeded(LiteDatabase db)

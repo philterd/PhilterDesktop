@@ -68,6 +68,23 @@ namespace PhilterDesktop.Tests
             Assert.True(policy.Identifiers.Date!.OnlyValidDates); // valid calendar dates only, to limit noise
         }
 
+        // International numbers, not just North American ones, are redacted by the default policy.
+        [Theory]
+        [InlineData("+44 20 7946 0958")]
+        [InlineData("+33 1 42 68 53 00")]
+        [InlineData("+91 98765 43210")]
+        [InlineData("+49 30 901820")]
+        [InlineData("(555) 867-5309")]
+        public void DefaultPolicy_RedactsInternationalPhoneNumbers(string phone)
+        {
+            var policy = PolicySerializer.DeserializeFromJson(DefaultPolicy.Json());
+            PhEyeModel.Prepare(policy);
+
+            var result = new FilterService().Filter(policy, "ctx", 0, $"Call me at {phone} tomorrow.");
+
+            Assert.DoesNotContain(phone, result.FilteredText);
+        }
+
         [Fact]
         public void DefaultPolicy_RedactsDateOfBirth()
         {

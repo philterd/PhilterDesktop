@@ -61,6 +61,9 @@ experience, a real PDF, and a couple of GUI interactions.
 
       It prints **`PASS: the bundled EULA matches ...`** (exit `0`). A FAIL means the installer shipped a
       stale `philterd-eula.txt` — rebuild so it re-downloads the current EULA.
+- [ ] If this release changes the license terms: the EULA's **`Version X.Y`** line (under the title, in
+      both `philterd-eula.md` and `philterd-eula.txt` on the website) was bumped and published *before*
+      building. Opening the upgraded app shows the license screen once, and not again after I Agree.
 
 ## Part 3 — Functional smoke (manual GUI + PDF)
 

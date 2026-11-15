@@ -19,30 +19,34 @@ using System.Reflection;
 namespace PhilterDesktop
 {
     /// <summary>
-    /// The license dialog: shows the <b>Apache License 2.0</b> (the open-source source license) and the
-    /// <b>Philterd Commercial License Agreement</b> (the EULA governing the official build) each in its own
-    /// read-only text box, notes that redaction uses statistical methods and must always be reviewed by a
-    /// human, and — at first run — gates startup behind an "I Agree" / "I Disagree" choice. Once the user
-    /// agrees, acceptance is recorded so the dialog is not shown again. Also reachable from Help → View
-    /// License (see <paramref name="viewOnly"/>). Both texts are embedded so they display offline.
+    /// The license dialog. At the gate it shows the <b>Philterd Commercial License Agreement</b> (the EULA
+    /// governing the official build) behind an "I Agree" / "I Disagree" choice, with a link to the
+    /// <b>Apache License 2.0</b> that covers the source code. Acceptance is recorded with the EULA's version,
+    /// so the gate returns only when a release ships a newer EULA. From the About box's View licenses link (see
+    /// <paramref name="viewOnly"/>) it shows both texts. Both display offline.
     /// </summary>
     public partial class LicenseForm : Form
     {
         private const string ApacheResource = "PhilterDesktop.ApacheLicense.txt";
 
-        /// <summary>
-        /// The EULA text file shipped next to the executable. The installer build refreshes it from
-        /// https://philterd.ai/philterd-eula.txt at packaging time; a checked-in snapshot is copied to the
-        /// build output so it is present in development too.
-        /// </summary>
-        private const string EulaFileName = "philterd-eula.txt";
+        /// <summary>The Apache License 2.0 for Philter Desktop's source code, in the GitHub repository.</summary>
+        internal const string ApacheLicenseUrl = "https://github.com/philterd/PhilterDesktop/blob/main/LICENSE";
+
+        internal const string ApacheLinkText = "Philter Desktop's source code is open source under the Apache License 2.0.";
+        private const string ApacheLinkWords = "Apache License 2.0";
+
+        internal const string GateTitle = "License Agreement";
+        internal const string GateSubtitle = "Please read the license agreement for Philter Desktop. To continue, click I Agree.";
+        internal const string ViewTitle = "Licenses";
+        internal const string ViewSubtitle =
+            "The open-source license for Philter Desktop's source code, and the license agreement for the official build.";
 
         public LicenseForm() : this(viewOnly: false)
         {
         }
 
         /// <param name="viewOnly">
-        /// When true, the dialog is shown for reference (from Help → View License) rather than as the
+        /// When true, the dialog is shown for reference (from the About box) rather than as the
         /// first-run gate: the Agree/Disagree choice is replaced with a single Close button, since the
         /// user has already accepted.
         /// </param>
@@ -51,9 +55,29 @@ namespace PhilterDesktop
             InitializeComponent();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_agree);
+            StyleChrome();
 
-            _licenseBody.Text = ForTextBox(ReadResource(ApacheResource));
-            _licenseBody.Select(0, 0); // keep the view scrolled to the top
+            // At the gate only the EULA is shown, since it's the only agreement accepted; the Apache License
+            // (a grant of permissions, nothing to accept) is a link. The view from About shows both texts offline.
+            _apacheLink.Text = ApacheLinkText;
+            _apacheLink.LinkArea = new LinkArea(ApacheLinkText.IndexOf(ApacheLinkWords, StringComparison.Ordinal), ApacheLinkWords.Length);
+            ShowsApacheText = viewOnly;
+            _title.Text = viewOnly ? ViewTitle : GateTitle;
+            _subtitle.Text = viewOnly ? ViewSubtitle : GateSubtitle;
+            if (viewOnly)
+            {
+                _licenseBody.Text = ForTextBox(ReadResource(ApacheResource));
+                _licenseBody.Select(0, 0); // keep the view scrolled to the top
+                _apacheLink.Visible = false;
+            }
+            else
+            {
+                // The header names the agreement, so the reading pane needs no heading of its own.
+                _licenseHeading.Visible = false;
+                _licenseFrame.Visible = false;
+                _eulaHeading.Visible = false;
+                _body.RowStyles[1] = new RowStyle(SizeType.Absolute, 0F); // the EULA takes the freed height
+            }
             _eulaBody.Text = ForTextBox(ReadEula());
             _eulaBody.Select(0, 0);
 
@@ -73,14 +97,102 @@ namespace PhilterDesktop
             UiState.FitToScreen(this);
         }
 
-        /// <summary>Whether the license dialog should be shown on this launch (i.e. not yet accepted).</summary>
-        public static bool ShouldShow() => !Acknowledgements.Store.HasAccepted(Acknowledgements.LicenseKey);
+        /// <summary>Whether the Apache License text is shown (the view from About) rather than linked (the gate).</summary>
+        internal bool ShowsApacheText { get; }
+
+        private void ApacheLink_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = ApacheLicenseUrl, UseShellExecute = true });
+                _apacheLink.LinkVisited = true;
+            }
+            catch
+            {
+                // best effort: opening a browser shouldn't break the license screen
+            }
+        }
+
+        // ModernTheme.Apply paints every panel the window colour and gives text boxes a border, so the
+        // header band, hairlines, and borderless reading panes are coloured after it.
+        private void StyleChrome()
+        {
+            _header.BackColor = ModernTheme.Surface;
+            _subtitle.ForeColor = ModernTheme.SubtleText;
+            _headerDivider.BackColor = ModernTheme.Border;
+            _footerDivider.BackColor = ModernTheme.Border;
+            _apacheLink.ForeColor = ModernTheme.SubtleText;
+            _apacheLink.LinkColor = ModernTheme.Accent;
+            _apacheLink.ActiveLinkColor = ModernTheme.Accent;
+            foreach ((Panel frame, Panel inner, TextBox text) in new[]
+                     { (_licenseFrame, _licenseInner, _licenseBody), (_eulaFrame, _eulaInner, _eulaBody) })
+            {
+                frame.BackColor = ModernTheme.Border;
+                inner.BackColor = ModernTheme.Surface;
+                text.BorderStyle = BorderStyle.None;
+                text.BackColor = ModernTheme.Surface;
+            }
+
+            if (Icon is not null)
+            {
+                using var sized = new Icon(Icon, 48, 48);
+                Bitmap image = sized.ToBitmap();
+                _headerIcon.Image = image;
+                Disposed += (_, _) => image.Dispose();
+            }
+        }
+
+        /// <summary>Whether the license dialog should be shown on this launch.</summary>
+        public static bool ShouldShow() => ShouldShow(BundledEula.Version());
 
         /// <summary>
-        /// Persists that the user accepted the license. Called once the user agrees, so acceptance is
-        /// remembered and the dialog is never re-shown after that (no opt-out to leave off).
+        /// Shown when never accepted, or when <paramref name="bundledVersion"/> is newer than the version
+        /// last accepted. An acceptance from before versioning counts as older than any version. If the
+        /// bundled EULA declares no version, a prior acceptance stands.
         /// </summary>
-        public static void RememberAccepted() => Acknowledgements.Store.RememberAccepted(Acknowledgements.LicenseKey);
+        internal static bool ShouldShow(Version? bundledVersion)
+        {
+            if (!Acknowledgements.Store.HasAccepted(Acknowledgements.LicenseKey))
+            {
+                return true;
+            }
+            return bundledVersion is not null && EulaVersion.IsNewer(bundledVersion, AcceptedEulaVersion());
+        }
+
+        /// <summary>The EULA version the user last accepted, or null (never, or before versioning).</summary>
+        internal static Version? AcceptedEulaVersion() =>
+            EulaVersion.TryParse(Acknowledgements.Store.GetValue(Acknowledgements.LicenseVersionKey));
+
+        /// <summary>
+        /// Shows the license screen if acceptance is owed. On Agree, records the acceptance and returns true;
+        /// returns false if the user disagrees. Returns true when nothing is owed.
+        /// </summary>
+        public static bool RunGateIfNeeded()
+        {
+            if (!ShouldShow())
+            {
+                return true;
+            }
+            using var form = new LicenseForm();
+            if (form.ShowDialog() != DialogResult.OK)
+            {
+                return false;
+            }
+            RememberAccepted();
+            return true;
+        }
+
+        /// <summary>Persists that the user accepted the bundled EULA (and its version, when it declares one).</summary>
+        public static void RememberAccepted() => RememberAccepted(BundledEula.Version());
+
+        internal static void RememberAccepted(Version? bundledVersion)
+        {
+            Acknowledgements.Store.RememberAccepted(Acknowledgements.LicenseKey);
+            if (bundledVersion is not null)
+            {
+                Acknowledgements.Store.SetValue(Acknowledgements.LicenseVersionKey, bundledVersion.ToString());
+            }
+        }
 
         // A Windows TextBox only breaks lines on CRLF; bare LFs (as in a file checked out with Unix line
         // endings) are dropped, running the words on either side together.
@@ -106,22 +218,10 @@ namespace PhilterDesktop
             }
         }
 
-        // Reads the EULA from the loose file next to the executable (refreshed by the installer build).
-        // Falls back to a short pointer rather than throwing if the file is missing, so the gate still renders.
-        private static string ReadEula()
-        {
-            try
-            {
-                string path = Path.Combine(AppContext.BaseDirectory, EulaFileName);
-                string text = File.Exists(path) ? File.ReadAllText(path) : string.Empty;
-                return string.IsNullOrWhiteSpace(text)
-                    ? "The Philterd Commercial License Agreement is available at https://philterd.ai/philterd-eula.txt."
-                    : text;
-            }
-            catch
-            {
-                return "The Philterd Commercial License Agreement is available at https://philterd.ai/philterd-eula.txt.";
-            }
-        }
+        // Reads the bundled EULA. Falls back to a short pointer rather than throwing if the file is missing,
+        // so the gate still renders.
+        private static string ReadEula() =>
+            BundledEula.ReadText() ??
+            "The Philterd Commercial License Agreement is available at https://philterd.ai/philterd-eula.txt.";
     }
 }

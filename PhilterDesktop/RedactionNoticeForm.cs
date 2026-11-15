@@ -26,9 +26,9 @@ namespace PhilterDesktop
     /// </summary>
     public partial class RedactionNoticeForm : Form
     {
-        private const string LearnMoreUrl = "https://philterd.github.io/PhilterDesktop/mistakes/";
+        internal const string LearnMoreUrl = "https://philterd.github.io/PhilterDesktop/mistakes/";
 
-        private const string NoticeText =
+        internal const string NoticeText =
             "Philter Desktop identifies personal and sensitive information using statistical and " +
             "machine-learning methods. These methods are not perfect: they can miss sensitive information " +
             "(false negatives) or flag text that is not sensitive (false positives).\r\n\r\n" +

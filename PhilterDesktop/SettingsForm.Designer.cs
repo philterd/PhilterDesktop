@@ -680,7 +680,7 @@ namespace PhilterDesktop
             lblNotificationsHint.Name = "lblNotificationsHint";
             lblNotificationsHint.Size = new Size(506, 30);
             lblNotificationsHint.TabIndex = 1;
-            lblNotificationsHint.Text = "Notifications appear only when Philter Desktop's window is hidden in the tray or minimized — never while you're looking at it. Click a notification to open the folder with the finished files.";
+            lblNotificationsHint.Text = "Notifications appear only when Philter Desktop's window is hidden in the tray or minimized, never while you're looking at it. Click a notification to open the folder with the finished files.";
             // 
             // tabWatched
             // 

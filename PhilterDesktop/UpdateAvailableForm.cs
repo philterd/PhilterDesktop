@@ -17,38 +17,42 @@
 namespace PhilterDesktop
 {
     /// <summary>
-    /// Shown when a newer version is published. Displays the installed/latest versions and a clickable
-    /// link to the download URL from the update manifest; it does not download anything itself.
+    /// Shown when a newer version is published. Displays the installed/latest versions and links to the
+    /// download page; it downloads nothing itself.
     /// </summary>
     public partial class UpdateAvailableForm : Form
     {
-        // Subscribers download new versions from their account page. The manifest's downloadUrl is
-        // intentionally not used — the official build is provided to subscribers, not via a public URL.
-        private const string AccountUrl = "https://account.philterd.ai";
+        // The public download page serves everyone, free and licensed users alike. The manifest's
+        // downloadUrl is intentionally not used, so a tampered manifest can't redirect the download.
+        internal const string DownloadUrl = "https://philterd.ai/philter-desktop/download/";
 
         /// <summary>Parameterless constructor (required by the Windows Forms designer).</summary>
         public UpdateAvailableForm()
         {
             InitializeComponent();
             ModernTheme.Apply(this);
-            _link.Text = AccountUrl;
+            _link.Text = DownloadUrl;
         }
 
         public UpdateAvailableForm(string currentVersion, string latestVersion, string? releaseDate)
             : this()
         {
+            _message.Text = BuildMessage(currentVersion, latestVersion, releaseDate);
+        }
+
+        internal static string BuildMessage(string currentVersion, string latestVersion, string? releaseDate)
+        {
             string released = string.IsNullOrWhiteSpace(releaseDate) ? string.Empty : $"  (released {releaseDate})";
-            _message.Text =
-                "A new version of Philter Desktop is available." + Environment.NewLine + Environment.NewLine +
-                $"Installed version: {currentVersion}" + Environment.NewLine +
-                $"Latest version: {latestVersion}{released}";
+            return "A new version of Philter Desktop is available." + Environment.NewLine + Environment.NewLine +
+                   $"Installed version: {currentVersion}" + Environment.NewLine +
+                   $"Latest version: {latestVersion}{released}";
         }
 
         private void Link_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
         {
             try
             {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = AccountUrl, UseShellExecute = true });
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = DownloadUrl, UseShellExecute = true });
                 _link.LinkVisited = true;
             }
             catch (Exception ex)

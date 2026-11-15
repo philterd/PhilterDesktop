@@ -72,7 +72,7 @@ namespace PhilterDesktop
             _heading.Name = "_heading";
             _heading.Size = new Size(238, 19);
             _heading.TabIndex = 0;
-            _heading.Text = "Important — reviewing redactions";
+            _heading.Text = "Important: reviewing redactions";
             //
             // _body
             //

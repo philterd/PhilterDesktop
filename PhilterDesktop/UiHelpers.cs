@@ -289,12 +289,13 @@ namespace PhilterDesktop
     /// </summary>
     internal static class Links
     {
-        private const string PhilterBase = "https://www.philterd.ai/philter";
-        private const string ScopeBase = "https://www.philterd.ai/philter-scope";
-        private const string DiffuseBase = "https://www.philterd.ai/philter-diffuse";
-        private const string ConsultingBase = "https://www.philterd.ai/consulting";
-        private const string SupportBase = "https://www.philterd.ai/philter-desktop";
-        private const string AllProductsBase = "https://philterd.ai/open-source-software";
+        // Trailing slashes: the site redirects a slashless path to the slashed one.
+        private const string PhilterBase = "https://philterd.ai/philter/";
+        private const string ScopeBase = "https://philterd.ai/philter-scope/";
+        private const string DiffuseBase = "https://philterd.ai/philter-diffuse/";
+        private const string ConsultingBase = "https://philterd.ai/consulting/";
+        private const string SupportBase = "https://philterd.ai/philter-desktop/";
+        private const string AllProductsBase = "https://philterd.ai/open-source-software/";
 
         /// <summary>Philter (server/API) landing page, tagged with the calling surface.</summary>
         public static string PhilterUrl(string medium) => Tag(PhilterBase, medium);
@@ -316,6 +317,12 @@ namespace PhilterDesktop
 
         /// <summary>Philterd's full open-source product listing, tagged with the calling surface.</summary>
         public static string AllProductsUrl(string medium) => Tag(AllProductsBase, medium);
+
+        /// <summary>Where a work-use license is bought, tagged with the calling surface.</summary>
+        public static string BuyUrl(string medium) => Tag("https://philterd.ai/philter-desktop/buy/", medium);
+
+        /// <summary>The purchaser's account site, where a license file can be downloaded.</summary>
+        public const string AccountUrl = "https://account.philterd.ai";
 
         private static string Tag(string url, string medium) =>
             $"{url}?utm_source=desktop&utm_medium={Uri.EscapeDataString(medium)}";

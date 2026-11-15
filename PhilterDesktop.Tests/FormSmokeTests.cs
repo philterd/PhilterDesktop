@@ -341,10 +341,11 @@ namespace PhilterDesktop.Tests
             Assert.Contains("Close", ok.Text); // the single button just closes in view-only mode
         });
 
+        // About's View licenses shows both texts offline (the bundled Apache components need a copy to hand).
         [Fact]
-        public void LicenseForm_LoadsBothLicenseTexts() => Sta(() =>
+        public void LicenseForm_ViewOnly_LoadsBothLicenseTexts() => Sta(() =>
         {
-            using var f = new LicenseForm();
+            using var f = new LicenseForm(viewOnly: true);
             _ = f.Handle;
             const System.Reflection.BindingFlags Flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
             var apache = (System.Windows.Forms.TextBox)typeof(LicenseForm).GetField("_licenseBody", Flags)!.GetValue(f)!;
@@ -359,7 +360,7 @@ namespace PhilterDesktop.Tests
         [Fact]
         public void LicenseForm_LicenseTexts_UseCrLfLineBreaks() => Sta(() =>
         {
-            using var f = new LicenseForm();
+            using var f = new LicenseForm(viewOnly: true);
             _ = f.Handle;
             const System.Reflection.BindingFlags Flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
             foreach (string field in new[] { "_licenseBody", "_eulaBody" })
