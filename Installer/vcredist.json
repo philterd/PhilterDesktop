@@ -1,0 +1,12 @@
+{
+  "comment": "Microsoft Visual C++ Redistributable bundled in the installer for ONNX Runtime. Downloaded and verified by build-setup.ps1; never committed. To update: download from https://aka.ms/vs/17/release/vc_redist.<arch>.exe, follow its redirect for the versioned URL, and record the version and SHA-256 here.",
+  "version": "14.44.35211.0",
+  "x64": {
+    "url": "https://download.visualstudio.microsoft.com/download/pr/e9604e21-4b79-4096-a4b3-1b63d4b55b4d/CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B/VC_redist.x64.exe",
+    "sha256": "CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B"
+  },
+  "arm64": {
+    "url": "https://download.visualstudio.microsoft.com/download/pr/d7450eb5-03e1-436d-9e7e-deb5fe4759b3/5139E1440C3A20B92153A4DB561C069A0175AAF76C276C3E5B6F56099EDCF4B0/VC_redist.arm64.exe",
+    "sha256": "5139E1440C3A20B92153A4DB561C069A0175AAF76C276C3E5B6F56099EDCF4B0"
+  }
+}

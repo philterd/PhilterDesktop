@@ -14,8 +14,8 @@ that. The architecture-specific native libraries (ONNX Runtime, PDFium, SkiaShar
 binaries, so a `win-arm64` self-contained publish cross-compiles fine on an x64 machine.
 
 Carrying both builds costs download size. The arch-neutral payload — most of it the ~89 MB PhEye
-model — is stored **once**, so the combined installer is roughly 190 MB rather than the ~140 MB of a
-single-arch build, not double.
+model — is stored **once**, so the combined installer is roughly 200 MB rather than double a
+single-arch build. The two Visual C++ Runtime installers add about 35 MB.
 
 **Build it:**
 
@@ -61,6 +61,9 @@ Requires **Inno Setup 6.3+** (`ISCC.exe` on PATH or in the default install locat
   name; the only files that would survive are the ones whose *name* carries the architecture
   (`Microsoft.DiaSymReader.Native.<arch>.dll`, `mscordaccore_<arch>_<arch>_<ver>.dll`), which an
   `[InstallDelete]` removes for the opposite architecture on every install.
+- Installs the **Microsoft Visual C++ Runtime** when the machine needs it. ONNX Runtime (on-device
+  name detection) links against it, and a clean Windows install may not have it. See
+  [Visual C++ Runtime](#visual-c-runtime) below.
 - Lists itself in Add/Remove Programs as just **Philter Desktop** (`UninstallDisplayName`); the
   version shows in that list's own Version column.
 - Optional tasks: a desktop icon, and **start at sign-in** — which writes the *same*
@@ -147,6 +150,56 @@ $env:TRUSTED_SIGNING_DLIB     = "C:\tools\trusted-signing\Azure.CodeSigning.Dlib
 az login
 pwsh Installer\build-setup.ps1
 ```
+
+## Visual C++ Runtime
+
+ONNX Runtime's native DLLs import the Visual C++ Runtime (`vcruntime140.dll`, `msvcp140.dll`, and
+friends). Without it, on-device name detection can't load on a clean PC. The installer bundles
+Microsoft's redistributables for both architectures and runs the matching one only when needed.
+
+**At build time**, `build-setup.ps1`:
+
+- Downloads `vc_redist.x64.exe` and `vc_redist.arm64.exe` from the versioned Microsoft URLs pinned in
+  [`vcredist.json`](vcredist.json), and **fails the build** unless each matches its pinned SHA-256
+  and carries a valid Microsoft signature. They are cached under `Installer\tools\vcredist\`
+  (gitignored), never committed.
+- Works out the oldest runtime the published DLLs accept: the newest linker version among those that
+  import the runtime (a runtime must be at least as new as the toolset that built the binary;
+  14.44 for ONNX Runtime 1.26). It fails if the pinned redistributable is older than that.
+- Passes the redistributables and that minimum to ISCC (`/DVCRedistDir`, `/DVCRedistMinMajor`,
+  `/DVCRedistMinMinor`). A direct ISCC run without them builds an installer that doesn't bundle the
+  runtime.
+
+**At install time**, [`vcredist.iss`](vcredist.iss):
+
+- Runs at the start of the install step (`ssInstall`), before the app's files are copied. It can't
+  run later: Setup asks `NeedRestart` during that step, so a restart request after it is lost.
+- Reads `HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\{ARM64|x64}` (both registry views).
+  If `Installed` = 1 and the version is at least the minimum, it does nothing.
+- Otherwise it extracts the matching redistributable (arm64 on Windows on ARM, x64 elsewhere) and runs
+  it with `/install /quiet /norestart`. An all-users or elevated install runs it directly; a per-user
+  install asks for administrator approval (UAC) just for this step. `ShellExec` doesn't return exit
+  codes, so the elevated run goes through `cmd`, which writes the code to a file; if that can't be
+  read, the registry is checked again instead.
+- Exit code 0 or 1638 (a newer runtime is already there) is success. 3010 tells Setup a restart is
+  needed, so the wizard offers one at the end. (A `/VERYSILENT` install restarts on its own in that
+  case unless `/NORESTART` is passed.)
+- If approval is declined or the redistributable fails, Philter Desktop is still installed; the
+  wizard explains that redacting with name detection will fail until the runtime is installed, and
+  links to it. (Without the runtime, ONNX Runtime can't load, so those redactions fail with an error;
+  the app doesn't yet detect this and fall back.) Unattended installs never show this,
+  and only log it.
+- A **silent per-user** install (`/VERYSILENT /CURRENTUSER`) can't ask for approval, so it skips the
+  runtime and logs why. For unattended deployment to PCs that may lack the runtime, install with
+  `/ALLUSERS` from an elevated prompt, or deploy the runtime separately first.
+
+**Updating the pins:** download the new redistributable from
+`https://aka.ms/vs/17/release/vc_redist.<arch>.exe`, note the versioned URL it redirects to, and record
+that URL, its SHA-256, and the version in `vcredist.json`. The tests check that the pinned version is
+new enough for the ONNX Runtime the project references.
+
+Microsoft's Visual Studio license terms allow distributing the Visual C++ Redistributable with an
+application that needs it.
 
 ## Notes
 

@@ -4,6 +4,10 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 ## 1.4.0 (unreleased)
 
+- **Fixed:** on-device name detection now works on PCs that lack the Microsoft Visual C++ Runtime,
+  such as a fresh Windows install or Windows on ARM in Parallels. The installer adds the runtime when
+  it is missing or too old, asking for administrator approval only then.
+
 ## 1.3.1 — 2026-11-12
 
 - **Fixed:** Philter Desktop no longer fails to start with "An application control policy has blocked

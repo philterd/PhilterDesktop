@@ -299,6 +299,66 @@ function Get-EulaVersion {
     return [version]::new([Math]::Max($v.Major, 0), [Math]::Max($v.Minor, 0), [Math]::Max($v.Build, 0), [Math]::Max($v.Revision, 0))
 }
 
+# ----- Microsoft Visual C++ Runtime ------------------------------------------------------------
+
+# ONNX Runtime (on-device name detection) links against the Visual C++ Runtime, which a clean Windows
+# install may lack. The installer bundles Microsoft's redistributables and runs the matching one only
+# when the machine's runtime is missing or too old. They are downloaded here from the URLs pinned in
+# vcredist.json, checked against the pinned SHA-256, and cached under Installer\tools (gitignored).
+$vcRuntimeImports = 'vcruntime140.dll', 'vcruntime140_1.dll', 'msvcp140.dll', 'msvcp140_1.dll', 'msvcp140_2.dll'
+
+# The oldest runtime the published native DLLs can use: the newest linker version among those that
+# import the VC runtime (a runtime must be at least as new as the toolset that built the binary).
+# $null if nothing imports it.
+function Get-VCRuntimeRequirement {
+    param([Parameter(Mandatory)][string]$Dir)
+    $required = $null
+    foreach ($file in Get-ChildItem $Dir -Recurse -File -Include *.dll, *.exe) {
+        $bytes = [System.IO.File]::ReadAllBytes($file.FullName)
+        # Import names are stored as NUL-terminated ASCII; Latin1 keeps one char per byte.
+        $text = [System.Text.Encoding]::GetEncoding(28591).GetString($bytes).ToLowerInvariant()
+        if (-not ($vcRuntimeImports | Where-Object { $text.Contains($_ + [char]0) })) { continue }
+        $optionalHeader = [BitConverter]::ToInt32($bytes, 0x3C) + 24
+        $linker = [version]::new($bytes[$optionalHeader + 2], $bytes[$optionalHeader + 3])
+        if (-not $required -or $linker -gt $required) { $required = $linker }
+    }
+    return $required
+}
+
+# Downloads (or reuses the cached copy of) both pinned redistributables and returns
+# @{ Dir; Version }. Throws if a download doesn't match its pinned hash or isn't Microsoft-signed.
+function Get-VCRedist {
+    $pins = Get-Content (Join-Path $PSScriptRoot 'vcredist.json') -Raw | ConvertFrom-Json
+    $dir = Join-Path $PSScriptRoot "tools\vcredist\$($pins.version)"
+    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    foreach ($arch in 'x64', 'arm64') {
+        $pin = $pins.$arch
+        $path = Join-Path $dir "vc_redist.$arch.exe"
+        if ((Test-Path $path) -and (Get-FileHash $path -Algorithm SHA256).Hash -eq $pin.sha256) {
+            Write-Host "Using cached VC++ Runtime $($pins.version) ($arch)."
+            continue
+        }
+        Write-Host "Downloading VC++ Runtime $($pins.version) ($arch) ..."
+        $download = Join-Path ([System.IO.Path]::GetTempPath()) ("vc_redist-" + [guid]::NewGuid().ToString('N') + '.exe')
+        try {
+            Invoke-WebRequest -Uri $pin.url -OutFile $download -UseBasicParsing -TimeoutSec 300
+            $hash = (Get-FileHash $download -Algorithm SHA256).Hash
+            if ($hash -ne $pin.sha256) {
+                throw "vc_redist.$arch.exe from $($pin.url) has SHA-256 $hash, but vcredist.json pins $($pin.sha256). Refusing to bundle it."
+            }
+            $sig = Get-AuthenticodeSignature $download
+            if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch '\bO=Microsoft Corporation\b') {
+                throw "vc_redist.$arch.exe is not validly signed by Microsoft ($($sig.Status), $($sig.SignerCertificate.Subject))."
+            }
+            Move-Item -LiteralPath $download -Destination $path -Force
+        }
+        finally {
+            Remove-Item -LiteralPath $download -Force -ErrorAction SilentlyContinue
+        }
+    }
+    return @{ Dir = $dir; Version = [version]$pins.version }
+}
+
 # Validate an explicit -Version override up front, before any (slow) work happens.
 if ($Version) { Assert-ComparableVersion $Version }
 
@@ -330,6 +390,11 @@ if (-not $iscc) {
 
 $outputDir = Join-Path $PSScriptRoot 'Output'
 $publishDirs = @{}
+$vcRuntimeRequired = $null
+
+# Fetch the runtime installers before publishing, so a changed or tampered download fails fast. Only
+# the full two-architecture build packages an installer.
+$vcRedist = if (@($Runtime | Select-Object -Unique).Count -eq 2) { Get-VCRedist } else { $null }
 
 # Publish once per requested RID (both arches by default). Tests and signing setup already ran once
 # above; each iteration publishes, verifies the model/EULA, and signs the app exe. The installer is
@@ -439,6 +504,9 @@ foreach ($rid in $Runtime) {
         }
     }
 
+    $required = Get-VCRuntimeRequirement $publishDir
+    if ($required -and (-not $vcRuntimeRequired -or $required -gt $vcRuntimeRequired)) { $vcRuntimeRequired = $required }
+
     $publishDirs[$archLabel] = $publishDir
     Write-Host "Published $archLabel to $publishDir"
 }
@@ -468,6 +536,21 @@ $isccArgs = @(
     "/DAppVersion=$Version",
     "/DPublishDirX64=$($publishDirs['x64'])",
     "/DPublishDirArm64=$($publishDirs['arm64'])")
+if ($vcRuntimeRequired) {
+    # The bundled runtime must be new enough for the binaries it's meant to support.
+    $bundled = [version]::new($vcRedist.Version.Major, $vcRedist.Version.Minor)
+    if ($bundled -lt $vcRuntimeRequired) {
+        throw ("The published native DLLs need VC++ Runtime $vcRuntimeRequired or later, but vcredist.json pins " +
+            "$($vcRedist.Version). Update the pins in Installer\vcredist.json.")
+    }
+    Write-Host "Bundling VC++ Runtime $($vcRedist.Version); installs only where older than $vcRuntimeRequired."
+    $isccArgs += "/DVCRedistDir=$($vcRedist.Dir)"
+    $isccArgs += "/DVCRedistMinMajor=$($vcRuntimeRequired.Major)"
+    $isccArgs += "/DVCRedistMinMinor=$($vcRuntimeRequired.Minor)"
+}
+else {
+    Write-Warning "No published DLL imports the VC++ Runtime, so the installer doesn't bundle it."
+}
 if ($Sign) {
     # Register the "philtersign" sign tool with ISCC and enable the SignTool directive in the .iss
     # (/DSign). Inno then signs the installer AND the embedded uninstaller. $q (a literal quote) and

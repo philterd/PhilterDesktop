@@ -38,6 +38,16 @@ experience, a real PDF, and a couple of GUI interactions.
 - [ ] **Silent install works** (on a second clean snapshot, or after uninstalling): running the setup
       file with `/VERYSILENT /SUPPRESSMSGBOXES /CURRENTUSER` installs with no wizard, no elevation
       prompt, and no desktop icon, and the app launches from the Start menu afterwards.
+- [ ] **Visual C++ Runtime installs only when needed.** On a clean snapshot with no Visual C++
+      Runtime (`HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64` absent; `ARM64` on
+      Windows on ARM), a per-user wizard install shows one UAC prompt near the end; approve it and
+      the key appears with `Installed` = 1. Install again over it: no UAC prompt, and an install log
+      (`/LOG="%TEMP%\setup.log"`) says `VC++ Runtime is already installed and current.` On another
+      clean snapshot, decline the prompt: the app still installs and a message explains name
+      detection needs the runtime.
+- [ ] **Silent all-users install brings the runtime.** On a clean snapshot, from an elevated prompt,
+      `/VERYSILENT /SUPPRESSMSGBOXES /ALLUSERS /NORESTART` completes with no prompts and installs the
+      runtime, and `--selftest` (Part 2) shows name detection **ENABLED**.
 - [ ] On first launch, the **welcome / license (EULA)** screen appears. Decline once → the app exits.
       Launch again, accept → the main window opens and the EULA is not shown again on the next launch.
 - [ ] The main window renders correctly (no missing-font or missing-DLL errors).
@@ -101,6 +111,8 @@ installer picks the native ARM64 build, and that it runs without x64 emulation �
 build exists is that the emulated x64 build fails to initialize the native ONNX Runtime.
 
 - [ ] Install with the standard installer; it installs and launches without asking about architecture.
+      On a machine without the ARM64 Visual C++ Runtime, approve the UAC prompt; afterwards
+      `HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\ARM64` has `Installed` = 1.
 - [ ] Confirm it installed the **arm64** build rather than the emulated x64 one: in Task Manager's
       Details tab, the `PhilterDesktop.exe` **Architecture** column reads **ARM64** (not "x64
       (emulated)"), and `HKCU\Software\Philterd\Philter Desktop` (`HKLM` for an all-users install) has

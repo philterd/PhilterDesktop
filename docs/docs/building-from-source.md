@@ -129,6 +129,10 @@ This runs the tests, publishes a **native build for each processor architecture*
 `win-arm64`), and compiles both into the single `PhilterDesktop-Setup-<version>.exe` that installs
 whichever one matches the machine. The finished installer is written to `Installer\Output\`.
 
+It also downloads Microsoft's Visual C++ Runtime installers (needed by on-device name detection), so
+a network connection is required. The build checks each against a pinned SHA-256 and stops if it
+doesn't match; the setup program installs the runtime only on PCs that need it.
+
 The version number comes from `<Version>` in `PhilterDesktop/PhilterDesktop.csproj`, so bump it
 there for a release rather than passing it on the command line.
 

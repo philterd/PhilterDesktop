@@ -179,3 +179,6 @@ begin
     end;
   end;
 end;
+
+// Installs the Microsoft Visual C++ Runtime when needed (only in builds that bundle it).
+#include "vcredist.iss"

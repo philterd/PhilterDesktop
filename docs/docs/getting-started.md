@@ -68,6 +68,13 @@ By default the program installs **only for you** and does **not** require admini
 you are setting up a shared computer and want it available to everyone, the wizard has an option to
 install for all users, which does require an administrator.)
 
+> **If Windows asks for administrator approval near the end.** On-device name detection needs the
+> free **Microsoft Visual C++ Runtime**, which most PCs already have. If yours doesn't (or has an
+> older one), the installer installs it, and because it is shared by the whole PC, Windows asks for
+> approval first. If you decline, Philter Desktop still installs, but redacting with a policy that
+> detects names fails with an error until the runtime is installed. Occasionally Windows needs a
+> restart to finish installing the runtime; the installer says so on its last page.
+
 > **A note on Windows security warnings.** The **official signed installer** from
 > [philterd.ai](https://philterd.ai) installs cleanly, with no warning. If you instead build
 > Philter Desktop yourself from source, the resulting installer is unsigned, so Windows may show a
@@ -106,6 +113,11 @@ knowing before you use it:
 - **The license agreement is not shown, and this is not a way to accept it in advance.** The first
   time anyone opens Philter Desktop it still shows the license screen, which has to be accepted before
   the main window appears. See *Your first time opening the program* below.
+- **The Microsoft Visual C++ Runtime is not installed by a `/CURRENTUSER` install.** Installing it
+  needs administrator approval, which a silent install can't ask for. Most PCs already have it; on
+  one that doesn't, redacting with a policy that detects names fails until it is installed. To
+  include it, install with
+  `/ALLUSERS` from an elevated window instead (see below), or install the runtime separately first.
 
 A few more options you can add if you need them:
 
@@ -116,6 +128,9 @@ A few more options you can add if you need them:
   silently).
 - **`/LOG="C:\Some\Folder\install.log"`** writes a record of what the installer did, which is the
   first thing to look at if a silent install did not produce what you expected.
+- **`/NORESTART`** stops the PC from restarting on its own. A silent install restarts Windows
+  automatically in the rare case that installing the Visual C++ Runtime needs it; with this option,
+  restart when convenient instead (redacting with name detection may fail until you do).
 
 Installing a newer version silently works the same way: run the new setup file with the same options
 and it replaces the old copy, keeping policies, contexts, settings, and history.
