@@ -154,12 +154,15 @@ redacted file will look like before anything is written to disk**:
       paragraphs is split into one redaction per paragraph. (**Add…** also lets you type an exact
       paragraph and offset by hand.)
 - **PDF (`.pdf`)**: the redacted PDF shown side by side with the original, with zoom controls and
-  synchronized scrolling, plus an editable list of the redactions on each page.
+  synchronized scrolling, plus an editable list of the redactions on each page. The list's **Source**
+  column says whether each was **Detected** or **Added** by you. To keep something in the output,
+  select it and click **Remove Selected**; the redacted side updates to show it. (If you then change
+  the policy or context, the document is checked again and removed detections come back.)
     - **Redact a region the detector missed by drawing a box.** Turn on **Add Redaction (draw)** in the
       side panel, then drag a rectangle over the area to remove on the **original (left) page**.
       The box is added to the list (marked **Added**), the redacted side updates to show it, and it
       appears in the [report](#generating-a-redaction-report-a-shareable-certificate) as a user-added
-      redaction; select it and click **Remove** to undo it. Because a redacted PDF is flattened to an
+      redaction; select it and click **Remove Selected** to undo it. Because a redacted PDF is flattened to an
       image, the area you draw over is genuinely destroyed in the saved file, not merely hidden.
 - **Email (`.eml` and `.msg`)**: a field-by-field comparison (subject, addresses, and body) showing
   what will be removed, with an editable list of redactions. Each redaction is anchored to a specific

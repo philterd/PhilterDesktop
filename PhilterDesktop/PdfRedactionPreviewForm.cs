@@ -41,6 +41,7 @@ namespace PhilterDesktop
         private byte[] _originalBytes = Array.Empty<byte>();
         private byte[] _redactedBytes = Array.Empty<byte>();
         private List<RedactionSpanEntity> _spans = new();
+        private bool _reapplyPending;
         private bool _loading;
         private bool _busy;
         private bool _unreadableChecked; // the unreadable-text banner is decided once per document
@@ -74,7 +75,7 @@ namespace PhilterDesktop
         // button. Built in code and slotted between the top/bottom bars so the viewer still fills the rest.
         private void BuildRedactionPanel()
         {
-            _sidePanel = new Panel { Dock = DockStyle.Right, Width = 240, Padding = new Padding(8) };
+            _sidePanel = new Panel { Dock = DockStyle.Right, Width = 290, Padding = new Padding(8) };
 
             var title = new Label
             {
@@ -109,8 +110,9 @@ namespace PhilterDesktop
                 MultiSelect = false,
                 HideSelection = false
             };
-            _redactionList.Columns.Add("Type", 110);
-            _redactionList.Columns.Add("Location", 100);
+            _redactionList.Columns.Add("Source", LogicalToDeviceUnits(64));
+            _redactionList.Columns.Add("Type", LogicalToDeviceUnits(110));
+            _redactionList.Columns.Add("Location", LogicalToDeviceUnits(76));
 
             _removeButton = new Button
             {
@@ -196,6 +198,7 @@ namespace PhilterDesktop
             }
 
             _busy = true;
+            _save.Enabled = false; // re-enabled once the new preview is ready
             UseWaitCursor = true;
             _policyCombo.Enabled = false;
             _contextCombo.Enabled = false;
@@ -203,19 +206,20 @@ namespace PhilterDesktop
             {
                 PhileasPolicy policy = CurrentPolicy();
 
-                // Keep any reviewer-added regions across a re-detect (e.g. when the policy/context changes).
-                List<RedactionSpanEntity> userAdded = _spans.Where(s => s.UserAdded).ToList();
-
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 (byte[] redacted, List<RedactionSpanEntity> spans) = await RedactionService.RedactPdfBytesAsync(
                     _originalBytes, policy, _contextCombo.Text, _settings, _filterService);
+
+                // Keep reviewer-added regions across a re-detect, including any drawn while it ran.
+                List<RedactionSpanEntity> userAdded = _spans.Where(s => s.UserAdded).ToList();
                 _spans = spans;
                 _spans.AddRange(userAdded);
+                _reapplyPending = false; // the re-burn below includes them
 
                 // RedactPdfBytesAsync produced the detected spans only; re-burn if there are added ones.
                 if (userAdded.Count > 0)
                 {
-                    redacted = await RedactionService.ApplyPdfSpansToBytesAsync(_originalBytes, _spans, policy, _settings, _filterService);
+                    redacted = await RedactionService.ApplyPdfSpansToBytesAsync(_originalBytes, _spans.ToList(), policy, _settings, _filterService);
                 }
                 stopwatch.Stop();
                 RedactionDurationMs = stopwatch.ElapsedMilliseconds;
@@ -223,7 +227,7 @@ namespace PhilterDesktop
                 _redactedBytes = redacted;
                 _view.SetDocuments(_originalBytes, _redactedBytes, "Original", "Redacted (preview)");
                 RefreshRedactionList();
-                _save.Enabled = true;
+                _save.Enabled = !_reapplyPending; // a box drawn during the re-burn is applied below first
 
                 if (!_unreadableChecked)
                 {
@@ -251,6 +255,12 @@ namespace PhilterDesktop
                 _policyCombo.Enabled = true;
                 _contextCombo.Enabled = true;
                 _busy = false;
+            }
+
+            // A box drawn or removed during the re-burn above still needs applying.
+            if (_reapplyPending)
+            {
+                await ReapplyAsync();
             }
         }
 
@@ -296,12 +306,7 @@ namespace PhilterDesktop
             {
                 return;
             }
-            if (!span.UserAdded)
-            {
-                MessageBox.Show(this, "Only redactions you added here can be removed. To keep a detected item, adjust the policy.",
-                    "Remove Redaction", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
+            // Detected or added, as in the other previews: the PDF is rebuilt from the remaining spans.
             _spans.Remove(span);
             RefreshRedactionList();
             await ReapplyAsync();
@@ -310,38 +315,58 @@ namespace PhilterDesktop
         private void UpdateRemoveEnabled()
         {
             _removeButton.Enabled = _redactionList.SelectedItems.Count > 0
-                && _redactionList.SelectedItems[0].Tag is RedactionSpanEntity { UserAdded: true };
+                && _redactionList.SelectedItems[0].Tag is RedactionSpanEntity;
         }
 
         // Re-burns the current span set (detected + reviewer-added) into the in-memory redacted bytes
         // and refreshes only the redacted pane, keeping the reviewer on the current page.
         private async Task ReapplyAsync()
         {
-            if (_busy || _originalBytes.Length == 0)
+            if (_originalBytes.Length == 0)
             {
+                return;
+            }
+            // Save writes _redactedBytes, which no longer match the list until this finishes.
+            _save.Enabled = false;
+            if (_busy)
+            {
+                _reapplyPending = true; // picked up when the running detect or re-apply finishes
                 return;
             }
             _busy = true;
             UseWaitCursor = true;
+            _policyCombo.Enabled = false;
+            _contextCombo.Enabled = false;
             try
             {
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                _redactedBytes = await RedactionService.ApplyPdfSpansToBytesAsync(
-                    _originalBytes, _spans, CurrentPolicy(), _settings, _filterService);
+                byte[] redacted;
+                do
+                {
+                    // A change made meanwhile (another box, a removal) needs another pass.
+                    _reapplyPending = false;
+                    redacted = await RedactionService.ApplyPdfSpansToBytesAsync(
+                        _originalBytes, _spans.ToList(), CurrentPolicy(), _settings, _filterService);
+                }
+                while (_reapplyPending);
                 stopwatch.Stop();
                 RedactionDurationMs = stopwatch.ElapsedMilliseconds;
 
+                _redactedBytes = redacted;
                 _view.UpdateAfter(_redactedBytes);
                 _save.Enabled = true;
             }
             catch (Exception ex)
             {
+                // Save stays off: the last good preview doesn't match the list any more.
                 MessageBox.Show(this, $"Redaction failed: {ex.Message}", "Redact (Preview)",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             finally
             {
                 UseWaitCursor = false;
+                _policyCombo.Enabled = true;
+                _contextCombo.Enabled = true;
                 _busy = false;
             }
         }
@@ -352,7 +377,8 @@ namespace PhilterDesktop
             _redactionList.Items.Clear();
             foreach (RedactionSpanEntity span in _spans)
             {
-                var item = new ListViewItem(RedactionReport.FriendlyType(span)) { Tag = span };
+                var item = new ListViewItem(span.UserAdded ? "Added" : "Detected") { Tag = span };
+                item.SubItems.Add(span.UserAdded ? "Region" : RedactionReport.FriendlyType(span));
                 item.SubItems.Add(RedactionReport.LocationOf(span));
                 _redactionList.Items.Add(item);
             }
