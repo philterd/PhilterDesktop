@@ -4,6 +4,10 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 ## 1.4.0 (unreleased)
 
+- **Fixed:** **Clear Log File** (in Settings) now deletes the log's older backups too, which also record
+  the names of processed files. If a log file can't be deleted, for example because it's open in another
+  program, you're told which one instead of being told the log was cleared.
+
 - **Changed:** the check that re-scans redacted output for anything still detectable is now called the
   **leftover check**, so it no longer sounds like a guarantee. Right-click a document and choose
   **Check for Leftover PII** (formerly **Verify Redaction**); results appear in the **Leftovers** column

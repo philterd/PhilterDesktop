@@ -48,13 +48,15 @@ Turning on **logging** tells Philter Desktop to keep a running record of what it
 useful if something goes wrong and you (or technical support) need to look into it. The **Open Log
 File** button shows you the log. Logging is **off** by default.
 
-Use **Clear Log File** to permanently delete that log. The log records application activity for
-troubleshooting (errors and the names of files that were processed); it does **not** contain the
-detected or redacted text from your documents. Since the file names themselves can be sensitive, you
-can wipe it whenever you like. A new log starts the next time something is logged.
-
 Once the log reaches about 5 MB it's rolled over to a backup (a few older backups are kept and the
 oldest is discarded), so it never fills up your disk.
+
+Use **Clear Log File** to permanently delete the log, **including those older backups**. The log records
+application activity for troubleshooting (errors and the names of files that were processed); it does
+**not** contain the detected or redacted text from your documents. Since the file names themselves can
+be sensitive, you can wipe it whenever you like. A new log starts the next time something is logged.
+If a log file can't be deleted (for example, because it's open in another program), you're told which
+one, so you can close it and try again.
 
 ## Explorer right-click menu
 

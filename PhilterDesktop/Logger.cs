@@ -223,20 +223,67 @@ namespace PhilterDesktop
         /// <summary>
         /// Clears the log file.
         /// </summary>
-        public static void ClearLog()
+        public static void ClearLog() => ClearLog(LogFilePath);
+
+        /// <summary>The log and its rotated older files, as they exist now.</summary>
+        public static IReadOnlyList<string> ExistingLogFiles() => ExistingLogFiles(LogFilePath);
+
+        /// <summary>
+        /// <paramref name="logPath"/> and its rotated files (<c>.1</c>, <c>.2</c>, …) that exist, the current log
+        /// first. Any numbered file counts, not just up to today's backup limit.
+        /// </summary>
+        internal static IReadOnlyList<string> ExistingLogFiles(string logPath)
+        {
+            string? dir = Path.GetDirectoryName(logPath);
+            if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
+            {
+                return Array.Empty<string>();
+            }
+            string name = Path.GetFileName(logPath);
+            var rotated = Directory.EnumerateFiles(dir, name + ".*")
+                .Where(f => Path.GetFileName(f).Length > name.Length + 1
+                            && Path.GetFileName(f)[(name.Length + 1)..].All(char.IsAsciiDigit))
+                .OrderBy(f => int.TryParse(Path.GetFileName(f)[(name.Length + 1)..], out int n) ? n : int.MaxValue);
+            return (File.Exists(logPath) ? new[] { logPath } : Array.Empty<string>()).Concat(rotated).ToList();
+        }
+
+        /// <summary>
+        /// Deletes <paramref name="logPath"/> and its rotated files. Tries every one, then throws an
+        /// <see cref="IOException"/> naming any it couldn't delete, so a failure is never reported as success.
+        /// </summary>
+        internal static void ClearLog(string logPath)
         {
             lock (_lockObject)
             {
-                try
+                var failures = new List<(string File, Exception Error)>();
+                foreach (string file in ExistingLogFiles(logPath))
                 {
-                    if (File.Exists(LogFilePath))
+                    try
                     {
-                        File.Delete(LogFilePath);
+                        // A read-only file can't be deleted as-is; the user asked for it gone, so clear the flag.
+                        FileAttributes attributes = File.GetAttributes(file);
+                        if (attributes.HasFlag(FileAttributes.ReadOnly))
+                        {
+                            File.SetAttributes(file, attributes & ~FileAttributes.ReadOnly);
+                        }
+                        File.Delete(file);
+                    }
+                    catch (FileNotFoundException)
+                    {
+                        // Already gone (deleted or rolled over since it was listed).
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                    {
+                        failures.Add((file, ex));
                     }
                 }
-                catch
+                if (failures.Count > 0)
                 {
-                    // Silently fail
+                    string names = string.Join(", ", failures.Select(f => Path.GetFileName(f.File)));
+                    throw new IOException(
+                        $"{failures.Count} log file{(failures.Count == 1 ? "" : "s")} couldn't be deleted ({names}). " +
+                        failures[0].Error.Message,
+                        failures[0].Error);
                 }
             }
         }

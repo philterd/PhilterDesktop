@@ -788,9 +788,9 @@ namespace PhilterDesktop
 
         private void BtnClearLog_Click(object sender, EventArgs e)
         {
-            string logFilePath = Logger.LogFilePath;
-
-            if (!File.Exists(logFilePath))
+            // The current log and any older files it was rolled over into.
+            IReadOnlyList<string> logFiles = Logger.ExistingLogFiles();
+            if (logFiles.Count == 0)
             {
                 ShowLogMessage(
                     "There is no log file to clear.",
@@ -801,7 +801,7 @@ namespace PhilterDesktop
             }
 
             DialogResult result = ShowLogMessage(
-                "Permanently delete the application log file?\n\n" +
+                ClearLogQuestion(logFiles.Count) + "\n\n" +
                 "The log records application activity for troubleshooting (such as errors and the " +
                 "names of files that were processed). It does not contain the detected/redacted text " +
                 "from your documents. Clearing it cannot be undone, and a new log will start the next " +
@@ -819,7 +819,7 @@ namespace PhilterDesktop
             {
                 Logger.ClearLog();
                 ShowLogMessage(
-                    "The application log file has been cleared.",
+                    logFiles.Count == 1 ? "The application log file has been cleared." : "The application log files have been cleared.",
                     "Clear Log File",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
@@ -827,12 +827,17 @@ namespace PhilterDesktop
             catch (Exception ex)
             {
                 ShowLogMessage(
-                    $"Failed to clear the log file: {ex.Message}",
-                    "Error",
+                    $"The log wasn't fully cleared. {ex.Message}",
+                    "Clear Log File",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
         }
+
+        /// <summary>The Clear Log prompt's question, counting older files the log was rolled over into.</summary>
+        internal static string ClearLogQuestion(int fileCount) => fileCount <= 1
+            ? "Permanently delete the application log file?"
+            : $"Permanently delete all {fileCount} application log files, including older ones?";
 
         private void BtnSave_Click(object sender, EventArgs e)
         {

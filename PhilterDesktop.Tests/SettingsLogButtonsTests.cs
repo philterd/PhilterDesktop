@@ -148,7 +148,143 @@ namespace PhilterDesktop.Tests
             Assert.False(File.Exists(_log));
         });
 
+        // ---- Older log files ----
+
+        [Fact]
+        public void ClearLog_DeletesTheOlderLogFilesToo() => WithSettings(form =>
+        {
+            WriteLogs("", ".1", ".2", ".3");
+
+            Click(form, "BtnClearLog_Click", answer: DialogResult.Yes);
+
+            Assert.Empty(Logger.ExistingLogFiles());
+            Assert.StartsWith("Permanently delete all 4 application log files, including older ones?", _shown[0].Text);
+            Assert.Equal("The application log files have been cleared.", _shown[1].Text);
+        });
+
+        [Fact]
+        public void ClearLog_WithOnlyOlderFiles_StillClearsThem() => WithSettings(form =>
+        {
+            WriteLogs(".1", ".2");
+
+            Click(form, "BtnClearLog_Click", answer: DialogResult.Yes);
+
+            Assert.DoesNotContain(_shown, m => m.Text == "There is no log file to clear.");
+            Assert.StartsWith("Permanently delete all 2 application log files", _shown[0].Text);
+            Assert.Empty(Logger.ExistingLogFiles());
+        });
+
+        [Fact]
+        public void ClearLog_AfterARealRollover_DeletesEveryFile() => WithSettings(form =>
+        {
+            File.WriteAllText(_log, new string('x', 100));
+            Logger.RotateLogIfNeeded(_log, maxBytes: 10, maxBackups: 3);
+            File.WriteAllText(_log, "new");
+            Assert.Equal(2, Logger.ExistingLogFiles().Count);
+
+            Click(form, "BtnClearLog_Click", answer: DialogResult.Yes);
+
+            Assert.Empty(Logger.ExistingLogFiles());
+        });
+
+        [Fact]
+        public void ExistingLogFiles_FindsEveryNumberedFile_AndNothingElse()
+        {
+            WriteLogs("", ".1", ".3", ".12");
+            File.WriteAllText(_log + ".bak", "");
+            File.WriteAllText(_log + ".1.tmp", "");
+            File.WriteAllText(Path.Combine(_dir, "other.log"), "");
+            File.WriteAllText(Path.Combine(_dir, "application.logs"), "");
+
+            Assert.Equal(new[] { "application.log", "application.log.1", "application.log.3", "application.log.12" },
+                Logger.ExistingLogFiles().Select(Path.GetFileName));
+        }
+
+        [Fact]
+        public void ExistingLogFiles_IsEmptyWhenTheFolderIsMissing() =>
+            Assert.Empty(Logger.ExistingLogFiles(Path.Combine(_dir, "missing", "application.log")));
+
+        [Fact]
+        public void ClearLog_LeavesOtherFilesAlone()
+        {
+            WriteLogs("", ".1");
+            string other = Path.Combine(_dir, "other.log");
+            File.WriteAllText(other, "");
+
+            Logger.ClearLog();
+
+            Assert.True(File.Exists(other));
+        }
+
+        [Fact]
+        public void ClearLog_DeletesAReadOnlyLogFile()
+        {
+            WriteLogs("", ".1");
+            File.SetAttributes(_log + ".1", FileAttributes.ReadOnly);
+
+            Logger.ClearLog();
+
+            Assert.Empty(Logger.ExistingLogFiles());
+        }
+
+        // ---- Failures ----
+
+        [Fact]
+        public void ClearLog_ALockedFile_FailsAndNamesIt_AfterDeletingTheRest()
+        {
+            WriteLogs("", ".1", ".2");
+            using (new FileStream(_log + ".1", FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                IOException error = Assert.Throws<IOException>(() => Logger.ClearLog());
+
+                Assert.StartsWith("1 log file couldn't be deleted (application.log.1).", error.Message);
+                Assert.NotNull(error.InnerException);
+            }
+
+            Assert.Equal(new[] { "application.log.1" }, Logger.ExistingLogFiles().Select(Path.GetFileName));
+        }
+
+        [Fact]
+        public void ClearLog_SeveralLockedFiles_NamesThemAll()
+        {
+            WriteLogs("", ".1");
+            using var a = new FileStream(_log, FileMode.Open, FileAccess.Read, FileShare.None);
+            using var b = new FileStream(_log + ".1", FileMode.Open, FileAccess.Read, FileShare.None);
+
+            IOException error = Assert.Throws<IOException>(() => Logger.ClearLog());
+
+            Assert.StartsWith("2 log files couldn't be deleted (application.log, application.log.1).", error.Message);
+        }
+
+        [Fact]
+        public void ClearLogButton_ALockedFile_ShowsTheFailure_NotSuccess() => WithSettings(form =>
+        {
+            WriteLogs("", ".1");
+            using var locked = new FileStream(_log, FileMode.Open, FileAccess.Read, FileShare.None);
+
+            Click(form, "BtnClearLog_Click", answer: DialogResult.Yes);
+
+            Assert.Equal(2, _shown.Count);
+            Assert.StartsWith("The log wasn't fully cleared. 1 log file couldn't be deleted (application.log).", _shown[1].Text);
+            Assert.DoesNotContain(_shown, m => m.Text.Contains("has been cleared") || m.Text.Contains("have been cleared"));
+        });
+
+        [Theory]
+        [InlineData(1, "Permanently delete the application log file?")]
+        [InlineData(2, "Permanently delete all 2 application log files, including older ones?")]
+        [InlineData(4, "Permanently delete all 4 application log files, including older ones?")]
+        public void ClearLogQuestion_SaysHowManyFiles(int count, string question) =>
+            Assert.Equal(question, SettingsForm.ClearLogQuestion(count));
+
         // ---- Helpers ----
+
+        private void WriteLogs(params string[] suffixes)
+        {
+            foreach (string suffix in suffixes)
+            {
+                File.WriteAllText(_log + suffix, "entry");
+            }
+        }
 
         private void Click(SettingsForm form, string handler, DialogResult answer = DialogResult.OK)
         {
