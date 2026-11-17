@@ -2,63 +2,68 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
-## 1.4.0 (unreleased)
+## 1.4.0 — 2026-11-17
 
-- **Changed:** every new version of Philter Desktop asks you to accept the license agreement once, the first
-  time you open it after updating, whether or not the terms changed.
-
-- **Improved:** the setup wizard shows Philter Desktop artwork instead of the installer's generic images,
-  and opens on a Welcome page.
-
-- **Changed:** the setup wizard's **Create a desktop icon** option is now ticked by default. Silent
-  installs still add no desktop icon unless asked for one with `/TASKS` or `/MERGETASKS`.
-- **Changed:** the setup wizard no longer offers to start Philter Desktop at sign-in. Turn on **Start
-  Philter Desktop at sign-in** in Settings instead. Existing installs that use it keep it.
-
-- **Changed:** pressing Enter on the license screen no longer accepts the license. Accepting now takes a
-  click on **I Agree** (or Alt+A), so the terms can't be accepted by accident.
+- **New:** work-use licenses. Philter Desktop is free for personal use and for trying it out; using it
+  for work needs a license. Choose **Help → Manage License…**, enter the email address you bought it
+  with, and type in the code we email you. A computer that's never online can import a license file
+  instead. The license is checked again about once a month, and nothing in the app is ever locked.
+- **New:** when the main window opens, a short screen asks whether you're using Philter Desktop for
+  **Personal Use** or **Work Use**, alongside the reminder to review every redacted document. It stops
+  appearing once a work license is entered.
+- **New:** automatic update checks. Philter Desktop checks philterd.ai for a newer version when you open
+  it and about once a day, sending only its version number, and points you to the download page when
+  there is one. Turn this off in Settings, or for every user with the `DisableAutoUpdateCheck` policy.
+  **Help → Check for Updates…** checks at any time.
+- **New:** custom PhEye models can use any redaction strategy, such as abbreviating names to initials.
+  Select the model on the Policy Editor's **PhEye** tab and click **Strategies…**; a new **Strategy**
+  column shows what each model uses.
+- **New:** a **Leniency** option for the Phone Number filter, in its **Configure…** dialog in the Policy
+  Editor. A stricter level avoids false matches, such as years in policies that check several regions,
+  but skips local numbers with no area code, such as *555-1234*. The default is unchanged.
+- **New:** the license, notices, and full third-party license texts are installed alongside the app, and
+  **Help → About** links to them.
 
 - **Improved:** in **Redact with Preview** for PDFs, **Remove Selected** now removes any redaction,
-  including detected ones, as the other previews do. Before, it only worked on regions you drew and was
-  greyed out otherwise. A new **Source** column shows whether each redaction was **Detected** or
-  **Added**.
-- **Fixed:** in **Redact with Preview** for PDFs, saving right after drawing a box could write the PDF
-  without that box, and quick successive changes could be dropped. **Save** now waits until the
-  preview has caught up with every change.
-
-- **Fixed:** **Clear Log File** (in Settings) now deletes the log's older backups too, which also record
-  the names of processed files. If a log file can't be deleted, for example because it's open in another
-  program, you're told which one instead of being told the log was cleared.
+  including detected ones, as the other previews do. A new **Source** column shows whether each
+  redaction was **Detected** or **Added**.
+- **Improved:** the setup wizard shows Philter Desktop artwork and opens on a Welcome page.
+- **Improved:** the leftover check's result window is clearer and fits its content; a caveat about parts
+  that weren't checked is no longer cut off.
 
 - **Changed:** the check that re-scans redacted output for anything still detectable is now called the
   **leftover check**, so it no longer sounds like a guarantee. Right-click a document and choose
   **Check for Leftover PII** (formerly **Verify Redaction**); results appear in the **Leftovers** column
-  (formerly **Verification**) as **None found** (formerly **Clean**) or **N found**. It works exactly as
-  before, and earlier results are kept.
+  (formerly **Verification**) as **None found** (formerly **Clean**) or **N found**. It works as before,
+  and earlier results are kept.
+- **Changed:** each new version of Philter Desktop asks you to accept the license agreement once, the
+  first time you open it after updating. The setup program no longer shows the license; it's accepted in
+  the app.
+- **Changed:** pressing Enter on the license screen no longer accepts the license. Accepting takes a
+  click on **I Agree** (or Alt+A).
+- **Changed:** the setup wizard's **Create a desktop icon** option is ticked by default. Silent installs
+  still add no desktop icon unless asked for one with `/TASKS` or `/MERGETASKS`.
+- **Changed:** the setup wizard no longer offers to start Philter Desktop at sign-in. Turn on **Start
+  Philter Desktop at sign-in** in Settings instead; existing installs that use it keep it.
+
+- **Fixed:** on-device name detection now works on PCs that lack the Microsoft Visual C++ Runtime, such
+  as a fresh Windows install or Windows on ARM in Parallels. The installer adds the runtime when it's
+  missing or too old, asking for administrator approval only then.
 - **Fixed:** redacted PDFs are no longer reported as having no leftover PII. Their pages are flattened
   images with no text, so the check couldn't read them and always found nothing. PDFs now show **Not
-  checked (PDF)**, **Check for Leftover PII** is unavailable for them, and their reports say they weren't
-  checked. Review redacted PDFs by eye. The automatic check still runs on PDFs, so text that leaked into
-  one would still be reported. The built-in self-test (`--selftest`) likewise reports PDF as **NOT
-  CHECKED** instead of passed, and still fails if a redacted PDF contains readable PII.
-- **Improved:** the leftover check's result window is clearer and fits its content. A caveat about parts
-  that weren't checked is no longer cut off.
+  checked (PDF)** and their reports say so; review redacted PDFs by eye. Text that leaked into a
+  redacted PDF would still be reported.
+- **Fixed:** in **Redact with Preview** for PDFs, saving right after drawing a box could save the PDF
+  without that box, and quick successive changes could be dropped. **Save** now waits until the preview
+  has caught up.
 - **Fixed:** findings are named properly in the leftover check, the PDF preview, and reports: for
-  example **City**, **State Abbreviation**, and **SSN** instead of *Locationcity*, *Stateabbreviation*, and
-  *Ssn*. A name found by on-device detection shows as **Name** rather than *Other*, and a custom
+  example **City**, **State Abbreviation**, and **SSN** instead of *Locationcity*, *Stateabbreviation*,
+  and *Ssn*. A name found by on-device detection shows as **Name** rather than *Other*, and a custom
   identifier shows its own label.
-
-- **New:** custom PhEye models can use any redaction strategy, such as abbreviating names to initials.
-  Select the model on the Policy Editor's **PhEye** tab and click **Strategies…**; a new **Strategy**
-  column shows what each model uses.
-
-- **New:** a **Leniency** option for the Phone Number filter, in its **Configure…** dialog in the Policy
-  Editor. A stricter level avoids false matches, such as years in policies that check several regions,
-  but skips local numbers with no area code, such as *555-1234*. The default is unchanged.
-
-- **Fixed:** on-device name detection now works on PCs that lack the Microsoft Visual C++ Runtime,
-  such as a fresh Windows install or Windows on ARM in Parallels. The installer adds the runtime when
-  it is missing or too old, asking for administrator approval only then.
+- **Fixed:** **Clear Log File** (in Settings) now deletes the log's older backups too, which also record
+  the names of processed files. If a log file can't be deleted, you're told which one instead of being
+  told the log was cleared.
+- **Fixed:** the update notice now links to the public download page.
 
 ## 1.3.1 — 2026-11-12
 
