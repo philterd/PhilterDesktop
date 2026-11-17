@@ -141,8 +141,8 @@ the question (see
 The very first time you run Philter Desktop, it shows a **license** screen with the **Philterd
 Commercial License Agreement** (the license for the official build), and a link to the **Apache License
 2.0** that covers the open-source code. Read it and click **I Agree** to continue (or **I Disagree** to
-close the program). You accept it once; if a later version of Philter Desktop comes with an updated
-license agreement, this screen appears once more so you can review and accept the new terms.
+close the program). Each new version of Philter Desktop shows this screen once more, the first time you
+open it after updating, so you always know the terms the version you're using comes with.
 
 Then, when you start Philter Desktop and its window opens, a short screen covers two things. If
 Philter Desktop keeps running in the system tray (for example, watching folders), it appears the first
@@ -218,8 +218,8 @@ first open its window, and about once a day while it keeps running in the backgr
 off on the [Notifications tab](settings.md#notifications-tab) in Settings). You can also check at any
 time with **Help → Check for Updates…**. If a newer version exists, it lets you know (with a notification
 near the clock if its window isn't open) and points you to the download page. It never downloads or
-installs anything on its own. If the new version comes with an updated license agreement, you're asked
-to review and accept it the first time you open the new version.
+installs anything on its own. The first time you open the new version, you're asked to review and accept
+the license agreement again.
 
 ## Uninstalling Philter Desktop
 

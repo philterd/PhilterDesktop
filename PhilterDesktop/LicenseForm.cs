@@ -150,25 +150,21 @@ namespace PhilterDesktop
         }
 
         /// <summary>Whether the license dialog should be shown on this launch.</summary>
-        public static bool ShouldShow() => ShouldShow(BundledEula.Version());
+        public static bool ShouldShow() => ShouldShow(UpdateChecker.CurrentVersion());
 
         /// <summary>
-        /// Shown when never accepted, or when <paramref name="bundledVersion"/> is newer than the version
-        /// last accepted. An acceptance from before versioning counts as older than any version. If the
-        /// bundled EULA declares no version, a prior acceptance stands.
+        /// Every release asks once: shown when never accepted, or when accepted at any app version other than
+        /// <paramref name="appVersion"/> (including acceptances recorded before this was tracked).
         /// </summary>
-        internal static bool ShouldShow(Version? bundledVersion)
-        {
-            if (!Acknowledgements.Store.HasAccepted(Acknowledgements.LicenseKey))
-            {
-                return true;
-            }
-            return bundledVersion is not null && EulaVersion.IsNewer(bundledVersion, AcceptedEulaVersion());
-        }
+        internal static bool ShouldShow(Version appVersion) =>
+            !Acknowledgements.Store.HasAccepted(Acknowledgements.LicenseKey) || AcceptedAppVersion() != ThreeParts(appVersion);
 
-        /// <summary>The EULA version the user last accepted, or null (never, or before versioning).</summary>
-        internal static Version? AcceptedEulaVersion() =>
-            EulaVersion.TryParse(Acknowledgements.Store.GetValue(Acknowledgements.LicenseVersionKey));
+        /// <summary>The app version at which the user last accepted, or null (never, or before it was recorded).</summary>
+        internal static Version? AcceptedAppVersion() =>
+            Version.TryParse(Acknowledgements.Store.GetValue(Acknowledgements.LicenseAppVersionKey), out Version? v) ? ThreeParts(v) : null;
+
+        // 1.4 and 1.4.0 are the same release.
+        private static Version ThreeParts(Version v) => new(Math.Max(v.Major, 0), Math.Max(v.Minor, 0), Math.Max(v.Build, 0));
 
         /// <summary>
         /// Shows the license screen if acceptance is owed. On Agree, records the acceptance and returns true;
@@ -189,12 +185,16 @@ namespace PhilterDesktop
             return true;
         }
 
-        /// <summary>Persists that the user accepted the bundled EULA (and its version, when it declares one).</summary>
-        public static void RememberAccepted() => RememberAccepted(BundledEula.Version());
+        /// <summary>
+        /// Persists that the user accepted, at this app version, and which EULA version they saw (when it declares
+        /// one).
+        /// </summary>
+        public static void RememberAccepted() => RememberAccepted(UpdateChecker.CurrentVersion(), BundledEula.Version());
 
-        internal static void RememberAccepted(Version? bundledVersion)
+        internal static void RememberAccepted(Version appVersion, Version? bundledVersion)
         {
             Acknowledgements.Store.RememberAccepted(Acknowledgements.LicenseKey);
+            Acknowledgements.Store.SetValue(Acknowledgements.LicenseAppVersionKey, ThreeParts(appVersion).ToString());
             if (bundledVersion is not null)
             {
                 Acknowledgements.Store.SetValue(Acknowledgements.LicenseVersionKey, bundledVersion.ToString());

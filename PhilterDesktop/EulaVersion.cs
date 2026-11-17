@@ -19,7 +19,8 @@ using System.Text.RegularExpressions;
 namespace PhilterDesktop
 {
     /// <summary>
-    /// Reads and compares the EULA's version, declared as a "Version 2.0" line in the agreement's header.
+    /// Reads the EULA's version, declared as a "Version 2.0" line in the agreement's header. Recorded when the
+    /// user agrees; whether to ask again is decided by the app's version (see LicenseForm.ShouldShow).
     /// </summary>
     internal static class EulaVersion
     {
@@ -47,12 +48,6 @@ namespace PhilterDesktop
         public static Version? TryParse(string? value) =>
             Version.TryParse(value?.Trim(), out Version? v) ? Normalize(v) : null;
 
-        /// <summary>
-        /// Whether <paramref name="candidate"/> is newer than <paramref name="baseline"/>. A null baseline
-        /// (nothing versioned accepted yet) is older than any version; an unparseable candidate is never newer.
-        /// </summary>
-        public static bool IsNewer(Version? candidate, Version? baseline) =>
-            candidate is not null && (baseline is null || Normalize(candidate) > Normalize(baseline));
 
         // "2.0" and "2.0.0" are the same version; System.Version treats missing parts as -1.
         private static Version Normalize(Version v) =>

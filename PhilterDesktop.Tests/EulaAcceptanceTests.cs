@@ -20,8 +20,8 @@ using Xunit;
 namespace PhilterDesktop.Tests
 {
     /// <summary>
-    /// First-run EULA acceptance: agreeing is persisted with the EULA's version, so the dialog returns only
-    /// when a newer EULA ships.
+    /// First-run EULA acceptance: agreeing is persisted with the app version, so every new release asks once
+    /// (the EULA's own version is recorded too).
     /// The previous opt-out "Don't show this again" checkbox is gone — leaving it unchecked used to
     /// re-prompt on every launch. Tests use an in-memory acceptance store so the real per-user
     /// registry is never touched.
@@ -115,77 +115,98 @@ namespace PhilterDesktop.Tests
             Assert.Null(typeof(LicenseForm).GetProperty("DoNotShowAgain", flags));
         }
 
-        // --- Versioned acceptance ---------------------------------------------
+        // --- Every release asks once ----------------------------------------
+
+        private static readonly Version App140 = new(1, 4, 0);
 
         [Fact]
-        public void AcceptingAVersion_StopsReprompting_ForThatVersion() => WithStore(store =>
+        public void AcceptingAtAVersion_StopsAskingAtThatVersion() => WithStore(store =>
         {
-            Assert.True(LicenseForm.ShouldShow(V2));
-            LicenseForm.RememberAccepted(V2);
-            Assert.False(LicenseForm.ShouldShow(V2));
-            Assert.Equal(new Version(2, 0, 0, 0), LicenseForm.AcceptedEulaVersion());
-        });
-
-        [Fact]
-        public void RememberAccepted_StoresTheVersion() => WithStore(store =>
-        {
-            LicenseForm.RememberAccepted(new Version(2, 1));
-            Assert.True(store.HasAccepted(Acknowledgements.LicenseKey));
-            Assert.Equal(new Version(2, 1, 0, 0), LicenseForm.AcceptedEulaVersion());
-        });
-
-        [Fact]
-        public void NewerEula_Reprompts() => WithStore(store =>
-        {
-            LicenseForm.RememberAccepted(V2);
-            Assert.True(LicenseForm.ShouldShow(new Version(2, 1)));
-        });
-
-        // Acceptances recorded before versioning existed carry no version, so any versioned EULA re-prompts.
-        [Fact]
-        public void PreVersioningAcceptance_RepromptsForAVersionedEula() => WithStore(store =>
-        {
-            store.RememberAccepted(Acknowledgements.LicenseKey);
-            Assert.True(LicenseForm.ShouldShow(V2));
+            Assert.True(LicenseForm.ShouldShow(App140));
+            LicenseForm.RememberAccepted(App140, V2);
+            Assert.False(LicenseForm.ShouldShow(App140));
         });
 
         [Theory]
-        [InlineData("2.0.0")]   // same version, different spelling
-        [InlineData("1.0")]     // an older EULA (e.g. reinstalling an older release)
-        public void SameOrOlderEula_DoesNotReprompt(string bundled) => WithStore(store =>
+        [InlineData("1.4.1")] // a patch release
+        [InlineData("1.5.0")]
+        [InlineData("2.0.0")]
+        public void EveryNewVersion_AsksAgain_EvenWithTheSameLicense(string next) => WithStore(store =>
         {
-            LicenseForm.RememberAccepted(V2);
-            Assert.False(LicenseForm.ShouldShow(Version.Parse(bundled)));
-        });
-
-        // If the bundled EULA is missing or unversioned, a prior acceptance stands rather than nagging.
-        [Fact]
-        public void UnversionedBundledEula_KeepsPriorAcceptance() => WithStore(store =>
-        {
-            LicenseForm.RememberAccepted(V2);
-            Assert.False(LicenseForm.ShouldShow(null));
+            LicenseForm.RememberAccepted(App140, V2);
+            Assert.True(LicenseForm.ShouldShow(Version.Parse(next)));
         });
 
         [Fact]
-        public void UnversionedBundledEula_StillShowsOnFirstRun() =>
-            WithStore(store => Assert.True(LicenseForm.ShouldShow(null)));
-
-        [Fact]
-        public void AcceptingAnUnversionedEula_RecordsOnlyTheFlag() => WithStore(store =>
+        public void AnOlderVersion_AsksAgainToo() => WithStore(store =>
         {
-            LicenseForm.RememberAccepted(null);
-            Assert.True(store.HasAccepted(Acknowledgements.LicenseKey));
-            Assert.Null(store.GetValue(Acknowledgements.LicenseVersionKey));
-            Assert.True(LicenseForm.ShouldShow(V2)); // the next versioned EULA asks again
+            // Reinstalling an older release is a different version: it asks rather than assuming.
+            LicenseForm.RememberAccepted(App140, V2);
+            Assert.True(LicenseForm.ShouldShow(new Version(1, 3, 1)));
         });
 
+        [Theory]
+        [InlineData("1.4")]       // the same release, spelled differently
+        [InlineData("1.4.0.0")]
+        public void TheSameVersion_SpelledDifferently_DoesNotAsk(string same) => WithStore(store =>
+        {
+            LicenseForm.RememberAccepted(App140, V2);
+            Assert.False(LicenseForm.ShouldShow(Version.Parse(same)));
+        });
+
+        // Acceptances from releases that didn't record a version (up to 1.3.x) ask once on upgrading.
         [Fact]
-        public void CorruptStoredVersion_IsTreatedAsUnaccepted() => WithStore(store =>
+        public void AnAcceptanceWithNoAppVersion_AsksOnce() => WithStore(store =>
         {
             store.RememberAccepted(Acknowledgements.LicenseKey);
-            store.SetValue(Acknowledgements.LicenseVersionKey, "garbage");
-            Assert.Null(LicenseForm.AcceptedEulaVersion());
-            Assert.True(LicenseForm.ShouldShow(V2));
+            store.SetValue(Acknowledgements.LicenseVersionKey, "2.0");
+            Assert.True(LicenseForm.ShouldShow(App140));
+
+            LicenseForm.RememberAccepted(App140, V2);
+            Assert.False(LicenseForm.ShouldShow(App140));
+        });
+
+        [Fact]
+        public void ACorruptStoredAppVersion_Asks() => WithStore(store =>
+        {
+            store.RememberAccepted(Acknowledgements.LicenseKey);
+            store.SetValue(Acknowledgements.LicenseAppVersionKey, "garbage");
+            Assert.Null(LicenseForm.AcceptedAppVersion());
+            Assert.True(LicenseForm.ShouldShow(App140));
+        });
+
+        [Fact]
+        public void TheAppVersionAlone_IsNotEnough_WithoutTheAcceptance() => WithStore(store =>
+        {
+            store.SetValue(Acknowledgements.LicenseAppVersionKey, "1.4.0");
+            Assert.True(LicenseForm.ShouldShow(App140));
+        });
+
+        [Fact]
+        public void Accepting_RecordsTheAppVersion_AndTheLicenseVersion() => WithStore(store =>
+        {
+            LicenseForm.RememberAccepted(new Version(1, 4, 0, 7), new Version(2, 1));
+            Assert.True(store.HasAccepted(Acknowledgements.LicenseKey));
+            Assert.Equal("1.4.0", store.GetValue(Acknowledgements.LicenseAppVersionKey));
+            Assert.Equal(new Version(1, 4, 0), LicenseForm.AcceptedAppVersion());
+            Assert.Equal("2.1", store.GetValue(Acknowledgements.LicenseVersionKey)); // kept as a record
+        });
+
+        [Fact]
+        public void AnUnversionedLicense_StillRecordsTheAppVersion() => WithStore(store =>
+        {
+            LicenseForm.RememberAccepted(App140, null);
+            Assert.Null(store.GetValue(Acknowledgements.LicenseVersionKey));
+            Assert.False(LicenseForm.ShouldShow(App140));
+        });
+
+        [Fact]
+        public void TheRunningApp_IsJudgedByItsOwnVersion() => WithStore(store =>
+        {
+            Assert.True(LicenseForm.ShouldShow());
+            LicenseForm.RememberAccepted();
+            Assert.Equal(UpdateChecker.CurrentVersion(), LicenseForm.AcceptedAppVersion());
+            Assert.False(LicenseForm.ShouldShow());
         });
 
         // When nothing is owed the gate returns at once without showing a dialog (a dialog would block here).
@@ -199,8 +220,9 @@ namespace PhilterDesktop.Tests
         [Fact]
         public void LicenseKeys_AreDistinct()
         {
-            Assert.NotEqual(Acknowledgements.LicenseKey, Acknowledgements.LicenseVersionKey);
-            Assert.NotEqual(Acknowledgements.LicenseVersionKey, Acknowledgements.RedactionNoticeKey);
+            string[] keys = { Acknowledgements.LicenseKey, Acknowledgements.LicenseVersionKey,
+                              Acknowledgements.LicenseAppVersionKey, Acknowledgements.RedactionNoticeKey };
+            Assert.Equal(keys.Length, keys.Distinct().Count());
         }
 
         // The EULA copied next to the binaries must declare a version, or upgrades can't re-prompt.

@@ -134,7 +134,7 @@ file), and the `DisableAutoUpdateCheck` policy doesn't turn it off. A computer t
 can still be licensed with a license file; the monthly check then simply never happens.
 
 **License acceptance.** Each Windows user accepts the license agreement the first time they open
-Philter Desktop, and again only when a new version ships a newer agreement. The setup program does not
+Philter Desktop, and again once for each new version. The setup program does not
 ask for acceptance, so silent and managed installs need no extra steps.
 
 ## Important reminder about redacted documents

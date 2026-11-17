@@ -4,6 +4,9 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 ## 1.4.0 (unreleased)
 
+- **Changed:** every new version of Philter Desktop asks you to accept the license agreement once, the first
+  time you open it after updating, whether or not the terms changed.
+
 - **Improved:** the setup wizard shows Philter Desktop artwork instead of the installer's generic images,
   and opens on a Welcome page.
 

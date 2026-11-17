@@ -85,8 +85,11 @@ namespace PhilterDesktop
         /// <summary>License / EULA acceptance flag (kept as "EulaAccepted" for continuity).</summary>
         internal const string LicenseKey = "EulaAccepted";
 
-        /// <summary>The EULA version the user last agreed to (absent for pre-versioning acceptances).</summary>
+        /// <summary>The EULA version the user last agreed to (a record only; absent for pre-versioning acceptances).</summary>
         internal const string LicenseVersionKey = "EulaAcceptedVersion";
+
+        /// <summary>The app version at which the user last agreed; any other version asks again.</summary>
+        internal const string LicenseAppVersionKey = "EulaAcceptedAppVersion";
 
         /// <summary>Redaction-review notice acceptance flag.</summary>
         internal const string RedactionNoticeKey = "RedactionNoticeAccepted";

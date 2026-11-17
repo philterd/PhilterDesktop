@@ -70,26 +70,5 @@ namespace PhilterDesktop.Tests
         [InlineData("2.0-beta")]
         public void TryParse_ReturnsNull_ForNonVersions(string? value) =>
             Assert.Null(EulaVersion.TryParse(value));
-
-        [Theory]
-        [InlineData("2.1", "2.0", true)]
-        [InlineData("3.0", "2.9", true)]
-        [InlineData("2.0", "2.0", false)]
-        [InlineData("2.0", "2.0.0", false)]   // same version, different spelling
-        [InlineData("2.0.0", "2.0", false)]
-        [InlineData("1.0", "2.0", false)]
-        public void IsNewer_ComparesVersions(string candidate, string baseline, bool expected) =>
-            Assert.Equal(expected, EulaVersion.IsNewer(Version.Parse(candidate), Version.Parse(baseline)));
-
-        [Fact]
-        public void IsNewer_AnyVersionBeatsNoBaseline() =>
-            Assert.True(EulaVersion.IsNewer(new Version(1, 0), null));
-
-        [Fact]
-        public void IsNewer_NoCandidateIsNeverNewer()
-        {
-            Assert.False(EulaVersion.IsNewer(null, new Version(1, 0)));
-            Assert.False(EulaVersion.IsNewer(null, null));
-        }
     }
 }

@@ -1540,7 +1540,7 @@ namespace PhilterDesktop
         }
 
         // A start at sign-in skips the license screen, and a second launch only brings this instance forward,
-        // so owed acceptance (e.g. an upgrade shipped newer terms) is asked for when the window first opens.
+        // so owed acceptance (every upgrade asks once) is asked for when the window first opens.
         // Disagreeing exits.
         private bool _licenseGateOpen;
 

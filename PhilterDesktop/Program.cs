@@ -90,8 +90,8 @@ namespace PhilterDesktop
                 a.Equals(StartupManager.MinimizedSwitch, StringComparison.OrdinalIgnoreCase) ||
                 a.Equals("-m", StringComparison.OrdinalIgnoreCase));
 
-            // The license agreement, shown until accepted (and again when a release ships a newer EULA
-            // version). Skipped during a silent tray auto-start; disagreeing exits without starting.
+            // The license agreement, shown until accepted, and again once for every new version of the app.
+            // Skipped during a silent tray auto-start; disagreeing exits without starting.
             if (!startMinimized)
             {
                 if (!LicenseForm.RunGateIfNeeded())
