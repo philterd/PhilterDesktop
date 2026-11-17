@@ -64,6 +64,9 @@ Requires **Inno Setup 6.3+** (`ISCC.exe` on PATH or in the default install locat
 - Installs the **Microsoft Visual C++ Runtime** when the machine needs it. ONNX Runtime (on-device
   name detection) links against it, and a clean Windows install may not have it. See
   [Visual C++ Runtime](#visual-c-runtime) below.
+- Uses Philter-themed wizard images (`images/installer/wizard.png` for the Welcome and Finished pages'
+  side panel, `wizard-small.png` for the corner of the others). Keep the side panel at 164:314 and the
+  corner image square, at least 202x386 and 58x58 so they stay sharp at high display scaling.
 - Lists itself in Add/Remove Programs as just **Philter Desktop** (`UninstallDisplayName`); the
   version shows in that list's own Version column.
 - One optional task: a desktop icon (ticked in the wizard; a silent install adds it only when

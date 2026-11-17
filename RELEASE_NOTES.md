@@ -4,6 +4,9 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 ## 1.4.0 (unreleased)
 
+- **Improved:** the setup wizard shows Philter Desktop artwork instead of the installer's generic images,
+  and opens on a Welcome page.
+
 - **Changed:** the setup wizard's **Create a desktop icon** option is now ticked by default. Silent
   installs still add no desktop icon unless asked for one with `/TASKS` or `/MERGETASKS`.
 - **Changed:** the setup wizard no longer offers to start Philter Desktop at sign-in. Turn on **Start

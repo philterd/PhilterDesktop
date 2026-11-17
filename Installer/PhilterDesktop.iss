@@ -56,6 +56,12 @@ OutputBaseFilename=PhilterDesktop-Setup-{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+; Philter-themed wizard images: the side panel of the Welcome and Finished pages, and the square in the
+; corner of the others.
+WizardImageFile=..\images\installer\wizard.png
+WizardSmallImageFile=..\images\installer\wizard-small.png
+; Open on the Welcome page so the Philter side panel greets people (Inno 6 hides it by default).
+DisableWelcomePage=no
 ; No installer license page: the app's first-run gate records EULA acceptance per Windows user.
 ; When the build passes /DSign, sign the installer AND the generated uninstaller. The "philtersign"
 ; sign tool is registered on the ISCC command line by build-setup.ps1 (/Sphiltersign=...).

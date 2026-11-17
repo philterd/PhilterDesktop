@@ -119,6 +119,43 @@ namespace PhilterDesktop.Tests
             Assert.Contains("if (Item = Lowercase(Name)) or (Item = '*' + Lowercase(Name)) then", iss);
         }
 
+        [Theory]
+        [InlineData("WizardImageFile", 164.0 / 314.0)] // the Welcome and Finished pages' side panel
+        [InlineData("WizardSmallImageFile", 1.0)]      // the square in the other pages' corner
+        public void WizardImages_ArePhilterThemed_AndShapedForTheirSpace(string directive, double aspect)
+        {
+            Match m = Regex.Match(InnoScript(), @"(?m)^" + directive + @"=(.+)$");
+            Assert.True(m.Success, directive + " isn't set, so the installer shows Inno's generic image.");
+            string iss = InstallerPath();
+            string image = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(iss)!, m.Groups[1].Value.Trim()));
+            Assert.True(File.Exists(image), "Missing " + image + ".");
+
+            using var bitmap = new System.Drawing.Bitmap(image);
+            Assert.InRange((double)bitmap.Width / bitmap.Height, aspect * 0.98, aspect * 1.02);
+            // Sharp at high display scaling (Inno recommends more than 202x386 and 58x58).
+            Assert.True(bitmap.Width >= (aspect < 1 ? 202 : 58), $"{image} is {bitmap.Width}px wide.");
+        }
+
+        [Fact]
+        public void Setup_OpensOnTheWelcomePage_SoTheArtworkIsSeen()
+        {
+            // Inno 6 skips the Welcome page unless told otherwise; without it the side panel only shows at the end.
+            Assert.Matches(@"(?m)^DisableWelcomePage=no\s*$", InnoScript());
+        }
+
+        private static string InstallerPath()
+        {
+            for (DirectoryInfo? dir = new(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
+            {
+                string candidate = Path.Combine(dir.FullName, "Installer", "PhilterDesktop.iss");
+                if (File.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+            throw new FileNotFoundException("Could not locate Installer\\PhilterDesktop.iss");
+        }
+
         private static string TaskEntry(string task) => Assert.Single(
             InnoScript().Split('\n').Select(l => l.Trim()),
             l => l.StartsWith("Name: \"" + task + "\"", StringComparison.Ordinal));

@@ -3,6 +3,8 @@ images/*
 !images/PhilterDesktop.ico
 # The main-window screenshot is shown in README.md.
 !images/main-form.png
+# The setup wizard's images are compiled into the installer.
+!images/installer/
 *.swp
 *.*~
 project.lock.json
