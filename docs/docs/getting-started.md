@@ -33,12 +33,8 @@ To install:
    permission.
 3. On the **Select Destination Location** page, click **Next** to accept the suggested folder. (There
    is no reason to change it unless you keep programs somewhere particular.)
-4. On the **Select Additional Tasks** page, tick any optional extras you want and click **Next**. Both
-   are off by default and both are safe to leave alone; the next section explains what they do.
-
-    ![The setup wizard's Select Additional Tasks page, with unticked checkboxes for a desktop shortcut and for starting automatically at sign-in](img/options.png)
-
-    *The two optional extras: a desktop shortcut, and starting automatically when you sign in.*
+4. On the **Select Additional Tasks** page, choose whether to add a desktop shortcut (it's ticked) and
+   click **Next**.
 
 5. On the **Ready to Install** page, click **Install**. This is your last chance to go **Back** and
    change an answer.
@@ -55,14 +51,14 @@ option.
 
 ### The choices the setup wizard offers
 
-The **Select Additional Tasks** page shown above offers a couple of optional checkboxes; you can leave
-them at their defaults:
+The **Select Additional Tasks** page offers one option:
 
-- **Create a desktop icon**: adds a Philter Desktop shortcut to your desktop. (Off by default.)
-- **Start Philter Desktop automatically when I sign in**: has Philter Desktop launch quietly each
-  time you sign in to Windows, running in the background so it can watch folders for you. Turn this on
-  only if you plan to use the [watched folders](watched-folders.md) feature; otherwise leave it off.
-  (Off by default. You can also change this later, from inside the program's Settings.)
+- **Create a desktop icon**: adds a Philter Desktop shortcut to your desktop. (On by default; untick
+  it if you don't want one.)
+
+To have Philter Desktop start each time you sign in to Windows, for example to keep
+[watched folders](watched-folders.md) running, turn on **Start Philter Desktop at sign-in** in the
+program's [Settings](settings.md#start-automatically-at-sign-in) after installing.
 
 By default the program installs **only for you** and does **not** require administrator permission. (If
 you are setting up a shared computer and want it available to everyone, the wizard has an option to
@@ -106,9 +102,8 @@ The installation itself is exactly the one the wizard performs with its default 
 picking the right version for your PC's processor. A few things follow from that, and are worth
 knowing before you use it:
 
-- **No desktop icon, and no starting at sign-in.** Both are off by default, and there is no wizard to
-  turn them on. To include them anyway, add `/TASKS="desktopicon,autostart"`. You can also turn on
-  start-at-sign-in later from inside the program's Settings.
+- **No desktop icon.** A silent install doesn't add one. To include it, add `/TASKS="desktopicon"`.
+  Starting at sign-in isn't an installer option; turn it on from inside the program's Settings.
 - **Philter Desktop does not open when the install finishes.** Start it from the Start menu.
 - **The license agreement is not shown, and this is not a way to accept it in advance.** The first
   time anyone opens Philter Desktop it still shows the license screen, which has to be accepted before

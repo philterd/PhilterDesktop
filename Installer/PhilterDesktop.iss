@@ -1,9 +1,8 @@
 ; Inno Setup script for Philter Desktop.
 ;
 ; This packages the `dotnet publish` output into a single setup .exe for direct download. It
-; installs per-user by default (no admin required), and its optional "start at sign-in" task writes
-; the SAME HKCU\Run entry the app's own Settings toggle uses (StartupManager), so the two stay
-; consistent.
+; installs per-user by default (no admin required). Starting at sign-in is turned on from the app's
+; Settings (StartupManager), not offered here; uninstalling removes that entry however it was set.
 ;
 ; ONE installer covers BOTH architectures. build-setup.ps1 publishes win-x64 and win-arm64 and
 ; passes both publish dirs; the [Files] entries below pick the matching set at install time, so
@@ -77,8 +76,9 @@ MinVersion=10.0.17763
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "autostart"; Description: "Start {#AppName} automatically when I sign in (runs minimized to the tray and watches folders)"; GroupDescription: "Startup:"; Flags: unchecked
+; The desktop icon is ticked in the wizard; a silent install adds it only when /TASKS or /MERGETASKS asks
+; (see DesktopIconWanted).
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
 ; Arch-neutral payload, stored once: the bundled PhEye name-detection model and the EULA text.
@@ -105,18 +105,13 @@ Type: files; Name: "{app}\*_amd64_*.dll"; Check: IsArm64
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon; Check: DesktopIconWanted
 
 [Registry]
 ; Record which architecture was installed so a later run can detect an arch switch and clear the
 ; stale binaries first (see PrepareToInstall). HKA follows the install mode: HKLM for all-users,
 ; HKCU for per-user.
 Root: HKA; Subkey: "Software\Philterd\Philter Desktop"; ValueType: string; ValueName: "InstalledArch"; ValueData: "{code:GetCurrentArch}"; Flags: uninsdeletevalue uninsdeletekeyifempty
-
-; Optional auto-start. Same value name + "--minimized" switch as StartupManager, so the in-app
-; "Start at sign-in" toggle reflects/controls this too. Removal is handled in [Code] on uninstall
-; (covers the case where the user later enabled it from inside the app).
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "PhilterDesktop"; ValueData: """{app}\{#AppExe}"" --minimized"; Tasks: autostart; Flags: uninsdeletevalue
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
@@ -131,6 +126,41 @@ begin
     Result := 'arm64'
   else
     Result := 'x64';
+end;
+
+// Whether /TASKS or /MERGETASKS on the command line selects the named task.
+function TaskRequestedOnCommandLine(const Name: string): Boolean;
+var
+  i, j: Integer;
+  Param, List, Item: string;
+begin
+  Result := False;
+  for i := 1 to ParamCount do
+  begin
+    Param := ParamStr(i);
+    if Pos('/TASKS=', Uppercase(Param)) = 1 then
+      List := Copy(Param, Length('/TASKS=') + 1, MaxInt)
+    else if Pos('/MERGETASKS=', Uppercase(Param)) = 1 then
+      List := Copy(Param, Length('/MERGETASKS=') + 1, MaxInt)
+    else
+      continue;
+    StringChangeEx(List, '"', '', True);
+    List := List + ',';
+    while List <> '' do
+    begin
+      j := Pos(',', List);
+      Item := Lowercase(Trim(Copy(List, 1, j - 1)));
+      Delete(List, 1, j);
+      if (Item = Lowercase(Name)) or (Item = '*' + Lowercase(Name)) then
+        Result := True;
+    end;
+  end;
+end;
+
+// The desktop shortcut's Check: the wizard's ticked default applies, but a silent install needs it asked for.
+function DesktopIconWanted: Boolean;
+begin
+  Result := not WizardSilent or TaskRequestedOnCommandLine('desktopicon');
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

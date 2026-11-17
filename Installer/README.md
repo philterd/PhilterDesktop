@@ -66,9 +66,10 @@ Requires **Inno Setup 6.3+** (`ISCC.exe` on PATH or in the default install locat
   [Visual C++ Runtime](#visual-c-runtime) below.
 - Lists itself in Add/Remove Programs as just **Philter Desktop** (`UninstallDisplayName`); the
   version shows in that list's own Version column.
-- Optional tasks: a desktop icon, and **start at sign-in** — which writes the *same*
-  `HKCU\…\Run` value (with `--minimized`) that the in-app "Start at sign-in" toggle uses, so the two
-  stay in sync. The entry is removed on uninstall.
+- One optional task: a desktop icon (ticked in the wizard; a silent install adds it only when
+  `/TASKS` or `/MERGETASKS` names `desktopicon`). **Start at sign-in** isn't offered here: it's the
+  app's Settings toggle, which writes `HKCU\…\Run` with `--minimized`. Uninstalling removes that entry
+  however it was set.
 - Leaves user data (`%LocalAppData%\PhilterDesktop\`, including the database and logs) in place on
   uninstall.
 

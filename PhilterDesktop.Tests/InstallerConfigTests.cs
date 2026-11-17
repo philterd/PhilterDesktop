@@ -81,20 +81,47 @@ namespace PhilterDesktop.Tests
         }
 
         [Fact]
-        public void OptionalTasks_AreOffByDefault_SoASilentInstallAddsNeither()
+        public void DesktopIcon_IsTickedInTheWizard()
         {
-            // A silent install takes each task's default. Both are "unchecked", which is what the docs
-            // promise: no desktop icon and no start-at-sign-in unless /TASKS asks for them.
-            string iss = InnoScript();
-
-            foreach (string task in new[] { "desktopicon", "autostart" })
-            {
-                string entry = Assert.Single(
-                    iss.Split('\n').Select(l => l.Trim()),
-                    l => l.StartsWith("Name: \"" + task + "\"", StringComparison.Ordinal));
-                Assert.Contains("Flags: unchecked", entry);
-            }
+            Assert.DoesNotContain("Flags: unchecked", TaskEntry("desktopicon"));
         }
+
+        [Fact]
+        public void StartAtSignIn_IsNotOfferedByTheInstaller()
+        {
+            // It's turned on from the app's Settings instead; the installer neither offers nor writes it.
+            string[] lines = InnoScript().Split('\n').Select(l => l.Trim()).ToArray();
+            Assert.DoesNotContain(lines, l => l.StartsWith("Name: \"autostart\"", StringComparison.Ordinal));
+            Assert.DoesNotContain(lines, l => l.StartsWith("Root: HKCU; Subkey: \"Software\\Microsoft\\Windows\\CurrentVersion\\Run\"", StringComparison.Ordinal));
+        }
+
+        [Fact]
+        public void Uninstall_StillRemovesTheSignInEntry_HoweverItWasSet()
+        {
+            // The app's Settings toggle (or an older installer) may have written it.
+            Assert.Matches(@"RegDeleteValue\(HKEY_CURRENT_USER,\s+'Software\\Microsoft\\Windows\\CurrentVersion\\Run', 'PhilterDesktop'\);", InnoScript());
+        }
+
+        [Fact]
+        public void ASilentInstall_AddsTheDesktopIconOnlyWhenAsked()
+        {
+            // The task is ticked, so the shortcut itself checks: the docs promise an unattended install adds
+            // no desktop icon unless /TASKS or /MERGETASKS names it.
+            string iss = InnoScript();
+            string shortcut = Assert.Single(
+                iss.Split('\n').Select(l => l.Trim()),
+                l => l.StartsWith("Name: \"{autodesktop}", StringComparison.Ordinal));
+
+            Assert.Contains("Tasks: desktopicon; Check: DesktopIconWanted", shortcut);
+            Assert.Contains("Result := not WizardSilent or TaskRequestedOnCommandLine('desktopicon');", iss);
+            Assert.Contains("if Pos('/TASKS=', Uppercase(Param)) = 1 then", iss);
+            Assert.Contains("else if Pos('/MERGETASKS=', Uppercase(Param)) = 1 then", iss);
+            Assert.Contains("if (Item = Lowercase(Name)) or (Item = '*' + Lowercase(Name)) then", iss);
+        }
+
+        private static string TaskEntry(string task) => Assert.Single(
+            InnoScript().Split('\n').Select(l => l.Trim()),
+            l => l.StartsWith("Name: \"" + task + "\"", StringComparison.Ordinal));
 
         [Fact]
         public void SilentUninstall_NeverAsksAboutSavedData()

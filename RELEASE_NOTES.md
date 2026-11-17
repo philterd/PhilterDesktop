@@ -4,6 +4,11 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 ## 1.4.0 (unreleased)
 
+- **Changed:** the setup wizard's **Create a desktop icon** option is now ticked by default. Silent
+  installs still add no desktop icon unless asked for one with `/TASKS` or `/MERGETASKS`.
+- **Changed:** the setup wizard no longer offers to start Philter Desktop at sign-in. Turn on **Start
+  Philter Desktop at sign-in** in Settings instead. Existing installs that use it keep it.
+
 - **Changed:** pressing Enter on the license screen no longer accepts the license. Accepting now takes a
   click on **I Agree** (or Alt+A), so the terms can't be accepted by accident.
 

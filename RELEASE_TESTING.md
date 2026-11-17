@@ -33,7 +33,7 @@ experience, a real PDF, and a couple of GUI interactions.
       SmartScreen block that can't be bypassed (if it's code-signed) and shows the correct version.
 - [ ] Accept the defaults and install. It installs to `C:\Program Files\Philter Desktop` and creates a
       **Start menu** entry "Philter Desktop".
-- [ ] If offered, tick the **desktop icon** task and confirm the shortcut is created.
+- [ ] The **desktop icon** task is ticked by default; leave it ticked and confirm the shortcut is created.
 - [ ] Finish the installer with "Launch Philter Desktop" checked — the app starts.
 - [ ] **Silent install works** (on a second clean snapshot, or after uninstalling): running the setup
       file with `/VERYSILENT /SUPPRESSMSGBOXES /CURRENTUSER` installs with no wizard, no elevation
