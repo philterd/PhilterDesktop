@@ -32,29 +32,28 @@ namespace PhilterDesktop.Tests
 
     /// <summary>
     /// The Settings window's Open Log and Clear Log buttons use the logger's own path, so there's one
-    /// definition of where the log lives. The log is redirected to a temporary file here.
+    /// definition of where the log lives. The log is redirected to a temporary file for each test's own work,
+    /// so other code still running in the test process can't write into it.
     /// </summary>
     [Collection(LogFileCollection.Name)]
     public sealed class SettingsLogButtonsTests : IDisposable
     {
         private const BindingFlags Flags = BindingFlags.Instance | BindingFlags.NonPublic;
-        private static readonly FieldInfo CachedPath = typeof(Logger).GetField("_logFilePath", BindingFlags.Static | BindingFlags.NonPublic)!;
 
         private readonly string _dir = Path.Combine(Path.GetTempPath(), "settings-log-" + Guid.NewGuid().ToString("N"));
         private readonly string _log;
-        private readonly object? _originalPath = CachedPath.GetValue(null);
         private readonly List<(string Text, string Caption, MessageBoxButtons Buttons)> _shown = new();
 
         public SettingsLogButtonsTests()
         {
             Directory.CreateDirectory(_dir);
             _log = Path.Combine(_dir, "application.log");
-            CachedPath.SetValue(null, _log);
+            Logger.TestLogFilePath = _log; // this test's work only; nothing else in the process logs here
         }
 
         public void Dispose()
         {
-            CachedPath.SetValue(null, _originalPath);
+            Logger.TestLogFilePath = null;
             try { Directory.Delete(_dir, recursive: true); } catch { }
         }
 
@@ -63,11 +62,40 @@ namespace PhilterDesktop.Tests
         [Fact]
         public void LoggerPath_IsUnchanged()
         {
-            CachedPath.SetValue(null, null); // resolve afresh, as on startup
+            Logger.TestLogFilePath = null; // the app's own path
             string expected = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PhilterDesktop", "application.log");
 
             Assert.Equal(expected, Logger.LogFilePath);
+        }
+
+        [Fact]
+        public void OtherWorkInTheProcess_DoesNotLogIntoTheTestsFile()
+        {
+            // The race that made Clear Log tests flaky: work started outside this test (e.g. left over from an
+            // earlier one) logged into the redirected file. It must see the normal path instead.
+            AssertLogIsTheTests();
+            string? elsewhere = null;
+            Task task;
+            using (ExecutionContext.SuppressFlow())
+            {
+                task = Task.Run(() => elsewhere = Logger.LogFilePath);
+            }
+            task.Wait();
+
+            Assert.NotEqual(_log, elsewhere);
+        }
+
+        [Fact]
+        public void ThreadsTheTestStarts_DoLogIntoItsFile()
+        {
+            AssertLogIsTheTests();
+            string? seen = null;
+            var thread = new Thread(() => seen = Logger.LogFilePath);
+            thread.Start();
+            thread.Join();
+
+            Assert.Equal(_log, seen);
         }
 
         [Fact]
@@ -278,8 +306,13 @@ namespace PhilterDesktop.Tests
 
         // ---- Helpers ----
 
+        // Stops a test before it touches a log that isn't its own (the real one would be deleted by Clear Log).
+        private void AssertLogIsTheTests() =>
+            Assert.True(Logger.LogFilePath == _log, "The log isn't redirected to this test's file: " + Logger.LogFilePath);
+
         private void WriteLogs(params string[] suffixes)
         {
+            AssertLogIsTheTests();
             foreach (string suffix in suffixes)
             {
                 File.WriteAllText(_log + suffix, "entry");
@@ -298,6 +331,7 @@ namespace PhilterDesktop.Tests
 
         private void WithSettings(Action<SettingsForm> test)
         {
+            AssertLogIsTheTests();
             ExceptionDispatchInfo? captured = null;
             var thread = new Thread(() =>
             {

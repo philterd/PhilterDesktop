@@ -23,6 +23,17 @@ namespace PhilterDesktop
     {
         private static readonly object _lockObject = new();
         private static string? _logFilePath;
+
+        // A test's own log file. It follows only the test's work (including threads it starts), so other code
+        // still running in the process keeps logging where it always does instead of into the test's file.
+        private static readonly AsyncLocal<string?> _testLogFilePath = new();
+
+        /// <summary>Points the log at <paramref name="path"/> for the calling test's work only (null to stop).</summary>
+        internal static string? TestLogFilePath
+        {
+            get => _testLogFilePath.Value;
+            set => _testLogFilePath.Value = value;
+        }
         private const int MaxRetries = 3;
         private const int RetryDelayMilliseconds = 100;
 
@@ -39,6 +50,10 @@ namespace PhilterDesktop
         {
             get
             {
+                if (_testLogFilePath.Value is { } testPath)
+                {
+                    return testPath;
+                }
                 if (_logFilePath == null)
                 {
                     string root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
