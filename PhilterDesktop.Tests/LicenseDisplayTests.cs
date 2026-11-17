@@ -86,18 +86,78 @@ namespace PhilterDesktop.Tests
         });
 
         [Fact]
-        public void Gate_HasAgreeAndDisagree_WithAgreeAsDefault() => Sta(() =>
+        public void Gate_HasAgreeAndDisagree_WithNoDefault() => Sta(() =>
         {
             using var f = new LicenseForm();
             Button agree = Field<Button>(f, "_agree");
             Button disagree = Field<Button>(f, "_disagree");
-            Assert.Same(agree, f.AcceptButton);
+            Assert.Null(f.AcceptButton); // Enter must not accept the terms
             Assert.Same(disagree, f.CancelButton);
             Assert.Equal(DialogResult.OK, agree.DialogResult);
             Assert.Equal(DialogResult.Cancel, disagree.DialogResult);
             Assert.Equal("I &Agree", agree.Text);
             Assert.Equal("I &Disagree", disagree.Text);
         });
+
+        [Fact]
+        public void Gate_PressingEnter_DoesNotAgree() => ShownGate(f =>
+        {
+            Assert.False(PressKey(f, Keys.Enter));
+            Assert.True(f.Visible);
+            Assert.Equal(DialogResult.None, f.DialogResult);
+        });
+
+        [Fact]
+        public void Gate_PressingEsc_Disagrees() => ShownGate(f =>
+        {
+            Assert.True(PressKey(f, Keys.Escape));
+            Assert.Equal(DialogResult.Cancel, f.DialogResult);
+        });
+
+        [Fact]
+        public void Gate_OpensWithFocusInTheAgreement_NotOnAButton() => ShownGate(f =>
+        {
+            Assert.Same(Field<TextBox>(f, "_eulaBody"), f.ActiveControl);
+            Assert.False(Field<Button>(f, "_agree").Focused);
+        });
+
+        [Fact]
+        public void Gate_ClickingAgree_Agrees() => ShownGate(f =>
+        {
+            Field<Button>(f, "_agree").PerformClick();
+            Assert.Equal(DialogResult.OK, f.DialogResult);
+        });
+
+        [Fact]
+        public void Gate_AltA_StillAgrees() => ShownGate(f =>
+        {
+            bool handled = (bool)typeof(Control).GetMethod("ProcessMnemonic", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                .Invoke(f, new object[] { 'A' })!;
+            Assert.True(handled);
+            Assert.Equal(DialogResult.OK, f.DialogResult);
+        });
+
+        [Fact]
+        public void ViewOnly_EnterStillCloses() => Sta(() =>
+        {
+            using var f = new LicenseForm(viewOnly: true);
+            Assert.Same(Field<Button>(f, "_agree"), f.CancelButton);
+            Assert.Equal(DialogResult.OK, Field<Button>(f, "_agree").DialogResult);
+        });
+
+        // The gate shown off-screen, as the first-run screen would be.
+        private static void ShownGate(Action<LicenseForm> test) => Sta(() =>
+        {
+            using var f = new LicenseForm { StartPosition = FormStartPosition.Manual, Location = new Point(-32000, -32000), ShowInTaskbar = false };
+            f.Show();
+            Application.DoEvents();
+            test(f);
+        });
+
+        // Delivers a key the way the focused control would pass it up to the dialog.
+        private static bool PressKey(Form f, Keys key) =>
+            (bool)typeof(Form).GetMethod("ProcessDialogKey", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                .Invoke(f, new object[] { key })!;
 
         // Shrunk to its minimum size, neither mode overlaps or clips (the panes give up height first).
         [Theory]

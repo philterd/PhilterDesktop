@@ -88,6 +88,13 @@ namespace PhilterDesktop
                 _agree.DialogResult = DialogResult.OK;
                 CancelButton = _agree; // Esc / the window close button just closes
             }
+            else
+            {
+                // Agreeing takes a deliberate click (or Alt+A), so a stray Enter can't accept the terms.
+                // Focus starts in the agreement, not on a button Enter or Space would press.
+                AcceptButton = null;
+                ActiveControl = _eulaBody;
+            }
         }
 
         /// <summary>Keeps the dialog on screen at high display scaling.</summary>

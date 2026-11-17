@@ -4,6 +4,9 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 ## 1.4.0 (unreleased)
 
+- **Changed:** pressing Enter on the license screen no longer accepts the license. Accepting now takes a
+  click on **I Agree** (or Alt+A), so the terms can't be accepted by accident.
+
 - **Improved:** in **Redact with Preview** for PDFs, **Remove Selected** now removes any redaction,
   including detected ones, as the other previews do. Before, it only worked on regions you drew and was
   greyed out otherwise. A new **Source** column shows whether each redaction was **Detected** or

@@ -51,7 +51,7 @@ namespace PhilterDesktop.Tests
             "policy-editor", "policy-wizard", "filter-strategies", "filter-strategies-options", "filter-strategies-choice",
             "add-filter-strategy",
             "custom-identifiers", "custom-identifier", "pdf-regions", "add-region", "pdf-region-picker",
-            "pheye-model", "ocr-advanced", "work-license", "usage-choice", "usage-choice-work",
+            "pheye-model", "ocr-advanced", "work-license", "work-license-licensed", "usage-choice", "usage-choice-work",
             "leftover-clean", "leftover-caveat", "leftover-found", "leftover-error"
         };
 
@@ -80,6 +80,7 @@ namespace PhilterDesktop.Tests
             "pheye-model" => new PhEyeModelForm(PhEyeModel.CreateDefaultFilter()),
             "ocr-advanced" => new OcrAdvancedSettingsForm(0.01, 0.5, 200),
             "work-license" => new WorkLicenseForm(new WorkLicense(new LicenseRepository(db)), new LicenseClient()),
+            "work-license-licensed" => new WorkLicenseForm(Licensed(db), new LicenseClient()),
             "usage-choice" => new UsageChoiceForm(_ => { }),
             "usage-choice-work" => WorkChoices(new UsageChoiceForm(_ => { })),
             "leftover-clean" => Leftover(new VerificationOutcome { Status = VerificationStatus.Clean }),
@@ -108,6 +109,13 @@ namespace PhilterDesktop.Tests
             "update-available" => new UpdateAvailableForm("1.4.0", "1.5.0", "2026-12-01"),
             _ => throw new ArgumentOutOfRangeException(nameof(name))
         };
+
+        private static WorkLicense Licensed(LiteDatabase db)
+        {
+            var license = new WorkLicense(new LicenseRepository(db), TestLicenses.Keys);
+            license.Accept(TestLicenses.Make(seats: 3), DateTime.UtcNow);
+            return license;
+        }
 
         private static Form Leftover(VerificationOutcome outcome) =>
             new VerificationResultForm("quarterly-report_redacted-draft.docx", outcome);
