@@ -50,7 +50,7 @@ namespace PhilterDesktop.Tests
         {
             "policy-editor", "policy-wizard", "filter-strategies", "filter-strategies-options", "filter-strategies-choice",
             "add-filter-strategy",
-            "custom-identifiers", "custom-identifier", "pdf-regions", "add-region", "pdf-region-picker",
+            "custom-identifiers", "custom-identifier", "policy-json", "pdf-regions", "add-region", "pdf-region-picker",
             "pheye-model", "ocr-advanced", "work-license", "work-license-licensed", "usage-choice", "usage-choice-work",
             "leftover-clean", "leftover-caveat", "leftover-found", "leftover-error"
         };
@@ -75,6 +75,7 @@ namespace PhilterDesktop.Tests
                 new[] { FilterOptions.Read(FilterOptions.For("PhoneNumber")[0], new PhoneNumber { Leniency = "STRICT_GROUPING" })! }),
             "custom-identifiers" => new CustomIdentifiersForm(new[] { new Identifier { Classification = "case", Pattern = "CASE-\\d+" } }),
             "custom-identifier" => new CustomIdentifierForm(new Identifier()),
+            "policy-json" => new PolicyJsonForm("{\n  \"identifiers\": {\n    \"ssn\": {}\n  }\n}", "default"),
             "pdf-regions" => new PdfRegionsForm(new[] { new BoundingBox { Page = 1, X = 1, Y = 2, W = 3, H = 4 } }),
             "add-region" => new AddRegionForm(),
             "pdf-region-picker" => new PdfRegionPickerForm(MinimalPdf.PlainText("Hello")),

@@ -58,6 +58,7 @@ namespace PhilterDesktop.PolicyEditing
         private readonly ToolStripButton _delete = new() { Text = "Delete", Enabled = false };
         private readonly ToolStripButton _import = new() { Text = "Import" };
         private readonly ToolStripButton _export = new() { Text = "Export", Enabled = false };
+        private readonly ToolStripButton _editJson = new() { Text = "Edit JSON", Enabled = false, ToolTipText = "Edit this policy's JSON directly" };
         private readonly ToolStripLabel _consultingLink = new("Need help with policies?")
         {
             IsLink = true,
@@ -143,6 +144,9 @@ namespace PhilterDesktop.PolicyEditing
         /// <summary>Shows the PhEye tab's dialogs; tests replace it to drive them without a modal loop.</summary>
         internal Func<Form, DialogResult> ShowPhEyeDialog;
 
+        /// <summary>Shows the Edit JSON dialog; tests replace it to drive it without a modal loop.</summary>
+        internal Func<PolicyJsonForm, DialogResult> ShowJsonDialog;
+
         // Free-text, editor-only description (stored on the policy record, not in the engine JSON).
         private readonly TableLayoutPanel _descPanel = new()
         {
@@ -162,6 +166,7 @@ namespace PhilterDesktop.PolicyEditing
         public PolicyEditorForm(PolicyRepository repo, WatchedFolderRepository? watchedFolders = null)
         {
             ShowPhEyeDialog = dlg => dlg.ShowDialog(this);
+            ShowJsonDialog = dlg => dlg.ShowDialog(this);
             _repo = repo;
             _watchedFolders = watchedFolders;
 
@@ -186,6 +191,7 @@ namespace PhilterDesktop.PolicyEditing
             _delete.Click += OnDelete;
             _import.Click += OnImport;
             _export.Click += OnExport;
+            _editJson.Click += OnEditJson;
             _description.TextChanged += (_, _) => { if (!_loading) { _dirty = true; } };
             _consultingLink.Click += (_, _) => Links.Open(Links.ConsultingUrl("policy-editor"));
             _ignoreList.Click += OnIgnoredTerms;
@@ -213,6 +219,7 @@ namespace PhilterDesktop.PolicyEditing
             _delete.Image = ModernTheme.CreateGlyphImage("\uE74D", icon, ModernTheme.Text);  // Delete
             _import.Image = ModernTheme.CreateGlyphImage("", icon, ModernTheme.Text);  // Download (import from file)
             _export.Image = ModernTheme.CreateGlyphImage("", icon, ModernTheme.Text);  // Upload (export to file)
+            _editJson.Image = ModernTheme.CreateGlyphImage("", icon, ModernTheme.Text); // Code
 
             // "New" is a dropdown: Blank Policy, From Template, or From Wizard. Menu items use small icons.
             _newBlank.Image = ModernTheme.CreateGlyphImage("\uE7C3", menuIcon, ModernTheme.Text);        // Page (blank)
@@ -221,7 +228,7 @@ namespace PhilterDesktop.PolicyEditing
             _new.DropDownItems.AddRange(new ToolStripItem[] { _newBlank, _newFromTemplate, _newWizard });
 
             // Toolbar buttons show their icon above the label.
-            foreach (ToolStripItem button in new ToolStripItem[] { _new, _save, _saveAs, _delete, _import, _export })
+            foreach (ToolStripItem button in new ToolStripItem[] { _new, _save, _saveAs, _delete, _import, _export, _editJson })
             {
                 button.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
                 button.TextImageRelation = TextImageRelation.ImageAboveText;
@@ -233,7 +240,7 @@ namespace PhilterDesktop.PolicyEditing
             _toolStrip.Items.AddRange(new ToolStripItem[]
             {
                 _new, new ToolStripSeparator(), _save, _saveAs, new ToolStripSeparator(), _delete,
-                new ToolStripSeparator(), _import, _export
+                new ToolStripSeparator(), _import, _export, new ToolStripSeparator(), _editJson
             });
             _toolStrip.Items.Add(_consultingLink); // right-aligned (Alignment = Right)
 
@@ -1123,6 +1130,30 @@ namespace PhilterDesktop.PolicyEditing
             ReloadPolicyList(name);
         }
 
+        // Opens the current policy, including unsaved edits, as JSON. Saving there stores the checked
+        // JSON (with the description) and reloads the editor from it.
+        private void OnEditJson(object? sender, EventArgs e)
+        {
+            if (_policy is null || _currentPolicyName is null)
+            {
+                return;
+            }
+            using var dlg = new PolicyJsonForm(PrettyJson(PolicySerializer.SerializeToJson(_policy)), _currentPolicyName);
+            if (ShowJsonDialog(dlg) != DialogResult.OK || dlg.ResultJson is null)
+            {
+                return;
+            }
+            PolicyEntity? entity = _repo.FindByName(_currentPolicyName);
+            if (entity is null)
+            {
+                return;
+            }
+            entity.Json = dlg.ResultJson;
+            entity.Description = _description.Text;
+            _repo.Update(entity);
+            LoadSelectedPolicy();
+        }
+
         private static string PrettyJson(string json)
         {
             try
@@ -1282,6 +1313,7 @@ namespace PhilterDesktop.PolicyEditing
             _saveAs.Enabled = enabled;
             _delete.Enabled = enabled;
             _export.Enabled = enabled; // Import is always available; Export needs a loaded policy
+            _editJson.Enabled = enabled;
             _description.Enabled = enabled;
             _ignoreList.Enabled = enabled;
             _alwaysRedact.Enabled = enabled;

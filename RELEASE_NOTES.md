@@ -6,6 +6,8 @@ All notable changes to Philter Desktop are recorded here, newest first.
 
 - **New:** **Find & Redact** and **Redact Spreadsheet** have a box that says **Or drag a file here**.
   Drop a document on it instead of using **Browse…**.
+- **New:** **Edit JSON** in the Policy Editor opens the policy's JSON for editing. **Save** checks the
+  JSON and the policy before saving, and points to any problem so it can be fixed.
 
 - **Changed:** **Redact with Preview** now opens a small window for choosing the document: click
   **Browse…** or drop a file on it.

@@ -90,7 +90,9 @@
   <ItemGroup>
     <!-- The Phileas redaction engine. Desktop consumes the Word/Excel redactors (Services/Office)
          and PDF services that live in the library. -->
-    <PackageReference Include="Philterd.Phileas" Version="1.8.0" />
+    <!-- TEMPORARY: local phileas-dotnet for testing. Restore the package reference before committing. -->
+    <!-- <PackageReference Include="Philterd.Phileas" Version="1.8.0" /> -->
+    <ProjectReference Include="..\..\phileas-dotnet\src\Phileas\Phileas.csproj" />
   </ItemGroup>
 
   <!-- On-device PhEye name-detection model (GLiNER xsmall, ~90 MB). Kept out of git (see
