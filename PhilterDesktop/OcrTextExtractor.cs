@@ -270,14 +270,17 @@ namespace PhilterDesktop
 
         private static IReadOnlyList<PdfLine> OcrPage(byte[] document, int pageNumber, OcrEngine engine)
         {
-            byte[] png = RenderPagePng(document, pageNumber, out double pageHeightPts);
+            byte[] png = RenderPagePng(document, pageNumber, out int widthPx, out int heightPx);
             OcrResult result = RecognizeAsync(engine, png).GetAwaiter().GetResult();
 
             double ptPerPixel = 72.0 / OcrDpi;
+            double pageHeightPts = heightPx * ptPerPixel;
+            double textAngle = result.TextAngle ?? 0;
             var lines = new List<PdfLine>();
             foreach (OcrLine ocrLine in result.Lines)
             {
-                (string text, IReadOnlyList<CharBox?> boxes) = BuildLine(ocrLine, ptPerPixel, pageHeightPts);
+                (string text, IReadOnlyList<CharBox?> boxes) = BuildLine(
+                    ocrLine, textAngle, widthPx / 2.0, heightPx / 2.0, ptPerPixel, pageHeightPts);
                 if (text.Length > 0)
                 {
                     lines.Add(new PdfLine(pageNumber, text, boxes));
@@ -286,12 +289,13 @@ namespace PhilterDesktop
             return lines;
         }
 
-        // Rasterizes a page to PNG bytes at the OCR DPI and reports the page height in PDF points.
-        private static byte[] RenderPagePng(byte[] document, int pageNumber, out double pageHeightPts)
+        // Rasterizes a page to PNG bytes at the OCR DPI and reports its size in pixels.
+        private static byte[] RenderPagePng(byte[] document, int pageNumber, out int widthPx, out int heightPx)
         {
             using SKBitmap bitmap = Conversion.ToImage(document, page: pageNumber - 1,
                 options: new RenderOptions(Dpi: OcrDpi));
-            pageHeightPts = bitmap.Height * 72.0 / OcrDpi;
+            widthPx = bitmap.Width;
+            heightPx = bitmap.Height;
             using SKImage image = SKImage.FromBitmap(bitmap);
             using SKData data = image.Encode(SKEncodedImageFormat.Png, 100);
             return data.ToArray();
@@ -315,11 +319,93 @@ namespace PhilterDesktop
             return await engine.RecognizeAsync(bgra);
         }
 
-        // Builds a line's text plus a per-character box. OCR gives word-level boxes, so each character's
-        // box is interpolated across its word's width (coarse but adequate for drawing redaction boxes).
-        // Image pixels (top-left origin) are converted to PDF points (bottom-left origin) with a Y-flip.
+        // Typical advance widths (Arial/Helvetica, 1/1000 em) for ASCII 32-126.
+        private static readonly short[] AsciiWidths =
+        {
+            278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, // space to /
+            556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, // 0 to ?
+            1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778, // @ to O
+            667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556, // P to _
+            333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, // ` to o
+            556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584        // p to ~
+        };
+
+        private const double DefaultWidth = 556;
+
+        // Share of a character's slot added on each side, kept inside the word, since fonts vary.
+        private const double CharMargin = 0.15;
+
+        // OCR word boxes can sit a few pixels inside the ink, so each is widened by these shares of its height.
+        private const double WordPadSides = 0.2;
+        private const double WordPadEnds = 0.1;
+
+        /// <summary>Widens an OCR word box (pixels, top-left origin) so it covers the word's ink.</summary>
+        internal static (double X, double Y, double Width, double Height) PadWord(double x, double y, double width, double height)
+        {
+            double side = height * WordPadSides, end = height * WordPadEnds;
+            return (x - side, y - end, width + 2 * side, height + 2 * end);
+        }
+
+        internal static double CharWidth(char c) =>
+            c >= ' ' && c <= '~' ? AsciiWidths[c - ' '] : DefaultWidth;
+
+        /// <summary>
+        /// Splits a word's horizontal extent into one range per character, sized by typical character
+        /// width. An even split leaves part of a number uncovered when narrow punctuation such as ';'
+        /// shares its word.
+        /// </summary>
+        internal static (double Left, double Right)[] SplitWord(string text, double left, double width)
+        {
+            var ranges = new (double Left, double Right)[text.Length];
+            double total = 0;
+            foreach (char c in text)
+            {
+                total += CharWidth(c);
+            }
+            double right = left + width;
+            double x = left;
+            for (int i = 0; i < text.Length; i++)
+            {
+                double slot = width * CharWidth(text[i]) / total;
+                double pad = slot * CharMargin;
+                ranges[i] = (Math.Max(left, x - pad), Math.Min(right, x + slot + pad));
+                x += slot;
+            }
+            return ranges;
+        }
+
+        /// <summary>
+        /// Maps a box from Windows OCR's deskewed frame back onto the page image. When OCR detects
+        /// skew it reports word boxes rotated by <c>TextAngle</c> about the image centre; used as-is,
+        /// they miss the text. Returns the bounding box of the rotated corners (pixels, top-left origin).
+        /// </summary>
+        internal static (double Left, double Top, double Right, double Bottom) Unrotate(
+            double left, double top, double right, double bottom, double angleDegrees, double centerX, double centerY)
+        {
+            if (angleDegrees == 0)
+            {
+                return (left, top, right, bottom);
+            }
+            double a = angleDegrees * Math.PI / 180;
+            double cos = Math.Cos(a), sin = Math.Sin(a);
+            double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
+            foreach ((double x, double y) in new[] { (left, top), (right, top), (left, bottom), (right, bottom) })
+            {
+                double dx = x - centerX, dy = y - centerY;
+                double ux = centerX + dx * cos - dy * sin;
+                double uy = centerY + dx * sin + dy * cos;
+                minX = Math.Min(minX, ux);
+                maxX = Math.Max(maxX, ux);
+                minY = Math.Min(minY, uy);
+                maxY = Math.Max(maxY, uy);
+            }
+            return (minX, minY, maxX, maxY);
+        }
+
+        // Builds a line's text plus a per-character box. OCR gives word-level boxes, so each word's box
+        // is shared out by SplitWord. Image pixels (top-left origin) become PDF points (bottom-left).
         private static (string Text, IReadOnlyList<CharBox?> Boxes) BuildLine(
-            OcrLine line, double ptPerPixel, double pageHeightPts)
+            OcrLine line, double textAngle, double centerXPx, double centerYPx, double ptPerPixel, double pageHeightPts)
         {
             var text = new StringBuilder();
             var boxes = new List<CharBox?>();
@@ -334,15 +420,14 @@ namespace PhilterDesktop
 
                 OcrWord word = line.Words[w];
                 string value = word.Text ?? string.Empty;
-                Windows.Foundation.Rect rect = word.BoundingRect;
-                int n = Math.Max(value.Length, 1);
+                Windows.Foundation.Rect r = word.BoundingRect;
+                (double x, double y, double width, double height) = PadWord(r.X, r.Y, r.Width, r.Height);
+                (double Left, double Right)[] ranges = SplitWord(value, x, width);
 
                 for (int c = 0; c < value.Length; c++)
                 {
-                    double leftPx = rect.X + rect.Width * c / n;
-                    double rightPx = rect.X + rect.Width * (c + 1) / n;
-                    double topPx = rect.Y;
-                    double bottomPx = rect.Y + rect.Height;
+                    (double leftPx, double topPx, double rightPx, double bottomPx) = Unrotate(
+                        ranges[c].Left, y, ranges[c].Right, y + height, textAngle, centerXPx, centerYPx);
 
                     double left = leftPx * ptPerPixel;
                     double right = rightPx * ptPerPixel;

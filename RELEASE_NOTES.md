@@ -2,6 +2,20 @@
 
 All notable changes to Philter Desktop are recorded here, newest first.
 
+## 1.5.0 — Unreleased
+
+- **New:** **Find & Redact** and **Redact Spreadsheet** have a box that says **Or drag a file here**.
+  Drop a document on it instead of using **Browse…**.
+
+- **Changed:** **Redact with Preview** now opens a small window for choosing the document: click
+  **Browse…** or drop a file on it.
+
+- **Improved:** document path fields show the end of a long path, so the file name stays visible.
+
+- **Fixed:** with OCR on, redaction boxes on scanned PDFs could leave part of the text visible. A
+  character next to punctuation, such as the last digit of *987654321012;*, could stay uncovered, and on
+  a slightly tilted scan boxes could land beside the text. Boxes now cover the text with a small margin.
+
 ## 1.4.0 — 2026-11-17
 
 - **New:** work-use licenses. Philter Desktop is free for personal use and for trying it out; using it
