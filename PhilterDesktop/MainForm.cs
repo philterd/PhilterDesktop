@@ -3196,19 +3196,20 @@ namespace PhilterDesktop
             }
         }
 
+        /// <summary>Asks for the document to preview (Browse or drop); tests replace it. Null if cancelled.</summary>
+        internal Func<IWin32Window, string?> ChoosePreviewSource = owner =>
+        {
+            using var chooser = new PreviewSourceForm();
+            return chooser.ShowDialog(owner) == DialogResult.OK ? chooser.SelectedPath : null;
+        };
+
         private void redactPreviewToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            using var picker = new OpenFileDialog
-            {
-                Title = "Select a file to redact",
-                Filter = "Supported (*.txt;*.docx;*.pdf;*.rtf;*.eml;*.msg)|*.txt;*.docx;*.pdf;*.rtf;*.eml;*.msg|Text (*.txt)|*.txt|Rich Text (*.rtf)|*.rtf|Word (*.docx)|*.docx|PDF (*.pdf)|*.pdf|Email (*.eml;*.msg)|*.eml;*.msg"
-            };
-            if (picker.ShowDialog(this) != DialogResult.OK)
+            if (ChoosePreviewSource(this) is not { } source)
             {
                 return;
             }
 
-            string source = picker.FileName;
             SettingsEntity settings = _settingsRepository.GetSettings();
 
             if (source.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))

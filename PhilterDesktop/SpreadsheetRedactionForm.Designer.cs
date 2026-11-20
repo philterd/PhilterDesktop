@@ -36,6 +36,7 @@ namespace PhilterDesktop
             _sourceLabel = new Label();
             _source = new TextBox();
             _browse = new Button();
+            _dropZone = new FileDropZone();
             _policyLabel = new Label();
             _policy = new ComboBox();
             _contextLabel = new Label();
@@ -81,10 +82,18 @@ namespace PhilterDesktop
             _browse.UseVisualStyleBackColor = true;
             _browse.Click += OnBrowse;
             // 
+            // _dropZone
+            // 
+            _dropZone.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            _dropZone.Location = new Point(12, 64);
+            _dropZone.Name = "_dropZone";
+            _dropZone.Size = new Size(536, 60);
+            _dropZone.TabIndex = 16;
+            // 
             // _policyLabel
             // 
             _policyLabel.AutoSize = true;
-            _policyLabel.Location = new Point(12, 73);
+            _policyLabel.Location = new Point(12, 139);
             _policyLabel.Name = "_policyLabel";
             _policyLabel.Size = new Size(42, 15);
             _policyLabel.TabIndex = 3;
@@ -93,7 +102,7 @@ namespace PhilterDesktop
             // _policy
             // 
             _policy.DropDownStyle = ComboBoxStyle.DropDownList;
-            _policy.Location = new Point(70, 70);
+            _policy.Location = new Point(70, 136);
             _policy.Name = "_policy";
             _policy.Size = new Size(180, 23);
             _policy.TabIndex = 4;
@@ -101,7 +110,7 @@ namespace PhilterDesktop
             // _contextLabel
             // 
             _contextLabel.AutoSize = true;
-            _contextLabel.Location = new Point(266, 73);
+            _contextLabel.Location = new Point(266, 139);
             _contextLabel.Name = "_contextLabel";
             _contextLabel.Size = new Size(51, 15);
             _contextLabel.TabIndex = 5;
@@ -110,7 +119,7 @@ namespace PhilterDesktop
             // _context
             // 
             _context.DropDownStyle = ComboBoxStyle.DropDownList;
-            _context.Location = new Point(320, 70);
+            _context.Location = new Point(320, 136);
             _context.Name = "_context";
             _context.Size = new Size(180, 23);
             _context.TabIndex = 6;
@@ -118,7 +127,7 @@ namespace PhilterDesktop
             // _worksheetLabel
             // 
             _worksheetLabel.AutoSize = true;
-            _worksheetLabel.Location = new Point(12, 108);
+            _worksheetLabel.Location = new Point(12, 174);
             _worksheetLabel.Name = "_worksheetLabel";
             _worksheetLabel.Size = new Size(116, 15);
             _worksheetLabel.TabIndex = 7;
@@ -127,7 +136,7 @@ namespace PhilterDesktop
             // _worksheet
             // 
             _worksheet.DropDownStyle = ComboBoxStyle.DropDownList;
-            _worksheet.Location = new Point(163, 105);
+            _worksheet.Location = new Point(163, 171);
             _worksheet.Name = "_worksheet";
             _worksheet.Size = new Size(250, 23);
             _worksheet.TabIndex = 8;
@@ -136,7 +145,7 @@ namespace PhilterDesktop
             // _columnsLabel
             // 
             _columnsLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            _columnsLabel.Location = new Point(12, 140);
+            _columnsLabel.Location = new Point(12, 206);
             _columnsLabel.Name = "_columnsLabel";
             _columnsLabel.Size = new Size(536, 54);
             _columnsLabel.TabIndex = 9;
@@ -145,7 +154,7 @@ namespace PhilterDesktop
             // _selectAll
             // 
             _selectAll.AutoSize = true;
-            _selectAll.Location = new Point(12, 200);
+            _selectAll.Location = new Point(12, 266);
             _selectAll.Name = "_selectAll";
             _selectAll.Size = new Size(53, 15);
             _selectAll.TabIndex = 10;
@@ -155,7 +164,7 @@ namespace PhilterDesktop
             // _clearAll
             // 
             _clearAll.AutoSize = true;
-            _clearAll.Location = new Point(82, 200);
+            _clearAll.Location = new Point(82, 266);
             _clearAll.Name = "_clearAll";
             _clearAll.Size = new Size(34, 15);
             _clearAll.TabIndex = 11;
@@ -167,7 +176,7 @@ namespace PhilterDesktop
             _selectedCount.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             _selectedCount.AutoSize = true;
             _selectedCount.ForeColor = SystemColors.GrayText;
-            _selectedCount.Location = new Point(470, 200);
+            _selectedCount.Location = new Point(470, 266);
             _selectedCount.Name = "_selectedCount";
             _selectedCount.Size = new Size(59, 15);
             _selectedCount.TabIndex = 12;
@@ -181,7 +190,7 @@ namespace PhilterDesktop
             _columns.CheckOnClick = true;
             _columns.FormattingEnabled = true;
             _columns.IntegralHeight = false;
-            _columns.Location = new Point(12, 226);
+            _columns.Location = new Point(12, 292);
             _columns.Name = "_columns";
             _columns.Size = new Size(536, 238);
             _columns.TabIndex = 13;
@@ -190,7 +199,7 @@ namespace PhilterDesktop
             // 
             _redact.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             _redact.Enabled = false;
-            _redact.Location = new Point(362, 476);
+            _redact.Location = new Point(362, 542);
             _redact.Name = "_redact";
             _redact.Size = new Size(100, 26);
             _redact.TabIndex = 14;
@@ -202,7 +211,7 @@ namespace PhilterDesktop
             // 
             _close.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             _close.DialogResult = DialogResult.Cancel;
-            _close.Location = new Point(468, 476);
+            _close.Location = new Point(468, 542);
             _close.Name = "_close";
             _close.Size = new Size(80, 26);
             _close.TabIndex = 15;
@@ -215,9 +224,10 @@ namespace PhilterDesktop
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = _close;
-            ClientSize = new Size(560, 514);
+            ClientSize = new Size(560, 580);
             Controls.Add(_source);
             Controls.Add(_browse);
+            Controls.Add(_dropZone);
             Controls.Add(_sourceLabel);
             Controls.Add(_policyLabel);
             Controls.Add(_policy);
@@ -233,7 +243,7 @@ namespace PhilterDesktop
             Controls.Add(_redact);
             Controls.Add(_close);
             MinimizeBox = false;
-            MinimumSize = new Size(576, 553);
+            MinimumSize = new Size(576, 619);
             Name = "SpreadsheetRedactionForm";
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
@@ -248,6 +258,7 @@ namespace PhilterDesktop
         private Label _sourceLabel;
         private TextBox _source;
         private Button _browse;
+        private FileDropZone _dropZone;
         private Label _policyLabel;
         private ComboBox _policy;
         private Label _contextLabel;

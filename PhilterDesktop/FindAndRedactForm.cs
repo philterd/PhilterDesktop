@@ -39,11 +39,15 @@ namespace PhilterDesktop
         {
             _settings = settings;
             InitializeComponent();
+            _source.KeepEndVisible();
 
             if (!string.IsNullOrEmpty(initialSource))
             {
                 _source.Text = initialSource;
             }
+
+            _dropZone.Accepts = RedactionService.IsSupported;
+            _dropZone.FileDropped += path => _source.Text = path;
 
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_redact);
@@ -89,7 +93,7 @@ namespace PhilterDesktop
             string output = RedactionService.GetUniqueOutputPath(RedactionService.GetOutputPath(source, _settings));
             PhileasPolicy policy = FindAndRedact.BuildPolicy(terms);
 
-            _redact.Enabled = _browse.Enabled = _import.Enabled = false;
+            _redact.Enabled = _browse.Enabled = _dropZone.Enabled = _import.Enabled = false;
             Cursor = Cursors.WaitCursor;
             try
             {
@@ -114,7 +118,7 @@ namespace PhilterDesktop
             }
             finally
             {
-                _redact.Enabled = _browse.Enabled = _import.Enabled = true;
+                _redact.Enabled = _browse.Enabled = _dropZone.Enabled = _import.Enabled = true;
             }
         }
     }

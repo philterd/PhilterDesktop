@@ -60,7 +60,8 @@ namespace PhilterDesktop.Tests
         // Designer forms are checked at their real startup DPI only: the simulated DPI change rescales them
         // differently from a real high-DPI start, so it reports problems a real 150% display doesn't have.
         public static TheoryData<string> AllForms => new(CodeBuilt.Append("settings").Append("watched-folder")
-            .Append("license").Append("license-view").Append("update-available").Append("about"));
+            .Append("license").Append("license-view").Append("update-available").Append("about")
+            .Append("find-and-redact").Append("spreadsheet").Append("preview-source"));
 
         private static Form Create(string name, LiteDatabase db) => name switch
         {
@@ -106,6 +107,9 @@ namespace PhilterDesktop.Tests
             "license" => new LicenseForm(),
             "license-view" => new LicenseForm(viewOnly: true),
             "about" => new AboutForm(),
+            "find-and-redact" => new FindAndRedactForm(new SettingsEntity()),
+            "preview-source" => new PreviewSourceForm(),
+            "spreadsheet" => new SpreadsheetRedactionForm(Seeded(db), SeededContexts(db), new RedactionQueueRepository(db), new SettingsEntity()),
             "update-available" => new UpdateAvailableForm("1.4.0", "1.5.0", "2026-12-01"),
             _ => throw new ArgumentOutOfRangeException(nameof(name))
         };

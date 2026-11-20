@@ -36,6 +36,7 @@ namespace PhilterDesktop
             _sourceLabel = new Label();
             _source = new TextBox();
             _browse = new Button();
+            _dropZone = new FileDropZone();
             _termsLabel = new Label();
             _terms = new TextBox();
             _import = new Button();
@@ -73,10 +74,18 @@ namespace PhilterDesktop
             _browse.UseVisualStyleBackColor = true;
             _browse.Click += OnBrowse;
             //
+            // _dropZone
+            //
+            _dropZone.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            _dropZone.Location = new Point(12, 64);
+            _dropZone.Name = "_dropZone";
+            _dropZone.Size = new Size(536, 60);
+            _dropZone.TabIndex = 8;
+            //
             // _termsLabel
             //
             _termsLabel.AutoSize = true;
-            _termsLabel.Location = new Point(12, 70);
+            _termsLabel.Location = new Point(12, 136);
             _termsLabel.Name = "_termsLabel";
             _termsLabel.Size = new Size(310, 15);
             _termsLabel.TabIndex = 3;
@@ -86,7 +95,7 @@ namespace PhilterDesktop
             //
             _terms.AcceptsReturn = true;
             _terms.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            _terms.Location = new Point(12, 92);
+            _terms.Location = new Point(12, 158);
             _terms.Multiline = true;
             _terms.Name = "_terms";
             _terms.ScrollBars = ScrollBars.Both;
@@ -99,7 +108,7 @@ namespace PhilterDesktop
             _import.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             _import.AutoSize = true;
             _import.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            _import.Location = new Point(12, 382);
+            _import.Location = new Point(12, 448);
             _import.MinimumSize = new Size(0, 26);
             _import.Name = "_import";
             _import.Padding = new Padding(10, 0, 10, 0);
@@ -111,7 +120,7 @@ namespace PhilterDesktop
             // _redact
             //
             _redact.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            _redact.Location = new Point(382, 382);
+            _redact.Location = new Point(382, 448);
             _redact.Name = "_redact";
             _redact.Size = new Size(80, 26);
             _redact.TabIndex = 6;
@@ -123,7 +132,7 @@ namespace PhilterDesktop
             //
             _close.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             _close.DialogResult = DialogResult.Cancel;
-            _close.Location = new Point(468, 382);
+            _close.Location = new Point(468, 448);
             _close.Name = "_close";
             _close.Size = new Size(80, 26);
             _close.TabIndex = 7;
@@ -136,9 +145,10 @@ namespace PhilterDesktop
             CancelButton = _close;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(560, 420);
+            ClientSize = new Size(560, 486);
             Controls.Add(_source);
             Controls.Add(_browse);
+            Controls.Add(_dropZone);
             Controls.Add(_sourceLabel);
             Controls.Add(_terms);
             Controls.Add(_termsLabel);
@@ -146,7 +156,7 @@ namespace PhilterDesktop
             Controls.Add(_redact);
             Controls.Add(_close);
             MinimizeBox = false;
-            MinimumSize = new Size(456, 360);
+            MinimumSize = new Size(456, 426);
             Name = "FindAndRedactForm";
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
@@ -160,6 +170,7 @@ namespace PhilterDesktop
         private Label _sourceLabel;
         private TextBox _source;
         private Button _browse;
+        private FileDropZone _dropZone;
         private Label _termsLabel;
         private TextBox _terms;
         private Button _import;

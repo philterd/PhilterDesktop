@@ -39,6 +39,7 @@ namespace PhilterDesktop
         public SpreadsheetRedactionForm()
         {
             InitializeComponent();
+            _source.KeepEndVisible();
             ModernTheme.Apply(this);
             ModernTheme.MakePrimary(_redact);
 
@@ -46,6 +47,9 @@ namespace PhilterDesktop
             _clearAll.LinkClicked += (_, _) => SetAllColumns(false);
             // ItemCheck fires before the state flips, so refresh the count after it settles.
             _columns.ItemCheck += (_, _) => BeginInvoke(UpdateSelectedCount);
+
+            _dropZone.Accepts = IsSpreadsheet;
+            _dropZone.FileDropped += UseFile;
         }
 
         private void SetAllColumns(bool selected)
@@ -124,10 +128,20 @@ namespace PhilterDesktop
             };
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
-                _source.Text = dlg.FileName;
-                LoadFile(dlg.FileName);
-                UpdateCanRedact();
+                UseFile(dlg.FileName);
             }
+        }
+
+        internal static bool IsSpreadsheet(string path) =>
+            path.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase) ||
+            path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+
+        // Shared by Browse and the drop zone.
+        private void UseFile(string path)
+        {
+            _source.Text = path;
+            LoadFile(path);
+            UpdateCanRedact();
         }
 
         // Loads the worksheet list (Excel only) and the column checklist for the chosen file. For .xlsx,
